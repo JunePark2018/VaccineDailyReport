@@ -10,8 +10,8 @@
 .Main .main-content {
   flex: 1;
   overflow-y: auto;
-  background-color: #121212; /* 스케치에 맞춘 어두운 배경 */
-  color: white; /* 텍스트는 흰색으로 */
+  background-color: #ffffff;
+  color: black;
   padding-bottom: 40px; /* 스크롤 끝부분 여백 */
 }
 
@@ -28,7 +28,7 @@
 
 /* 뉴스 섹션 */
 .bottom-news-section {
-  padding: 100px;
+  padding: 100px 20px 0 0;
   display: grid;
   gap: 20px;
   /* 핵심 코드 */

@@ -45,7 +45,7 @@ const SubArticle = ({ title, img_url, width, height, onClick = () => {}, fontSiz
           fontSize: fontSize, 
           textAlign: "left",
           marginTop: '10px', 
-          color: 'white',
+          color: 'black',
           wordBreak: 'keep-all' // 단어 단위 줄바꿈으로 가독성 향상
         }}>
           {title}

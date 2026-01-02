@@ -69,9 +69,9 @@ function Main() {
             </div>
           </section>
           <section className="bottom-news-section">
-            <SubArticle title="TEST" height="200px" fontSize="24px" img_url="https://image.ichannela.com/images/channela/2026/01/02/000002924491/00000292449120260102113532802.webp" />
-            <SubArticle title="TEST" height="200px" fontSize="24px" img_url="https://image.ichannela.com/images/channela/2026/01/02/000002924491/00000292449120260102113532802.webp" />
-            <SubArticle title="TEST" height="200px" fontSize="24px" img_url="https://image.ichannela.com/images/channela/2026/01/02/000002924491/00000292449120260102113532802.webp" />
+            <SubArticle title="의대 증원 극적 타결 조짐" height="200px" fontSize="24px" img_url="https://image.ichannela.com/images/channela/2026/01/02/000002924491/00000292449120260102113532802.webp" />
+            <SubArticle title="의대 증원 극적 타결 조짐" height="200px" fontSize="24px" img_url="https://image.ichannela.com/images/channela/2026/01/02/000002924491/00000292449120260102113532802.webp" />
+            <SubArticle title="의대 증원 극적 타결 조짐" height="200px" fontSize="24px" img_url="https://image.ichannela.com/images/channela/2026/01/02/000002924491/00000292449120260102113532802.webp" />
           </section>
         </main>
 
