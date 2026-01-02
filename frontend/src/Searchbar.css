@@ -1,0 +1,54 @@
+.Searchbar {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.Searchbar .search-box {
+    display: flex;
+    align-items: center;
+    background-color: #3b3b3b; /* 이미지와 유사한 짙은 회색 */
+    border-radius: 40px;       /* 둥근 캡슐 형태 */
+    padding: 8px 20px;
+    width: 100%;
+    max-width: 500px;
+}
+
+.Searchbar .search-box input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #ffffff;           /* 입력하는 텍스트 흰색 */
+    font-size: 16px;
+    padding: 10px 0;
+}
+
+.Searchbar .search-box input::placeholder {
+    color: #888;              /* 가이드 문구 색상 */
+}
+
+.Searchbar .search-box button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+}
+
+/* 흰색 돋보기 아이콘 스타일 */
+.Searchbar .search-box button svg {
+    width: 22px;
+    height: 22px;
+    stroke: #ffffff;          /* 돋보기 선 색상을 흰색으로 */
+    stroke-width: 1.5;        /* 이미지처럼 얇고 깔끔한 선 두께 */
+    fill: none;               /* 내부는 비움 */
+    transition: transform 0.2s ease;
+}
+
+.Searchbar .search-box button:hover svg {
+    transform: scale(1.1);    /* 마우스 올렸을 때 살짝 커지는 효과 */
+    stroke: #dddddd;
+}
