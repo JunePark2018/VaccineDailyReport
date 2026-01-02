@@ -1,0 +1,102 @@
+.LeftSideBar .left_sidebar_category {
+    display: inline-block;
+    width: 64px;
+    height: 74px;
+}
+
+.LeftSideBar .category_panel {
+    position: fixed;
+    top: 0;
+    left: 72px;
+    width: 200px;
+    height: 100vh;
+    background-color: white;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    z-index: 999;
+
+
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform 0.3s ease, visibility 0.3s;
+}
+
+.LeftSideBar .category_panel.open {
+    transform: translateX(0);
+    visibility: visible;
+}
+
+.LeftSideBar .category_panel ul {
+    list-style: none;
+    padding: 20px;
+}
+
+.LeftSideBar .category_panel li {
+    padding: 10px 0;
+    cursor: pointer;
+}
+
+.LeftSideBar .category_panel li:hover {
+    font-weight: bold;
+}
+
+
+.LeftSideBar .left_sidebar_category_box {
+    padding: 16px 0 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.LeftSideBar .left_sidebar_Algorithm_top_01 {
+    display: inline-block;
+    width: 64px;
+    height: 74px;
+}
+
+.LeftSideBar .left_sidebar_Algorithm_box_01 {
+    padding: 16px 0 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.LeftSideBar .left_sidebar_Algorithm_top_02 {
+    display: inline-block;
+    width: 64px;
+    height: 74px;
+}
+.LeftSideBar .left_sidebar_Algorithm_box_02 {
+    padding: 16px 0 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.LeftSideBar .left_sidebar_Algorithm_top_03 {
+    display: inline-block;
+    width: 64px;
+    height: 74px;
+}
+.LeftSideBar .left_sidebar_Algorithm_box_03 {
+    padding: 16px 0 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+
+.LeftSideBar .left_sidebar_category_box:hover,
+.LeftSideBar .left_sidebar_Algorithm_box_01:hover,
+.LeftSideBar .left_sidebar_Algorithm_box_02:hover,
+.LeftSideBar .left_sidebar_Algorithm_box_03:hover {
+    transform: scale(1.15);
+    transform-origin: center;
+}
