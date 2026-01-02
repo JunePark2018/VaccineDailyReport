@@ -1,15 +1,28 @@
-import CarouselNewsAnalyzer from '../components/CarouselNewsAnalyzer';
+import React from 'react';
 import Carousel from '../components/Carousel';
 import TodayNews from '../components/TodayNews';
+import SlideItem from '../components/SlideItem';
 import './Main.css';
 
 function Main() {
 
   // 슬라이드 데이터 예시
   const slideData = [
-    { id: 1, img: "...", title: "의대 증원 이슈", desc: "정부와 의료계..." },
-    { id: 2, img: "...", title: "백신 개발", desc: "임상 3상 돌입..." },
-    { id: 3, img: "...", title: "환절기 건강", desc: "면역력 강화..." },
+    {
+      id: 1,
+      image: "https://mod-file.dn.nexoncdn.co.kr/game/a20196202add4dde8dfae7aebd05bfb7/1705021038279_409.png?s=892x500&t=crop&q=100&f=png", // 실제 이미지 URL
+      title: "의대 증원 극적 타결 조짐?",
+      description: "정부와 의료계 5차 협상... 입장차 좁혀",
+      analysis: { /* 분석 데이터 객체 */ }
+    },
+    {
+      id: 2,
+      image: "https://mod-file.dn.nexoncdn.co.kr/game/a20196202add4dde8dfae7aebd05bfb7/1705021038279_409.png?s=892x500&t=crop&q=100&f=png",
+      title: "국산 1호 AI 신약 탄생 임박",
+      description: "임상 3상 성공적 완료... 주가 급등",
+      analysis: { /* ... */ }
+    },
+    // ... 더 많은 슬라이드
   ];
 
   return (
@@ -19,7 +32,7 @@ function Main() {
 
       {/* 2. 오른쪽: 헤더 + 본문 영역을 감싸는 컨테이너 */}
       <div className="page-content">
-        
+
         {/* 상단 */}
         {/* <Header /> */}
 
@@ -30,18 +43,16 @@ function Main() {
 
             {/* 캐러셀 */}
             <div className="carousel-container">
-               <Carousel height="100%">                
+              <Carousel height="100%">
+                {/* SlideItem 컴포넌트 반복 렌더링 */}
                 {slideData.map(data => (
-                  <div key={data.id} className="my-slide-content">
-                    <img src={data.img} alt={data.title} />
-                    <div className="caption">
-                      <h2>{data.title}</h2>
-                      <p>{data.desc}</p>
-                    </div>
-                    <div className="analysis-container">
-                      <CarouselNewsAnalyzer width="100%" height="100%" fontSize="14px" />
-                    </div>
-                  </div>
+                  <SlideItem
+                    key={data.id}
+                    image={data.image}
+                    title={data.title}
+                    description={data.description}
+                    analysisData={data.analysis} // 나중에 데이터 연동 시 사용
+                  />
                 ))}
               </Carousel>
             </div>
@@ -50,7 +61,7 @@ function Main() {
             <TodayNews/>
             </section>
         </main>
-        
+
       </div>
     </div>
   );
