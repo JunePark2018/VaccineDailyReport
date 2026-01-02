@@ -1,0 +1,32 @@
+/* Main container for the entire header */
+.Header {
+    display: flex;
+    justify-content: space-between; /* Distributes the three children across the width */
+    align-items: center;            /* Vertically centers all items */
+    padding: 10px 20px;
+    width: 100%;
+    height: 80px;                   /* Adjust height as needed */
+    background-color: #ffffff;
+    border-bottom: 1px solid #ddd;
+}
+
+/* 1. Left Section: Logo centered to the left */
+.Header .left-child {
+
+    display: flex;
+    justify-content: flex-start;    /* Aligns logo to the far left */
+    align-items: center;
+}
+
+/* 2. Middle Section: Searchbar centered on all sides */
+.Header .mid-child {
+    flex: 1;                        /* Takes up more space for the searchbar */
+}
+
+/* 3. Right Section: Login button aligned to the far right */
+.Header .right-child {
+    display: flex;
+    justify-content: flex-end;      /* Aligns button to the far right */
+    align-items: center;
+    padding-right: 50px;
+}
