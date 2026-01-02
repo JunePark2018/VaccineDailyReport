@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import SubArticle from './SubNewsItem'; // 조원들과 약속한 Article(SubArticle) 컴포넌트
+import SubArticle from './SubArticle'; // 조원들과 약속한 Article(SubArticle) 컴포넌트
 
 /**
  * [TodayNews 컴포넌트 개요]

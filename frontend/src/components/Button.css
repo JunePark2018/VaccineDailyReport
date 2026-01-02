@@ -29,8 +29,8 @@
 
 /* 마우스를 올렸을 때 (Hover 상태) */
 .Button:hover:not(:disabled) {
-    /* 버튼이 검정색 계열이므로, 밝기를 1.3배 높여서 마우스가 올라갔음을 표현 */
-    filter: brightness(1.3); 
+    /* 버튼이 검정색 계열이므로, 밝기를 1.1배 높여서 마우스가 올라갔음을 표현 */
+    filter: brightness(1.1); 
 }
 
 /* 버튼을 마우스로 꾹 눌렀을 때 (Active 상태) */

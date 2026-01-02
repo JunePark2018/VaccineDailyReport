@@ -4,7 +4,7 @@
     justify-content: space-between; /* Distributes the three children across the width */
     align-items: center;            /* Vertically centers all items */
     padding: 10px 20px;
-    width: 100%;
+    width: auto;
     height: 80px;                   /* Adjust height as needed */
     background-color: #ffffff;
     border-bottom: 1px solid #ddd;

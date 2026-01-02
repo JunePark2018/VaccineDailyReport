@@ -8,6 +8,7 @@ import Searchbar from '../components/Searchbar';
 import Button from '../components/Button';
 import Logo from '../components/Logo';
 import './Main.css';
+import SubArticle from '../components/SubArticle';
 
 function Main() {
 
@@ -33,7 +34,7 @@ function Main() {
   return (
     <div className="Main">
       {/* 1. 왼쪽: 사이드바 (전체 높이) */}
-      {/* <LeftSideBar /> */}
+      <LeftSideBar />
 
       {/* 2. 오른쪽: 헤더 + 본문 영역을 감싸는 컨테이너 */}
       <div className="page-content">
@@ -42,7 +43,7 @@ function Main() {
         <Header
           leftChild={<Logo />}
           midChild={<Searchbar maxWidth="400px" />}
-          rightChild={<Button text={'로그인'} onClick={() => {
+          rightChild={<Button text={'로그인'} color="LightSeaGreen" textColor="white" onClick={() => {
           }} />}
         />
 
@@ -68,7 +69,9 @@ function Main() {
             </div>
           </section>
           <section className="bottom-news-section">
-            <TodayNews />
+            <SubArticle title="TEST" height="200px" fontSize="24px" img_url="https://image.ichannela.com/images/channela/2026/01/02/000002924491/00000292449120260102113532802.webp" />
+            <SubArticle title="TEST" height="200px" fontSize="24px" img_url="https://image.ichannela.com/images/channela/2026/01/02/000002924491/00000292449120260102113532802.webp" />
+            <SubArticle title="TEST" height="200px" fontSize="24px" img_url="https://image.ichannela.com/images/channela/2026/01/02/000002924491/00000292449120260102113532802.webp" />
           </section>
         </main>
 

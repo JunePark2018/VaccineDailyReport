@@ -22,54 +22,64 @@ export default function LeftSideBar({
     const [showCategoryPanel, setShowCategoryPanel] = useState(false);
 
     return (
-        <div style={{ display: "flex" }}>
+        <div className="LeftSideBar" style={{ display: "flex" }}>
             {/* 사이드바 */}
-            <div className="LeftSideBar" 
-            style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                backgroundColor: darkmode,
-                color: textColor,
-                fontSize: textSize,
-                width: width,
-                height: "100vh",
-                display: "flex",
-                flexDirection: "column",
-                zIndex: 1000
-            }}
+            <div className='left_sidebar_area'
+                style={{
+                    top: 0,
+                    left: 0,
+                    width: width,
+                    height: "100vh",
+                    visibility: "false"
+                }}
+            >
+            </div>
+            <div className="category_buttons"
+                style={{
+                    position: "fixed",
+                    top: 0,
+                    left: 0,
+                    backgroundColor: darkmode,
+                    color: textColor,
+                    fontSize: textSize,
+                    width: width,
+                    height: "100vh",
+                    display: "flex",
+                    flexDirection: "column",
+                    zIndex: 1000
+                }}
             >
                 <div className="left_sidebar_01">
                     <div className="left_sidebar_category">
-                        <div 
-                        className="left_sidebar_category_box"
-                        onClick={() => setShowCategoryPanel(!showCategoryPanel)}
+                        <div
+                            className="left_sidebar_category_box"
+                            onClick={() => setShowCategoryPanel(!showCategoryPanel)}
                         >
                             <div className="left_sidebar_category_icon">아이콘</div>
                             <span>카테고리</span>
                         </div>
                     </div>
                     <div className="left_sidebar_Algorithm_top_01">
-                        <div 
-                        className="left_sidebar_Algorithm_box_01"
-                        onClick={() => nav('/Algorithm1')}>
+                        <div
+                            className="left_sidebar_Algorithm_box_01"
+                            onClick={() => nav('/Algorithm1')}>
                             <div className="left_sidebar_Algorithm_icon_01">아이콘</div>
                             <div>Algorithm1</div>
                         </div>
                     </div>
                     <div className="left_sidebar_Algorithm_top_02">
-                        <div 
-                        className="left_sidebar_Algorithm_box_02"
-                        onClick={() => nav('/Algorithm2')}
+                        <div
+                            className="left_sidebar_Algorithm_box_02"
+                            onClick={() => nav('/Algorithm2')}
                         >
                             <div className="left_sidebar_Algorithm_icon_02">아이콘</div>
                             <div>Algorithm2</div>
                         </div>
                     </div>
                     <div className="left_sidebar_Algorithm_top_03">
-                        <div 
-                        className="left_sidebar_Algorithm_box_03"
-                        onClick={() => nav('/Algorithm3')}
+                        <div
+                            className="left_sidebar_Algorithm_box_03"
+                            onClick={() => nav('/Algorithm3')}
                         >
                             <div className="left_sidebar_Algorithm_icon_03">아이콘</div>
                             <div>Algorithm3</div>

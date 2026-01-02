@@ -6,14 +6,14 @@ import React from 'react';
  * - 기능: 이미지 썸네일과 제목으로 구성된 작은 뉴스 카드를 생성함.
  * - 특징: 부모 컴포넌트로부터 크기(width, height)와 폰트 정보를 받아 스타일을 동적으로 결정함.
  * * [Props 가이드 - 팀원 공유용]
- * @param {number|string} id - 기사 고유 번호 (추후 상세 페이지 링크 이동 시 사용)
  * @param {string} title - 뉴스 제목 텍스트
  * @param {string} img_url - 뉴스 썸네일 이미지의 절대 경로 또는 URL
  * @param {string} width - 카드 전체의 가로 너비 (예: "300px", "100%")
  * @param {string} height - 이미지 영역의 세로 높이 (예: "180px")
  * @param {string} fontSize - 제목 텍스트의 크기 (예: "1rem", "16px")
+ * @param {function} onClick - 클릭 시 실행할 함수
  */
-const SubArticle = ({ id, title, img_url, width, height, fontSize }) => {
+const SubArticle = ({ title, img_url, width, height, onClick = () => {}, fontSize }) => {
   return (
     /**
      * 1. 최상위 컨테이너
@@ -43,6 +43,7 @@ const SubArticle = ({ id, title, img_url, width, height, fontSize }) => {
       <div className="title-container">
         <p style={{ 
           fontSize: fontSize, 
+          textAlign: "left",
           marginTop: '10px', 
           color: 'white',
           wordBreak: 'keep-all' // 단어 단위 줄바꿈으로 가독성 향상
