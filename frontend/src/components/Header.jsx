@@ -1,5 +1,5 @@
 import React from 'react';
-import './header.css'; // We will create this next
+import './Header.css'; // We will create this next
 
 const Header = ({className = "", leftChild, midChild, rightChild, darkmode}) => {
   return (
