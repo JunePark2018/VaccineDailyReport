@@ -1,5 +1,6 @@
 import CarouselNewsAnalyzer from '../components/CarouselNewsAnalyzer';
 import Carousel from '../components/Carousel';
+import TodayNews from '../components/TodayNews';
 import './Main.css';
 
 function Main() {
@@ -44,8 +45,10 @@ function Main() {
                 ))}
               </Carousel>
             </div>
-
           </section>
+          <section className="bottom-news-section">
+            <TodayNews/>
+            </section>
         </main>
         
       </div>
