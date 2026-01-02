@@ -1,0 +1,27 @@
+/* 로고 컨테이너 */
+.Logo {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    /* 주변 여백 제거 */
+    padding: 0;
+    margin: 0;
+}
+
+/* 마우스를 올렸을 때 효과 */
+.Logo:hover {
+    opacity: 0.8;
+}
+
+/* 로고 이미지 스타일 */
+.Logo .logo-image {
+    /* 헤더 높이에 맞춰 이미지 크기를 조절 (가장 중요) */
+    height: 45px; 
+    width: auto;
+    display: block;
+    object-fit: contain;
+    
+    /* 만약 이미지의 흰색 배경을 검은 헤더에서 없애고 싶다면 아래 주석 해제 */
+    /* mix-blend-mode: screen; */
+}

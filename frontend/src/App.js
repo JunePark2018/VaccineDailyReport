@@ -3,15 +3,17 @@ import './App.css';
 import axios from 'axios';
 import Main from './pages/Main.jsx';
 import Header from './components/Header';
-import logo from './logo.png';
 import Searchbar from './components/Searchbar';
 import Button from './components/Button';
+import Logo from './components/Logo.jsx';
+import { BrowserRouter } from 'react-router-dom';
 
 function App() {
   return (
+    <BrowserRouter>
     <div className="App">
       <Header
-        leftChild={<img src={logo} alt="Vaccine 일보 Logo" style={{ height: '50px' }} />}
+        leftChild={<Logo/>}
         midChild={<Searchbar maxWidth="400px" />}
         rightChild={<Button text={'로그인'} onClick={() => {
 
@@ -19,6 +21,7 @@ function App() {
       />
       <Main />
     </div>
+    </BrowserRouter>
   );
 }
 
