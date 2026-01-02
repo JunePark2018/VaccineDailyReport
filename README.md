@@ -17,7 +17,7 @@ git clone https://github.com/JunePark2018/VaccineDailyReport.git
 ```
 
 ## 🤝 쓰실 때
-
+* 브랜치를 만들기 전에 `git pull origin main`으로 pull을 하여 동기화를 먼저 진행해 주세요. 
 * 로컬에서 `git add`, `git commit`을 활용해 자유롭게 개발하시면 됩니다.
 * **⚠️ `git push`를 하기 전, 반드시 본인의 브랜치(Branch)인지 확인해 주세요!** `main` 브랜치에 직접 푸시하지 않도록 주의 바랍니다.
 * 매일 **아침 회의 시간**에 `Pull Requests` 탭에서 함께 코드를 확인하며 병합을 진행하고자 합니다.
