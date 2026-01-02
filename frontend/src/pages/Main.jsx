@@ -1,5 +1,6 @@
 import React from 'react';
 import Carousel from '../components/Carousel';
+import TodayNews from '../components/TodayNews';
 import SlideItem from '../components/SlideItem';
 import './Main.css';
 
@@ -55,8 +56,10 @@ function Main() {
                 ))}
               </Carousel>
             </div>
-
           </section>
+          <section className="bottom-news-section">
+            <TodayNews/>
+            </section>
         </main>
 
       </div>
