@@ -8,8 +8,6 @@
 
 ## 🚀 시작하기
 
-이 사이트에서 **ZIP 파일**로 다운로드하거나 아래 **git** 명령어를 통해 로컬 환경에 복사하여 사용할 수 있습니다.
-
 ```bash
 # 터미널에서 아래 명령어로 프로젝트를 다운로드하세요
 git clone https://github.com/JunePark2018/VaccineDailyReport.git
