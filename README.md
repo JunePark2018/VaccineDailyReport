@@ -35,4 +35,7 @@ git reset --hard origin/main
 
 # 4. 추적되지 않는 찌꺼기 파일(새로 생긴 파일 등)을 삭제합니다.
 git clean -fd
+
+# 5. main을 제외한 모든 브랜치 삭제
+git branch | grep -v "main" | xargs git branch -D
 ```
