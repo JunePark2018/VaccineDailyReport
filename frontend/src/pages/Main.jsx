@@ -1,3 +1,4 @@
+import React from 'react';
 import Carousel from '../components/Carousel';
 import SlideItem from '../components/SlideItem';
 import './Main.css';

@@ -11,16 +11,15 @@ import { BrowserRouter } from 'react-router-dom';
 function App() {
   return (
     <BrowserRouter>
-    <div className="App">
-      <Header
-        leftChild={<Logo/>}
-        midChild={<Searchbar maxWidth="400px" />}
-        rightChild={<Button text={'로그인'} onClick={() => {
-
-        }} />}
-      />
-      <Main />
-    </div>
+      <div className="App">
+        <Header
+          leftChild={<Logo />}
+          midChild={<Searchbar maxWidth="400px" />}
+          rightChild={<Button text={'로그인'} onClick={() => {
+          }} />}
+        />
+        <Main />
+      </div>
     </BrowserRouter>
   );
 }

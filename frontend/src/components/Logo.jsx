@@ -1,3 +1,4 @@
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Logo.css';
 import logoImg from './Logo.png'; // 로고 이미지 파일
