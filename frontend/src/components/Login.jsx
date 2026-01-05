@@ -1,7 +1,8 @@
-import { Link, useNavigate } from "react-router-dom";
+import React, {useState} from "react";
+import { useNavigate } from "react-router-dom";
 import Button from "./Button"
 import './Login.css'
-import { useState } from "react";
+
 
 const Login = ()=>{
 
@@ -30,9 +31,8 @@ const Login = ()=>{
 
     return (
         <div className="Login">
-            <form className="Login_total" onSubmit={handleLogin}>
-                <div>
-                    <div>
+            <form className="Login_total" onSubmit={handleLogin}>  
+                    <div className="input_containter">
                         <input 
                             className="id_box" 
                             placeholder="아이디"
@@ -41,7 +41,7 @@ const Login = ()=>{
                             onChange={handleChange}
                         />
                     </div>
-                    <div>
+                    <div className="input_containter">
                         <input 
                             className="pw_box" 
                             placeholder="비밀번호" 
@@ -56,13 +56,14 @@ const Login = ()=>{
                             </p>
                         )}
                     </div>
-                    <div>
-                        <Button type='submit' text='로그인'/>
+                    <div className="button_wrapper">
+                        <div className="button_container">
+                            <Button type='submit' text='로그인'/>
+                        </div>
+                        <div className="button_container">
+                            <Button onClick={() => nav('/CreateAccount')} text='회원가입'/>
+                        </div>
                     </div>
-                    <div>
-                        <Button onClick={()=> nav('/signup')} text='회원가입'/>
-                    </div>
-                </div>
             </form>
         </div>
     )
