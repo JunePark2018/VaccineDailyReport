@@ -1,0 +1,13 @@
+.ArticlePage .page-content {
+  display: flex;
+  flex-direction: column;
+  width: calc(100% - 72px); /* Total width minus Sidebar width */
+  min-height: 100vh;
+}
+
+.ArticlePage .main-content {
+  flex: 1;
+  padding: 20px;
+  background-color: #1a1a1a; /* Dark theme to match your wireframe */
+}
+

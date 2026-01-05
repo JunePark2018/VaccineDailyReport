@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Carousel from '../components/Carousel';
 import TodayNews from '../components/TodayNews';
 import SlideItem from '../components/SlideItem';
@@ -10,7 +11,10 @@ import Logo from '../components/Logo';
 import './Main.css';
 import SubArticle from '../components/SubArticle';
 
+
+
 function Main() {
+  const navigate = useNavigate(); 
 
   // 슬라이드 데이터 예시
   const slideData = [
@@ -48,7 +52,7 @@ function Main() {
         />
 
         {/* 하단 */}
-        <main className="main-content">
+        <main className="main-content">         
           {/* 상단 배너 영역: 캐러셀 + 비교분석 */}
           <section className="top-banner-section">
 
@@ -68,11 +72,23 @@ function Main() {
               </Carousel>
             </div>
           </section>
-          <section className="bottom-news-section">
-            <SubArticle title="의대 증원 극적 타결 조짐" height="200px" fontSize="24px" img_url="https://image.ichannela.com/images/channela/2026/01/02/000002924491/00000292449120260102113532802.webp" />
-            <SubArticle title="의대 증원 극적 타결 조짐" height="200px" fontSize="24px" img_url="https://image.ichannela.com/images/channela/2026/01/02/000002924491/00000292449120260102113532802.webp" />
-            <SubArticle title="의대 증원 극적 타결 조짐" height="200px" fontSize="24px" img_url="https://image.ichannela.com/images/channela/2026/01/02/000002924491/00000292449120260102113532802.webp" />
-          </section>
+            <section className="bottom-news-section">
+              {[1, 2, 3].map((item) => (
+                <div 
+                  key={item} 
+                  onClick={() => navigate('/article')} 
+                  style={{ cursor: 'pointer' }}
+                  className="sub-article-wrapper"
+                >
+                  <SubArticle 
+                    title="의대 증원 극적 타결 조짐" 
+                    height="200px" 
+                    fontSize="24px" 
+                    img_url="https://image.ichannela.com/images/channela/2026/01/02/000002924491/00000292449120260102113532802.webp" 
+                  />
+                </div>
+              ))}
+            </section>
         </main>
 
       </div>
