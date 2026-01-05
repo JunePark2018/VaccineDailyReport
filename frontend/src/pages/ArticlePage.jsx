@@ -21,7 +21,7 @@ function ArticlePage() {
       <LeftSideBar />
 
       {/* 2. 오른쪽: 헤더 + 본문 영역을 감싸는 컨테이너 */}
-      <div className="page-content" style={{flex: 1, marginLeft: '72px'}}>
+      <div className="page-content" style={{flex: 1}}>
 
         {/* 상단 */}
         <Header
