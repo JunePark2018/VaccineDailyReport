@@ -1,20 +1,50 @@
-.LeftSideBar .left_sidebar_category {
+/* --- Sidebar Main Containers --- */
+
+.LeftSideBar .left_sidebar_category,
+.LeftSideBar .left_sidebar_Algorithm_top_01,
+.LeftSideBar .left_sidebar_Algorithm_top_02,
+.LeftSideBar .left_sidebar_Algorithm_top_03 {
     display: inline-block;
     width: 64px;
     height: 74px;
 }
 
+/* --- Navigation Button Boxes --- */
+
+.LeftSideBar .left_sidebar_category_box,
+.LeftSideBar .left_sidebar_Algorithm_box_01,
+.LeftSideBar .left_sidebar_Algorithm_box_02,
+.LeftSideBar .left_sidebar_Algorithm_box_03 {
+    padding: 16px 0 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+/* Hover effect for the icons on the far left bar */
+.LeftSideBar .left_sidebar_category_box:hover,
+.LeftSideBar .left_sidebar_Algorithm_box_01:hover,
+.LeftSideBar .left_sidebar_Algorithm_box_02:hover,
+.LeftSideBar .left_sidebar_Algorithm_box_03:hover {
+    transform: scale(1.15);
+    transform-origin: center;
+}
+
+/* --- Category Sliding Panel --- */
+
 .LeftSideBar .category_panel {
     position: fixed;
     top: 0;
-    left: 72px;
+    left: 72px; /* Positioned right next to the 72px sidebar */
     width: 200px;
     height: 100vh;
     background-color: white;
     box-shadow: 2px 0 5px rgba(0,0,0,0.1);
     z-index: 999;
 
-
+    /* Animation logic */
     transform: translateX(-100%);
     visibility: hidden;
     transition: transform 0.3s ease, visibility 0.3s;
@@ -25,78 +55,39 @@
     visibility: visible;
 }
 
+.LeftSideBar .category_panel h3 {
+    padding: 25px 20px 10px;
+    margin: 0;
+    border-bottom: 1px solid #eee;
+    font-size: 1.1rem;
+}
+
+/* --- List Items & Icons --- */
+
 .LeftSideBar .category_panel ul {
     list-style: none;
-    padding: 20px;
+    padding: 10px 0; /* Remove horizontal padding so hover background stretches full width */
+    margin: 0;
 }
 
 .LeftSideBar .category_panel li {
-    padding: 10px 0;
+    padding: 12px 20px;
     cursor: pointer;
+    display: flex;         /* Icons and text on same line */
+    align-items: center;   /* Vertical alignment */
+    gap: 15px;            /* Space between image and text */
+    transition: background-color 0.2s ease;
 }
 
 .LeftSideBar .category_panel li:hover {
+    background-color: #f5f5f5; /* Light grey highlight */
     font-weight: bold;
 }
 
-
-.LeftSideBar .left_sidebar_category_box {
-    padding: 16px 0 14px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    cursor: pointer;
-    transition: transform 0.3s ease;
-}
-
-.LeftSideBar .left_sidebar_Algorithm_top_01 {
-    display: inline-block;
-    width: 64px;
-    height: 74px;
-}
-
-.LeftSideBar .left_sidebar_Algorithm_box_01 {
-    padding: 16px 0 14px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    cursor: pointer;
-    transition: transform 0.3s ease;
-}
-
-.LeftSideBar .left_sidebar_Algorithm_top_02 {
-    display: inline-block;
-    width: 64px;
-    height: 74px;
-}
-.LeftSideBar .left_sidebar_Algorithm_box_02 {
-    padding: 16px 0 14px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    cursor: pointer;
-    transition: transform 0.3s ease;
-}
-
-.LeftSideBar .left_sidebar_Algorithm_top_03 {
-    display: inline-block;
-    width: 64px;
-    height: 74px;
-}
-.LeftSideBar .left_sidebar_Algorithm_box_03 {
-    padding: 16px 0 14px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    cursor: pointer;
-    transition: transform 0.3s ease;
-}
-
-
-.LeftSideBar .left_sidebar_category_box:hover,
-.LeftSideBar .left_sidebar_Algorithm_box_01:hover,
-.LeftSideBar .left_sidebar_Algorithm_box_02:hover,
-.LeftSideBar .left_sidebar_Algorithm_box_03:hover {
-    transform: scale(1.15);
-    transform-origin: center;
+/* IMPORTANT: This fixes the image sizes */
+.LeftSideBar .category_icon_img {
+    width: 24px;          /* Small uniform size */
+    height: 24px;
+    object-fit: contain;  /* Keeps icons from stretching */
+    display: block;
 }

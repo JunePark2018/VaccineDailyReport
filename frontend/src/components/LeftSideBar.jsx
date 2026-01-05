@@ -2,6 +2,15 @@ import { useNavigate } from 'react-router-dom'
 import { useState } from 'react';
 import './LeftSideBar.css'
 
+import governmentIcon from './leftsidebaricon/government.png';
+import economicsIcon from './leftsidebaricon/economics.png';
+import societyIcon from './leftsidebaricon/society.png';
+import entertainmentIcon from './leftsidebaricon/entertainment.png';
+import healthIcon from './leftsidebaricon/health.png';
+import sportsIcon from './leftsidebaricon/sports.png';
+import weatherIcon from './leftsidebaricon/weather.png';
+import scienceIcon from './leftsidebaricon/science.png';
+import worldIcon from './leftsidebaricon/world.png';
 /**
  
 왼쪽 사이드바 컴포넌트 입니다.  
@@ -20,6 +29,31 @@ export default function LeftSideBar({
 }) {
     const nav = useNavigate();
     const [showCategoryPanel, setShowCategoryPanel] = useState(false);
+    let closeTimer = null;
+
+    const handleMouseLeave = () => {
+        closeTimer = setTimeout(() => {
+            setShowCategoryPanel(false);
+        }, 300);
+    };
+
+    const handleMouseEnter = () => {
+        if (closeTimer) {
+            clearTimeout(closeTimer);
+        }
+    };
+
+    const categories = [
+        { id: 'sub1', label: '정치', icon: governmentIcon },
+        { id: 'sub2', label: '경제', icon: economicsIcon },
+        { id: 'sub3', label: '사회', icon: societyIcon },
+        { id: 'sub4', label: '엔터', icon: entertainmentIcon },
+        { id: 'sub5', label: '건강', icon: healthIcon },
+        { id: 'sub6', label: '스포츠', icon: sportsIcon },
+        { id: 'sub7', label: '기후', icon: weatherIcon },
+        { id: 'sub8', label: '과학', icon: scienceIcon },
+        { id: 'sub9', label: '세계', icon: worldIcon },
+    ];
 
     return (
         <div className="LeftSideBar" style={{ display: "flex" }}>
@@ -89,18 +123,22 @@ export default function LeftSideBar({
             </div>
 
             {/*카테고리 패널*/}
-            <div className={`category_panel ${showCategoryPanel ? 'open' : ''}`}>
+            <div 
+                className={`category_panel ${showCategoryPanel ? 'open' : ''}`}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}>             
                 <h3>카테고리</h3>
                 <ul>
-                    <li onClick={() => nav('/sub1')}>정치</li>
-                    <li onClick={() => nav('/sub2')}>경제</li>
-                    <li onClick={() => nav('/sub3')}>사회</li>
-                    <li onClick={() => nav('/sub4')}>엔터</li>
-                    <li onClick={() => nav('/sub5')}>건강</li>
-                    <li onClick={() => nav('/sub6')}>스포츠</li>
-                    <li onClick={() => nav('/sub7')}>기후</li>
-                    <li onClick={() => nav('/sub8')}>과학</li>
-                    <li onClick={() => nav('/sub9')}>세계</li>
+                    {categories.map((item) => (
+                        <li key={item.id} onClick={() => nav(`/${item.id}`)}>
+                            <img 
+                                src={item.icon} 
+                                alt={item.label} 
+                                className="category_icon_img" 
+                            />
+                            {item.label}
+                        </li>
+                    ))}
                 </ul>
             </div>
         </div>
