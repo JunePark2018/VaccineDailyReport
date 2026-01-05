@@ -35,3 +35,52 @@ class Article(Base):
     
     # 관계 설정
     issue = relationship("Issue", back_populates="articles")
+
+from sqlalchemy import Column, Integer, BigInteger, String, JSON, DateTime, Boolean
+from datetime import datetime
+# from database import Base  # Base 클래스는 기존 코드에 있다고 가정
+
+# 사용자의 정보가 저장된 클래스
+class User(Base):
+    __tablename__ = "users"
+
+    # user_id BIGINT AUTO_INCREMENT PRIMARY KEY
+    user_id = Column(BigInteger, primary_key=True, autoincrement=True)
+    
+    # login_id VARCHAR(50) NOT NULL UNIQUE
+    login_id = Column(String(50), nullable=False, unique=True)
+    
+    # user_real_name VARCHAR(50)
+    user_real_name = Column(String(50))
+    
+    # password_hash VARCHAR(255) NOT NULL
+    password_hash = Column(String(255), nullable=False)
+    
+    # email VARCHAR(100)
+    email = Column(String(100))
+    
+    # subscribed_categories JSON (['정치', '경제', 'IT'])
+    subscribed_categories = Column(JSON)
+    
+    # subscribed_keywords JSON (['삼성전자', '금리', 'AI'])
+    subscribed_keywords = Column(JSON)
+    
+    # fcm_token VARCHAR(255)
+    fcm_token = Column(String(255))
+    
+    # created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at = Column(DateTime, default=datetime.now)
+    
+    # view_history JSON ({기사 URL, 기사 조회 시간})
+    view_history = Column(JSON)
+    
+    # preferred_time_range JSON or String
+    # 시간 대역을 구조적으로 저장하려면 JSON, 단순 텍스트면 String 사용
+    preferred_time_range = Column(JSON) 
+    
+    # marketing_agree BOOLEAN DEFAULT FALSE
+    marketing_agree = Column(Boolean, default=False)
+    
+    # user_status TINYINT DEFAULT 1 (1:정상, 0:휴면, -1:탈퇴)
+    # SQLAlchemy에서는 보통 Integer로 처리하거나 SmallInteger를 사용합니다.
+    user_status = Column(Integer, default=1)
