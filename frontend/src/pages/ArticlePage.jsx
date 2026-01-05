@@ -1,9 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import Carousel from '../components/Carousel';
-import TodayNews from '../components/TodayNews';
-import SlideItem from '../components/SlideItem';
+import Sources from '../components/Sources';
 import LeftSideBar from '../components/LeftSideBar';
+import NewsText from '../components/NewsText';
 import Header from '../components/Header';
 import Searchbar from '../components/Searchbar';
 import Button from '../components/Button';
@@ -33,10 +32,15 @@ function ArticlePage() {
 
         {/* 하단 */}
         <main className="main-content">
-           <div className="NewsText">
-              <h2>생성된 뉴스 기사 제목</h2>
-              <h3>안녕하세요, 오늘의 뉴스를 알려드리겠습니다. 저녁 식사는 맛있게 하셨나요? 저는 전 현식입니다.</h3>
-           </div>
+          <div className='article-section'>
+            <NewsText title="TEST 기사 제목" contents="AI가 쓴 TEST 기사 본문입니다."/>
+            <Sources articles={[{ title: "원본 기사 제목", company_name: "언론사명", url: "https://example.com" }]}/>
+          </div>
+          <div className="additional-section">
+            워드 포그<br/>
+            어쩌구저쩌구<br/>
+            123123123<br/>
+          </div>
         </main>
 
       </div>
