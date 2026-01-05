@@ -1,93 +1,53 @@
-/* --- Sidebar Main Containers --- */
-
-.LeftSideBar .left_sidebar_category,
-.LeftSideBar .left_sidebar_Algorithm_top_01,
-.LeftSideBar .left_sidebar_Algorithm_top_02,
-.LeftSideBar .left_sidebar_Algorithm_top_03 {
-    display: inline-block;
-    width: 64px;
-    height: 74px;
-}
-
-/* --- Navigation Button Boxes --- */
-
-.LeftSideBar .left_sidebar_category_box,
-.LeftSideBar .left_sidebar_Algorithm_box_01,
-.LeftSideBar .left_sidebar_Algorithm_box_02,
-.LeftSideBar .left_sidebar_Algorithm_box_03 {
-    padding: 16px 0 14px;
+/* Container for each category unit */
+.LeftSideBar .sidebar_icon_item {
+    width: 100%;
+    padding: 16px 0 12px;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     cursor: pointer;
-    transition: transform 0.3s ease;
+    transition: transform 0.2s ease, background-color 0.2s ease;
 }
 
-/* Hover effect for the icons on the far left bar */
-.LeftSideBar .left_sidebar_category_box:hover,
-.LeftSideBar .left_sidebar_Algorithm_box_01:hover,
-.LeftSideBar .left_sidebar_Algorithm_box_02:hover,
-.LeftSideBar .left_sidebar_Algorithm_box_03:hover {
-    transform: scale(1.15);
-    transform-origin: center;
+/* Hover effect */
+.LeftSideBar .sidebar_icon_item:hover {
+    transform: scale(1.1);
+    background-color: rgba(0, 0, 0, 0.04);
 }
 
-/* --- Category Sliding Panel --- */
-
-.LeftSideBar .category_panel {
-    position: fixed;
-    top: 0;
-    left: 72px; /* Positioned right next to the 72px sidebar */
-    width: 200px;
-    height: 100vh;
-    background-color: white;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-    z-index: 999;
-
-    /* Animation logic */
-    transform: translateX(-100%);
-    visibility: hidden;
-    transition: transform 0.3s ease, visibility 0.3s;
+/* Keeps all icons in a uniform 32x32 container */
+.LeftSideBar .icon_wrapper {
+    width: 32px;
+    height: 32px;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-.LeftSideBar .category_panel.open {
-    transform: translateX(0);
-    visibility: visible;
+/* Forces the high-res images to fit the container */
+.LeftSideBar .category_main_icon {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
 
-.LeftSideBar .category_panel h3 {
-    padding: 25px 20px 10px;
-    margin: 0;
-    border-bottom: 1px solid #eee;
-    font-size: 1.1rem;
+/* Text label styling */
+.LeftSideBar .sidebar_icon_item span {
+    font-size: 10px;
+    font-weight: 500;
+    text-align: center;
+    word-break: keep-all; /* Keeps Korean words from breaking line-by-line */
 }
 
-/* --- List Items & Icons --- */
-
-.LeftSideBar .category_panel ul {
-    list-style: none;
-    padding: 10px 0; /* Remove horizontal padding so hover background stretches full width */
-    margin: 0;
+/* Scrollbar Styling (Hidden for cleaner UI) */
+.LeftSideBar .category_buttons::-webkit-scrollbar {
+    width: 0px;
+    display: none;
 }
 
-.LeftSideBar .category_panel li {
-    padding: 12px 20px;
-    cursor: pointer;
-    display: flex;         /* Icons and text on same line */
-    align-items: center;   /* Vertical alignment */
-    gap: 15px;            /* Space between image and text */
-    transition: background-color 0.2s ease;
-}
-
-.LeftSideBar .category_panel li:hover {
-    background-color: #f5f5f5; /* Light grey highlight */
-    font-weight: bold;
-}
-
-/* IMPORTANT: This fixes the image sizes */
-.LeftSideBar .category_icon_img {
-    width: 24px;          /* Small uniform size */
-    height: 24px;
-    object-fit: contain;  /* Keeps icons from stretching */
-    display: block;
+.LeftSideBar .category_buttons {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
 }
