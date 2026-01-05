@@ -1,0 +1,124 @@
+/* Sources 컴포넌트의 메인 컨테이너 
+  - 다크 모드 배경(#333333) 적용
+  - Pretendard 폰트를 우선 적용하고 시스템 폰트로 폴백
+*/
+.Sources {
+  background-color: #333333;
+  padding: 40px 30px;
+  color: #ffffff;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+  text-align: left;
+}
+
+/* "원본 기사" 타이틀 스타일 
+  - 크고 굵은 폰트로 강조
+  - flex를 사용하여 옆에 붙는 숫자(span)와 높이(baseline)를 맞춤
+*/
+.Sources .sources-header {
+  font-size: 2.2rem;
+  font-weight: 900;
+  margin-bottom: 35px;
+  color: #ffffff;
+  letter-spacing: -1px;
+  display: flex;
+  align-items: baseline;
+}
+
+/* 타이틀 옆의 기사 개수 (예: ( 20개 )) 스타일 
+  - 타이틀보다 작지만 굵기는 똑같이 유지하여 통일감 부여
+  - 색상을 흰색으로 하여 가독성 확보
+*/
+.Sources .article-count {
+  font-size: 1.2rem;     /* 타이틀보다 작게 설정 */
+  font-weight: 900;      /* 타이틀과 동일한 굵기 */
+  color: #ffffff;        /* 흰색 */
+  margin-left: 12px;     /* 제목과의 간격 */
+  letter-spacing: -0.5px;
+}
+
+/* 기사 리스트 (ul) 
+  - 기본 목록 스타일(점) 제거 및 패딩 초기화
+*/
+.Sources .sources-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* 개별 기사 항목 (li) 
+  - 가로 정렬(row)을 위해 flex 사용
+  - 세로 중앙 정렬(align-items: center)
+*/
+.Sources .source-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 14px;
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+/* 언론사명 스타일 */
+.Sources .company-name {
+  font-weight: 700;
+  color: #e0e0e0;
+  white-space: nowrap; /* 줄바꿈 방지 */
+}
+
+/* 언론사와 제목 사이의 구분선 (-) */
+.Sources .separator {
+  margin: 0 12px;
+  color: #888;
+}
+
+/* 기사 제목 링크 스타일 
+  - 기본적으로 밑줄 표시
+  - 호버 시 투명도를 조절하여 클릭 가능함을 암시
+*/
+.Sources .article-link {
+  color: #ffffff;
+  text-decoration: underline;
+  text-underline-offset: 4px; /* 밑줄과 글자 사이 간격 */
+  transition: opacity 0.2s;
+}
+
+.Sources .article-link:hover {
+  opacity: 0.7;
+}
+
+/* 하단 버튼들을 감싸는 컨테이너 
+  - 버튼들을 가로로 나란히 배치 (flex)
+  - 버튼 사이 간격 20px (gap)
+*/
+.Sources .load-more-container {
+  margin-top: 30px;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+/* '더 보기' 및 '전체보기' 버튼 공통 스타일 
+  - 배경색 없이 텍스트로만 구성
+  - 마우스를 올리면 밝은 색으로 변하는 효과
+*/
+.Sources .load-more-button {
+  background: none;
+  border: none;
+  color: #aaaaaa;       /* 기본: 회색 */
+  font-size: 1.05rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;        /* 화살표 아이콘과 텍스트 정렬용 */
+  align-items: center;
+  padding: 10px 0;
+  transition: color 0.2s;
+}
+
+.Sources .load-more-button:hover {
+  color: #ffffff;       /* 호버 시: 흰색 */
+}
+
+/* 버튼 내부 화살표 아이콘(▼) 스타일 */
+.Sources .load-more-button .arrow {
+  font-size: 0.9rem;
+  margin-right: 8px;
+}

@@ -1,0 +1,64 @@
+/* 전체 컨테이너: 흰색 배경, 검정 글씨 */
+.NewsText {
+  background-color: #ffffff;
+  color: #1a1a1a; /* 완전 검정보다 눈이 편한 짙은 회색 */
+  padding: 40px 30px; /* 여백 넉넉하게 */
+  max-width: 800px;   /* 가독성을 위해 너무 넓게 퍼지지 않도록 제한 */
+  margin: 0 auto;     /* 중앙 정렬 */
+  font-family: 'Pretendard', -apple-system, sans-serif;
+}
+
+/* 기사 제목 */
+.NewsText .news-title {
+  font-size: 2.4rem;  /* 매우 크게 */
+  font-weight: 800;
+  line-height: 1.3;
+  margin-bottom: 15px;
+  letter-spacing: -1px;
+  color: #000000;
+  word-break: keep-all; /* 단어 단위 줄바꿈 */
+}
+
+/* 부제 (서브 타이틀) */
+.NewsText .news-subtitle {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #555555;
+  margin-bottom: 20px;
+  line-height: 1.4;
+}
+
+/* 제목과 본문 사이 구분선 */
+.NewsText .news-divider {
+  border: none;
+  border-top: 1px solid #eeeeee;
+  margin: 20px 0 30px 0;
+}
+
+/* 본문 영역 */
+.NewsText .news-body {
+  font-size: 1.1rem;    /* 본문 폰트 크기 */
+  line-height: 1.8;     /* 줄 간격을 넓혀 읽기 편하게 */
+  color: #333333;       /* 본문은 가독성을 위해 짙은 회색 */
+  text-align: justify;  /* 양쪽 정렬 (선택사항) */
+}
+
+/* 개별 문단 스타일 */
+.NewsText .news-paragraph {
+  margin-bottom: 20px; /* 문단 사이 간격 */
+  word-break: break-all;
+}
+
+/* [핵심] 클릭 가능한 문장 스타일 */
+.NewsText .clickable-sentence {
+  cursor: pointer;       /* 👈 마우스를 올리면 손가락 모양으로 변경 */
+  transition: all 0.2s;  /* 부드러운 효과 */
+  border-radius: 4px;    /* 배경색 모서리 둥글게 */
+  padding: 2px 0;        /* 텍스트 위아래 살짝 여백 */
+}
+
+/* [선택 사항] 마우스 호버 시 배경색 변경 효과 */
+.NewsText .clickable-sentence:hover {
+  background-color: #e3f2fd; /* 연한 파란색 배경 (하이라이트) */
+  color: #007bff;            /* 글자색 파란색으로 변경 */
+}
