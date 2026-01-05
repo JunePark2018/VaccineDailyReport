@@ -1,0 +1,34 @@
+.Login{
+    display: flex;
+    height: 100vh;
+    align-items: center;
+    justify-self: center;
+}
+
+.Login_total{
+    width: 400px;
+}
+
+.id_box{
+    width: 50%;
+    height: 40px;
+    padding-left: 10px;
+    border: 1.5px solid rgba(0, 0, 0, 0.2);
+    border-radius: 2px;
+    margin-bottom: 10px;
+}
+.id_box:focus{
+    outline: 2px
+}
+
+.pw_box{
+    width: 50%;
+    height: 40px;
+    padding-left: 10px;
+    border: 1.5px solid rgba(0, 0, 0, 0.2);
+    border-radius: 2px;
+    margin-bottom: 20px;
+}
+.pw_box:focus{
+    outline: 2px
+}
