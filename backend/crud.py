@@ -1,8 +1,9 @@
 # crud.py
 from sqlalchemy.orm import Session
 from database import SessionLocal
-from models import Article, Issue
+from models import Article, Issue, User
 from datetime import datetime
+from sqlalchemy.exc import IntegrityError
 
 def create_article(db: Session, news_data: dict):
     """
@@ -89,3 +90,44 @@ def create_sample_issue():
         db.rollback() # 에러 나면 저장 취소
     finally:
         db.close()    # 세션 닫기 (필수)
+
+# 유저 데이터 백엔드에 저장하는 함수    
+def create_user(db: Session, user_data: dict):
+    """
+    딕셔너리 형태의 데이터를 받아 DB에 저장합니다.
+    이미 존재하는 login_id라면 저장을 실패하고 None을 반환합니다.
+    """
+    
+    # 모델 인스턴스 생성
+    new_user = User(
+        login_id=user_data["login_id"],  # 필수 (PK)
+        password_hash=user_data["password_hash"], # 필수
+        
+        # 아래는 선택 항목 (.get으로 없으면 None 처리)
+        user_real_name=user_data.get("user_real_name"),
+        email=user_data.get("email"),
+        subscribed_categories=user_data.get("subscribed_categories"),
+        subscribed_keywords=user_data.get("subscribed_keywords"),
+        preferred_time_range=user_data.get("preferred_time_range"),
+        marketing_agree=user_data.get("marketing_agree", False)
+    )
+
+    try:
+        db.add(new_user)
+        db.commit()      # DB에 반영
+        db.refresh(new_user) # 저장된 데이터(default 값 등)를 다시 로드
+        print(f"[성공] 사용자 '{new_user.login_id}' 생성 완료!")
+        return new_user
+        
+    except IntegrityError:
+        db.rollback()    # 에러 발생 시 되돌리기
+        print(f"[실패] 이미 존재하는 아이디입니다: {user_data['login_id']}")
+        return None
+    
+#유저 데이터 백엔드에서 불러오는 함수    
+def get_user(db: Session, login_id: str):
+    """
+    login_id를 기준으로 사용자 정보를 가져옵니다.
+    Primary Key로 검색하므로 속도가 매우 빠릅니다.
+    """
+    return db.query(User).filter(User.login_id == login_id).first()

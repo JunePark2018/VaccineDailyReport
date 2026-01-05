@@ -43,12 +43,9 @@ from datetime import datetime
 # 사용자의 정보가 저장된 클래스
 class User(Base):
     __tablename__ = "users"
-
-    # user_id BIGINT AUTO_INCREMENT PRIMARY KEY
-    user_id = Column(BigInteger, primary_key=True, autoincrement=True)
     
-    # login_id VARCHAR(50) NOT NULL UNIQUE
-    login_id = Column(String(50), nullable=False, unique=True)
+    # Primary Key는 자동으로 NOT NULL, UNIQUE 속성을 가집니다.
+    login_id = Column(String(50), primary_key=True)
     
     # user_real_name VARCHAR(50)
     user_real_name = Column(String(50))
