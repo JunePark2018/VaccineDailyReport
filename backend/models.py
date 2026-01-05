@@ -1,5 +1,5 @@
 # models.py
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, JSON # <--- JSON 임포트 필수!
+from sqlalchemy import Column, Integer, BigInteger, String, Boolean, Text, ForeignKey, DateTime, JSON # <--- JSON 임포트 필수!
 from sqlalchemy.orm import relationship, declarative_base
 from datetime import datetime
 
@@ -36,9 +36,6 @@ class Article(Base):
     # 관계 설정
     issue = relationship("Issue", back_populates="articles")
 
-from sqlalchemy import Column, Integer, BigInteger, String, JSON, DateTime, Boolean
-from datetime import datetime
-# from database import Base  # Base 클래스는 기존 코드에 있다고 가정
 
 # 사용자의 정보가 저장된 클래스
 class User(Base):
