@@ -32,10 +32,10 @@ function ArticlePage() {
         />
 
         {/* 하단 */}
-        <main className="main-content" style={{ backgroundColor: '#222', minHeight: 'calc(100vh - 64px)' }}>
-           <div className="article-layout-container">
-              <h2 style={{color: 'white', padding: '20px'}}>의대 증원 타결 기사 상세</h2>
-
+        <main className="main-content">
+           <div className="NewsText">
+              <h2>생성된 뉴스 기사 제목</h2>
+              <h3>안녕하세요, 오늘의 뉴스를 알려드리겠습니다. 저녁 식사는 맛있게 하셨나요? 저는 전 현식입니다.</h3>
            </div>
         </main>
 
