@@ -50,6 +50,14 @@ export default function LeftSideBar({
                 }}
             >
                 <div className="left_sidebar_01">
+                    <div className="left_sidebar_hamburgerIcon">
+                        <div
+                            className="left_sidebar_category_box"
+                        >
+                            <div className="left_sidebar_category_icon">아이콘</div>
+                            <span>카테고리</span>
+                        </div>
+                    </div>
                     <div className="left_sidebar_category">
                         <div
                             className="left_sidebar_category_box"
