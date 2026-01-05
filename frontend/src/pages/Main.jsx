@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Carousel from '../components/Carousel';
 import TodayNews from '../components/TodayNews';
@@ -10,12 +10,16 @@ import Button from '../components/Button';
 import Logo from '../components/Logo';
 import './Main.css';
 import SubArticle from '../components/SubArticle';
-
-
+import loginIcon from '../login_icon/login.png';
 
 function Main() {
   const navigate = useNavigate(); 
-
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  useEffect(() => {
+    // 2. 컴포넌트가 로드될 때나 다시 그려질 때 토큰 확인
+    const token = localStorage.getItem('token');
+    setIsLoggedIn(!!token);
+  }, []); // []는 페이지 처음 로드 시 실행
   // 슬라이드 데이터 예시
   const slideData = [
     {
@@ -35,6 +39,16 @@ function Main() {
     // ... 더 많은 슬라이드
   ];
 
+  const RightHeaderIcon = (
+    <img 
+        src={loginIcon} 
+        alt={isLoggedIn ? "마이페이지" : "로그인"} 
+        width='35px' 
+        onClick={() => navigate(isLoggedIn ? '/mypage' : '/login')} 
+        style={{ cursor: 'pointer' }} 
+    />
+);
+
   return (
     <div className="Main">
       {/* 1. 왼쪽: 사이드바 (전체 높이) */}
@@ -47,8 +61,7 @@ function Main() {
         <Header
           leftChild={<Logo />}
           midChild={<Searchbar maxWidth="400px" />}
-          rightChild={<Button text={'로그인'} color="LightSeaGreen" textColor="white" onClick={() => {
-          }} />}
+          rightChild={RightHeaderIcon}
         />
 
         {/* 하단 */}
