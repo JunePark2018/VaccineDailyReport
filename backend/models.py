@@ -12,7 +12,7 @@ class Issue(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String)
-    
+    content = Column(Text)
     analysis_result = Column(JSON, nullable=True) 
     
     created_at = Column(DateTime, default=datetime.now)
@@ -27,7 +27,7 @@ class Article(Base):
     content = Column(Text)                    # 기사 본문
     url = Column(String, unique=True)         # 기사 링크 (중복 수집 방지)
     publisher = Column(String)                # 언론사 (예: 조선일보, 한겨레)
-    image_url = Column(String, nullable=True) # 기사 썸네일 이미지
+    image_url = Column(JSON, nullable=True)   # 기사 이미지 리스트
     published_at = Column(DateTime)           # 기사 발행 시간
     
     # 외래키: 이 기사가 어떤 이슈(Issue)에 속하는지 연결

@@ -9,7 +9,7 @@ from datetime import datetime
 
 from database import engine, SessionLocal
 from models import Base, Article, Issue
-from crawler import crawl_breaking_news
+from scraper import run_article_crawler
 from crud import create_article
 from ai_processor import process_news_pipeline 
 
@@ -17,9 +17,11 @@ from ai_processor import process_news_pipeline
 class ArticleResponse(BaseModel):
     id: int
     title: str
+    content: Optional[str] = None          # 본문
     publisher: str
     published_at: Optional[datetime]
     url: str
+    image_url: Optional[List[str]] = None
 
     class Config:
         from_attributes = True
@@ -27,6 +29,7 @@ class ArticleResponse(BaseModel):
 class IssueResponse(BaseModel):
     id: int
     title: str
+    content: str
     created_at: datetime
     # 통째로 구조화된 JSON 데이터를 보냅니다. (프론트엔드가 받아서 알아서 뿌림)
     analysis_result: Optional[Any] 
@@ -38,27 +41,26 @@ class IssueResponse(BaseModel):
 def run_background_worker():
     print("🚀 [System] 백그라운드 워커 가동 시작")
     while True:
+        print("\n⏰ [Auto] 뉴스 수집 및 분석 사이클 시작...")
+            
+        # 1. 뉴스 수집 (DB 연결)
+        db = SessionLocal()
         try:
-            print("\n⏰ [Auto] 뉴스 수집 및 분석 사이클 시작...")
-            
-            # 1. 뉴스 수집 (DB 연결)
-            db = SessionLocal()
-            try:
-                # 스마트 수집 (중복 만나면 중단)
-                news_list = crawl_breaking_news(limit=20, db_check_session=db)
-                count = 0
-                for news in news_list:
-                    if create_article(db, news):
-                        count += 1
-                print(f"   -> {count}개의 신규 기사 저장 완료")
-            finally:
-                db.close()
+            # 스마트 수집 (중복 만나면 중단)
+            # news_list = crawl_breaking_news(limit=20, db_check_session=db)
+            news_list = run_article_crawler(["조선일보", "한국일보", "연합뉴스"], False)
+            count = 0
+            for news in news_list:
+                # 기사 db에 저장
+                if create_article(db, news):
+                    count += 1
+                pass
+            print(f"   -> {count}개의 신규 기사 저장 완료")
+        finally:
+            db.close()
 
-            # 2. AI 파이프라인 가동 (신규 기사가 있든 없든, 분석 대기 중인 게 있을 수 있으므로 실행)
-            process_news_pipeline()
-            
-        except Exception as e:
-            print(f"   ⚠️ 워커 에러 발생: {e}")
+        # 2. AI 파이프라인 가동 (신규 기사가 있든 없든, 분석 대기 중인 게 있을 수 있으므로 실행)
+        process_news_pipeline()
         
         # 10분(600초) 대기
         print("💤 [Sleep] 10분 대기 중...")

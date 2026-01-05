@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from openai import OpenAI
 from models import Article, Issue
 from database import SessionLocal
+from crud import create_sample_issue
 
 # 🔑 API 키 확인 필수
 os.environ["OPENAI_API_KEY"] = "sk-..." 
@@ -24,5 +25,7 @@ def process_news_pipeline():
     print("🧠 [AI] 뉴스 분석 파이프라인 가동...")
 
     # blablablablabla
+    
+    create_sample_issue()
     
     print("🧠 [AI] 완료")

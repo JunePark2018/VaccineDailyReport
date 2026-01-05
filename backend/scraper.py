@@ -81,7 +81,22 @@ def get_news_data(url):
 
 
 def run_article_crawler(target_companies=None, debug_save=True, output_file='news_result.json'):
-    """통합 크롤링 제어 함수"""
+    """
+    통합 크롤링 제어 함수.
+    반환값:
+    [
+        {
+            "title": title,
+            "time": time_val,
+            "company_name": company_name,
+            "author": author,
+            "contents": contents,
+            "img_url": img_urls,
+            "url": url
+        },
+        ...
+    ]
+    """
     is_filter_mode = True if target_companies else False
     list_url = "https://news.naver.com/main/list.naver?mode=LSD&mid=sec&sid1=001"
     headers = {
@@ -104,7 +119,7 @@ def run_article_crawler(target_companies=None, debug_save=True, output_file='new
             if data:
                 if not is_filter_mode or any(target.strip() in data['company_name'] for target in target_companies):
                     news_list_data.append(data)
-                    print(f"[수집] {data['company_name']} - {data['title'][:15]}...")
+                    print(f"[수집] {data['company_name']} - {data['title']}")
             time.sleep(0.3)
 
         if debug_save and news_list_data:
