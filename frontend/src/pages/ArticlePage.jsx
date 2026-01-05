@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sources from '../components/Sources';
 import LeftSideBar from '../components/LeftSideBar';
+import RightSideBar from '../components/RightSideBar';
 import NewsText from '../components/NewsText';
 import Header from '../components/Header';
 import Searchbar from '../components/Searchbar';
@@ -43,6 +44,8 @@ function ArticlePage() {
           </div>
         </main>
 
+        {/* 오른쪽 사이드바 */}
+        <RightSideBar isOpen={true} />
       </div>
     </div>
   );

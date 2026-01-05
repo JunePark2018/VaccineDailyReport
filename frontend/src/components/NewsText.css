@@ -51,7 +51,6 @@
 
 /* [핵심] 클릭 가능한 문장 스타일 */
 .NewsText .clickable-sentence {
-  cursor: pointer;       /* 👈 마우스를 올리면 손가락 모양으로 변경 */
   transition: all 0.2s;  /* 부드러운 효과 */
   border-radius: 4px;    /* 배경색 모서리 둥글게 */
   padding: 2px 0;        /* 텍스트 위아래 살짝 여백 */

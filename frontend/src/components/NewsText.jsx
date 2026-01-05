@@ -9,11 +9,18 @@ const NewsText = ({ title, contents }) => {
   
   // [내부 함수] 문장 클릭 시 실행될 로직
   const handleSentenceClick = (sentence) => {
+    // 1. 현재 브라우저에서 선택(드래그)된 텍스트 가져오기
+    const selection = window.getSelection();
+
+    // 2. 선택된 텍스트가 있다면? -> 사용자가 드래그 중인 것임 -> 클릭 이벤트 무시
+    if (selection.toString().length > 0) {
+      return; 
+    }
+
+    // 3. 순수 클릭일 때만 아래 로직 실행
     const cleanSentence = sentence.trim();
-    
-    // 현재는 콘솔에만 출력 (추후 여기에 사이드바 오픈 코드 작성)
     console.log("사용자가 선택한 문장:", cleanSentence);
-    alert(`선택된 문장: \n${cleanSentence}`); // 클릭 확인용 알림창 (테스트용)
+    alert(`선택된 문장: \n${cleanSentence}`);
   };
 
   // [렌더링 로직] 줄바꿈(\n) -> 마침표(.) 순서로 텍스트 분리
