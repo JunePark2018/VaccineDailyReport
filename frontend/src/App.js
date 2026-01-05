@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import axios from 'axios';
 import Main from './pages/Main.jsx';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import ArticlePage from './pages/ArticlePage.jsx';
 
 function App() {
   return (
@@ -11,7 +12,10 @@ function App() {
         v7_relativeSplatPath: true,
       }}>
       <div className="App">
-        <Main />
+        <Routes>
+          <Route path="/" element={<Main />} />
+          <Route path="/article" element={<ArticlePage />} />
+        </Routes>
       </div>
     </BrowserRouter>
   );
