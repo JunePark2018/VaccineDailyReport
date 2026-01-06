@@ -11,7 +11,7 @@
 }
 
 /* The white card box */
-.create-account-box {
+.create-account-container .create-account-box {
     background-color: white;
     width: 100%;
     max-width: 500px;
@@ -20,13 +20,13 @@
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
-h2 {
+.create-account-container h2 {
     text-align: center;
     color: #333;
     margin-bottom: 10px;
 }
 
-.description {
+.create-account-container .description {
     text-align: center;
     color: #666;
     font-size: 14px;
@@ -34,24 +34,24 @@ h2 {
 }
 
 /* Form Layout */
-.input-group {
+.create-account-container .input-group {
     margin-bottom: 20px;
     display: flex;
     flex-direction: column;
 }
 
-.input-row {
+.create-account-container .input-row {
     display: flex;
     justify-content: space-between;
     gap: 15px;
     margin-bottom: 15px; /* Added spacing below name row */
 }
 
-.half {
+.create-account-container .half {
     width: 48%;
 }
 
-label {
+.create-account-container label {
     font-size: 14px;
     font-weight: 600;
     color: #444;
@@ -59,16 +59,16 @@ label {
     display: block;
 }
 
-.sub-label {
+.create-account-container .sub-label {
     font-weight: normal;
     font-size: 12px;
     color: #888;
 }
 
 /* Input Fields */
-input[type="text"],
-input[type="password"],
-input[type="email"] {
+.create-account-container input[type="text"],
+.create-account-container input[type="password"],
+.create-account-container input[type="email"] {
     width: 100%;
     padding: 12px;
     border: 1px solid #ddd;
@@ -78,30 +78,30 @@ input[type="email"] {
     transition: border 0.3s;
 }
 
-input:focus {
+.create-account-container input:focus {
     border-color: #4a90e2;
     outline: none;
 }
 
-.input-error {
+.create-account-container .input-error {
     border-color: #ff4d4d !important;
     background-color: #fff8f8;
 }
 
 /* Error Message Text */
-.error-msg {
+.create-account-container .error-msg {
     color: #ff4d4d;
     font-size: 12px;
     margin-top: 5px;
 }
 
 /* Password Toggle & Strength */
-.password-wrapper {
+.create-account-container .password-wrapper {
     position: relative;
     width: 100%;
 }
 
-.toggle-btn {
+.create-account-container .toggle-btn {
     position: absolute;
     right: 10px;
     top: 50%;
@@ -113,7 +113,7 @@ input:focus {
     cursor: pointer;
 }
 
-.strength-meter-container {
+.create-account-container .strength-meter-container {
     margin-top: 8px;
     display: flex;
     align-items: center;
@@ -122,25 +122,25 @@ input:focus {
     font-weight: bold;
 }
 
-.strength-bar {
+.create-account-container .strength-bar {
     height: 4px;
     border-radius: 2px;
     transition: width 0.3s ease, background-color 0.3s ease;
 }
 
 /* Category Grid */
-.category-section {
+.create-account-container .category-section {
     margin-bottom: 25px;
 }
 
-.category-grid {
+.create-account-container .category-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr); /* 3 columns */
     gap: 10px;
     margin-top: 10px;
 }
 
-.category-box {
+.create-account-container .category-box {
     position: relative;
     padding: 12px;
     border: 1px solid #ddd;
@@ -153,18 +153,18 @@ input:focus {
     user-select: none;
 }
 
-.category-box:hover {
+.create-account-container .category-box:hover {
     background-color: #f0f0f0;
 }
 
-.category-box.selected {
+.create-account-container .category-box.selected {
     border-color: #4a90e2;
     background-color: #eef6ff;
     color: #4a90e2;
     font-weight: bold;
 }
 
-.badge {
+.create-account-container .badge {
     position: absolute;
     top: -6px;
     right: -6px;
@@ -180,14 +180,14 @@ input:focus {
 }
 
 /* Agreement Checkbox */
-.agreement-section {
+.create-account-container .agreement-section {
     margin-bottom: 30px;
     padding: 15px;
     background-color: #f9f9f9;
     border-radius: 6px;
 }
 
-.checkbox-container {
+.create-account-container .checkbox-container {
     display: flex;
     align-items: flex-start; /* Align with top of text */
     cursor: pointer;
@@ -196,14 +196,14 @@ input:focus {
     font-weight: normal;
 }
 
-.checkbox-container input {
+.create-account-container .checkbox-container input {
     margin-right: 10px;
     margin-top: 2px;
     cursor: pointer;
 }
 
 /* Submit Button */
-.submit-btn {
+.create-account-container .submit-btn {
     width: 100%;
     padding: 15px;
     background-color: #4a90e2; /* Nice blue */
@@ -216,19 +216,19 @@ input:focus {
     transition: background 0.3s;
 }
 
-.submit-btn:hover {
+.create-account-container .submit-btn:hover {
     background-color: #357abd;
 }
 
 /* Login Link */
-.login-redirect {
+.create-account-container .login-redirect {
     margin-top: 20px;
     text-align: center;
     font-size: 13px;
     color: #666;
 }
 
-.login-redirect span {
+.create-account-container .login-redirect span {
     color: #4a90e2;
     font-weight: bold;
     cursor: pointer;
