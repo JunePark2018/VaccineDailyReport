@@ -1,0 +1,32 @@
+.Login{
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    align-items: center;
+    justify-content: center;
+}
+
+.Login_total{
+    width: 400px;
+    text-align: center;
+}
+
+.id_box, .pw_box{
+    width: 100%;
+    height: 40px;
+    padding-left: 10px;
+    border: 1.5px solid rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+}
+.button_wrapper {
+    display: flex;
+    width: 300px;
+    gap: 10px; 
+    margin-top: 10px;
+}
+
+.button_wrapper > div {
+    flex: 1; 
+}
