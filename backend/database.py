@@ -2,8 +2,8 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-# SQLite 데이터베이스 파일 이름 (프로젝트 폴더에 news.db라는 파일이 생깁니다)
-SQLALCHEMY_DATABASE_URL = "sqlite:///./news.db"
+# SQLite 데이터베이스 파일 이름 (프로젝트 폴더에 db 파일이 생깁니다)
+SQLALCHEMY_DATABASE_URL = "sqlite:///./sql.db"
 
 # 데이터베이스 엔진 생성
 engine = create_engine(

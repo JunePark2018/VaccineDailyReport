@@ -112,12 +112,12 @@ def get_db():
 # --- [API 엔드포인트] ---
 
 # 이슈 목록 가져오기 (히스토리)
-@app.get("/api/issues", response_model=List[IssueResponse])
+@app.get("/issues", response_model=List[IssueResponse])
 def get_issues(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     return db.query(Issue).order_by(Issue.created_at.desc()).offset(skip).limit(limit).all()
 
 # 개별 기사 목록 (디버깅용)
-@app.get("/api/articles", response_model=List[ArticleResponse])
+@app.get("/articles", response_model=List[ArticleResponse])
 def get_articles(skip: int = 0, limit: int = 20, db: Session = Depends(get_db)):
     return db.query(Article).order_by(Article.published_at.desc()).offset(skip).limit(limit).all()
 
