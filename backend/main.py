@@ -51,9 +51,17 @@ class UserCreateRequest(BaseModel):
 # 클라이언트에게 응답할 데이터 (비밀번호 제외)
 class UserResponse(BaseModel):
     login_id: str
-    user_real_name: Optional[str]
-    email: Optional[str]
+    user_real_name: Optional[str] = None
+    email: Optional[str] = None
+    subscribed_categories: Optional[List[str]] = []
+    subscribed_keywords: Optional[List[str]] = []
+    preferred_time_range: Optional[Any] = None
+    marketing_agree: bool = False
     
+    # 시스템이 생성하는 정보 (가입일, 상태 등)
+    created_at: Optional[datetime] = None 
+    user_status: int = 1 
+
     class Config:
         from_attributes = True
 
