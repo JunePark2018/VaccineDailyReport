@@ -112,17 +112,11 @@ def create_user(db: Session, user_data: dict):
         marketing_agree=user_data.get("marketing_agree", False)
     )
 
-    try:
-        db.add(new_user)
-        db.commit()      # DB에 반영
-        db.refresh(new_user) # 저장된 데이터(default 값 등)를 다시 로드
-        print(f"[성공] 사용자 '{new_user.login_id}' 생성 완료!")
-        return new_user
-        
-    except IntegrityError:
-        db.rollback()    # 에러 발생 시 되돌리기
-        print(f"[실패] 이미 존재하는 아이디입니다: {user_data['login_id']}")
-        return None
+    db.add(new_user)
+    db.commit()      # DB에 반영
+    db.refresh(new_user) # 저장된 데이터(default 값 등)를 다시 로드
+    print(f"[성공] 사용자 '{new_user.login_id}' 생성 완료!")
+    return new_user
     
 #유저 데이터 백엔드에서 불러오는 함수    
 def get_user(db: Session, login_id: str):
