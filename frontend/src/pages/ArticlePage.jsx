@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sources from '../components/Sources';
 import RightSideBar from '../components/RightSideBar';
@@ -8,11 +8,18 @@ import Searchbar from '../components/Searchbar';
 import Button from '../components/Button';
 import Logo from '../components/Logo';
 import './ArticlePage.css';
-
+import loginIcon from '../login_icon/login.png';
 
 function ArticlePage() {
 
   const navigate = useNavigate();
+
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  useEffect(() => {
+    // 2. 컴포넌트가 로드될 때나 다시 그려질 때 토큰 확인
+    const token = localStorage.getItem('token');
+    setIsLoggedIn(!!token);
+  }, []); // []는 페이지 처음 로드 시 실행
 
   const [isSidebarOpen, setSidebarOpen] = useState(true);
 
@@ -27,6 +34,16 @@ function ArticlePage() {
     setSidebarOpen(false);
   };
 
+  const RightHeaderIcon = (
+      <img 
+          src={loginIcon} 
+          alt={isLoggedIn ? "마이페이지" : "로그인"} 
+          width='35px' 
+          onClick={() => navigate(isLoggedIn ? '/mypage' : '/login')} 
+          style={{ cursor: 'pointer' }} 
+      />
+  );
+
   return (
     <div className="ArticlePage" style={{ display: 'flex' }}>
       {/* 2. 오른쪽: 헤더 + 본문 영역을 감싸는 컨테이너 */}
@@ -36,9 +53,7 @@ function ArticlePage() {
         <Header
           leftChild={<Logo />}
           midChild={<Searchbar maxWidth="400px" />}
-          rightChild={<Button text={'로그인'} color="LightSeaGreen" textColor="white" onClick={() => {
-            navigate('/login');
-          }} />}
+          rightChild={RightHeaderIcon}
         />
 
         {/* 하단 */}
