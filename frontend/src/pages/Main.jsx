@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import Carousel from '../components/Carousel';
 import TodayNews from '../components/TodayNews';
 import SlideItem from '../components/SlideItem';
-import LeftSideBar from '../components/LeftSideBar';
 import Header from '../components/Header';
 import Searchbar from '../components/Searchbar';
 import Button from '../components/Button';
@@ -52,7 +51,6 @@ function Main() {
   return (
     <div className="Main">
       {/* 1. 왼쪽: 사이드바 (전체 높이) */}
-      <LeftSideBar />
 
       {/* 2. 오른쪽: 헤더 + 본문 영역을 감싸는 컨테이너 */}
       <div className="page-content">
