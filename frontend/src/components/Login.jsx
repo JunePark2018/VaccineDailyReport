@@ -1,10 +1,11 @@
-import React, {useState} from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Button from "./Button"
-import './Login.css'
+import Button from "./Button";
+import Header from "./Header";
+import Logo from "./Logo";
+import "./Login.css";
 
-
-const Login = ()=>{
+const Login = () => {
 
     const nav = useNavigate();
 
@@ -31,7 +32,13 @@ const Login = ()=>{
 
     return (
         <div className="Login">
-            <form className="Login_total" onSubmit={handleLogin}>  
+            <Header
+                headerTop="off"
+                headerMain="on"
+                headerBottom="off"
+                leftChild={<Logo />}
+            />
+            <form className="Login_total" onSubmit={handleLogin}>
                     <div className="input_containter">
                         <input 
                             className="id_box" 

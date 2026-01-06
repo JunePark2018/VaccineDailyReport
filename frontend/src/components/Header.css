@@ -1,5 +1,22 @@
-/* Main container for the entire header */
-.Header {
+/* Main container for the entire header structure */
+.Header-Container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+/* Header 1: Top Section */
+.Header-Top {
+    height: 40px; /* Adjust height as needed */
+    background-color: #080707; /* Example background color */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid #ddd;
+}
+
+/* Header 2: Main Section (Original Header) */
+.Header-Main {
     display: flex;
     justify-content: space-between; /* Distributes the three children across the width */
     align-items: center;            /* Vertically centers all items */
@@ -11,22 +28,87 @@
 }
 
 /* 1. Left Section: Logo centered to the left */
-.Header .left-child {
-
+.Header-Main .left-child {
     display: flex;
     justify-content: flex-start;    /* Aligns logo to the far left */
     align-items: center;
 }
 
 /* 2. Middle Section: Searchbar centered on all sides */
-.Header .mid-child {
+.Header-Main .mid-child {
     flex: 1;                        /* Takes up more space for the searchbar */
 }
 
 /* 3. Right Section: Login button aligned to the far right */
-.Header .right-child {
+.Header-Main .right-child {
     display: flex;
     justify-content: flex-end;      /* Aligns button to the far right */
     align-items: center;
     padding-right: 50px;
+}
+
+/* Header 3: Bottom Section */
+.Header-Bottom {
+    height: auto; /* Adjust height as needed */
+    background-color: #ffffff; /* Example background color */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid #ddd;
+    padding: 10px 0;
+}
+
+/* Category List Container */
+.Header-Bottom .category-list {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 20px; /* Space between items */
+    width: 100%;
+    overflow-x: auto; /* Allow horizontal scrolling if needed */
+}
+
+/* Individual Category Item */
+.Header-Bottom .category-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+    padding: 8px 12px;
+    border-radius: 8px;
+}
+
+/* Hover effect */
+.Header-Bottom .category-item:hover {
+    transform: scale(1.1);
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
+/* Icon Wrapper */
+.Header-Bottom .icon-wrapper {
+    width: 32px;
+    height: 32px;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Icon Image */
+.Header-Bottom .category-icon {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* Text Label */
+.Header-Bottom .category-item span {
+    font-size: 10px;
+    font-weight: 500;
+    text-align: center;
+    word-break: keep-all;
+    color: black; /* Ensure text is visible */
 }

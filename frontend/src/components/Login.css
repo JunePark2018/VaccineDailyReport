@@ -1,13 +1,18 @@
-.Login{
+.Login {
     display: flex;
+    flex-direction: column;
     height: 100vh;
     width: 100vw;
-    align-items: center;
-    justify-content: center;
 }
 
-.Login .Login_total{
+.Login .Login_total {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     width: 400px;
+    margin: 0 auto;
     text-align: center;
 }
 
