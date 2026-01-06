@@ -6,12 +6,12 @@
     justify-content: center;
 }
 
-.Login_total{
+.Login .Login_total{
     width: 400px;
     text-align: center;
 }
 
-.id_box, .pw_box{
+.Login .id_box, .pw_box{
     width: 100%;
     height: 40px;
     padding-left: 10px;
@@ -20,13 +20,13 @@
     margin-bottom: 10px;
     box-sizing: border-box;
 }
-.button_wrapper {
+.Login .button_wrapper {
     display: flex;
     width: 300px;
     gap: 10px; 
     margin-top: 10px;
 }
 
-.button_wrapper > div {
+.Login .button_wrapper > div {
     flex: 1; 
 }
