@@ -1,94 +1,103 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import Logo from '../components/Logo';
-import loginIcon from '../login_icon/login.png';
-import Header from '../components/Header';
+import React, { useState, useEffect } from 'react';
+import SubArticle from './SubArticle'; // 조원들과 약속한 Article(SubArticle) 컴포넌트
 
-const MyPage = () => {
-  const scores = {
-    politics: 80, economy: 65, society: 90, living: 70, itScience: 85, world: 50
-  };
+/**
+ * [TodayNews 컴포넌트 개요]
+ * - 역할: 메인 하단 '오늘의 소식' 섹션의 레이아웃과 데이터 페칭을 담당함.
+ * - 특징: 백엔드 서버 상태에 따라 [실제 데이터] 또는 [Mock 데이터]를 유연하게 렌더링함.
+ */
+const TodayNews = () => {
+  // newsList: 화면에 뿌려줄 뉴스 객체들을 담는 배열
+  const [newsList, setNewsList] = useState([]);
+  // loading: API 통신 중 사용자가 대기 중임을 알리기 위한 상태 (필요 시 스피너 연결 가능)
+  const [loading, setLoading] = useState(true);
 
-  const navigate = useNavigate();
+  /**
+   * [개발용 테스트 데이터 (Fallback Data)]
+   * - 용도: 백엔드(FastAPI) 서버가 구동되지 않거나 에러 발생 시 UI 확인용으로 출력.
+   * - 형식: 조원들과 협의한 Article 컴포넌트의 props 구조를 따름.
+   */
+  const mockData = [
+    { 
+      "id": 1, 
+      "title": "[MOCK] 의대 증원 갈등, 의료계 현장 리포트", 
+      "imageUrl": "https://image.ichannela.com/images/channela/2026/01/02/000002924491/00000292449120260102113532802.webp" 
+    },
+    { 
+      "id": 2, 
+      "title": "[MOCK] 정부, 필수의료 패키지 지원책 발표", 
+      "imageUrl": "https://via.placeholder.com/300x180/444/fff?text=News2" 
+    },
+    { 
+      "id": 3, 
+      "title": "[MOCK] 지역 의사제 도입에 대한 찬반 논란", 
+      "imageUrl": "https://via.placeholder.com/300x180/444/fff?text=News3" 
+    }
+  ];
 
-  const getCoordinates = (scores) => {
-    const labels = ['politics', 'economy', 'society', 'living', 'itScience', 'world'];
-    const center = 100;
-    const radius = 60;
-    
-    return labels.map((label, i) => {
-      const angle = (Math.PI / 3) * i - Math.PI / 2;
-      const scoreRatio = scores[label] / 100;
-      const x = center + radius * scoreRatio * Math.cos(angle);
-      const y = center + radius * scoreRatio * Math.sin(angle);
-      return `${x},${y}`;
-    }).join(' ');
-  };
+  useEffect(() => {
+    /**
+     * [비동기 데이터 로드 함수]
+     * - 성공 시: FastAPI로부터 받은 실제 데이터를 newsList에 저장.
+     * - 실패 시: catch 블록에서 mockData를 대신 저장하여 화면 깨짐 방지.
+     */
+    const fetchNews = async () => {
+      try {
+        setLoading(true);
+        // [수정 포인트] 조원들이 배포한 실제 FastAPI 엔드포인트 URL로 교체 필요
+        const response = await fetch('http://127.0.0.1:8000/api/news');
+        
+        if (response.ok) {
+          const data = await response.json();
+          setNewsList(data);
+          console.log(" 백엔드 데이터 로드 성공");
+        } else {
+          // 서버는 응답했으나 404, 500 등 오류가 발생한 경우
+          setNewsList(mockData);
+          console.warn(" 서버 응답 오류 - 목데이터 사용");
+        }
+      } catch (error) {
+        /**
+         * [에러 처리]
+         * - 서버가 꺼져있거나(Network Error), CORS 정책 문제가 있을 때 실행됨.
+         * - 사용자에게 빈 화면을 보여주는 대신 테스트 데이터를 노출함.
+         */
+        console.warn(" 서버 연결 실패 - 목데이터를 표시합니다.");
+        setNewsList(mockData);
+      } finally {
+        setLoading(false); // 성공/실패 여부와 상관없이 로딩 종료
+      }
+    };
 
-  const points = getCoordinates(scores);
+    fetchNews();
+  }, []); // 컴포넌트 마운트 시 최초 1회만 실행
 
   return (
-    <div className="min-h-screen bg-[#f3f4f6] p-4 md:p-10 font-sans">
-      <Header
-        headerTop="off"
-        headerMain="on"
-        headerBottom="off"
-        leftChild={<Logo />}
-        rightChild={<img src={loginIcon} width='35px' onClick={() => navigate('/login')} className="cursor-pointer" alt="login" />}
-      />
+    <section className="today-news-section">
+      <h3 className="section-header">오늘의 소식</h3>
       
-      <main className="max-w-[1000px] mx-auto mt-6">
-        {/* 상단 프로필 */}
-        <section className="bg-black text-white p-8 mb-6 shadow-md">
-          <h1 className="text-xl font-bold">행복한 춘식이</h1>
-          <p className="text-gray-400 text-sm font-light">user_id@vaccine.com</p>
-        </section>
-
-        {/* [가로 스크롤 레이아웃 적용 구간] */}
-        <div className="flex overflow-x-auto gap-6 pb-4 no-scrollbar">
-          
-          {/* 왼쪽 섹션: 최소 너비(min-w)를 지정해야 스크롤 시 안 찌그러짐 */}
-          <section className="bg-white border p-6 shadow-sm min-w-[320px] md:flex-1 h-[320px] flex flex-col">
-            <h3 className="font-bold mb-4 border-b pb-2 text-sm md:text-base">나의 관심 카테고리</h3>
-            <div className="flex-1 flex items-center justify-center">
-              <div className="relative w-36 h-36">
-                {[0.2, 0.4, 0.6, 0.8, 1].map((r) => (
-                  <polygon key={r} points={getCoordinates({ politics: 100*r, economy: 100*r, society: 100*r, living: 100*r, itScience: 100*r, world: 100*r })} fill="none" stroke="#f0f0f0" strokeWidth="1" />
-                ))}
-                <polygon points={points} fill="rgba(250, 204, 21, 0.6)" stroke="#facc15" strokeWidth="2" />
-                <text x="100" y="25" textAnchor="middle" fontSize="14" className="fill-gray-600 font-bold">정치</text>
-                <text x="180" y="75" textAnchor="start" fontSize="14" className="fill-gray-600 font-bold">경제</text>
-                <text x="180" y="135" textAnchor="start" fontSize="14" className="fill-gray-600 font-bold">사회</text>
-                <text x="100" y="185" textAnchor="middle" fontSize="14" className="fill-gray-600 font-bold">생활</text>
-                <text x="20" y="135" textAnchor="end" fontSize="14" className="fill-gray-600 font-bold">IT</text>
-                <text x="20" y="75" textAnchor="end" fontSize="14" className="fill-gray-600 font-bold">세계</text>
-              </div>
-            </div>
-          </section>
-
-          {/* 오른쪽 섹션 */}
-          <section className="bg-white border p-6 shadow-sm min-w-[320px] md:flex-1 h-[320px] flex flex-col justify-between">
-            <div>
-              <h3 className="font-bold mb-6 border-b pb-2 text-sm md:text-base">나의 관심 키워드</h3>
-              <div className="flex flex-wrap gap-2">
-                {['#반도체', '#금리', '#오픈AI', '#미대선', '#건강'].map(tag => (
-                  <span key={tag} className="bg-gray-900 text-yellow-400 px-3 py-1 text-[11px] border border-gray-700 font-mono italic">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-            
-            <div className="mt-4 pt-4 border-t border-gray-100">
-               <p className="text-xs text-gray-400 mb-1">AI 분석 리포트</p>
-               <p className="text-base font-black text-black leading-tight">주로 사회 이슈와 IT 기술에<br/>관심이 집중되어 있습니다.</p>
-            </div>
-          </section>
-
-        </div>
-      </main>
-    </div>
+      {/* [가로 스크롤 레이아웃 가이드]
+        - news-grid-wrapper: Flex를 통해 자식들을 가로로 나열.
+        - overflowX: 'auto': 아이템이 많아지면 사용자가 마우스나 터치로 가로 스크롤 가능.
+      */}
+      <div className="news-grid-wrapper" style={{ display: 'flex', gap: '20px', overflowX: 'auto' }}>
+        {newsList.map((news) => (
+          /**
+           * - 유연성: 부모에서 width/height를 조절함으로써 카드 크기를 즉시 변경 가능.
+           */
+          <SubArticle 
+            key={news.id}       // 리액트 효율성을 위한 고유 키값
+            id={news.id}        // 상세 페이지 이동을 위한 ID
+            title={news.title}  // 기사 제목
+            img_url={news.imageUrl} // 서버 데이터(imageUrl)를 조원들의 변수명(img_url)으로 매핑
+            width="300px"       // 섹션 컨셉에 맞춘 카드 너비
+            height="180px"      // 이미지 비율 16:9 유지를 위한 높이
+            fontSize="1rem"     // 제목 가독성을 위한 폰트 크기
+          />
+        ))}
+      </div>
+    </section>
   );
 };
 
-export default MyPage;
+export default TodayNews;
