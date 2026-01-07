@@ -19,7 +19,7 @@ export default function RightSideBar({
     return (
         <aside 
             style={{ 
-                position: "fixed", top: 0, 
+                position: "fixed", top: "229px", 
                 right: isOpen ? 0 : `-${width}`, 
                 transition: "right 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)", 
                 width: width, 

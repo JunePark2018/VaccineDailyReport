@@ -3,7 +3,6 @@
   background-color: #ffffff;
   color: #1a1a1a; /* 완전 검정보다 눈이 편한 짙은 회색 */
   padding: 40px 30px; /* 여백 넉넉하게 */
-  max-width: 800px;   /* 가독성을 위해 너무 넓게 퍼지지 않도록 제한 */
   margin: 0 auto;     /* 중앙 정렬 */
   font-family: 'Pretendard', -apple-system, sans-serif;
 }

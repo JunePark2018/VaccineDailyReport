@@ -63,14 +63,11 @@ function ArticlePage() {
             <Sources articles={[{ title: "원본 기사 제목", company_name: "언론사명", url: "https://example.com" }]} />
           </div>
           <div className="additional-section">
-            워드 포그<br />
-            어쩌구저쩌구<br />
-            123123123<br />
+            추가 섹션
           </div>
+          {/* 오른쪽 사이드바 */}
+          <RightSideBar isOpen={isSidebarOpen} onClose={closeSidebar} />
         </main>
-
-        {/* 오른쪽 사이드바 */}
-        <RightSideBar isOpen={isSidebarOpen} onClose={closeSidebar} />
       </div>
     </div>
   );

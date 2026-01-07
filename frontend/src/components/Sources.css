@@ -4,6 +4,7 @@
 */
 .Sources {
   background-color: #333333;
+  margin: 0 auto;
   padding: 40px 30px;
   color: #ffffff;
   text-align: left;
@@ -14,7 +15,7 @@
   - flex를 사용하여 옆에 붙는 숫자(span)와 높이(baseline)를 맞춤
 */
 .Sources .sources-header {
-  font-size: 2.2rem;
+  font-size: 2rem;
   font-weight: 900;
   margin-bottom: 35px;
   color: #ffffff;
