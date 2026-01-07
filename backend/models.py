@@ -24,11 +24,13 @@ class Article(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String)                    # 기사 제목
-    content = Column(Text)                    # 기사 본문
+    contents = Column(Text)                    # 기사 본문
+    category = Column(String)                   # 카테고리
     url = Column(String, unique=True)         # 기사 링크 (중복 수집 방지)
-    publisher = Column(String)                # 언론사 (예: 조선일보, 한겨레)
-    image_url = Column(JSON, nullable=True)   # 기사 이미지 리스트
-    published_at = Column(DateTime)           # 기사 발행 시간
+    company_name = Column(String)                # 언론사 (예: 조선일보, 한겨레)
+    img_urls = Column(JSON, nullable=True)   # 기사 이미지 리스트
+    time = Column(DateTime)           # 기사 발행 시간
+    author = Column(String)             # 기자
     
     # 외래키: 이 기사가 어떤 이슈(Issue)에 속하는지 연결
     issue_id = Column(Integer, ForeignKey("issues.id"))
@@ -53,11 +55,11 @@ class User(Base):
     # email VARCHAR(100)
     email = Column(String(100))
     
-    # subscribed_categories JSON (['정치', '경제', 'IT'])
-    subscribed_categories = Column(JSON)
+    # subscribed_categories JSON ({'정치': 37, '경제': 26})
+    subscribed_categories = Column(JSON, default={})
     
-    # subscribed_keywords JSON (['삼성전자', '금리', 'AI'])
-    subscribed_keywords = Column(JSON)
+    # subscribed_keywords JSON ({'삼성전자': 37, 'AI': 26})
+    subscribed_keywords = Column(JSON, default={})
     
     # fcm_token VARCHAR(255)
     fcm_token = Column(String(255))
@@ -66,7 +68,7 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.now)
     
     # view_history JSON ({기사 URL, 기사 조회 시간})
-    view_history = Column(JSON)
+    view_history = Column(JSON, default={})
     
     # preferred_time_range JSON or String
     # 시간 대역을 구조적으로 저장하려면 JSON, 단순 텍스트면 String 사용

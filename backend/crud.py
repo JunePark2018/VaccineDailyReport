@@ -1,5 +1,6 @@
 # crud.py
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 from database import SessionLocal
 from models import Article, Issue, User
 from datetime import datetime
@@ -29,11 +30,13 @@ def create_article(db: Session, news_data: dict):
     # 3. 데이터 객체 생성
     new_article = Article(
         title=news_data["title"],
-        content=news_data["contents"],
+        contents=news_data["contents"],
+        category=news_data["category"],
         url=news_data["url"],
-        publisher=news_data["company_name"],
-        image_url=news_data["img_url"],
-        published_at=pub_date,
+        company_name=news_data["company_name"],
+        img_urls=news_data["img_urls"],
+        time=pub_date,
+        author=news_data["author"]
         # issue_id는 나중에 AI가 클러스터링할 때 채워줍니다. 지금은 비워둡니다(NULL).
     )
 
@@ -97,6 +100,20 @@ def create_user(db: Session, user_data: dict):
     딕셔너리 형태의 데이터를 받아 DB에 저장합니다.
     이미 존재하는 login_id라면 저장을 실패하고 None을 반환합니다.
     """
+    raw_cats = user_data.get("subscribed_categories")
+    raw_kwds = user_data.get("subscribed_keywords")
+
+    # 카테고리가 리스트면 딕셔너리로 변환, 아니면 그대로 사용(또는 빈 딕셔너리)
+    if isinstance(raw_cats, list):
+        categories_dict = {cat: 1 for cat in raw_cats}
+    else:
+        categories_dict = raw_cats or {}
+
+    # 키워드가 리스트면 딕셔너리로 변환
+    if isinstance(raw_kwds, list):
+        keywords_dict = {kwd: 1 for kwd in raw_kwds}
+    else:
+        keywords_dict = raw_kwds or {}
     
     # 모델 인스턴스 생성
     new_user = User(
@@ -106,8 +123,8 @@ def create_user(db: Session, user_data: dict):
         # 아래는 선택 항목 (.get으로 없으면 None 처리)
         user_real_name=user_data.get("user_real_name"),
         email=user_data.get("email"),
-        subscribed_categories=user_data.get("subscribed_categories"),
-        subscribed_keywords=user_data.get("subscribed_keywords"),
+        subscribed_categories=categories_dict,
+        subscribed_keywords=keywords_dict,
         preferred_time_range=user_data.get("preferred_time_range"),
         marketing_agree=user_data.get("marketing_agree", False)
     )
@@ -125,3 +142,36 @@ def get_user(db: Session, login_id: str):
     Primary Key로 검색하므로 속도가 매우 빠릅니다.
     """
     return db.query(User).filter(User.login_id == login_id).first()
+
+# 기사를 봤을 때 카운트가 증가하는 함수
+def increase_user_interest(db: Session, user_id: str, category: str, keyword: str = None):
+    user = db.query(User).filter(User.login_id == user_id).first()
+    if not user:
+        return None
+    
+    # 1. 카테고리 카운트 증가
+    current_cats = user.subscribed_categories or {} # 기존 값 가져오기
+    # 가져온 값이 딕셔너리가 아니라면(혹시 모를 에러 방지) 딕셔너리로 변환
+    if isinstance(current_cats, list): 
+        current_cats = {c: 1 for c in current_cats}
+        
+    current_count = current_cats.get(category, 0) # 기존 점수 확인
+    current_cats[category] = current_count + 1    # 점수 +1
+    user.subscribed_categories = dict(current_cats) # [중요] 재할당해야 DB가 인식함
+    
+    flag_modified(user, "subscribed_categories")
+
+    # 2. 키워드 카운트 증가 (키워드가 있을 경우에만)
+    if keyword:
+        current_kwds = user.subscribed_keywords or {}
+        if isinstance(current_kwds, list):
+            current_kwds = {k: 1 for k in current_kwds}
+            
+        kwd_count = current_kwds.get(keyword, 0)
+        current_kwds[keyword] = kwd_count + 1
+        user.subscribed_keywords = dict(current_kwds)
+    
+        flag_modified(user, "subscribed_keywords")
+
+    db.commit()
+    return user

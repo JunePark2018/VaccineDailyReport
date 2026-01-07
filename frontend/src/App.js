@@ -8,6 +8,7 @@ import CategoryPage from './pages/CategoryPage.jsx';
 import CreateAccount from './pages/CreateAccount.jsx';
 import Issues from './pages/Issues.jsx';
 import Login from './components/Login.jsx';
+import MyPage from './pages/MyPage.jsx';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="/issues" element={<Issues />} />
           <Route path='login' element={<Login />} />
           <Route path='/CreateAccount' element={<CreateAccount />} />
+          <Route path='/MyPage' element={<MyPage />} />
         </Routes>
       </div>
     </BrowserRouter>
