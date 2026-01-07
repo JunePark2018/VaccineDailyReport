@@ -58,7 +58,7 @@ function Main() {
         {/* 상단 */}
         <Header
           leftChild={<Logo />}
-          midChild={<Searchbar maxWidth="400px" />}
+          midChild={<Searchbar />}
           rightChild={RightHeaderIcon}
         />
 

@@ -33,39 +33,47 @@
 /* Header 2: Main Section (Original Header) */
 .Header-Container .Header-Main {
     display: flex;
-    justify-content: space-between; /* Distributes the three children across the width */
-    align-items: center;            /* Vertically centers all items */
+    justify-content: center;
+    align-items: center;
     padding: 10px 20px;
-    width: auto;
-    height: 80px;                   /* Adjust height as needed */
+    height: 60px;
     background-color: #ffffff;
     border-bottom: 1px solid #ddd;
 }
 
+.Header-Container .Header-Main .header-main-content {
+    width: 100%;
+    max-width: 1200px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 /* 1. Left Section: Logo centered to the left */
 .Header-Container .Header-Main .left-child {
-    display: flex;
-    justify-content: flex-start;    /* Aligns logo to the far left */
-    align-items: center;
+    flex: 1;
 }
 
 /* 2. Middle Section: Searchbar centered on all sides */
 .Header-Container .Header-Main .mid-child {
-    flex: 1;                        /* Takes up more space for the searchbar */
+    flex: 2;                        /* Increased territory to 200% compared to side children */
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 /* 3. Right Section: Login button aligned to the far right */
 .Header-Container .Header-Main .right-child {
+    flex: 1;
     display: flex;
     justify-content: flex-end;      /* Aligns button to the far right */
     align-items: center;
-    padding-right: 20px;
 }
 
 /* Header 3: Bottom Section */
 .Header-Container .Header-Bottom {
-    height: auto; /* Adjust height as needed */
-    background-color: #ffffff; /* Example background color */
+    height: 50px;
+    background-color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -79,9 +87,10 @@
     flex-direction: row;
     justify-content: center;
     align-items: center;
-    gap: 20px; /* Space between items */
+    gap: 20px;
     width: 100%;
-    overflow-x: auto; /* Allow horizontal scrolling if needed */
+    max-width: 1200px;
+    overflow-x: auto;
 }
 
 /* Individual Category Item */

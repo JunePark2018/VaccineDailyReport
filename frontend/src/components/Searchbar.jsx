@@ -30,9 +30,8 @@ function Searchbar({ maxWidth, fontSize, className}) {
     };
 
     // Props로 받은 maxWidth와 fontSize를 인라인 스타일에 적용
-    const boxStyle = {
-        maxWidth: maxWidth
-    };
+    // maxWidth가 전달되지 않으면 CSS의 기본값이 적용됩니다.
+    const boxStyle = maxWidth ? { maxWidth: maxWidth } : {};
 
     const inputStyle = {
         fontSize: fontSize
