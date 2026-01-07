@@ -4,7 +4,7 @@
     border-bottom: 1px solid #eee;
 }
 
-.header3-top {
+.header3 .header3-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -13,28 +13,28 @@
     margin: 0 auto;
 }
 
-.header3-logo {
+.header3 .header3-logo {
     flex: 1;
 }
 
-.header3-search {
+.header3 .header3-search {
     flex: 2;
     display: flex;
     justify-content: center;
 }
 
-.header3-login {
+.header3 .header3-login {
     flex: 1;
     display: flex;
     justify-content: flex-end;
 }
 
-.header3-bottom {
+.header3 .header3-bottom {
     border-top: 1px solid #f5f5f5;
     padding: 15px 0;
 }
 
-.header3-nav ul {
+.header3 .header3-nav ul {
     display: flex;
     justify-content: center;
     list-style: none;
@@ -43,7 +43,7 @@
     gap: 40px;
 }
 
-.header3-nav li {
+.header3 .header3-nav li {
     cursor: pointer;
     font-size: 16px;
     font-weight: 500;
@@ -51,6 +51,6 @@
     transition: color 0.2s;
 }
 
-.header3-nav li:hover {
+.header3 .header3-nav li:hover {
     color: #007bff;
 }
