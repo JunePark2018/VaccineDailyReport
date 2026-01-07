@@ -34,8 +34,8 @@ class UserCreateRequest(BaseModel):
     password_hash: str  # 실제로는 비밀번호 원문을 받아 내부에서 해싱하는 것이 좋지만, 현재 구조에 맞췄습니다.
     user_real_name: Optional[str] = None
     email: Optional[str] = None
-    subscribed_categories: Optional[Dict[str, int]] = {}
-    subscribed_keywords: Optional[Dict[str, int]] = {}
+    subscribed_categories: Optional[List[str]] = []
+    subscribed_keywords: Optional[List[str]] = []
     preferred_time_range: Optional[Any] = None # JSON이나 문자열
     marketing_agree: bool = False
 
@@ -44,8 +44,10 @@ class UserResponse(BaseModel):
     login_id: str
     user_real_name: Optional[str] = None
     email: Optional[str] = None
-    subscribed_categories: Optional[Dict[str, int]] = {}
-    subscribed_keywords: Optional[Dict[str, int]] = {}
+    subscribed_categories: Optional[List[str]] = []
+    subscribed_keywords: Optional[List[str]] = []
+    read_categories: Optional[Dict[str, int]] = {}
+    read_keywords: Optional[Dict[str, int]] = {}
     preferred_time_range: Optional[Any] = None
     marketing_agree: bool = False
     
@@ -64,12 +66,12 @@ class LogViewRequest(BaseModel):
 
 # 구독 카테고리/키워드 수정 요청 (Request) Body
 class UpdatePreferencesRequest(BaseModel):
-    subscribed_categories: Optional[Dict[str, int]] = None
-    subscribed_keywords: Optional[Dict[str, int]] = None
+    subscribed_categories: Optional[List[str]] = None
+    subscribed_keywords: Optional[List[str]] = None
 
 # 구독 카테고리/키워드 수정 응답 (Response) Body
 class UpdatePreferencesResponse(BaseModel):
     login_id: str
     message: str
-    current_categories: Dict[str, int]
-    current_keywords: Dict[str, int]
+    current_categories: Optional[List[str]]
+    current_keywords: Optional[List[str]]

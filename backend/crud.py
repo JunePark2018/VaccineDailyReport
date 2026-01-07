@@ -104,16 +104,12 @@ def create_user(db: Session, user_data: dict):
     raw_kwds = user_data.get("subscribed_keywords")
 
     # 카테고리가 리스트면 딕셔너리로 변환, 아니면 그대로 사용(또는 빈 딕셔너리)
-    if isinstance(raw_cats, list):
-        categories_dict = {cat: 1 for cat in raw_cats}
-    else:
-        categories_dict = raw_cats or {}
+    if not raw_cats:
+        raw_cats = []
 
     # 키워드가 리스트면 딕셔너리로 변환
-    if isinstance(raw_kwds, list):
-        keywords_dict = {kwd: 1 for kwd in raw_kwds}
-    else:
-        keywords_dict = raw_kwds or {}
+    if not raw_kwds:
+        raw_kwds = []
     
     # 모델 인스턴스 생성
     new_user = User(
@@ -123,8 +119,8 @@ def create_user(db: Session, user_data: dict):
         # 아래는 선택 항목 (.get으로 없으면 None 처리)
         user_real_name=user_data.get("user_real_name"),
         email=user_data.get("email"),
-        subscribed_categories=categories_dict,
-        subscribed_keywords=keywords_dict,
+        subscribed_categories=raw_cats,
+        subscribed_keywords=raw_kwds,
         preferred_time_range=user_data.get("preferred_time_range"),
         marketing_agree=user_data.get("marketing_agree", False)
     )
@@ -150,28 +146,28 @@ def increase_user_interest(db: Session, user_id: str, category: str, keyword: st
         return None
     
     # 1. 카테고리 카운트 증가
-    current_cats = user.subscribed_categories or {} # 기존 값 가져오기
+    current_cats = user.read_categories or {} # 기존 값 가져오기
     # 가져온 값이 딕셔너리가 아니라면(혹시 모를 에러 방지) 딕셔너리로 변환
     if isinstance(current_cats, list): 
         current_cats = {c: 1 for c in current_cats}
         
     current_count = current_cats.get(category, 0) # 기존 점수 확인
     current_cats[category] = current_count + 1    # 점수 +1
-    user.subscribed_categories = dict(current_cats) # [중요] 재할당해야 DB가 인식함
+    user.read_categories = dict(current_cats) # [중요] 재할당해야 DB가 인식함
     
-    flag_modified(user, "subscribed_categories")
+    flag_modified(user, "read_categories")
 
     # 2. 키워드 카운트 증가 (키워드가 있을 경우에만)
     if keyword:
-        current_kwds = user.subscribed_keywords or {}
+        current_kwds = user.read_keywords or {}
         if isinstance(current_kwds, list):
             current_kwds = {k: 1 for k in current_kwds}
             
         kwd_count = current_kwds.get(keyword, 0)
         current_kwds[keyword] = kwd_count + 1
-        user.subscribed_keywords = dict(current_kwds)
+        user.read_keywords = dict(current_kwds)
     
-        flag_modified(user, "subscribed_keywords")
+        flag_modified(user, "read_keywords")
 
     db.commit()
     return user

@@ -55,11 +55,17 @@ class User(Base):
     # email VARCHAR(100)
     email = Column(String(100))
     
-    # subscribed_categories JSON ({'정치': 37, '경제': 26})
-    subscribed_categories = Column(JSON, default={})
+    # subscribed_categories JSON (['정치', '경제'])
+    subscribed_categories = Column(JSON, default=[])
     
-    # subscribed_keywords JSON ({'삼성전자': 37, 'AI': 26})
-    subscribed_keywords = Column(JSON, default={})
+    # subscribed_keywords JSON (['삼성전자', 'AI'])
+    subscribed_keywords = Column(JSON, default=[])
+    
+    # read_categories JSON ({'정치': 37, '경제': 26})
+    read_categories = Column(JSON, default={})
+    
+    # read_keywords JSON ({'삼성전자': 37, 'AI': 26})
+    read_keywords = Column(JSON, default={})
     
     # fcm_token VARCHAR(255)
     fcm_token = Column(String(255))
