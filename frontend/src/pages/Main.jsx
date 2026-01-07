@@ -23,14 +23,14 @@ function Main() {
   const slideData = [
     {
       id: 1,
-      image: "https://mod-file.dn.nexoncdn.co.kr/game/a20196202add4dde8dfae7aebd05bfb7/1705021038279_409.png?s=892x500&t=crop&q=100&f=png", // 실제 이미지 URL
+      image: "https://img.freepik.com/free-photo/downtown-cityscape-night-seoul-south-korea_335224-272.jpg?t=st=1767758567~exp=1767762167~hmac=e4ba534e5c105b48886e453f789bb90395bd99e130b545bd3dda7a37f52f1f55&w=2000", // 실제 이미지 URL
       title: "의대 증원 극적 타결 조짐?",
       description: "정부와 의료계 5차 협상... 입장차 좁혀",
       analysis: { /* 분석 데이터 객체 */ }
     },
     {
       id: 2,
-      image: "https://mod-file.dn.nexoncdn.co.kr/game/a20196202add4dde8dfae7aebd05bfb7/1705021038279_409.png?s=892x500&t=crop&q=100&f=png",
+      image: "https://img.freepik.com/free-photo/banghwa-bridge-night-korea_335224-492.jpg?t=st=1767758818~exp=1767762418~hmac=155ead384e649570fd2cf9e64236f7a64ab7cf9a668b785df37138b3229373da&w=2000",
       title: "국산 1호 AI 신약 탄생 임박",
       description: "임상 3상 성공적 완료... 주가 급등",
       analysis: { /* ... */ }
