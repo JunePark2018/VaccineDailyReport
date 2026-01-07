@@ -1,4 +1,4 @@
-from typing import List, Optional, Any
+from typing import List, Optional, Any, Dict
 from pydantic import BaseModel
 from datetime import datetime
 
@@ -42,8 +42,8 @@ class UserResponse(BaseModel):
     login_id: str
     user_real_name: Optional[str] = None
     email: Optional[str] = None
-    subscribed_categories: Optional[List[str]] = []
-    subscribed_keywords: Optional[List[str]] = []
+    subscribed_categories: Optional[Dict[str, int]] = {}
+    subscribed_keywords: Optional[Dict[str, int]] = {}
     preferred_time_range: Optional[Any] = None
     marketing_agree: bool = False
     
@@ -53,3 +53,9 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+# 누가, 어떤 카테고리, 어떤 키워드의 글을 봤는지 데이터를 보낼 때 사용할 포멧
+class LogViewRequest(BaseModel):
+    login_id: str
+    category: str
+    keyword: Optional[str] = None

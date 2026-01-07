@@ -7,9 +7,9 @@ from sqlalchemy.orm import Session
 
 from database import engine, SessionLocal
 from models import Base, Article, Issue, User
-from schemas import ArticleResponse, IssueResponse, UserCreateRequest, UserResponse
+from schemas import ArticleResponse, IssueResponse, UserCreateRequest, UserResponse, LogViewRequest
 from scraper import run_article_crawler
-from crud import create_article, create_user, get_user
+from crud import create_article, create_user, get_user, increase_user_interest
 from ai_processor import process_news_pipeline 
 
 # --- [백그라운드 워커] 주기적으로 뉴스 수집 & AI 분석 ---
@@ -85,3 +85,18 @@ def signup(user: UserCreateRequest, db: Session = Depends(get_db)):
 @app.get("/users/{login_id}", response_model=UserResponse)
 def read_user(login_id: str, db: Session = Depends(get_db)):
     return get_user(db, login_id)
+
+# 사용자가 기사를 클릭했을때 호출. 카테고리, 키워드 횟수 증가
+@app.post("/increase_user_interest")
+def log_article_view(request: LogViewRequest, db: Session = Depends(get_db)):
+    updated_user = increase_user_interest(
+        db=db,
+        user_id=request.login_id,
+        category=request.category,
+        keyword=request.keyword
+    )
+    
+    if not updated_user:
+        return {"message": "User not found", "success": False}
+        
+    return {"message": "Interest updated", "success": True}
