@@ -73,8 +73,21 @@ def get_issues(limit: int = 10, db: Session = Depends(get_db)):
 
 # 개별 기사 목록 (디버깅용)
 @app.get("/articles", response_model=List[ArticleResponse])
-def get_articles(limit: int = 20, db: Session = Depends(get_db)):
-    return db.query(Article).order_by(Article.time.desc()).limit(limit).all()
+def get_articles(
+    limit: int = 20, 
+    category: Optional[str] = None, # [추가] 카테고리 입력을 선택적으로 받음
+    db: Session = Depends(get_db)
+):
+    # 1. 일단 모든 기사를 가져올 준비를 합니다.
+    query = db.query(Article)
+    
+    # 2. 만약 URL에 category가 들어왔다면? (예: ?category=IT)
+    if category:
+        # DB에서 해당 카테고리만 필터링합니다.
+        query = query.filter(Article.category == category)
+        
+    # 3. 최신순 정렬 후 limit만큼 잘라서 반환
+    return query.order_by(Article.time.desc()).limit(limit).all()
 
 # 회원가입 엔드포인트
 @app.post("/users", response_model=UserResponse)
