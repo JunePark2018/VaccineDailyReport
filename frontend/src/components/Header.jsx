@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import './Header.css';
 
 // Import all category icons
@@ -24,6 +24,7 @@ const Header = ({
   headerBottom = "on"
 }) => {
   const nav = useNavigate();
+  const { name: activeCategory } = useParams();
 
   // Data array for categories
   const categories = [
@@ -38,11 +39,22 @@ const Header = ({
       { id: 'sub9', label: '세계', icon: worldIcon },
   ];
 
+  const today = new Date();
+  const dateString = today.toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    weekday: 'long'
+  });
+
   return (
     <div className={"Header-Container " + className}>
       {headerTop === "on" && (
         <div className="Header-Top">
-          Header 1
+          <div className="header-top-content">
+            <span className="today-date">{dateString}</span>
+            <span className="trending-tag">#의대증원 #AI신약 #기후위기</span>
+          </div>
         </div>
       )}
 
@@ -68,8 +80,8 @@ const Header = ({
             {categories.map((item) => (
               <div
                 key={item.id}
-                className="category-item"
-                onClick={() => nav(`/${item.id}`)}
+                className={`category-item ${activeCategory === item.label ? 'active' : ''}`}
+                onClick={() => nav(`/category/${item.label}`)}
               >
                 <div className="icon-wrapper">
                   <img

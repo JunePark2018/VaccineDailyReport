@@ -11,6 +11,7 @@ export default function CreateAccount() {
         firstName: '',
         loginId: '',
         password: '',
+        confirmPassword: '',
         email: '',
         marketingAgree: false, // For the tracking agreement
     });
@@ -70,6 +71,11 @@ export default function CreateAccount() {
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: null }));
         }
+
+        // If password changes, also clear confirmPassword error
+        if (name === 'password' && errors.confirmPassword) {
+            setErrors(prev => ({ ...prev, confirmPassword: null }));
+        }
     };
 
     const handleCategoryClick = (category) => {
@@ -109,6 +115,11 @@ export default function CreateAccount() {
         // 4. Password Check (Basic requirement check)
         if (formData.password.length < 8) {
             newErrors.password = "비밀번호는 최소 8자 이상이어야 합니다.";
+        }
+
+        // 4-1. Password Confirmation Check
+        if (formData.password !== formData.confirmPassword) {
+            newErrors.confirmPassword = "비밀번호가 일치하지 않습니다.";
         }
 
         // 5. Category Check (At least 3)
@@ -230,6 +241,34 @@ export default function CreateAccount() {
                             </div>
                         )}
                         {errors.password && <span className="error-msg">{errors.password}</span>}
+                    </div>
+
+                    {/* 3-1. Confirm Password Section */}
+                    <div className="input-group">
+                        <label>비밀번호 확인</label>
+                        <div className="password-wrapper">
+                            <input 
+                                type={showPassword ? "text" : "password"} 
+                                name="confirmPassword" 
+                                placeholder="비밀번호를 다시 입력해주세요" 
+                                value={formData.confirmPassword}
+                                onChange={handleChange}
+                                className={errors.confirmPassword ? "input-error" : ""}
+                            />
+                            <button 
+                                type="button" 
+                                className="toggle-btn"
+                                onClick={() => setShowPassword(!showPassword)}
+                            >
+                                {showPassword ? "숨기기" : "보기"}
+                            </button>
+                        </div>
+                        {formData.password && formData.confirmPassword && formData.password === formData.confirmPassword && (
+                            <span className="success-msg" style={{ color: '#2ecc71', fontSize: '0.85rem', marginTop: '4px', display: 'block' }}>
+                                비밀번호 일치
+                            </span>
+                        )}
+                        {errors.confirmPassword && <span className="error-msg">{errors.confirmPassword}</span>}
                     </div>
 
                     {/* 4. Email Section */}
