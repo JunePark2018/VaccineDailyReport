@@ -7,6 +7,7 @@ import ArticlePage from './pages/ArticlePage.jsx';
 import CategoryPage from './pages/CategoryPage.jsx';
 import CreateAccount from './pages/CreateAccount.jsx';
 import Login from './components/Login.jsx';
+import MyPage from './pages/MyPage.jsx';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
           <Route path="/category/:name" element={<CategoryPage />} />
           <Route path='login' element={<Login />} />
           <Route path='/CreateAccount' element={<CreateAccount />} />
+          <Route path='/MyPage' element={<MyPage />} />
         </Routes>
       </div>
     </BrowserRouter>
