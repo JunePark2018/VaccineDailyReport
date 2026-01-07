@@ -53,10 +53,10 @@ class User(Base):
     # email VARCHAR(100)
     email = Column(String(100))
     
-    # subscribed_categories JSON (['정치', '경제', 'IT'])
+    # subscribed_categories JSON ([['정치', 36], ['경제', 27]])
     subscribed_categories = Column(JSON)
     
-    # subscribed_keywords JSON (['삼성전자', '금리', 'AI'])
+    # subscribed_keywords JSON ([('삼성전자', , '금리', 'AI'])
     subscribed_keywords = Column(JSON)
     
     # fcm_token VARCHAR(255)
