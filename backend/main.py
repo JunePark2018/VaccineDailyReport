@@ -2,12 +2,12 @@ import threading
 import time
 from contextlib import asynccontextmanager
 from typing import List, Optional, Any
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database import engine, SessionLocal
 from models import Base, Article, Issue, User
-from schemas import ArticleResponse, IssueResponse, UserCreateRequest, UserResponse, LogViewRequest
+from schemas import ArticleResponse, IssueResponse, UserCreateRequest, UserResponse, LogViewRequest, UpdatePreferencesRequest, UpdatePreferencesResponse
 from scraper import run_article_crawler
 from crud import create_article, create_user, get_user, increase_user_interest
 from ai_processor import process_news_pipeline 
@@ -113,3 +113,35 @@ def log_article_view(request: LogViewRequest, db: Session = Depends(get_db)):
         return {"message": "User not found", "success": False}
         
     return {"message": "Interest updated", "success": True}
+
+@app.patch("/users/{login_id}/preferences", response_model=UpdatePreferencesResponse)
+def update_user_preferences(
+    login_id: str, 
+    body: UpdatePreferencesRequest, 
+    db: Session = Depends(get_db)
+):
+    # 사용자 조회
+    user = db.query(User).filter(User.login_id == login_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
+
+    # 카테고리 업데이트
+    # 프론트에서 {"정치": 50, "경제": 10} 처럼 전체 딕셔너리를 보내면 그대로 덮어씁니다.
+    if body.subscribed_categories is not None:
+        user.subscribed_categories = body.subscribed_categories
+
+    # 키워드 업데이트
+    if body.subscribed_keywords is not None:
+        user.subscribed_keywords = body.subscribed_keywords
+
+    # 변경사항 저장
+    db.commit()
+    db.refresh(user)
+
+    return UpdatePreferencesResponse(
+        login_id=user.login_id,
+        message="구독 정보(가중치 포함)가 업데이트되었습니다.",
+        # DB에 값이 없으면(None) 빈 딕셔너리 {} 반환
+        current_categories=user.subscribed_categories or {},
+        current_keywords=user.subscribed_keywords or {}
+    )

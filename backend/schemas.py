@@ -61,3 +61,15 @@ class LogViewRequest(BaseModel):
     login_id: str
     category: str
     keyword: Optional[str] = None
+
+# 구독 카테고리/키워드 수정 요청 (Request) Body
+class UpdatePreferencesRequest(BaseModel):
+    subscribed_categories: Optional[Dict[str, int]] = None
+    subscribed_keywords: Optional[Dict[str, int]] = None
+
+# 구독 카테고리/키워드 수정 응답 (Response) Body
+class UpdatePreferencesResponse(BaseModel):
+    login_id: str
+    message: str
+    current_categories: Dict[str, int]
+    current_keywords: Dict[str, int]
