@@ -1,84 +1,44 @@
+import React from 'react';
+import './header3.css';
+import Logo from './Logo';
+import Searchbar from './Searchbar';
+import loginIcon from '../login_icon/login.png';
 import { useNavigate } from 'react-router-dom';
-import './LeftSideBar.css';
 
-// Import all category icons
-import governmentIcon from './leftsidebaricon/government.png';
-import economicsIcon from './leftsidebaricon/economics.png';
-import societyIcon from './leftsidebaricon/society.png';
-import entertainmentIcon from './leftsidebaricon/entertainment.png';
-import healthIcon from './leftsidebaricon/health.png';
-import sportsIcon from './leftsidebaricon/sports.png';
-import weatherIcon from './leftsidebaricon/weather.png';
-import scienceIcon from './leftsidebaricon/science.png';
-import worldIcon from './leftsidebaricon/world.png';
-
-/**
- * LeftSideBar Component
- * darkmode: Background color (default: #ffffffff)
- * textColor: Text color (default: black)
- * textSize: Font size (default: 10px)
- * width: Sidebar width (default: 72px)
- */
-export default function LeftSideBar({
-    darkmode = "#ffffffff",
-    textColor = "black",
-    textSize = "10px",
-    width = "72px"
-}) {
-    const nav = useNavigate();
-
-    // Data array for categories
-    const categories = [
-        { id: 'sub1', label: '정치', icon: governmentIcon },
-        { id: 'sub2', label: '경제', icon: economicsIcon },
-        { id: 'sub3', label: '사회', icon: societyIcon },
-        { id: 'sub4', label: '엔터', icon: entertainmentIcon },
-        { id: 'sub5', label: '건강', icon: healthIcon },
-        { id: 'sub6', label: '스포츠', icon: sportsIcon },
-        { id: 'sub7', label: '기후', icon: weatherIcon },
-        { id: 'sub8', label: '과학', icon: scienceIcon },
-        { id: 'sub9', label: '세계', icon: worldIcon },
-    ];
+const Header3 = () => {
+    const navigate = useNavigate();
+    const categories = ["정치", "경제", "사회", "생활/문화", "IT/과학", "세계", "랭킹"];
 
     return (
-        <div className="LeftSideBar" style={{ display: "flex" }}>
-            {/* Layout spacer to prevent main content from hiding behind the fixed sidebar */}
-            <div className='left_sidebar_area' style={{ width: width, height: "100vh" }}></div>
-            
-            <div className="category_buttons"
-                style={{
-                    position: "fixed",
-                    top: 0,
-                    left: 0,
-                    backgroundColor: darkmode,
-                    color: textColor,
-                    fontSize: textSize,
-                    width: width,
-                    height: "100vh",
-                    display: "flex",
-                    flexDirection: "column",
-                    zIndex: 1000,
-                    overflowY: "auto",
-                    overflowX: "hidden"
-                }}
-            >
-                {categories.map((item) => (
-                    <div 
-                        key={item.id} 
-                        className="sidebar_icon_item" 
-                        onClick={() => nav(`/${item.id}`)}
-                    >
-                        <div className="icon_wrapper">
-                            <img 
-                                src={item.icon} 
-                                alt={item.label} 
-                                className="category_main_icon" 
-                            />
-                        </div>
-                        <span>{item.label}</span>
-                    </div>
-                ))}
+        <header className="header3">
+            <div className="header3-top">
+                <div className="header3-logo">
+                    <Logo />
+                </div>
+                <div className="header3-search">
+                    <Searchbar maxWidth="600px" />
+                </div>
+                <div className="header3-login">
+                    <img 
+                        src={loginIcon} 
+                        alt="login" 
+                        width="35px" 
+                        onClick={() => navigate('/login')} 
+                        style={{ cursor: 'pointer' }} 
+                    />
+                </div>
             </div>
-        </div>
+            <div className="header3-bottom">
+                <nav className="header3-nav">
+                    <ul>
+                        {categories.map((category, index) => (
+                            <li key={index} onClick={() => navigate(`/category/${category}`)}>{category}</li>
+                        ))}
+                    </ul>
+                </nav>
+            </div>
+        </header>
     );
-}
+};
+
+export default Header3;

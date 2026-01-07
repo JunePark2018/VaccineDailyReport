@@ -17,7 +17,7 @@
 }
 
 .Login .id_box, .pw_box{
-    width: 100%;
+    width: 300px;
     height: 40px;
     padding-left: 10px;
     border: 1.5px solid rgba(0, 0, 0, 0.2);
