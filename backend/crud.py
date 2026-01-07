@@ -1,5 +1,6 @@
 # crud.py
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 from database import SessionLocal
 from models import Article, Issue, User
 from datetime import datetime
@@ -29,11 +30,13 @@ def create_article(db: Session, news_data: dict):
     # 3. 데이터 객체 생성
     new_article = Article(
         title=news_data["title"],
-        content=news_data["contents"],
+        contents=news_data["contents"],
+        category=news_data["category"],
         url=news_data["url"],
-        publisher=news_data["company_name"],
-        image_url=news_data["img_url"],
-        published_at=pub_date,
+        company_name=news_data["company_name"],
+        img_urls=news_data["img_urls"],
+        time=pub_date,
+        author=news_data["author"]
         # issue_id는 나중에 AI가 클러스터링할 때 채워줍니다. 지금은 비워둡니다(NULL).
     )
 
@@ -145,7 +148,7 @@ def increase_user_interest(db: Session, user_id: str, category: str, keyword: st
     user = db.query(User).filter(User.login_id == user_id).first()
     if not user:
         return None
-
+    
     # 1. 카테고리 카운트 증가
     current_cats = user.subscribed_categories or {} # 기존 값 가져오기
     # 가져온 값이 딕셔너리가 아니라면(혹시 모를 에러 방지) 딕셔너리로 변환
@@ -155,6 +158,8 @@ def increase_user_interest(db: Session, user_id: str, category: str, keyword: st
     current_count = current_cats.get(category, 0) # 기존 점수 확인
     current_cats[category] = current_count + 1    # 점수 +1
     user.subscribed_categories = dict(current_cats) # [중요] 재할당해야 DB가 인식함
+    
+    flag_modified(user, "subscribed_categories")
 
     # 2. 키워드 카운트 증가 (키워드가 있을 경우에만)
     if keyword:
@@ -165,6 +170,8 @@ def increase_user_interest(db: Session, user_id: str, category: str, keyword: st
         kwd_count = current_kwds.get(keyword, 0)
         current_kwds[keyword] = kwd_count + 1
         user.subscribed_keywords = dict(current_kwds)
+    
+        flag_modified(user, "subscribed_keywords")
 
     db.commit()
     return user

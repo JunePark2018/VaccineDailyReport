@@ -89,8 +89,8 @@ def get_news_data(url):
             "category": category,      # 카테고리
             "company_name": company_name,    # 언론사
             "author": author,          # 기자
-            "content": contents,       # 본문 (contents 아님!)
-            "image_url": img_urls,     # 이미지
+            "contents": contents,       # 본문
+            "img_urls": img_urls,     # 이미지
             "url": url                 # 링크
 }
 
@@ -99,24 +99,13 @@ def get_news_data(url):
         return None
 
 
-def run_article_crawler(target_companies=None, debug_save=True, output_file='news_result.json'):
+def run_article_crawler(target_companies=None, debug_save=False, output_file='news_result.json'):
     """
     통합 크롤링 제어 함수.
-    반환값:
-    [
-        {
-            "title": title,
-            "time": time_val,
-            "company_name": company_name,
-            "author": author,
-            "content": contents,
-            "img_url": img_urls,
-            "url": url
-        },
+    반환값: [get_news_data(url)가 반환한 값 리스트]
     
-        섹션 100(정치) ~ 105(IT/과학)까지 순회하며 크롤링
-        001:전체 100:정치, 101:경제, 102:사회, 103:생활/문화, 104:세계, 105:IT/과학
-    ]
+    섹션 100(정치) ~ 105(IT/과학)까지 순회하며 크롤링
+    001:전체 100:정치, 101:경제, 102:사회, 103:생활/문화, 104:세계, 105:IT/과학
     """
     is_filter_mode = True if target_companies else False
     

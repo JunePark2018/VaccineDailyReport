@@ -74,7 +74,7 @@ def get_issues(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
 # 개별 기사 목록 (디버깅용)
 @app.get("/articles", response_model=List[ArticleResponse])
 def get_articles(skip: int = 0, limit: int = 20, db: Session = Depends(get_db)):
-    return db.query(Article).order_by(Article.published_at.desc()).offset(skip).limit(limit).all()
+    return db.query(Article).order_by(Article.time.desc()).offset(skip).limit(limit).all()
 
 # 회원가입 엔드포인트
 @app.post("/users", response_model=UserResponse)

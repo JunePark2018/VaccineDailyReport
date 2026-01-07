@@ -6,11 +6,13 @@ from datetime import datetime
 class ArticleResponse(BaseModel):
     id: int
     title: str
-    content: Optional[str] = None          # 본문
-    publisher: str
-    published_at: Optional[datetime]
+    contents: Optional[str] = None          # 본문
+    category: str
     url: str
-    image_url: Optional[List[str]] = None
+    company_name: str
+    img_urls: Optional[List[str]] = None
+    time: Optional[datetime]
+    author: str
 
     class Config:
         from_attributes = True
@@ -32,8 +34,8 @@ class UserCreateRequest(BaseModel):
     password_hash: str  # 실제로는 비밀번호 원문을 받아 내부에서 해싱하는 것이 좋지만, 현재 구조에 맞췄습니다.
     user_real_name: Optional[str] = None
     email: Optional[str] = None
-    subscribed_categories: Optional[List[str]] = []
-    subscribed_keywords: Optional[List[str]] = []
+    subscribed_categories: Optional[Dict[str, int]] = {}
+    subscribed_keywords: Optional[Dict[str, int]] = {}
     preferred_time_range: Optional[Any] = None # JSON이나 문자열
     marketing_agree: bool = False
 
