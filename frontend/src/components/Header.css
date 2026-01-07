@@ -6,7 +6,7 @@
 }
 
 /* Header 1: Top Section */
-.Header-Top {
+.Header-Container .Header-Top {
     height: 36px;
     background-color: #0c0c0c;
     display: flex;
@@ -17,7 +17,7 @@
     color: #dbd7d7;
 }
 
-.header-top-content {
+.Header-Container .header-top-content {
     width: 100%;
     max-width: 1200px;
     display: flex;
@@ -25,13 +25,13 @@
     padding: 0 20px;
 }
 
-.trending-tag {
+.Header-Container .trending-tag {
     color: #007bff;
     font-weight: 600;
 }
 
 /* Header 2: Main Section (Original Header) */
-.Header-Main {
+.Header-Container .Header-Main {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -50,14 +50,19 @@
 }
 
 /* 1. Left Section: Logo centered to the left */
+<<<<<<< HEAD
 .Header-Main .left-child {
     flex: 1;
+=======
+.Header-Container .Header-Main .left-child {
+>>>>>>> origin/main
     display: flex;
     justify-content: flex-start;    /* Aligns logo to the far left */
     align-items: center;
 }
 
 /* 2. Middle Section: Searchbar centered on all sides */
+<<<<<<< HEAD
 .Header-Main .mid-child {
     flex: 2;                        /* Increased territory to 200% compared to side children */
     display: flex;
@@ -68,15 +73,29 @@
 /* 3. Right Section: Login button aligned to the far right */
 .Header-Main .right-child {
     flex: 1;
+=======
+.Header-Container .Header-Main .mid-child {
+    flex: 1;                        /* Takes up more space for the searchbar */
+}
+
+/* 3. Right Section: Login button aligned to the far right */
+.Header-Container .Header-Main .right-child {
+>>>>>>> origin/main
     display: flex;
     justify-content: flex-end;      /* Aligns button to the far right */
     align-items: center;
 }
 
 /* Header 3: Bottom Section */
+<<<<<<< HEAD
 .Header-Bottom {
     height: 50px;
     background-color: #ffffff;
+=======
+.Header-Container .Header-Bottom {
+    height: auto; /* Adjust height as needed */
+    background-color: #ffffff; /* Example background color */
+>>>>>>> origin/main
     display: flex;
     align-items: center;
     justify-content: center;
@@ -85,7 +104,7 @@
 }
 
 /* Category List Container */
-.Header-Bottom .category-list {
+.Header-Container .Header-Bottom .category-list {
     display: flex;
     flex-direction: row;
     justify-content: center;
@@ -97,7 +116,7 @@
 }
 
 /* Individual Category Item */
-.Header-Bottom .category-item {
+.Header-Container .Header-Bottom .category-item {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -108,13 +127,13 @@
     transition: transform 0.2s ease, color 0.2s ease;
 }
 
-.Header-Bottom .category-item:hover {
+.Header-Container .Header-Bottom .category-item:hover {
     transform: translateY(-2px);
     color: #007bff;
 }
 
 /* Active state with underbar */
-.Header-Bottom .category-item.active::after {
+.Header-Container .Header-Bottom .category-item.active::after {
     content: '';
     position: absolute;
     bottom: 0;
@@ -125,7 +144,7 @@
 }
 
 /* Icon Wrapper */
-.Header-Bottom .icon-wrapper {
+.Header-Container .Header-Bottom .icon-wrapper {
     width: 32px;
     height: 32px;
     margin-bottom: 6px;
@@ -135,14 +154,14 @@
 }
 
 /* Icon Image */
-.Header-Bottom .category-icon {
+.Header-Container .Header-Bottom .category-icon {
     width: 100%;
     height: 100%;
     object-fit: contain;
 }
 
 /* Text Label */
-.Header-Bottom .category-item span {
+.Header-Container .Header-Bottom .category-item span {
     font-size: 11px;
     font-weight: 500;
     text-align: center;
@@ -151,6 +170,6 @@
     transition: color 0.2s ease;
 }
 
-.Header-Bottom .category-item:hover span {
+.Header-Container .Header-Bottom .category-item:hover span {
     color: #007bff;
 }

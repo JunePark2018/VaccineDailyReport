@@ -36,4 +36,7 @@ git clean -fd
 
 # 5. main을 제외한 모든 브랜치 삭제
 git branch | grep -v "main" | xargs git branch -D
+
+# 6. 위 명령어가 오류가 날 경우를 대비한 명령어
+git branch --format "%(refname:short)" | ? { $_ -ne "main" } | % { git branch -D $_ }
 ```

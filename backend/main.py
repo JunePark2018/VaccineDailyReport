@@ -4,66 +4,13 @@ from contextlib import asynccontextmanager
 from typing import List, Optional, Any
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
-from datetime import datetime
 
 from database import engine, SessionLocal
 from models import Base, Article, Issue, User
+from schemas import ArticleResponse, IssueResponse, UserCreateRequest, UserResponse, LogViewRequest
 from scraper import run_article_crawler
-from crud import create_article, create_user, get_user
+from crud import create_article, create_user, get_user, increase_user_interest
 from ai_processor import process_news_pipeline 
-
-# --- [Pydantic 모델] 프론트엔드에 보낼 데이터 형태 정의 ---
-class ArticleResponse(BaseModel):
-    id: int
-    title: str
-    content: Optional[str] = None          # 본문
-    publisher: str
-    published_at: Optional[datetime]
-    url: str
-    image_url: Optional[List[str]] = None
-
-    class Config:
-        from_attributes = True
-
-class IssueResponse(BaseModel):
-    id: int
-    title: str
-    content: str
-    created_at: datetime
-    # 통째로 구조화된 JSON 데이터를 보냅니다. (프론트엔드가 받아서 알아서 뿌림)
-    analysis_result: Optional[Any] 
-
-    class Config:
-        from_attributes = True
-
-# 회원가입 요청 시 받을 데이터
-class UserCreateRequest(BaseModel):
-    login_id: str
-    password_hash: str  # 실제로는 비밀번호 원문을 받아 내부에서 해싱하는 것이 좋지만, 현재 구조에 맞췄습니다.
-    user_real_name: Optional[str] = None
-    email: Optional[str] = None
-    subscribed_categories: Optional[List[str]] = []
-    subscribed_keywords: Optional[List[str]] = []
-    preferred_time_range: Optional[Any] = None # JSON이나 문자열
-    marketing_agree: bool = False
-
-# 클라이언트에게 응답할 데이터 (비밀번호 제외)
-class UserResponse(BaseModel):
-    login_id: str
-    user_real_name: Optional[str] = None
-    email: Optional[str] = None
-    subscribed_categories: Optional[List[str]] = []
-    subscribed_keywords: Optional[List[str]] = []
-    preferred_time_range: Optional[Any] = None
-    marketing_agree: bool = False
-    
-    # 시스템이 생성하는 정보 (가입일, 상태 등)
-    created_at: Optional[datetime] = None 
-    user_status: int = 1 
-
-    class Config:
-        from_attributes = True
 
 # --- [백그라운드 워커] 주기적으로 뉴스 수집 & AI 분석 ---
 def run_background_worker():
@@ -121,13 +68,26 @@ def get_db():
 
 # 이슈 목록 가져오기 (히스토리)
 @app.get("/issues", response_model=List[IssueResponse])
-def get_issues(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    return db.query(Issue).order_by(Issue.created_at.desc()).offset(skip).limit(limit).all()
+def get_issues(limit: int = 10, db: Session = Depends(get_db)):
+    return db.query(Issue).order_by(Issue.created_at.desc()).limit(limit).all()
 
 # 개별 기사 목록 (디버깅용)
 @app.get("/articles", response_model=List[ArticleResponse])
-def get_articles(skip: int = 0, limit: int = 20, db: Session = Depends(get_db)):
-    return db.query(Article).order_by(Article.published_at.desc()).offset(skip).limit(limit).all()
+def get_articles(
+    limit: int = 20, 
+    category: Optional[str] = None, # [추가] 카테고리 입력을 선택적으로 받음
+    db: Session = Depends(get_db)
+):
+    # 1. 일단 모든 기사를 가져올 준비를 합니다.
+    query = db.query(Article)
+    
+    # 2. 만약 URL에 category가 들어왔다면? (예: ?category=IT)
+    if category:
+        # DB에서 해당 카테고리만 필터링합니다.
+        query = query.filter(Article.category == category)
+        
+    # 3. 최신순 정렬 후 limit만큼 잘라서 반환
+    return query.order_by(Article.time.desc()).limit(limit).all()
 
 # 회원가입 엔드포인트
 @app.post("/users", response_model=UserResponse)
@@ -138,3 +98,18 @@ def signup(user: UserCreateRequest, db: Session = Depends(get_db)):
 @app.get("/users/{login_id}", response_model=UserResponse)
 def read_user(login_id: str, db: Session = Depends(get_db)):
     return get_user(db, login_id)
+
+# 사용자가 기사를 클릭했을때 호출. 카테고리, 키워드 횟수 증가
+@app.post("/increase_user_interest")
+def log_article_view(request: LogViewRequest, db: Session = Depends(get_db)):
+    updated_user = increase_user_interest(
+        db=db,
+        user_id=request.login_id,
+        category=request.category,
+        keyword=request.keyword
+    )
+    
+    if not updated_user:
+        return {"message": "User not found", "success": False}
+        
+    return {"message": "Interest updated", "success": True}
