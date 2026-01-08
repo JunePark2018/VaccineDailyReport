@@ -75,3 +75,8 @@ class UpdatePreferencesResponse(BaseModel):
     message: str
     current_categories: Optional[List[str]]
     current_keywords: Optional[List[str]]
+
+# 로그인할 때 받을 데이터 양식
+class UserLoginRequest(BaseModel):
+    login_id: str
+    password: str
