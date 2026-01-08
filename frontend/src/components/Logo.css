@@ -17,7 +17,7 @@
 /* 로고 이미지 스타일 */
 .Logo .logo-image {
     /* 헤더 높이에 맞춰 이미지 크기를 조절 (가장 중요) */
-    height: 70px; 
+    height: 50px; 
     width: auto;
     display: block;
     object-fit: contain;
