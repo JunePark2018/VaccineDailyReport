@@ -2,8 +2,9 @@ import threading
 import time
 from contextlib import asynccontextmanager
 from typing import Dict, List, Optional, Any
-from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy.orm import Session
+from fastapi import FastAPI, Depends, HTTPException, Query
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import or_
 
 from database import engine, SessionLocal
 from models import Base, Article, Issue, User
@@ -68,26 +69,138 @@ def get_db():
 
 # 이슈 목록 가져오기 (히스토리)
 @app.get("/issues", response_model=List[IssueResponse])
-def get_issues(limit: int = 10, db: Session = Depends(get_db)):
-    return db.query(Issue).order_by(Issue.created_at.desc()).limit(limit).all()
+def get_issues(
+    skip: int = 0,    # [추가] 앞에서부터 몇 개를 건너뛸지
+    limit: int = 10,  # 몇 개를 가져올지
+    db: Session = Depends(get_db)
+):
+    return db.query(Issue)\
+        .order_by(Issue.created_at.desc())\
+        .offset(skip)\
+        .limit(limit)\
+        .all()
+        
+@app.get("/issues/{issue_id}")
+def get_issue_detail(
+    issue_id: int, 
+    db: Session = Depends(get_db)
+):
+    """
+    특정 이슈의 상세 정보를 가져옵니다.
+    이때, 해당 이슈에 속한 '기사 목록(articles)'도 함께 반환합니다.
+    """
+    
+    # 1. 이슈를 찾으면서 + 연관된 articles도 같이 로딩(joinedload)
+    issue = db.query(Issue)\
+        .options(joinedload(Issue.articles))\
+        .filter(Issue.id == issue_id)\
+        .first()
+    
+    # 2. 없으면 404
+    if not issue:
+        raise HTTPException(status_code=404, detail="해당 이슈를 찾을 수 없습니다.")
+        
+    return issue
+
+@app.get("/issues/search")
+def search_issues(
+    keyword: str = Query(..., min_length=2, description="검색어"),
+    skip: int = 0,   # 앞에서부터 몇 개를 건너뛸지 (0이면 처음부터)
+    limit: int = 20, # 최대 몇 개를 가져올지 (기본값 20개)
+    db: Session = Depends(get_db)
+):
+    """
+    이슈 검색 엔드포인트
+    AI가 생성한 '내용(content)' 또는 '제목(title)'에 키워드가 포함된 이슈를 찾습니다.
+    """
+    
+    search_pattern = f"%{keyword}%"
+
+    results = db.query(Issue).filter(
+        or_(
+            Issue.title.ilike(search_pattern),
+            Issue.content.ilike(search_pattern)
+        )
+    )\
+    .offset(skip)\
+    .limit(limit)\
+    .all()  # [중요] offset과 limit은 .all() 부르기 전에 써야 합니다.
+    
+    return results
 
 # 개별 기사 목록 (디버깅용)
 @app.get("/articles", response_model=List[ArticleResponse])
 def get_articles(
+    skip: int = 0,    # [추가]
     limit: int = 20, 
-    category: Optional[str] = None, # [추가] 카테고리 입력을 선택적으로 받음
+    category: Optional[str] = None, 
     db: Session = Depends(get_db)
 ):
-    # 1. 일단 모든 기사를 가져올 준비를 합니다.
     query = db.query(Article)
     
-    # 2. 만약 URL에 category가 들어왔다면? (예: ?category=IT)
     if category:
-        # DB에서 해당 카테고리만 필터링합니다.
         query = query.filter(Article.category == category)
         
-    # 3. 최신순 정렬 후 limit만큼 잘라서 반환
-    return query.order_by(Article.time.desc()).limit(limit).all()
+    # 정렬 -> 건너뛰기(skip) -> 자르기(limit) 순서로 실행
+    return query.order_by(Article.time.desc())\
+        .offset(skip)\
+        .limit(limit)\
+        .all()
+
+@app.get("/articles/{article_id}")
+def get_article(
+    article_id: int,           # URL의 {article_id}가 여기로 들어옵니다.
+    db: Session = Depends(get_db)
+):
+    # 1. DB에서 ID가 일치하는 기사 찾기
+    article = db.query(Article).filter(Article.id == article_id).first()
+    
+    # 2. 기사가 없으면 404 에러 발생 (매우 중요!)
+    if article is None:
+        raise HTTPException(status_code=404, detail="기사를 찾을 수 없습니다.")
+    
+    # 3. 기사가 있으면 반환
+    return article
+
+@app.get("/articles/search")
+def search_articles(
+    keyword: str = Query(..., min_length=2, description="검색어"),
+    category: Optional[str] = None,  # [옵션] 특정 카테고리 내에서 검색
+    skip: int = 0,
+    limit: int = 20,
+    db: Session = Depends(get_db)
+):
+    """
+    기사 검색 엔드포인트
+    - keyword: 제목(title) 또는 본문(contents)에 포함된 단어 검색
+    - category: (선택) 특정 카테고리 필터링
+    - skip/limit: 페이징 처리
+    """
+    
+    # 1. 쿼리 객체 생성
+    query = db.query(Article)
+    
+    # 2. 카테고리 필터가 있다면 먼저 적용 (범위를 좁혀주므로 성능에 유리)
+    if category:
+        query = query.filter(Article.category == category)
+        
+    # 3. 키워드 검색 적용 (제목 OR 본문)
+    # 주의: 사용자 모델에서 본문은 'content'가 아니라 'contents'였습니다.
+    search_pattern = f"%{keyword}%"
+    query = query.filter(
+        or_(
+            Article.title.ilike(search_pattern),
+            Article.contents.ilike(search_pattern)
+        )
+    )
+    
+    # 4. 최신순 정렬 + 페이징 적용 후 실행
+    results = query.order_by(Article.time.desc())\
+        .offset(skip)\
+        .limit(limit)\
+        .all()
+        
+    return results
 
 # 회원가입 엔드포인트
 @app.post("/users", response_model=UserResponse)
@@ -113,6 +226,28 @@ def log_article_view(request: LogViewRequest, db: Session = Depends(get_db)):
         return {"message": "User not found", "success": False}
         
     return {"message": "Interest updated", "success": True}
+
+# 로그인 엔드포인트
+@app.post("/login")
+def login(request: UserLoginRequest, db: Session = Depends(get_db)):
+    # 1. 아이디로 유저 찾기
+    user = get_user(db, request.login_id)
+
+# 유저가 없는 경우
+    if not user:
+        return {"success": False, "message": "존재하지 않는 아이디입니다."}
+
+# 비밀번호 비교 (DB의 password_hash 컬럼에 저장된 평문과 비교)
+    if user.password_hash != request.password:
+        return {"success": False, "message": "비밀번호가 틀렸습니다."}
+
+# 일치하면 성공 메시지 반환
+    return {
+        "success": True, 
+        "message": "로그인 성공!",
+        "login_id": user.login_id,
+        "user_name": user.user_real_name
+    }
 
 # 사용자 정보 수정
 @app.patch("/users/{login_id}")
@@ -146,25 +281,3 @@ def update_user_simple(
         raise HTTPException(status_code=500, detail="DB 업데이트 실패")
 
     return {"message": f"'{login_id}'님의 정보가 수정되었습니다."}
-
-# 로그인 엔드포인트
-@app.post("/login")
-def login(request: UserLoginRequest, db: Session = Depends(get_db)):
-    # 1. 아이디로 유저 찾기
-    user = get_user(db, request.login_id)
-
-# 유저가 없는 경우
-    if not user:
-        return {"success": False, "message": "존재하지 않는 아이디입니다."}
-
-# 비밀번호 비교 (DB의 password_hash 컬럼에 저장된 평문과 비교)
-    if user.password_hash != request.password:
-        return {"success": False, "message": "비밀번호가 틀렸습니다."}
-
-# 일치하면 성공 메시지 반환
-    return {
-        "success": True, 
-        "message": "로그인 성공!",
-        "login_id": user.login_id,
-        "user_name": user.user_real_name
-    }
