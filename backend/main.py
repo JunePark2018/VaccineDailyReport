@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from database import engine, SessionLocal
 from models import Base, Article, Issue, User
-from schemas import ArticleResponse, IssueResponse, UserCreateRequest, UserResponse, LogViewRequest, UpdatePreferencesRequest, UpdatePreferencesResponse
+from schemas import ArticleResponse, IssueResponse, UserCreateRequest, UserResponse, LogViewRequest, UpdatePreferencesRequest, UpdatePreferencesResponse, UserLoginRequest
 from scraper import run_article_crawler
 from crud import create_article, create_user, get_user, increase_user_interest
 from ai_processor import process_news_pipeline 
@@ -145,3 +145,25 @@ def update_user_preferences(
         current_categories=user.subscribed_categories or {},
         current_keywords=user.subscribed_keywords or {}
     )
+
+# 로그인 엔드포인트
+@app.post("/login")
+def login(request: UserLoginRequest, db: Session = Depends(get_db)):
+    # 1. 아이디로 유저 찾기
+    user = get_user(db, request.login_id)
+
+# 유저가 없는 경우
+    if not user:
+        return {"success": False, "message": "존재하지 않는 아이디입니다."}
+
+# 비밀번호 비교 (DB의 password_hash 컬럼에 저장된 평문과 비교)
+    if user.password_hash != request.password:
+        return {"success": False, "message": "비밀번호가 틀렸습니다."}
+
+# 일치하면 성공 메시지 반환
+    return {
+        "success": True, 
+        "message": "로그인 성공!",
+        "login_id": user.login_id,
+        "user_name": user.user_real_name
+    }
