@@ -31,7 +31,6 @@ const MyPage = () => {
   const [subscribedKeywords, setSubscribedKeywords] = useState([]);
   const [newKeyword, setNewKeyword] = useState('');
 
-  // 1. 데이터 로드 로직
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -87,7 +86,7 @@ const MyPage = () => {
   };
 
   const handleAddKeyword = () => {
-    if (newKeyword.trim() && !subscribedKeywords.includes(newKeyword)) {
+    if (newKeyword.trim() && !subscribedKeywords.includes(newKeyword.trim())) {
       const newList = [...subscribedKeywords, newKeyword.trim()];
       setSubscribedKeywords(newList);
       updateKeywordsOnServer(newList);
@@ -140,57 +139,59 @@ const MyPage = () => {
             </div>
           </section>
 
-          {/* 바 그래프 섹션 (마우스 오버 툴팁 적용) */}
+          {/* 바 그래프 섹션 (Top 10 최적화) */}
           <section className="info-section">
             <h3 className="section-title">관심 키워드 Top 10</h3>
-            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', height: '180px', padding: '100px 0' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', height: '180px', padding: '20px 0' }}>
               {Object.entries(readKeywords).sort(([, a], [, b]) => b - a).slice(0, 10).map(([keyword, count], index) => (
-                <div key={keyword} className="bar-wrapper" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '15%', position: 'relative' }}>
-                  
-                  {/* 💡 툴팁: 평소엔 숨겨져 있다가 .bar-wrapper hover 시 등장 */}
+                <div key={keyword} className="bar-wrapper" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '9%', position: 'relative' }}>
                   <div className="bar-tooltip" style={{
-                    position: 'absolute',
-                    top: '-30px',
-                    backgroundColor: '#1e293b',
-                    color: 'white',
-                    padding: '4px 8px',
-                    fontSize: '10px',
-                    fontWeight: 'bold',
-                    opacity: 0,
-                    transition: 'opacity 0.2s ease',
-                    pointerEvents: 'none',
-                    whiteSpace: 'nowrap'
+                    position: 'absolute', top: '-30px', backgroundColor: '#1e293b', color: 'white', padding: '4px 8px', fontSize: '10px', fontWeight: 'bold', opacity: 0, transition: 'opacity 0.2s ease', pointerEvents: 'none', whiteSpace: 'nowrap', zIndex: 10
                   }}>
                     {count}회 읽음
                   </div>
-                  
-                  <div style={{ width: '80%', backgroundColor: '#ffffffff', height: '100px', position: 'relative',  overflow: 'hidden', cursor: 'pointer' }}>
+                  <div style={{ width: '80%', backgroundColor: '#ffffff', height: '100px', position: 'relative', overflow: 'hidden', cursor: 'pointer', borderBottom: '1px solid #eee' }}>
                     <div className="bar-fill-element" style={{ 
                         position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#0095f6', 
                         height: isActive ? `${(count / (Math.max(...Object.values(readKeywords)) + 5)) * 100}%` : '0%',
-                        transition: `height 1s cubic-bezier(0.17, 0.67, 0.83, 0.67) ${index * 0.1}s, background-color 0.2s ease` 
+                        transition: `height 1s cubic-bezier(0.17, 0.67, 0.83, 0.67) ${index * 0.05}s` 
                     }} />
                   </div>
-                  <span style={{ fontSize: '10px', marginTop: '8px', fontWeight: '600', color: '#475569', textAlign: 'center' }}>{keyword}</span>
+                  <span style={{ fontSize: '9px', marginTop: '8px', fontWeight: '600', color: '#475569', textAlign: 'center', wordBreak: 'keep-all' }}>{keyword}</span>
                 </div>
               ))}
             </div>
           </section>
         </div>
 
-        {/* 구독 키워드 편집 섹션 (기존 유지) */}
+        {/* 하단 구독 섹션 (추가 기능 복구) */}
         <section className='keyword-listname' style={{ marginTop: '20px', padding: '20px', backgroundColor: 'white', border: '5px solid #e5e7eb', borderRadius: '12px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
             <span className='keyword-sub' style={{ fontWeight: 'bold', fontSize: '18px' }}>구독 중인 키워드</span>
             <Button text={isEditMode ? "저장" : "관리"} color={isEditMode ? "#111" : "transparent"} textColor={isEditMode ? "white" : "#6b7280"} fontSize="12px" width="70px" height="32px" onClick={() => setIsEditMode(!isEditMode)} />
           </div>
-          <div className="keyword-list" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+          <div className="keyword-list" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
             {subscribedKeywords.map(tag => (
               <span key={tag} className="keyword-tag" style={{ color: '#0095f6', backgroundColor: isEditMode ? '#f0f9ff' : 'transparent', padding: isEditMode ? '4px 12px' : '0', borderRadius: '20px', border: isEditMode ? '1px solid #bae6fd' : 'none', display: 'flex', alignItems: 'center' }}>
                 #{tag}
                 {isEditMode && <span onClick={() => handleDeleteKeyword(tag)} style={{ marginLeft: '8px', color: '#ef4444', cursor: 'pointer', fontWeight: 'bold' }}>×</span>}
               </span>
             ))}
+            
+            {/* 💡 복구된 키워드 추가 입력창 로직 */}
+            {isEditMode && (
+              <div style={{ display: 'flex', alignItems: 'center', borderBottom: '2px solid #0095f6', paddingBottom: '2px', marginLeft: '5px' }}>
+                <input 
+                  type="text" 
+                  value={newKeyword} 
+                  onChange={(e) => setNewKeyword(e.target.value)} 
+                  placeholder="추가..." 
+                  style={{ border: 'none', outline: 'none', fontSize: '13px', width: '80px', backgroundColor: 'transparent' }} 
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddKeyword()} 
+                />
+                <span onClick={handleAddKeyword} style={{ cursor: 'pointer', color: '#0095f6', fontSize: '18px', fontWeight: 'bold', marginLeft: '5px' }}>+</span>
+              </div>
+            )}
           </div>
         </section>
       </main>
