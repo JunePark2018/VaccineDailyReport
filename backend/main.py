@@ -1,13 +1,13 @@
 import threading
 import time
 from contextlib import asynccontextmanager
-from typing import List, Optional, Any
+from typing import Dict, List, Optional, Any
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database import engine, SessionLocal
 from models import Base, Article, Issue, User
-from schemas import ArticleResponse, IssueResponse, UserCreateRequest, UserResponse, LogViewRequest, UpdatePreferencesRequest, UpdatePreferencesResponse, UserLoginRequest
+from schemas import ArticleResponse, IssueResponse, UserCreateRequest, UserResponse, LogViewRequest, UserUpdate
 from scraper import run_article_crawler
 from crud import create_article, create_user, get_user, increase_user_interest
 from ai_processor import process_news_pipeline 
@@ -114,37 +114,38 @@ def log_article_view(request: LogViewRequest, db: Session = Depends(get_db)):
         
     return {"message": "Interest updated", "success": True}
 
-@app.patch("/users/{login_id}/preferences", response_model=UpdatePreferencesResponse)
-def update_user_preferences(
-    login_id: str, 
-    body: UpdatePreferencesRequest, 
+# 사용자 정보 수정
+@app.patch("/users/{login_id}")
+def update_user_simple(
+    login_id: str,               # URL에서 아이디를 받습니다.
+    user_update: UserUpdate,     # 수정할 내용을 받습니다.
     db: Session = Depends(get_db)
 ):
-    # 사용자 조회
+    # 1. 전달받은 login_id로 DB에서 바로 찾습니다. (인증 X)
     user = db.query(User).filter(User.login_id == login_id).first()
+    
     if not user:
-        raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
+        raise HTTPException(status_code=404, detail="해당 아이디의 유저를 찾을 수 없습니다.")
 
-    # 카테고리 업데이트
-    # 프론트에서 {"정치": 50, "경제": 10} 처럼 전체 딕셔너리를 보내면 그대로 덮어씁니다.
-    if body.subscribed_categories is not None:
-        user.subscribed_categories = body.subscribed_categories
+    # 2. 데이터 업데이트 로직
+    update_data = user_update.dict(exclude_unset=True) # 입력된 값만 추출
 
-    # 키워드 업데이트
-    if body.subscribed_keywords is not None:
-        user.subscribed_keywords = body.subscribed_keywords
+    for key, value in update_data.items():
+        if key == "password":
+            # 실제 사용 시에는 여기서 해싱(암호화) 필요
+            user.password_hash = value  
+        else:
+            setattr(user, key, value)
 
-    # 변경사항 저장
-    db.commit()
-    db.refresh(user)
+    # 3. 저장
+    try:
+        db.commit()
+        db.refresh(user)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="DB 업데이트 실패")
 
-    return UpdatePreferencesResponse(
-        login_id=user.login_id,
-        message="구독 정보(가중치 포함)가 업데이트되었습니다.",
-        # DB에 값이 없으면(None) 빈 딕셔너리 {} 반환
-        current_categories=user.subscribed_categories or {},
-        current_keywords=user.subscribed_keywords or {}
-    )
+    return {"message": f"'{login_id}'님의 정보가 수정되었습니다."}
 
 # 로그인 엔드포인트
 @app.post("/login")
