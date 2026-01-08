@@ -122,7 +122,7 @@ def run_article_crawler(target_companies=None, debug_save=False, output_file="ne
     is_filter_mode = True if target_companies else False
 
     sections = ["100", "101", "102", "103", "104", "105"]
-    section_names = {"100": "정치", "101": "경제", "102": "사회", "103": "생활", "104": "세계", "105": "IT"}
+    section_names = {"100": "정치", "101": "경제", "102": "사회", "103": "생활/문화", "104": "세계", "105": "IT/과학"}
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
     }

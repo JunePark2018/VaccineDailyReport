@@ -1,77 +1,101 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import axios from 'axios';
 import Logo from '../components/Logo';
 import loginIcon from '../login_icon/login.png';
 import Header from '../components/Header';
+import Button from '../components/Button';
 import './MyPage.css';
+
+const CATEGORIES = ['정치', '경제', '사회', '생활/문화', 'IT/과학', '세계'];
+
+const MOCK_USER_DATA = {
+  user_real_name: "홍길동",
+  email: "gildong@example.com",
+  read_categories: { '정치': 85, '경제': 45, '사회': 95, '생활/문화': 60, 'IT/과학': 100, '세계': 30 },
+  read_keywords: { '반도체': 15, '금리': 10, '인공지능': 25, '나스닥': 8, '재건축': 12, '우크라이나': 5, '이재명':100, '윤석열':300, 'AI':55, '박나래':44 },
+  subscribed_keywords: ['AI', '재테크', '건강']
+};
 
 const MyPage = () => {
   const navigate = useNavigate();
+  const { login_id } = useParams();
+
   const [isActive, setIsActive] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const targetScores = {
-    politics: 80, economy: 65, society: 90, living: 70, itScience: 85, world: 50
-  };
+  const [userData, setUserData] = useState(null);
+  const [targetScores, setTargetScores] = useState({});
+  const [readKeywords, setReadKeywords] = useState({});
+  const [subscribedKeywords, setSubscribedKeywords] = useState([]);
+  const [newKeyword, setNewKeyword] = useState('');
 
-  // 1. 동적 최대값 계산 (최대값 + 10)
-  const dynamicLimit = useMemo(() => {
-    return Math.max(...Object.values(targetScores)) + 10;
-  }, []);
-
-  const [currentScores, setCurrentScores] = useState({
-    politics: 0, economy: 0, society: 0, living: 0, itScience: 0, world: 0
-  });
-
-  // 2. 애니메이션 로직 (높은 값 순서대로 스프레드)
+  // 1. 데이터 로드 로직
   useEffect(() => {
-    const sortedKeys = Object.keys(targetScores).sort((a, b) => targetScores[b] - targetScores[a]);
-    let frame = 0;
-    const totalFrames = 90;
-    const staggerDelay = 4;
+    const fetchUserData = async () => {
+      try {
+        const id = login_id || 'test_user'; 
+        // const response = await axios.get(`YOUR_BACKEND_URL/users/${id}`); 
+        // const data = response.data;
+        const data = MOCK_USER_DATA; 
 
-    const animate = () => {
-      frame++;
-      let updatedScores = { ...currentScores };
-      let finished = true;
-
-      sortedKeys.forEach((key, index) => {
-        const startFrame = index * staggerDelay;
-        if (frame > startFrame) {
-          const relativeFrame = frame - startFrame;
-          const progress = Math.min(relativeFrame / totalFrames, 1);
-          const easeProgress = 1 - Math.pow(1 - progress, 3);
-          updatedScores[key] = targetScores[key] * easeProgress;
-          if (progress < 1) finished = false;
-        } else {
-          finished = false;
-        }
-      });
-
-      setCurrentScores(updatedScores);
-      if (!finished) requestAnimationFrame(animate);
+        setUserData(data);
+        setTargetScores(data.read_categories || {});
+        setReadKeywords(data.read_keywords || {});
+        setSubscribedKeywords(data.subscribed_keywords || []);
+        setLoading(false);
+      } catch (error) {
+        setUserData(MOCK_USER_DATA);
+        setLoading(false);
+      }
     };
+    fetchUserData();
+  }, [login_id]);
 
-    const timer = setTimeout(() => {
-      setIsActive(true);
-      requestAnimationFrame(animate);
-    }, 200);
+  useEffect(() => {
+    if (!loading) {
+      const timer = setTimeout(() => setIsActive(true), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
 
-    return () => { clearTimeout(timer); cancelAnimationFrame(animate); };
-  }, []);
+  const dynamicLimit = useMemo(() => {
+    const values = Object.values(targetScores);
+    return values.length > 0 ? Math.max(...values) + 10 : 100;
+  }, [targetScores]);
 
-  // 3. 좌표 계산 함수 (거미줄과 데이터 영역 공용)
-  const getCoordinates = (scores, limit) => {
-    const labels = ['politics', 'economy', 'society', 'living', 'itScience', 'world'];
-    const center = 100;
-    const radius = 60;
-    return labels.map((label, i) => {
+  const getCoordinates = (scores, limit, active) => {
+    const center = 100, radius = 60;
+    return CATEGORIES.map((label, i) => {
       const angle = (Math.PI / 3) * i - Math.PI / 2;
-      const scoreRatio = (scores[label] || 0) / limit;
-      const x = center + radius * scoreRatio * Math.cos(angle);
-      const y = center + radius * scoreRatio * Math.sin(angle);
-      return `${x},${y}`;
+      const scoreRatio = active ? (scores[label] || 0) / limit : 0;
+      return `${center + radius * scoreRatio * Math.cos(angle)},${center + radius * scoreRatio * Math.sin(angle)}`;
     }).join(' ');
   };
+
+  const updateKeywordsOnServer = async (newList) => {
+    try {
+      await axios.patch(`YOUR_BACKEND_URL/users/${login_id}`, { subscribed_keywords: newList });
+    } catch (error) { console.error(error); }
+  };
+
+  const handleDeleteKeyword = (target) => {
+    const newList = subscribedKeywords.filter(k => k !== target);
+    setSubscribedKeywords(newList);
+    updateKeywordsOnServer(newList);
+  };
+
+  const handleAddKeyword = () => {
+    if (newKeyword.trim() && !subscribedKeywords.includes(newKeyword)) {
+      const newList = [...subscribedKeywords, newKeyword.trim()];
+      setSubscribedKeywords(newList);
+      updateKeywordsOnServer(newList);
+      setNewKeyword('');
+    }
+  };
+
+  if (loading) return <div className="loading-state">데이터 분석 중...</div>;
 
   return (
     <div className="mypage-container">
@@ -83,78 +107,92 @@ const MyPage = () => {
 
       <main className="mypage-main">
         <section className="profile-header">
-          <h1 className="text-xl font-bold">나의 정보</h1>
-          <p className="text-gray-400 text-sm mt-1">user_id@vaccine.com</p>
+          <h1 className="text-xl font-bold">{userData?.user_real_name} 님의 인사이트</h1>
+          <p className="text-gray-400 text-sm mt-1">{userData?.email}</p>
         </section>
 
         <div className="content-wrapper">
+          {/* 레이더 차트 */}
           <section className="info-section">
             <h3 className="section-title">나의 관심 카테고리</h3>
-            <div className="chart-container">
+            <div className="chart-container" style={{ display: 'flex', justifyContent: 'center' }}>
               <div style={{ width: '500px', height: '350px' }}>
-                <svg viewBox="-20 10 250 180" className="w-full h-full">
-                  {/* --- 거미줄(가이드라인) 복구 구간 --- */}
-                  {[0.2, 0.4, 0.6, 0.8, 1].map((r) => {
-                    // 각 단계별로 모든 카테고리 점수가 동일한 가상의 객체 생성
-                    const guideScores = {
-                      politics: dynamicLimit * r, economy: dynamicLimit * r, 
-                      society: dynamicLimit * r, living: dynamicLimit * r, 
-                      itScience: dynamicLimit * r, world: dynamicLimit * r
-                    };
-                    return (
-                      <polygon
-                        key={r}
-                        points={getCoordinates(guideScores, dynamicLimit)}
-                        fill="none"
-                        stroke="#f0f0f0"
-                        strokeWidth="1"
-                      />
-                    );
-                  })}
-                  {/* ---------------------------------- */}
-
-                  {/* 데이터 영역 */}
-                  <polygon
-                    className={`radar-polygon ${isActive ? 'active' : ''}`}
-                    points={getCoordinates(currentScores, dynamicLimit)}
-                    fill="#0496f721"
-                    stroke="#000000ff"
-                    strokeWidth="0.1"
+                <svg viewBox="-20 10 250 180" className="w-full h-full" style={{ overflow: 'visible' }}>
+                  {[0.2, 0.4, 0.6, 0.8, 1].map((r) => (
+                    <polygon key={r} points={getCoordinates({ '정치': dynamicLimit * r, '경제': dynamicLimit * r, '사회': dynamicLimit * r, '생활/문화': dynamicLimit * r, 'IT/과학': dynamicLimit * r, '세계': dynamicLimit * r }, dynamicLimit, true)} fill="none" stroke="#f0f0f0" strokeWidth="1" />
+                  ))}
+                  <polygon 
+                    points={getCoordinates(targetScores, dynamicLimit, isActive)} 
+                    fill="#0496f721" 
+                    stroke="#000000ff" 
+                    strokeWidth="0.1" 
                     strokeLinejoin="round"
+                    style={{ transition: 'points 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)' }}
                   />
-
-                  {/* 라벨 텍스트 */}
-                  <text x="100" y="33" textAnchor="middle" fontSize="10" fill="#4b5563" fontWeight="">정치</text>
-                  <text x="160" y="75" textAnchor="start" fontSize="10" fill="#4b5563" fontWeight="">경제</text>
-                  <text x="160" y="135" textAnchor="start" fontSize="10" fill="#4b5563" fontWeight="">사회</text>
-                  <text x="100" y="177" textAnchor="middle" fontSize="10" fill="#4b5563" fontWeight="">생활</text>
-                  <text x="40" y="135" textAnchor="end" fontSize="10" fill="#4b5563" fontWeight="">과학</text>
-                  <text x="40" y="75" textAnchor="end" fontSize="10" fill="#4b5563" fontWeight="">세계</text>
+                  {CATEGORIES.map((label, i) => {
+                    const angle = (Math.PI / 3) * i - Math.PI / 2;
+                    const x = 100 + 85 * Math.cos(angle);
+                    const y = 100 + 85 * Math.sin(angle);
+                    return <text key={label} x={x} y={y} textAnchor="middle" fontSize="10" fill="#4b5563" fontWeight="bold" dominantBaseline="middle">{label}</text>
+                  })}
                 </svg>
               </div>
             </div>
           </section>
 
-          {/* 오른쪽 키워드 섹션 (해시태그 스타일) */}
+          {/* 바 그래프 섹션 (마우스 오버 툴팁 적용) */}
           <section className="info-section">
-            <div style={{ flex: 1 }}>
-              <h3 className="section-title">나의 관심 키워드</h3>
-              <div className="keyword-list">
-                {['반도체', '금리', '오픈AI', '미대선', '건강'].map(tag => (
-                  <span key={tag} className="keyword-tag" style={{ color: '#0095f6', marginRight: '5px' }}>
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div className="analysis-footer">
-              <p className="text-xs text-gray-400 mb-1">AI 분석 결과</p>
-              <p className="text-lg font-black leading-tight italic">
-                당신의 데이터 분석 결과,<br />사회 및 과학 분야의 관심도가 높습니다.
-              </p>
+            <h3 className="section-title">관심 키워드 Top 10</h3>
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', height: '180px', padding: '100px 0' }}>
+              {Object.entries(readKeywords).sort(([, a], [, b]) => b - a).slice(0, 10).map(([keyword, count], index) => (
+                <div key={keyword} className="bar-wrapper" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '15%', position: 'relative' }}>
+                  
+                  {/* 💡 툴팁: 평소엔 숨겨져 있다가 .bar-wrapper hover 시 등장 */}
+                  <div className="bar-tooltip" style={{
+                    position: 'absolute',
+                    top: '-30px',
+                    backgroundColor: '#1e293b',
+                    color: 'white',
+                    padding: '4px 8px',
+                    fontSize: '10px',
+                    fontWeight: 'bold',
+                    opacity: 0,
+                    transition: 'opacity 0.2s ease',
+                    pointerEvents: 'none',
+                    whiteSpace: 'nowrap'
+                  }}>
+                    {count}회 읽음
+                  </div>
+                  
+                  <div style={{ width: '80%', backgroundColor: '#ffffffff', height: '100px', position: 'relative',  overflow: 'hidden', cursor: 'pointer' }}>
+                    <div className="bar-fill-element" style={{ 
+                        position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#0095f6', 
+                        height: isActive ? `${(count / (Math.max(...Object.values(readKeywords)) + 5)) * 100}%` : '0%',
+                        transition: `height 1s cubic-bezier(0.17, 0.67, 0.83, 0.67) ${index * 0.1}s, background-color 0.2s ease` 
+                    }} />
+                  </div>
+                  <span style={{ fontSize: '10px', marginTop: '8px', fontWeight: '600', color: '#475569', textAlign: 'center' }}>{keyword}</span>
+                </div>
+              ))}
             </div>
           </section>
         </div>
+
+        {/* 구독 키워드 편집 섹션 (기존 유지) */}
+        <section className='keyword-listname' style={{ marginTop: '20px', padding: '20px', backgroundColor: 'white', border: '5px solid #e5e7eb', borderRadius: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+            <span className='keyword-sub' style={{ fontWeight: 'bold', fontSize: '18px' }}>구독 중인 키워드</span>
+            <Button text={isEditMode ? "저장" : "관리"} color={isEditMode ? "#111" : "transparent"} textColor={isEditMode ? "white" : "#6b7280"} fontSize="12px" width="70px" height="32px" onClick={() => setIsEditMode(!isEditMode)} />
+          </div>
+          <div className="keyword-list" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+            {subscribedKeywords.map(tag => (
+              <span key={tag} className="keyword-tag" style={{ color: '#0095f6', backgroundColor: isEditMode ? '#f0f9ff' : 'transparent', padding: isEditMode ? '4px 12px' : '0', borderRadius: '20px', border: isEditMode ? '1px solid #bae6fd' : 'none', display: 'flex', alignItems: 'center' }}>
+                #{tag}
+                {isEditMode && <span onClick={() => handleDeleteKeyword(tag)} style={{ marginLeft: '8px', color: '#ef4444', cursor: 'pointer', fontWeight: 'bold' }}>×</span>}
+              </span>
+            ))}
+          </div>
+        </section>
       </main>
     </div>
   );

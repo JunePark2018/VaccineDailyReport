@@ -84,3 +84,27 @@
 .radar-polygon.active {
   opacity: 1;
 }
+
+/* MyPage.css */
+
+/* 막대 전체 영역에 마우스를 올렸을 때 */
+.bar-wrapper:hover .bar-tooltip {
+  opacity: 1 !important;
+  transform: translateY(-5px);
+}
+
+.bar-wrapper:hover .bar-fill-element {
+  background-color: #0077c7 !important; /* 마우스 올리면 좀 더 진한 파란색으로 변경 */
+}
+
+/* 툴팁 아래 작은 화살표 효과 (선택 사항) */
+.bar-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -4px;
+  border-width: 4px;
+  border-style: solid;
+  border-color: #1e293b transparent transparent transparent;
+}
