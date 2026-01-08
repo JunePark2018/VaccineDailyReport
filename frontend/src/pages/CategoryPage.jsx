@@ -3,21 +3,18 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Logo from '../components/Logo';
 import Searchbar from '../components/Searchbar';
-import loginIcon from '../login_icon/login.png';
+import UserMenu from '../components/UserMenu';
 import './CategoryPage.css';
 
 const CategoryPage = () => {
     const { name } = useParams();
     const navigate = useNavigate();
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [displayArticles, setDisplayArticles] = useState([]);
     const [imageMap, setImageMap] = useState({});
     const itemsPerPage = 5;
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        setIsLoggedIn(!!token);
         setCurrentPage(1);
 
         const loadData = async () => {
@@ -62,16 +59,6 @@ const CategoryPage = () => {
 
         loadData();
     }, [name]);
-
-    const RightHeaderIcon = (
-        <img 
-            src={loginIcon} 
-            alt={isLoggedIn ? "마이페이지" : "로그인"} 
-            width='35px' 
-            onClick={() => navigate(isLoggedIn ? '/mypage' : '/login')} 
-            style={{ cursor: 'pointer' }} 
-        />
-    );
 
     // Function to render the main content block (Featured, Highlights, Grid)
     // This is repeated 5 times as requested by the user
@@ -197,7 +184,7 @@ const CategoryPage = () => {
             <Header
                 leftChild={<Logo />}
                 midChild={<Searchbar />}
-                rightChild={RightHeaderIcon}
+                rightChild={<UserMenu />}
                 headerTop="on"
                 headerMain="on"
                 headerBottom="on"
