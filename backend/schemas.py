@@ -72,3 +72,7 @@ class UserUpdate(BaseModel):
     fcm_token: Optional[str] = None
     marketing_agree: Optional[bool] = None
     user_status: Optional[int] = None
+
+class UserLoginRequest(BaseModel):
+    login_id: str
+    password: str

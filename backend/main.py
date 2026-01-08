@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from database import engine, SessionLocal
 from models import Base, Article, Issue, User
-from schemas import ArticleResponse, IssueResponse, UserCreateRequest, UserResponse, LogViewRequest, UserUpdate
+from schemas import ArticleResponse, IssueResponse, UserCreateRequest, UserLoginRequest, UserResponse, LogViewRequest, UserUpdate
 from scraper import run_article_crawler
 from crud import create_article, create_user, get_user, increase_user_interest
 from ai_processor import process_news_pipeline 
