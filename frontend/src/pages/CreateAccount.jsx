@@ -7,8 +7,7 @@ export default function CreateAccount() {
 
     // --- State Management ---
     const [formData, setFormData] = useState({
-        lastName: '',
-        firstName: '',
+        name: '',
         loginId: '',
         password: '',
         confirmPassword: '',
@@ -97,8 +96,8 @@ export default function CreateAccount() {
         let newErrors = {};
         
         // 1. Name Check
-        if (!formData.lastName.trim() || !formData.firstName.trim()) {
-            newErrors.name = "이름을 모두 입력해주세요.";
+        if (!formData.name.trim()) {
+            newErrors.name = "이름을 입력해주세요.";
         }
 
         // 2. Login ID Check (6+ chars, at least 2 numbers)
@@ -143,7 +142,7 @@ export default function CreateAccount() {
             // Prepare data for backend (matching your SQL structure mostly)
             const submitData = {
                 login_id: formData.loginId,
-                user_real_name: formData.lastName + formData.firstName,
+                user_real_name: formData.name,
                 password: formData.password, // Ideally, hash this before sending or send over HTTPS
                 email: formData.email,
                 subscribed_categories: selectedCategories,
@@ -167,29 +166,18 @@ export default function CreateAccount() {
                 <form onSubmit={handleSubmit}>
                     
                     {/* 1. Name Section */}
-                    <div className="input-row">
-                        <div className="input-group half">
-                            <label>성</label>
-                            <input 
-                                type="text" 
-                                name="lastName" 
-                                placeholder="홍" 
-                                value={formData.lastName}
-                                onChange={handleChange} 
-                            />
-                        </div>
-                        <div className="input-group half">
-                            <label>이름</label>
-                            <input 
-                                type="text" 
-                                name="firstName" 
-                                placeholder="길동" 
-                                value={formData.firstName}
-                                onChange={handleChange} 
-                            />
-                        </div>
+                    <div className="input-group">
+                        <label>이름</label>
+                        <input 
+                            type="text" 
+                            name="name" 
+                            placeholder="홍길동" 
+                            value={formData.name}
+                            onChange={handleChange} 
+                            className={errors.name ? "input-error" : ""}
+                        />
+                        {errors.name && <span className="error-msg">{errors.name}</span>}
                     </div>
-                    {errors.name && <span className="error-msg">{errors.name}</span>}
 
                     {/* 2. Login ID Section */}
                     <div className="input-group">
