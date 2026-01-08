@@ -1,5 +1,5 @@
 from typing import List, Optional, Any, Dict
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from datetime import datetime
 
 # --- [Pydantic 모델] 프론트엔드에 보낼 데이터 형태 정의 ---
@@ -36,7 +36,6 @@ class UserCreateRequest(BaseModel):
     email: Optional[str] = None
     subscribed_categories: Optional[List[str]] = []
     subscribed_keywords: Optional[List[str]] = []
-    preferred_time_range: Optional[Any] = None # JSON이나 문자열
     marketing_agree: bool = False
 
 # 클라이언트에게 응답할 데이터 (비밀번호 제외)
@@ -48,7 +47,6 @@ class UserResponse(BaseModel):
     subscribed_keywords: Optional[List[str]] = []
     read_categories: Optional[Dict[str, int]] = {}
     read_keywords: Optional[Dict[str, int]] = {}
-    preferred_time_range: Optional[Any] = None
     marketing_agree: bool = False
     
     # 시스템이 생성하는 정보 (가입일, 상태 등)
@@ -62,16 +60,15 @@ class UserResponse(BaseModel):
 class LogViewRequest(BaseModel):
     login_id: str
     category: str
-    keyword: Optional[str] = None
+    keywords: Optional[List[str]] = None
 
-# 구독 카테고리/키워드 수정 요청 (Request) Body
-class UpdatePreferencesRequest(BaseModel):
+# 사용자 정보 수정
+class UserUpdate(BaseModel):
+    user_real_name: Optional[str] = None
+    password: Optional[str] = None
+    email: Optional[str] = None
     subscribed_categories: Optional[List[str]] = None
     subscribed_keywords: Optional[List[str]] = None
-
-# 구독 카테고리/키워드 수정 응답 (Response) Body
-class UpdatePreferencesResponse(BaseModel):
-    login_id: str
-    message: str
-    current_categories: Optional[List[str]]
-    current_keywords: Optional[List[str]]
+    fcm_token: Optional[str] = None
+    marketing_agree: Optional[bool] = None
+    user_status: Optional[int] = None

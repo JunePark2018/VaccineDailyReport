@@ -121,7 +121,6 @@ def create_user(db: Session, user_data: dict):
         email=user_data.get("email"),
         subscribed_categories=raw_cats,
         subscribed_keywords=raw_kwds,
-        preferred_time_range=user_data.get("preferred_time_range"),
         marketing_agree=user_data.get("marketing_agree", False)
     )
 

@@ -76,10 +76,6 @@ class User(Base):
     # view_history JSON ({기사 URL, 기사 조회 시간})
     view_history = Column(JSON, default={})
     
-    # preferred_time_range JSON or String
-    # 시간 대역을 구조적으로 저장하려면 JSON, 단순 텍스트면 String 사용
-    preferred_time_range = Column(JSON) 
-    
     # marketing_agree BOOLEAN DEFAULT FALSE
     marketing_agree = Column(Boolean, default=False)
     
