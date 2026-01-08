@@ -30,7 +30,7 @@
 }
 
 /* 뉴스 섹션 */
-.bottom-news-section {
+.Main .bottom-news-section {
   max-width: 1200px;
   margin: 0 auto;
   padding: 100px 20px 0 20px;
