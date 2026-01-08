@@ -1,4 +1,5 @@
 # crud.py
+from typing import List
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 from database import SessionLocal
@@ -75,7 +76,7 @@ def create_sample_issue():
         # 3. Issue 객체 생성 (id와 created_at은 자동 생성되므로 안 넣어도 됨)
         new_issue = Issue(
             title="의대 증원 2천명 확정, 의료계 반발 심화",
-            content="AI가 쓴 테스트용 기사입니다.",
+            contents="AI가 쓴 테스트용 기사입니다.",
             analysis_result=ai_data
         )
 
@@ -139,7 +140,7 @@ def get_user(db: Session, login_id: str):
     return db.query(User).filter(User.login_id == login_id).first()
 
 # 기사를 봤을 때 카운트가 증가하는 함수
-def increase_user_interest(db: Session, user_id: str, category: str, keyword: str = None):
+def increase_user_interest(db: Session, user_id: str, category: str, keywords: List[str] = None):
     user = db.query(User).filter(User.login_id == user_id).first()
     if not user:
         return None
@@ -157,14 +158,15 @@ def increase_user_interest(db: Session, user_id: str, category: str, keyword: st
     flag_modified(user, "read_categories")
 
     # 2. 키워드 카운트 증가 (키워드가 있을 경우에만)
-    if keyword:
+    if keywords:
         current_kwds = user.read_keywords or {}
         if isinstance(current_kwds, list):
             current_kwds = {k: 1 for k in current_kwds}
             
-        kwd_count = current_kwds.get(keyword, 0)
-        current_kwds[keyword] = kwd_count + 1
-        user.read_keywords = dict(current_kwds)
+        for keyword in keywords:
+            kwd_count = current_kwds.get(keyword, 0)
+            current_kwds[keyword] = kwd_count + 1
+            user.read_keywords = dict(current_kwds)
     
         flag_modified(user, "read_keywords")
 

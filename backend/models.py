@@ -12,7 +12,7 @@ class Issue(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String)
-    content = Column(Text)
+    contents = Column(Text)
     analysis_result = Column(JSON, nullable=True) 
     
     created_at = Column(DateTime, default=datetime.now)

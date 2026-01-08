@@ -74,44 +74,33 @@ def get_issues(
     limit: int = 10,  # 몇 개를 가져올지
     db: Session = Depends(get_db)
 ):
+    """
+    AI가 생성한 기사들을 가져옵니다.
+    
+    **skip**: 앞에서부터 건너뛸 데이터의 개수 (페이지 번호 구현 시 사용)<br/>
+    **limit**: 한 번에 가져올 최대 데이터 개수 (페이지 당 목록 수)<br/>
+    
+    """
+    
     return db.query(Issue)\
         .order_by(Issue.created_at.desc())\
         .offset(skip)\
         .limit(limit)\
         .all()
         
-@app.get("/issues/{issue_id}")
-def get_issue_detail(
-    issue_id: int, 
-    db: Session = Depends(get_db)
-):
-    """
-    특정 이슈의 상세 정보를 가져옵니다.
-    이때, 해당 이슈에 속한 '기사 목록(articles)'도 함께 반환합니다.
-    """
-    
-    # 1. 이슈를 찾으면서 + 연관된 articles도 같이 로딩(joinedload)
-    issue = db.query(Issue)\
-        .options(joinedload(Issue.articles))\
-        .filter(Issue.id == issue_id)\
-        .first()
-    
-    # 2. 없으면 404
-    if not issue:
-        raise HTTPException(status_code=404, detail="해당 이슈를 찾을 수 없습니다.")
-        
-    return issue
-
 @app.get("/issues/search")
 def search_issues(
-    keyword: str = Query(..., min_length=2, description="검색어"),
+    keyword: str = Query(..., min_length=1, description="검색어"),
     skip: int = 0,   # 앞에서부터 몇 개를 건너뛸지 (0이면 처음부터)
     limit: int = 20, # 최대 몇 개를 가져올지 (기본값 20개)
     db: Session = Depends(get_db)
 ):
     """
-    이슈 검색 엔드포인트
-    AI가 생성한 '내용(content)' 또는 '제목(title)'에 키워드가 포함된 이슈를 찾습니다.
+    AI가 생성한 기사에서 '내용(content)' 또는 '제목(title)'에 키워드가 포함된 이슈를 찾습니다.
+    
+    **keyword**: 검색할 키워드.<br/>
+    **skip**: 앞에서부터 건너뛸 데이터의 개수 (페이지 번호 구현 시 사용)<br/>
+    **limit**: 한 번에 가져올 최대 데이터 개수 (페이지 당 목록 수)<br/>
     """
     
     search_pattern = f"%{keyword}%"
@@ -128,6 +117,30 @@ def search_issues(
     
     return results
 
+@app.get("/issues/{issue_id}")
+def get_issue_detail(
+    issue_id: int, 
+    db: Session = Depends(get_db)
+):
+    """
+    AI가 생성한 기사 중 특정 ID에 해당하는 기사를 가져옵니다.
+    
+    **issue_id**: AI가 생성한 기사의 ID.
+    
+    """
+    
+    # 1. 이슈를 찾으면서 + 연관된 articles도 같이 로딩(joinedload)
+    issue = db.query(Issue)\
+        .options(joinedload(Issue.articles))\
+        .filter(Issue.id == issue_id)\
+        .first()
+    
+    # 2. 없으면 404
+    if not issue:
+        raise HTTPException(status_code=404, detail="해당 이슈를 찾을 수 없습니다.")
+        
+    return issue
+
 # 개별 기사 목록 (디버깅용)
 @app.get("/articles", response_model=List[ArticleResponse])
 def get_articles(
@@ -136,6 +149,13 @@ def get_articles(
     category: Optional[str] = None, 
     db: Session = Depends(get_db)
 ):
+    """
+    크롤링한 기사들을 가져옵니다.
+    
+    **skip**: 앞에서부터 건너뛸 데이터의 개수 (페이지 번호 구현 시 사용)<br/>
+    **limit**: 한 번에 가져올 최대 데이터 개수 (페이지 당 목록 수)<br/>
+    **category**: 한정할 카테고리 이름 (옵션)
+    """
     query = db.query(Article)
     
     if category:
@@ -147,34 +167,21 @@ def get_articles(
         .limit(limit)\
         .all()
 
-@app.get("/articles/{article_id}")
-def get_article(
-    article_id: int,           # URL의 {article_id}가 여기로 들어옵니다.
-    db: Session = Depends(get_db)
-):
-    # 1. DB에서 ID가 일치하는 기사 찾기
-    article = db.query(Article).filter(Article.id == article_id).first()
-    
-    # 2. 기사가 없으면 404 에러 발생 (매우 중요!)
-    if article is None:
-        raise HTTPException(status_code=404, detail="기사를 찾을 수 없습니다.")
-    
-    # 3. 기사가 있으면 반환
-    return article
-
 @app.get("/articles/search")
 def search_articles(
-    keyword: str = Query(..., min_length=2, description="검색어"),
+    keyword: str = Query(..., min_length=1, description="검색어"),
     category: Optional[str] = None,  # [옵션] 특정 카테고리 내에서 검색
     skip: int = 0,
     limit: int = 20,
     db: Session = Depends(get_db)
 ):
     """
-    기사 검색 엔드포인트
-    - keyword: 제목(title) 또는 본문(contents)에 포함된 단어 검색
-    - category: (선택) 특정 카테고리 필터링
-    - skip/limit: 페이징 처리
+    크롤링한 기사들에서 '내용(content)' 또는 '제목(title)'에 키워드가 포함된 이슈를 찾습니다.
+    
+    **keyword**: 제목(title) 또는 본문(contents)에 포함된 단어 검색<br/>
+    **category**: (선택) 특정 카테고리 필터링<br/>
+    **skip**: 앞에서부터 건너뛸 데이터의 개수 (페이지 번호 구현 시 사용)<br/>
+    **limit**: 한 번에 가져올 최대 데이터 개수 (페이지 당 목록 수)<br/>
     """
     
     # 1. 쿼리 객체 생성
@@ -185,7 +192,6 @@ def search_articles(
         query = query.filter(Article.category == category)
         
     # 3. 키워드 검색 적용 (제목 OR 본문)
-    # 주의: 사용자 모델에서 본문은 'content'가 아니라 'contents'였습니다.
     search_pattern = f"%{keyword}%"
     query = query.filter(
         or_(
@@ -202,24 +208,55 @@ def search_articles(
         
     return results
 
+
+@app.get("/articles/{article_id}")
+def get_article(
+    article_id: int,           # URL의 {article_id}가 여기로 들어옵니다.
+    db: Session = Depends(get_db)
+):
+    """
+    크롤링한 기사들 중 특정 ID에 해당하는 기사를 가져옵니다.
+    
+    **id**: AI가 생성한 기사의 ID.
+    """
+    # 1. DB에서 ID가 일치하는 기사 찾기
+    article = db.query(Article).filter(Article.id == article_id).first()
+    
+    # 2. 기사가 없으면 404 에러 발생 (매우 중요!)
+    if article is None:
+        raise HTTPException(status_code=404, detail="기사를 찾을 수 없습니다.")
+    
+    # 3. 기사가 있으면 반환
+    return article
+
 # 회원가입 엔드포인트
 @app.post("/users", response_model=UserResponse)
 def signup(user: UserCreateRequest, db: Session = Depends(get_db)):
+    """
+    새 사용자 정보로 회원가입을 합니다.
+    """
     return create_user(db, user.model_dump())
 
 # 사용자 조회 엔드포인트
 @app.get("/users/{login_id}", response_model=UserResponse)
 def read_user(login_id: str, db: Session = Depends(get_db)):
+    """
+    특정 사용자 ID의 정보를 가져옵니다.
+    """
     return get_user(db, login_id)
 
 # 사용자가 기사를 클릭했을때 호출. 카테고리, 키워드 횟수 증가
 @app.post("/increase_user_interest")
 def log_article_view(request: LogViewRequest, db: Session = Depends(get_db)):
+    """
+    사용자가 읽은 카테고리와 키워드를 업데이트합니다.
+    """
+    
     updated_user = increase_user_interest(
         db=db,
         user_id=request.login_id,
         category=request.category,
-        keyword=request.keyword
+        keywords=request.keywords
     )
     
     if not updated_user:
@@ -230,6 +267,13 @@ def log_article_view(request: LogViewRequest, db: Session = Depends(get_db)):
 # 로그인 엔드포인트
 @app.post("/login")
 def login(request: UserLoginRequest, db: Session = Depends(get_db)):
+    
+    """
+    로그인을 합니다. ID나 비밀번호가 맞는지 비교하며, 응답문은 JSON 형태입니다. 
+    JSON의 success 항목이 True면 로그인에 성공한 것입니다. 자세한 내용은 아래 Schema를 참고해 주세요.
+    """
+    
+    
     # 1. 아이디로 유저 찾기
     user = get_user(db, request.login_id)
 
@@ -255,7 +299,14 @@ def update_user_simple(
     login_id: str,               # URL에서 아이디를 받습니다.
     user_update: UserUpdate,     # 수정할 내용을 받습니다.
     db: Session = Depends(get_db)
-):
+):    
+    """
+    사용자의 정보를 수정합니다.
+    
+    **login_id**: 수정할 사용자의 ID
+    """
+    
+    
     # 1. 전달받은 login_id로 DB에서 바로 찾습니다. (인증 X)
     user = db.query(User).filter(User.login_id == login_id).first()
     
