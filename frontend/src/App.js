@@ -22,9 +22,9 @@ function App() {
           <Route path="/article" element={<ArticlePage />} />
           <Route path="/category/:name" element={<CategoryPage />} />
           <Route path="/issues" element={<Issues />} />
-          <Route path='login' element={<Login />} />
+          <Route path='/login' element={<Login />} />
           <Route path='/CreateAccount' element={<CreateAccount />} />
-          <Route path='/MyPage' element={<MyPage />} />
+          <Route path='/mypage' element={<MyPage />} />
         </Routes>
       </div>
     </BrowserRouter>

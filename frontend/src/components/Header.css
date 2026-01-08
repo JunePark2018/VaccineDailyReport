@@ -52,6 +52,9 @@
 /* 1. Left Section: Logo centered to the left */
 .Header-Container .Header-Main .left-child {
     flex: 1;
+    display: flex;
+    justify-content: flex-start;
+    align-items: left;
 }
 
 /* 2. Middle Section: Searchbar centered on all sides */

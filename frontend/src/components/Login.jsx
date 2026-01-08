@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Button from "./Button";
 import Header from "./Header";
 import Logo from "./Logo";
+import UserMenu from "./UserMenu";
 import "./Login.css";
 
 const Login = () => {
@@ -26,7 +27,14 @@ const Login = () => {
     const handleLogin = (e) =>{
         e.preventDefault();
         setError('');
-
+        
+        // Test login logic: if username and password are 'test'
+        if (loginData.username === 'test' && loginData.password === 'test') {
+            localStorage.setItem('token', 'fake-token');
+            nav('/mypage');
+        } else {
+            setError('아이디 또는 비밀번호가 일치하지 않습니다. (테스트 계정: test / test)');
+        }
     }
 
 
@@ -37,6 +45,7 @@ const Login = () => {
                 headerMain="on"
                 headerBottom="off"
                 leftChild={<Logo />}
+                rightChild={<UserMenu />}
             />
             <form className="Login_total" onSubmit={handleLogin}>
                     <div className="input_containter">
