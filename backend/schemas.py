@@ -141,8 +141,8 @@ class UserUpdate(BaseModel):
     user_real_name: Optional[str] = None
     password: Optional[str] = None
     email: Optional[str] = None
-    age_range: str
-    gender: str
+    age_range: Optional[str] = None
+    gender: Optional[str] = None
     subscribed_categories: Optional[List[str]] = None
     subscribed_keywords: Optional[List[str]] = None
     fcm_token: Optional[str] = None
