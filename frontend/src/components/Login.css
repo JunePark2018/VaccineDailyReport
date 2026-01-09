@@ -16,7 +16,7 @@
     text-align: center;
 }
 
-.Login .id_box, .pw_box{
+.Login .id_box, .Login .pw_box {
     width: 300px;
     height: 40px;
     padding-left: 10px;

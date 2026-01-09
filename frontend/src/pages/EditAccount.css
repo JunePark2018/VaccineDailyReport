@@ -1,6 +1,5 @@
-
 /* Container to center everything on screen */
-.create-account-container {
+.edit-account-container {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -10,7 +9,7 @@
 }
 
 /* The white card box */
-.create-account-container .create-account-box {
+.edit-account-container .edit-account-box {
     background-color: white;
     width: 100%;
     max-width: 500px;
@@ -20,13 +19,13 @@
     margin: 40px 20px;
 }
 
-.create-account-container h2 {
+.edit-account-container h2 {
     text-align: center;
     color: #333;
     margin-bottom: 10px;
 }
 
-.create-account-container .description {
+.edit-account-container .description {
     text-align: center;
     color: #666;
     font-size: 14px;
@@ -34,24 +33,24 @@
 }
 
 /* Form Layout */
-.create-account-container .input-group {
+.edit-account-container .input-group {
     margin-bottom: 20px;
     display: flex;
     flex-direction: column;
 }
 
-.create-account-container .input-row {
+.edit-account-container .input-row {
     display: flex;
     justify-content: space-between;
     gap: 15px;
     margin-bottom: 15px; /* Added spacing below name row */
 }
 
-.create-account-container .half {
+.edit-account-container .half {
     width: 48%;
 }
 
-.create-account-container label {
+.edit-account-container label {
     font-size: 14px;
     font-weight: 600;
     color: #444;
@@ -59,51 +58,51 @@
     display: block;
 }
 
-.create-account-container .sub-label {
+.edit-account-container .sub-label {
     font-weight: normal;
     font-size: 12px;
     color: #888;
 }
 
 /* Input Fields */
-.create-account-container input[type="text"],
-.create-account-container input[type="password"],
-.create-account-container input[type="email"],
-.create-account-container select {
+.edit-account-container input[type="text"],
+.edit-account-container input[type="password"],
+.edit-account-container input[type="email"],
+.edit-account-container select {
     width: 100%;
     padding: 12px;
     border: 1px solid #ddd;
     border-radius: 6px;
     font-size: 15px;
-    box-sizing: border-box; /* Ensures padding doesn't affect width */
+    box-sizing: border-box;
     transition: border 0.3s;
     background-color: white;
 }
 
-.create-account-container input:focus {
+.edit-account-container input:focus {
     border-color: #4a90e2;
     outline: none;
 }
 
-.create-account-container .input-error {
+.edit-account-container .input-error {
     border-color: #ff4d4d !important;
     background-color: #fff8f8;
 }
 
 /* Error Message Text */
-.create-account-container .error-msg {
+.edit-account-container .error-msg {
     color: #ff4d4d;
     font-size: 12px;
     margin-top: 5px;
 }
 
 /* Password Toggle & Strength */
-.create-account-container .password-wrapper {
+.edit-account-container .password-wrapper {
     position: relative;
     width: 100%;
 }
 
-.create-account-container .toggle-btn {
+.edit-account-container .toggle-btn {
     position: absolute;
     right: 10px;
     top: 50%;
@@ -115,7 +114,7 @@
     cursor: pointer;
 }
 
-.create-account-container .strength-meter-container {
+.edit-account-container .strength-meter-container {
     margin-top: 8px;
     display: flex;
     align-items: center;
@@ -124,25 +123,25 @@
     font-weight: bold;
 }
 
-.create-account-container .strength-bar {
+.edit-account-container .strength-bar {
     height: 4px;
     border-radius: 2px;
     transition: width 0.3s ease, background-color 0.3s ease;
 }
 
 /* Category Grid */
-.create-account-container .category-section {
+.edit-account-container .category-section {
     margin-bottom: 25px;
 }
 
-.create-account-container .category-grid {
+.edit-account-container .category-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr); /* 3 columns */
     gap: 10px;
     margin-top: 10px;
 }
 
-.create-account-container .category-box {
+.edit-account-container .category-box {
     position: relative;
     padding: 12px;
     border: 1px solid #ddd;
@@ -155,18 +154,18 @@
     user-select: none;
 }
 
-.create-account-container .category-box:hover {
+.edit-account-container .category-box:hover {
     background-color: #f0f0f0;
 }
 
-.create-account-container .category-box.selected {
+.edit-account-container .category-box.selected {
     border-color: #4a90e2;
     background-color: #eef6ff;
     color: #4a90e2;
     font-weight: bold;
 }
 
-.create-account-container .badge {
+.edit-account-container .badge {
     position: absolute;
     top: -6px;
     right: -6px;
@@ -182,14 +181,14 @@
 }
 
 /* Agreement Checkbox */
-.create-account-container .agreement-section {
+.edit-account-container .agreement-section {
     margin-bottom: 30px;
     padding: 15px;
     background-color: #f9f9f9;
     border-radius: 6px;
 }
 
-.create-account-container .checkbox-container {
+.edit-account-container .checkbox-container {
     display: flex;
     align-items: flex-start; /* Align with top of text */
     cursor: pointer;
@@ -198,14 +197,14 @@
     font-weight: normal;
 }
 
-.create-account-container .checkbox-container input {
+.edit-account-container .checkbox-container input {
     margin-right: 10px;
     margin-top: 2px;
     cursor: pointer;
 }
 
 /* Submit Button */
-.create-account-container .submit-btn {
+.edit-account-container .submit-btn {
     width: 100%;
     padding: 15px;
     background-color: #4a90e2; /* Nice blue */
@@ -218,19 +217,19 @@
     transition: background 0.3s;
 }
 
-.create-account-container .submit-btn:hover {
+.edit-account-container .submit-btn:hover {
     background-color: #357abd;
 }
 
 /* Login Link */
-.create-account-container .login-redirect {
+.edit-account-container .login-redirect {
     margin-top: 20px;
     text-align: center;
     font-size: 13px;
     color: #666;
 }
 
-.create-account-container .login-redirect span {
+.edit-account-container .login-redirect span {
     color: #4a90e2;
     font-weight: bold;
     cursor: pointer;

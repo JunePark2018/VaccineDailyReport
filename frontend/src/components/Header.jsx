@@ -32,7 +32,13 @@ const Header = ({
       {headerTop === "on" && (
         <div className="Header-Top">
           <div className="header-top-content">
-            <span className="today-date">{sampleArticles[currentArticleIndex].title}</span>
+            <span 
+              className="today-date" 
+              onClick={() => nav('/article')} 
+              style={{ cursor: 'pointer' }}
+            >
+              {sampleArticles[currentArticleIndex].title}
+            </span>
             <span className="trending-tag">서울 날씨</span>
           </div>
         </div>

@@ -9,6 +9,7 @@ import CreateAccount from './pages/CreateAccount.jsx';
 import Issues from './pages/Issues.jsx';
 import Login from './components/Login.jsx';
 import MyPage from './pages/MyPage.jsx';
+import EditAccount from './pages/EditAccount.jsx';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
           <Route path='/login' element={<Login />} />
           <Route path='/CreateAccount' element={<CreateAccount />} />
           <Route path='/mypage' element={<MyPage />} />
+          <Route path='/edit-account' element={<EditAccount />} />
         </Routes>
       </div>
     </BrowserRouter>

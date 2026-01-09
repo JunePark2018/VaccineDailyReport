@@ -4,27 +4,27 @@ import Header from '../components/Header';
 import Logo from '../components/Logo';
 import UserMenu from '../components/UserMenu';
 import { categories as categoryData } from '../components/categoryIcon/categoryData';
-import './CreateAccount.css';
+import './EditAccount.css';
 
-export default function CreateAccount() {
+export default function EditAccount() {
     const navigate = useNavigate();
 
     // --- State Management ---
     const [formData, setFormData] = useState({
-        name: '',
-        loginId: '',
+        name: '홍길동', // Pre-filled mock data
+        loginId: 'test_user', 
         password: '',
         confirmPassword: '',
-        email: '',
-        ageGroup: '',
-        gender: '',
-        marketingAgree: false, // For the tracking agreement
+        email: 'gildong@example.com',
+        ageGroup: '20~29세', // Pre-filled mock data
+        gender: '남성', // Pre-filled mock data
+        marketingAgree: true,
     });
 
-    const [selectedCategories, setSelectedCategories] = useState([]); // Stores chosen categories in order
+    const [selectedCategories, setSelectedCategories] = useState(['정치', '사회', 'IT/과학']); // Pre-filled mock data
     const [showPassword, setShowPassword] = useState(false);
     const [passwordStrength, setPasswordStrength] = useState({ score: 0, label: '', color: '#e0e0e0' });
-    const [errors, setErrors] = useState({}); // To store validation error messages
+    const [errors, setErrors] = useState({});
 
     // --- Static Data ---
     const categoryOptions = categoryData
@@ -35,7 +35,6 @@ export default function CreateAccount() {
     const genders = ['남성', '여성', '비공개'];
 
     // --- Password Logic ---
-    // Runs every time the password field changes
     useEffect(() => {
         const pwd = formData.password;
         if (!pwd) {
@@ -44,20 +43,19 @@ export default function CreateAccount() {
         }
 
         let score = 0;
-        if (pwd.length >= 8) score++;          // Check length
-        if (/[A-Z]/.test(pwd)) score++;        // Check uppercase
-        if (/[0-9]/.test(pwd)) score++;        // Check numbers
-        if (/[!@#$%^&*]/.test(pwd)) score++;   // Check special chars
+        if (pwd.length >= 8) score++;
+        if (/[A-Z]/.test(pwd)) score++;
+        if (/[0-9]/.test(pwd)) score++;
+        if (/[!@#$%^&*]/.test(pwd)) score++;
 
         const strengthConfig = [
-            { label: '매우 약함', color: '#ff4d4d' }, // 0
-            { label: '약함', color: '#ff944d' },      // 1
-            { label: '보통', color: '#ffda4d' },      // 2
-            { label: '강함', color: '#90ee90' },      // 3
-            { label: '매우 강함', color: '#2ecc71' }  // 4
+            { label: '매우 약함', color: '#ff4d4d' },
+            { label: '약함', color: '#ff944d' },
+            { label: '보통', color: '#ffda4d' },
+            { label: '강함', color: '#90ee90' },
+            { label: '매우 강함', color: '#2ecc71' }
         ];
 
-        // Cap score at 4
         const finalScore = Math.min(score, 4);
         setPasswordStrength({ 
             score: finalScore, 
@@ -67,7 +65,6 @@ export default function CreateAccount() {
     }, [formData.password]);
 
     // --- Event Handlers ---
-
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         setFormData(prev => ({
@@ -75,12 +72,10 @@ export default function CreateAccount() {
             [name]: type === 'checkbox' ? checked : value
         }));
         
-        // Clear specific error when user types
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: null }));
         }
 
-        // If password changes, also clear confirmPassword error
         if (name === 'password' && errors.confirmPassword) {
             setErrors(prev => ({ ...prev, confirmPassword: null }));
         }
@@ -88,13 +83,10 @@ export default function CreateAccount() {
 
     const handleCategoryClick = (category) => {
         if (selectedCategories.includes(category)) {
-            // If already selected, remove it (deselect)
             setSelectedCategories(selectedCategories.filter(item => item !== category));
         } else {
-            // If not selected, add to the end
             setSelectedCategories([...selectedCategories, category]);
         }
-        // Clear category error if user selects
         if (errors.categories) {
             setErrors(prev => ({ ...prev, categories: null }));
         }
@@ -104,50 +96,32 @@ export default function CreateAccount() {
     const validate = () => {
         let newErrors = {};
         
-        // 1. Name Check
         if (!formData.name.trim()) {
             newErrors.name = "이름을 입력해주세요.";
         }
 
-        // 2. Login ID Check (6+ chars, at least 2 numbers)
-        const numberCount = (formData.loginId.match(/\d/g) || []).length;
-        if (formData.loginId.length < 6 || numberCount < 2) {
-            newErrors.loginId = "아이디는 6자 이상이며, 숫자가 2개 이상 포함되어야 합니다.";
-        }
-
-        // 3. Email Check (@ symbol)
         if (!formData.email.includes('@')) {
             newErrors.email = "유효한 이메일 형식이 아닙니다 (@ 누락).";
         }
 
-        // 3-1. Age Group Check
         if (!formData.ageGroup) {
             newErrors.ageGroup = "연령대를 선택해주세요.";
         }
 
-        // 3-2. Gender Check
         if (!formData.gender) {
             newErrors.gender = "성별을 선택해주세요.";
         }
 
-        // 4. Password Check (Basic requirement check)
-        if (formData.password.length < 8) {
+        if (formData.password && formData.password.length < 8) {
             newErrors.password = "비밀번호는 최소 8자 이상이어야 합니다.";
         }
 
-        // 4-1. Password Confirmation Check
         if (formData.password !== formData.confirmPassword) {
             newErrors.confirmPassword = "비밀번호가 일치하지 않습니다.";
         }
 
-        // 5. Category Check (At least 3)
         if (selectedCategories.length < 3) {
             newErrors.categories = `최소 3개의 관심 분야를 선택해주세요. (현재 ${selectedCategories.length}개 선택)`;
-        }
-
-        // 6. Agreement Check
-        if (!formData.marketingAgree) {
-            newErrors.agreement = "서비스 이용을 위해 사용자 경험 데이터 수집에 동의해야 합니다.";
         }
 
         setErrors(newErrors);
@@ -158,11 +132,10 @@ export default function CreateAccount() {
         e.preventDefault();
         
         if (validate()) {
-            // Prepare data for backend (matching your SQL structure mostly)
             const submitData = {
                 login_id: formData.loginId,
                 user_real_name: formData.name,
-                password: formData.password, // Ideally, hash this before sending or send over HTTPS
+                password: formData.password,
                 email: formData.email,
                 age_group: formData.ageGroup,
                 gender: formData.gender,
@@ -170,14 +143,14 @@ export default function CreateAccount() {
                 marketing_agree: formData.marketingAgree
             };
 
-            console.log("Account Created successfully:", submitData);
-            alert("회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.");
-            navigate('/login'); // Assuming you have a route for /login
+            console.log("Account Updated successfully:", submitData);
+            alert("회원 정보가 수정되었습니다.");
+            navigate('/mypage');
         }
     };
 
     return (
-        <div className="create-account-container">
+        <div className="edit-account-container">
             <Header
                 headerTop="on"
                 headerMain="on"
@@ -185,15 +158,14 @@ export default function CreateAccount() {
                 leftChild={<Logo />}
                 rightChild={<UserMenu />}
             />
-            <div className="create-account-box">
-                <h2>회원가입</h2>
+            <div className="edit-account-box">
+                <h2>정보 수정</h2>
                 <p className="description">
-                    맞춤형 뉴스 서비스를 경험하기 위해 계정을 생성하세요.
+                    회원 정보를 수정하고 맞춤형 서비스를 계속 이용하세요.
                 </p>
 
                 <form onSubmit={handleSubmit}>
                     
-                    {/* 1. Name Section */}
                     <div className="input-group">
                         <label>이름</label>
                         <input 
@@ -207,23 +179,20 @@ export default function CreateAccount() {
                         {errors.name && <span className="error-msg">{errors.name}</span>}
                     </div>
 
-                    {/* 2. Login ID Section */}
                     <div className="input-group">
                         <label>아이디</label>
                         <input 
                             type="text" 
                             name="loginId" 
-                            placeholder="영문+숫자 포함 6자 이상 (숫자 2개 필수)" 
                             value={formData.loginId}
-                            onChange={handleChange}
-                            className={errors.loginId ? "input-error" : ""}
+                            disabled
+                            style={{ backgroundColor: '#f0f0f0', cursor: 'not-allowed' }}
                         />
-                        {errors.loginId && <span className="error-msg">{errors.loginId}</span>}
+                        <span className="sub-label" style={{ marginTop: '4px' }}>아이디는 변경할 수 없습니다.</span>
                     </div>
 
-                    {/* 3. Password Section */}
                     <div className="input-group">
-                        <label>비밀번호</label>
+                        <label>새 비밀번호 (변경 시에만 입력)</label>
                         <div className="password-wrapper">
                             <input 
                                 type={showPassword ? "text" : "password"} 
@@ -241,7 +210,6 @@ export default function CreateAccount() {
                                 {showPassword ? "숨기기" : "보기"}
                             </button>
                         </div>
-                        {/* Strength Meter */}
                         {formData.password && (
                             <div className="strength-meter-container">
                                 <div 
@@ -259,7 +227,6 @@ export default function CreateAccount() {
                         {errors.password && <span className="error-msg">{errors.password}</span>}
                     </div>
 
-                    {/* 3-1. Confirm Password Section */}
                     <div className="input-group">
                         <label>비밀번호 확인</label>
                         <div className="password-wrapper">
@@ -287,7 +254,6 @@ export default function CreateAccount() {
                         {errors.confirmPassword && <span className="error-msg">{errors.confirmPassword}</span>}
                     </div>
 
-                    {/* 4. Email Section */}
                     <div className="input-group">
                         <label>이메일</label>
                         <input 
@@ -331,9 +297,8 @@ export default function CreateAccount() {
                         </div>
                     </div>
 
-                    {/* 5. Category Selection (Interactive) */}
                     <div className="category-section">
-                        <label>관심 분야 선택 <span className="sub-label">(우선순위대로 번호가 지정됩니다, 최소 3개)</span></label>
+                        <label>관심 분야 선택 <span className="sub-label">(최소 3개)</span></label>
                         <div className="category-grid">
                             {categoryOptions.map((cat) => {
                                 const index = selectedCategories.indexOf(cat);
@@ -353,7 +318,6 @@ export default function CreateAccount() {
                         {errors.categories && <span className="error-msg">{errors.categories}</span>}
                     </div>
 
-                    {/* 6. Agreement Section */}
                     <div className="agreement-section">
                         <label className="checkbox-container">
                             <input 
@@ -367,13 +331,12 @@ export default function CreateAccount() {
                                 (필수) 사용자 경험 향상 및 서비스 개선을 위한 활동 기록 수집에 동의합니다.
                             </span>
                         </label>
-                        {errors.agreement && <span className="error-msg">{errors.agreement}</span>}
                     </div>
 
-                    <button type="submit" className="submit-btn">계정 생성하기</button>
+                    <button type="submit" className="submit-btn">수정 완료</button>
                     
                     <div className="login-redirect">
-                        이미 계정이 있으신가요? <span onClick={() => navigate('/login')}>로그인 하기</span>
+                        <span onClick={() => navigate('/mypage')}>마이페이지로 돌아가기</span>
                     </div>
                 </form>
             </div>

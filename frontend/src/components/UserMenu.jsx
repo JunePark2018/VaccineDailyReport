@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import loginIcon from '../login_icon/login.png';
 import './UserMenu.css';
 
 const UserMenu = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
@@ -46,6 +47,11 @@ const UserMenu = () => {
     navigate('/mypage');
   };
 
+  const handleEditAccount = () => {
+    setShowMenu(false);
+    navigate('/edit-account');
+  };
+
   return (
     <div className="user-menu-container" ref={menuRef}>
       <img
@@ -54,9 +60,13 @@ const UserMenu = () => {
         className="user-icon"
         onClick={handleIconClick}
       />
+      {isLoggedIn && <div className="login-indicator"></div>}
       {isLoggedIn && showMenu && (
         <div className="dropdown-menu">
-          <div className="menu-item" onClick={handleMyPage}>마이페이지</div>
+          {location.pathname !== '/mypage' && (
+            <div className="menu-item" onClick={handleMyPage}>마이페이지</div>
+          )}
+          <div className="menu-item" onClick={handleEditAccount}>정보수정</div>
           <div className="menu-item" onClick={handleLogout}>로그아웃</div>
         </div>
       )}

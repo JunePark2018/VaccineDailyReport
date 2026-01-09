@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import Logo from '../components/Logo';
-import loginIcon from '../login_icon/login.png';
+import UserMenu from '../components/UserMenu';
 import Header from '../components/Header';
 import Button from '../components/Button';
 import './MyPage.css';
@@ -102,7 +102,7 @@ const MyPage = () => {
       <Header
         headerTop="off" headerMain="on" headerBottom="off"
         leftChild={<Logo />}
-        rightChild={<img src={loginIcon} width='35px' onClick={() => navigate('/login')} className="cursor-pointer" alt="login" />}
+        rightChild={<UserMenu />}
       />
 
       <main className="mypage-main">

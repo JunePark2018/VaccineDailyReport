@@ -5,18 +5,18 @@
   font-family: sans-serif;
 }
 
-.mypage-main {
+.mypage-container .mypage-main {
   max-width: 1000px;
   margin: 24px auto 0;
 }
 
-.profile-header {
+.mypage-container .profile-header {
   color: rgb(0, 0, 0);
   padding: 32px;
 }
 
 /* 옆으로 붙게 만드는 핵심 클래스 */
-.content-wrapper {
+.mypage-container .content-wrapper {
   display: flex;
   flex-direction: row; /* 가로 나열 강제 */
   gap: 12px;  /*나의 관심 카테고리 나의 관심 키워드  사이 간격*/
@@ -24,7 +24,7 @@
   padding-bottom: 16px;
 }
 
-.info-section {
+.mypage-container .info-section {
   background-color: white;
   border: 1px solid #e5e7eb;
   padding: 8px;
@@ -35,21 +35,21 @@
   flex-direction: column;
 }
 
-.section-title {
+.mypage-container .section-title {
   font-weight: bold;
   margin-bottom: 16px;
   border-bottom: 1px solid #f3f4f6;
   padding-bottom: 25px;
 }
 
-.chart-container {
+.mypage-container .chart-container {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.keyword-list {
+.mypage-container .keyword-list {
   display: flex;
   flex-wrap: wrap;
   padding-left: 20px;
@@ -57,7 +57,7 @@
 }
 
 
-.keyword-tag {
+.mypage-container .keyword-tag {
   /* 배경은 투명하게, 글자색은 인스타 블루 */
   background-color: transparent;
   color: #0095f6; /* 인스타그램 공식 브랜드 블루 계열 */
@@ -70,35 +70,35 @@
   transition: opacity 0.2s;
 }
 
-.analysis-footer {
+.mypage-container .analysis-footer {
   border-top: 1px solid #f3f4f6;
   padding-top: 16px;
 }
 
-.radar-polygon {
+.mypage-container .radar-polygon {
   /* points 트랜지션은 지우거나 아주 짧게(0.1s) 설정하세요 */
   transition: opacity 0.5s ease-out; 
   opacity: 0;
 }
 
-.radar-polygon.active {
+.mypage-container .radar-polygon.active {
   opacity: 1;
 }
 
 /* MyPage.css */
 
 /* 막대 전체 영역에 마우스를 올렸을 때 */
-.bar-wrapper:hover .bar-tooltip {
+.mypage-container .bar-wrapper:hover .bar-tooltip {
   opacity: 1 !important;
   transform: translateY(-5px);
 }
 
-.bar-wrapper:hover .bar-fill-element {
+.mypage-container .bar-wrapper:hover .bar-fill-element {
   background-color: #0077c7 !important; /* 마우스 올리면 좀 더 진한 파란색으로 변경 */
 }
 
 /* 툴팁 아래 작은 화살표 효과 (선택 사항) */
-.bar-tooltip::after {
+.mypage-container .bar-tooltip::after {
   content: "";
   position: absolute;
   top: 100%;
