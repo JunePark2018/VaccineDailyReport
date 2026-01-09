@@ -7,12 +7,17 @@ const UserMenu = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userName, setUserName] = useState('');
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
+    const storedUserName = localStorage.getItem('userName');
     setIsLoggedIn(!!token);
+    if (storedUserName) {
+      setUserName(storedUserName);
+    }
 
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -36,7 +41,9 @@ const UserMenu = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('userName');
     setIsLoggedIn(false);
+    setUserName('');
     setShowMenu(false);
     navigate('/');
     window.location.reload(); // Refresh to update all components
@@ -54,13 +61,16 @@ const UserMenu = () => {
 
   return (
     <div className="user-menu-container" ref={menuRef}>
-      <img
-        src={loginIcon}
-        alt={isLoggedIn ? "User Menu" : "Login"}
-        className="user-icon"
-        onClick={handleIconClick}
-      />
-      {isLoggedIn && <div className="login-indicator"></div>}
+      <div className="user-info-wrapper" onClick={handleIconClick}>
+        {isLoggedIn && (
+          <span className="user-name">{(userName || "회원") + "님"}</span>
+        )}
+        <img
+          src={loginIcon}
+          alt={isLoggedIn ? "User Menu" : "Login"}
+          className="user-icon"
+        />
+      </div>
       {isLoggedIn && showMenu && (
         <div className="dropdown-menu">
           {location.pathname !== '/mypage' && (
