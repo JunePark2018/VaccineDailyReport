@@ -119,7 +119,9 @@ def create_user(db: Session, user_data: dict):
         
         # 아래는 선택 항목 (.get으로 없으면 None 처리)
         user_real_name=user_data.get("user_real_name"),
-        email=user_data.get("email"),
+        email=user_data.get("email"),        
+        age_range=user_data.get("age_range"),
+        gender=user_data.get("gender"),
         subscribed_categories=raw_cats,
         subscribed_keywords=raw_kwds,
         marketing_agree=user_data.get("marketing_agree", False)
