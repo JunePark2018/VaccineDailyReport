@@ -30,7 +30,7 @@
   padding: 8px;
   min-width: 350px; /* 옆으로 붙을 때 찌그러짐 방지 */
   flex: 1;
-  height: 420px;
+  height: 500px;
   display: flex;
   flex-direction: column;
 }
@@ -53,7 +53,7 @@
   display: flex;
   flex-wrap: wrap;
   padding-left: 20px;
-  gap: 8px;
+  gap: 0px;
 }
 
 
