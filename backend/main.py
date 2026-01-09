@@ -96,7 +96,7 @@ def search_issues(
     db: Session = Depends(get_db)
 ):
     """
-    AI가 생성한 기사에서 '내용(content)' 또는 '제목(title)'에 키워드가 포함된 이슈를 찾습니다.
+    AI가 생성한 기사에서 '내용(contents)' 또는 '제목(title)'에 키워드가 포함된 이슈를 찾습니다.
     
     **keyword**: 검색할 키워드.<br/>
     **skip**: 앞에서부터 건너뛸 데이터의 개수 (페이지 번호 구현 시 사용)<br/>
@@ -108,7 +108,7 @@ def search_issues(
     results = db.query(Issue).filter(
         or_(
             Issue.title.ilike(search_pattern),
-            Issue.content.ilike(search_pattern)
+            Issue.contents.ilike(search_pattern)
         )
     )\
     .offset(skip)\
@@ -176,7 +176,7 @@ def search_articles(
     db: Session = Depends(get_db)
 ):
     """
-    크롤링한 기사들에서 '내용(content)' 또는 '제목(title)'에 키워드가 포함된 이슈를 찾습니다.
+    크롤링한 기사들에서 '내용(contents)' 또는 '제목(title)'에 키워드가 포함된 이슈를 찾습니다.
     
     **keyword**: 제목(title) 또는 본문(contents)에 포함된 단어 검색<br/>
     **category**: (선택) 특정 카테고리 필터링<br/>
@@ -254,7 +254,7 @@ def log_article_view(request: LogViewRequest, db: Session = Depends(get_db)):
     
     updated_user = increase_user_interest(
         db=db,
-        user_id=request.login_id,
+        login_id=request.login_id,
         category=request.category,
         keywords=request.keywords
     )

@@ -142,8 +142,8 @@ def get_user(db: Session, login_id: str):
     return db.query(User).filter(User.login_id == login_id).first()
 
 # 기사를 봤을 때 카운트가 증가하는 함수
-def increase_user_interest(db: Session, user_id: str, category: str, keywords: List[str] = None):
-    user = db.query(User).filter(User.login_id == user_id).first()
+def increase_user_interest(db: Session, login_id: str, category: str, keywords: List[str] = None):
+    user = db.query(User).filter(User.login_id == login_id).first()
     if not user:
         return None
     
