@@ -1,13 +1,16 @@
 import './Searchbar.css';
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 /**
  * Searchbar 컴포넌트: 사용자의 입력값을 받아 검색 로직을 수행하는 바 형태의 UI
  * * @param {string} maxWidth - 검색창의 최대 너비 (예: "500px", "100%")
  * @param {string} fontSize - 입력창 및 아이콘의 기준 폰트 크기 (예: "16px")
  * @param {string} className - 외부에서 추가할 CSS 클래스 이름
+ * @param {function} onSearch - 검색 실행 시 호출될 콜백 함수
  */
-function Searchbar({ maxWidth, fontSize, className}) {
+function Searchbar({ maxWidth, fontSize, className, onSearch }) {
+    const navigate = useNavigate();
     // 사용자가 입력창에 타이핑하는 텍스트 상태 관리
     const [inputText, setInputText] = useState("");
 
@@ -16,7 +19,11 @@ function Searchbar({ maxWidth, fontSize, className}) {
      */
     const handleSearch = () => {
         if (inputText.trim() !== "") {
-            console.log(`검색어 전송: ${inputText}`);
+            if (onSearch) {
+                onSearch(inputText);
+            } else {
+                navigate(`/search?q=${encodeURIComponent(inputText)}`);
+            }
         }
     };
 
