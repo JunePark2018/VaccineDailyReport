@@ -51,11 +51,13 @@
 }
 
 .edit-account-container label {
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
     color: #444;
     margin-bottom: 6px;
+    margin-left: 10px;
     display: block;
+    text-align: left;
 }
 
 .edit-account-container .sub-label {
@@ -74,7 +76,7 @@
     border: 1px solid #ddd;
     border-radius: 6px;
     font-size: 15px;
-    box-sizing: border-box;
+    box-sizing: border-box; /* Ensures padding doesn't affect width */
     transition: border 0.3s;
     background-color: white;
 }
