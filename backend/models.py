@@ -55,6 +55,12 @@ class User(Base):
     # email VARCHAR(100)
     email = Column(String(100))
     
+    # age_range STRING
+    age_range = Column(String(30))
+    
+    # gender STRING ("남", "여", "기타?" 등)
+    gender = Column(String(30))
+    
     # subscribed_categories JSON (['정치', '경제'])
     subscribed_categories = Column(JSON, default=[])
     

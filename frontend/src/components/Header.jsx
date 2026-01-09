@@ -33,13 +33,13 @@ const Header = ({
         <div className="Header-Top">
           <div className="header-top-content">
             <span 
-              className="today-date" 
+              className="updated-articles" 
               onClick={() => nav('/article')} 
               style={{ cursor: 'pointer' }}
             >
               {sampleArticles[currentArticleIndex].title}
             </span>
-            <span className="trending-tag">서울 날씨</span>
+            <span className="weather">서울 날씨</span>
           </div>
         </div>
       )}

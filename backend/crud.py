@@ -119,7 +119,9 @@ def create_user(db: Session, user_data: dict):
         
         # 아래는 선택 항목 (.get으로 없으면 None 처리)
         user_real_name=user_data.get("user_real_name"),
-        email=user_data.get("email"),
+        email=user_data.get("email"),        
+        age_range=user_data.get("age_range"),
+        gender=user_data.get("gender"),
         subscribed_categories=raw_cats,
         subscribed_keywords=raw_kwds,
         marketing_agree=user_data.get("marketing_agree", False)
@@ -140,8 +142,8 @@ def get_user(db: Session, login_id: str):
     return db.query(User).filter(User.login_id == login_id).first()
 
 # 기사를 봤을 때 카운트가 증가하는 함수
-def increase_user_interest(db: Session, user_id: str, category: str, keywords: List[str] = None):
-    user = db.query(User).filter(User.login_id == user_id).first()
+def increase_user_interest(db: Session, login_id: str, category: str, keywords: List[str] = None):
+    user = db.query(User).filter(User.login_id == login_id).first()
     if not user:
         return None
     

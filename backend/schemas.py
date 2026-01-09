@@ -59,6 +59,8 @@ class UserCreateRequest(BaseModel):
     password_hash: 비밀번호 해시<br/>
     user_real_name: 실명 (옵션)<br/>
     email: 이메일 (옵션)
+    age_range: 연령대
+    gender: 성별
     subscribed_categories: 구독한 카테고리 목록 (옵션)
     subscribed_keywords: 구독한 키워드 목록 (옵션)
     marketing_agree: 마케팅 동의
@@ -67,6 +69,8 @@ class UserCreateRequest(BaseModel):
     password_hash: str  # 실제로는 비밀번호 원문을 받아 내부에서 해싱하는 것이 좋지만, 현재 구조에 맞췄습니다.
     user_real_name: Optional[str] = None
     email: Optional[str] = None
+    age_range: str
+    gender: str
     subscribed_categories: Optional[List[str]] = []
     subscribed_keywords: Optional[List[str]] = []
     marketing_agree: bool = False
@@ -79,6 +83,8 @@ class UserResponse(BaseModel):
     login_id: 사용자 ID<br/>
     user_real_name: 실명 (옵션)<br/>
     email: 이메일 (옵션)
+    age_range: 연령대
+    gender: 성별
     subscribed_categories: 구독한 카테고리 목록 (옵션)
     subscribed_keywords: 구독한 키워드 목록 (옵션)
     read_categories: 읽은 카테고리 및 읽은 횟수 딕셔너리: {"세계": 27, "IT/과학": 38} (옵션)
@@ -88,6 +94,8 @@ class UserResponse(BaseModel):
     login_id: str
     user_real_name: Optional[str] = None
     email: Optional[str] = None
+    age_range: str
+    gender: str
     subscribed_categories: Optional[List[str]] = []
     subscribed_keywords: Optional[List[str]] = []
     read_categories: Optional[Dict[str, int]] = {}
@@ -121,6 +129,8 @@ class UserUpdate(BaseModel):
     user_real_name: 실명 (옵션)<br/>
     password: 비밀번호 해시 (옵션)<br/>
     email: 이메일 (옵션)
+    age_range: 연령대
+    gender: 성별
     subscribed_categories: 구독한 카테고리 목록 (옵션)
     subscribed_keywords: 구독한 키워드 목록 (옵션)
     fcm_token: FCM 토큰 (옵션)
@@ -131,6 +141,8 @@ class UserUpdate(BaseModel):
     user_real_name: Optional[str] = None
     password: Optional[str] = None
     email: Optional[str] = None
+    age_range: str
+    gender: str
     subscribed_categories: Optional[List[str]] = None
     subscribed_keywords: Optional[List[str]] = None
     fcm_token: Optional[str] = None
