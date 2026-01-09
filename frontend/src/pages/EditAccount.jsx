@@ -124,6 +124,11 @@ export default function EditAccount() {
             newErrors.categories = `최소 3개의 관심 분야를 선택해주세요. (현재 ${selectedCategories.length}개 선택)`;
         }
 
+        // 6. Agreement Check
+        if (!formData.marketingAgree) {
+            newErrors.agreement = "서비스 이용을 위해 사용자 경험 데이터 수집에 동의해야 합니다.";
+        }
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -298,7 +303,7 @@ export default function EditAccount() {
                     </div>
 
                     <div className="category-section">
-                        <label>관심 분야 선택 <span className="sub-label">(최소 3개)</span></label>
+                        <label>관심 분야 선택 <span className="sub-label">(우선순위대로 번호가 지정됩니다, 최소 3개)</span></label>
                         <div className="category-grid">
                             {categoryOptions.map((cat) => {
                                 const index = selectedCategories.indexOf(cat);
@@ -331,6 +336,7 @@ export default function EditAccount() {
                                 (필수) 사용자 경험 향상 및 서비스 개선을 위한 활동 기록 수집에 동의합니다.
                             </span>
                         </label>
+                        {errors.agreement && <span className="error-msg">{errors.agreement}</span>}
                     </div>
 
                     <button type="submit" className="submit-btn">수정 완료</button>
