@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import "./SearchResult.css";
 import Header from "../components/Header";
 import Logo from "../components/Logo";
@@ -7,8 +8,11 @@ import Searchbar from "../components/Searchbar";
 import TypewriterText from "../components/TypewriterText";
 
 export default function SearchResult() {
+    const [searchParams] = useSearchParams();
+    const query = searchParams.get('q');
+
     // --- 1. 가 데이터를 초기 상태로 설정 ---
-    const [searchTerm, setSearchTerm] = useState("뉴스"); // 초기 검색어 설정
+    const [searchTerm, setSearchTerm] = useState(query || "뉴스"); // 초기 검색어 설정
     const [isLoading, setIsLoading] = useState(false);
     const [articles, setArticles] = useState([
         {
@@ -54,6 +58,12 @@ export default function SearchResult() {
             setIsLoading(false);
         }, 1500);
     };
+
+    useEffect(() => {
+        if (query) {
+            handleSearch(query);
+        }
+    }, [query]);
 
     return (
         <div className="SearchResult_Main">
