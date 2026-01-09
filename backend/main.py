@@ -2,7 +2,7 @@ import threading
 import time
 from contextlib import asynccontextmanager
 from typing import Dict, List, Optional, Any
-from fastapi import FastAPI, Depends, HTTPException, Query
+from fastapi import FastAPI, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_
 
@@ -229,12 +229,23 @@ def get_article(
     # 3. 기사가 있으면 반환
     return article
 
-# 회원가입 엔드포인트
+# 회원가입 엔드포인트: 중복 아이디 체크 로직 추가
 @app.post("/users", response_model=UserResponse)
 def signup(user: UserCreateRequest, db: Session = Depends(get_db)):
     """
-    새 사용자 정보로 회원가입을 합니다.
+    새 사용자 정보로 회원가입을 합니다. (중복 아이디 체크 포함)
     """
+    # 1. 아이디 중복 체크 (get_user 함수 재사용)
+    db_user = get_user(db, login_id=user.login_id)
+    
+    # 2. 이미 존재하면 400 에러 발생
+    if db_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="이미 존재하는 아이디입니다."
+        )
+
+    # 3. 중복이 아니면 가입 진행
     return create_user(db, user.model_dump())
 
 # 사용자 조회 엔드포인트
