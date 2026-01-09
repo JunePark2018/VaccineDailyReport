@@ -43,7 +43,7 @@ function Main() {
         {/* 상단 */}
         <Header
           leftChild={<Logo />}
-          midChild={<Searchbar />}
+          midChild={<Searchbar fontSize="16px"/>}
           rightChild={<UserMenu />}
         />
 

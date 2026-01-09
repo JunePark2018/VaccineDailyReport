@@ -68,19 +68,19 @@ export default function SearchResult() {
     return (
         <div className="SearchResult_Main">
             <div className="Header_Container">
-                <Header leftChild={<Logo/>} rightChild={<UserMenu/>} headerBottom="off" />
+                <Header leftChild={<Logo/>} midChild={<Searchbar maxWidth="600px" onSearch={handleSearch} />} rightChild={<UserMenu/>} headerBottom="on" />
             </div>
 
             <div className="Content_Section">
                 <div className="Searchbar_Wrapper">
-                    <Searchbar maxWidth="800px" onSearch={handleSearch} />
+                    
                 </div>
 
                 {/* 데이터가 있을 때 항상 표시 */}
                 <div className="SearchResult_AI">
                     <div className="Title_Wrapper">
                         <h3 className="AI_Title">
-                            {isLoading ? `'${searchTerm}' 키워드 분석 중` : `'${searchTerm}' 분석 결과`}
+                            {isLoading ? `"${searchTerm}" 키워드 검색 중` : `"${searchTerm}" 검색 결과`}
                         </h3>
                         {isLoading && <div className="Loading_Spinner"></div>}
                     </div>
@@ -88,7 +88,7 @@ export default function SearchResult() {
                     <div className="AI_Content_Wrapper">
                         <div className="AI_Left_Section">
                             <div className="Hot_Topic_Section">
-                                <h4>핫 토픽!</h4>
+                                <p style={{fontWeight: 'bold'}}>Hot Topic!</p>
                                 <div className="Topic_Cards">
                                     {isLoading ? [1, 2].map(i => (
                                         <div key={i} className="Topic_Card skeleton"></div>
