@@ -52,11 +52,13 @@
 }
 
 .create-account-container label {
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
     color: #444;
     margin-bottom: 6px;
+    margin-left: 10px;
     display: block;
+    text-align: left;
 }
 
 .create-account-container .sub-label {
