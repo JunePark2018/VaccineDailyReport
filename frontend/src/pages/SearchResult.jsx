@@ -68,7 +68,7 @@ export default function SearchResult() {
     return (
         <div className="SearchResult_Main">
             <div className="Header_Container">
-                <Header leftChild={<Logo/>} rightChild={<UserMenu/>} headerBottom="off" />
+                <Header leftChild={<Logo/>} rightChild={<UserMenu/>} headerBottom="on" />
             </div>
 
             <div className="Content_Section">
