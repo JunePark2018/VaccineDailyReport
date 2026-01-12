@@ -11,29 +11,27 @@ const Login = () => {
     const nav = useNavigate();
 
     const [loginData, setLoginData] = useState({
-        username:'',
-        password:''
+        username: '',
+        password: ''
     });
 
-    const [error,setError] = useState('');
+    const [error, setError] = useState('');
 
-    const handleChange = (e) =>{
-        const {name, value} = e.target;
+    const handleChange = (e) => {
+        const { name, value } = e.target;
         setLoginData(prevData => ({
             ...prevData,
-            [name]: value,    
+            [name]: value,
         }));
     }
-    const handleLogin = (e) =>{
+    const handleLogin = (e) => {
         e.preventDefault();
         setError('');
-        
+
         // Test login logic: if username and password are 'test'
         if (loginData.username === 'test' && loginData.password === 'test') {
             localStorage.setItem('token', 'fake-token');
-            // For testing, we don't set userName here because 'test' is an ID, not a real name.
-            // In a real app, this would come from the user profile after authentication.
-            nav('/');
+            nav('/mypage');
         } else {
             setError('아이디 또는 비밀번호가 일치하지 않습니다. (테스트 계정: test / test)');
         }
@@ -42,17 +40,14 @@ const Login = () => {
 
     return (
         <div className="Login">
-            <Header
-                headerTop="on"
-                headerMain="on"
-                headerBottom="off"
-                leftChild={<Logo />}
-                rightChild={<UserMenu />}
-            />
-            <form className="Login_total" onSubmit={handleLogin}>
+            <div className="Login_Logo">
+                <Logo />
+            </div>
+            <div className="Login_main_box">
+                <form className="Login_total" onSubmit={handleLogin}>
                     <div className="input_containter">
-                        <input 
-                            className="id_box" 
+                        <input
+                            className="id_box"
                             placeholder="아이디"
                             name="username"
                             value={loginData.username}
@@ -60,9 +55,9 @@ const Login = () => {
                         />
                     </div>
                     <div className="input_containter">
-                        <input 
-                            className="pw_box" 
-                            placeholder="비밀번호" 
+                        <input
+                            className="pw_box"
+                            placeholder="비밀번호"
                             name="password"
                             type="password"
                             value={loginData.password}
@@ -74,15 +69,42 @@ const Login = () => {
                             </p>
                         )}
                     </div>
+                </form>
+                <div>
+                    {/*로그인 버튼 */}
                     <div className="button_wrapper">
                         <div className="button_container">
-                            <Button type='submit' text='로그인'/>
-                        </div>
-                        <div className="button_container">
-                            <Button onClick={() => nav('/CreateAccount')} text='회원가입'/>
+                            <Button
+                                type='submit'
+                                text='로그인'
+                                textColor='black'
+                                borderRadius="3px"
+                                color='rgba(186, 214, 205, 1)'
+                                width="100%"
+                                height="55px"
+                            />
                         </div>
                     </div>
-            </form>
+                    {/* 구분선 */}
+                    <div className="line">
+                        <span className="line_01"></span>
+                        <span className="line_text">또는</span>
+                        <span className="line_01"></span>
+                    </div>
+                    {/*회원가입 버튼 */}
+                    <div className="signup_text">
+                        <Button onClick={() => nav('/CreateAccount')}
+                            text='회원가입'
+                            textColor='black'
+                            borderRadius="3px"
+                            color='rgba(220, 220, 220, 1)'
+                            width="100%"
+                            height="55px"
+
+                        />
+                    </div>
+                </div>
+            </div>
         </div>
     )
 }
