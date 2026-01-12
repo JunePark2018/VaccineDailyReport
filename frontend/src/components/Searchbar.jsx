@@ -22,7 +22,7 @@ function Searchbar({ maxWidth, fontSize, className, onSearch }) {
             if (onSearch) {
                 onSearch(inputText);
             } else {
-                navigate(`/search?q=${encodeURIComponent(inputText)}`);
+                navigate(`/search?q=${encodeURIComponent(inputText)}&t=${Date.now()}`);
             }
         }
     };
@@ -43,26 +43,26 @@ function Searchbar({ maxWidth, fontSize, className, onSearch }) {
     const inputStyle = {
         fontSize: fontSize
     };
-    
+
     return (
         // 외부에서 전달받은 className을 기본 클래스와 결합
         <div className={`Searchbar ${className}`}>
             {/* maxWidth 스타일 적용 */}
             <div className="search-box" style={boxStyle}>
-                <input 
-                    type="text" 
+                <input
+                    type="text"
                     placeholder="검색어를 입력하세요"
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     onKeyDown={onKeyPress}
                     style={inputStyle} // fontSize 스타일 적용
                 />
-                
+
                 <button onClick={handleSearch} aria-label="search">
-                    <svg 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        viewBox="0 0 24 24" 
-                        strokeLinecap="round" 
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        strokeLinecap="round"
                         strokeLinejoin="round"
                         // 아이콘 크기도 폰트 크기에 비례하게 조절하고 싶다면 style 추가 가능
                         style={{ width: `calc(${fontSize} + 6px)`, height: `calc(${fontSize} + 6px)` }}

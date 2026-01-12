@@ -1,145 +1,228 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import axios from 'axios';
+import { useLocation } from 'react-router-dom';
 import "./SearchResult.css";
 import Header from "../components/Header";
 import Logo from "../components/Logo";
 import UserMenu from "../components/UserMenu";
 import Searchbar from "../components/Searchbar";
 import TypewriterText from "../components/TypewriterText";
+import Button from "../components/Button";
 
 export default function SearchResult() {
-    const [searchParams] = useSearchParams();
-    const query = searchParams.get('q');
-
-    // --- 1. 가 데이터를 초기 상태로 설정 ---
-    const [searchTerm, setSearchTerm] = useState(query || "뉴스"); // 초기 검색어 설정
+    const location = useLocation();
+    const [searchTerm, setSearchTerm] = useState("뉴스");
     const [isLoading, setIsLoading] = useState(false);
-    const [articles, setArticles] = useState([
-        {
-            id: 0,
-            title: "'뉴스' 관련 AI 통합 분석 보고서",
-            contents: "전 세계 뉴스 데이터를 실시간으로 분석한 결과, 디지털 미디어의 소비 패턴이 급격히 변화하고 있습니다. 특히 AI 기반의 뉴스 큐레이션 서비스가 사용자들 사이에서 큰 인기를 끌고 있으며, 전통적인 언론사들 또한 기술 도입을 서두르고 있는 추세입니다.",
-            category: "미디어",
-            url: "https://example.com",
-            company_name: "백신일보",
-            img_urls: ["https://images.unsplash.com/photo-1504711432869-0df30d7eaf4d?q=80&w=500"], // 실제 이미지 경로
-            time: new Date().toISOString(),
-            author: "AI 리포터"
-        },
-        {
-            id: 1,
-            title: "미디어 시장의 미래 전망",
-            contents: "향후 5년간 뉴스 콘텐츠 시장은...",
-            company_name: "빅신테크",
-            img_urls: ["https://images.unsplash.com/photo-1495020689067-958852a7765e?q=80&w=500"],
-            url: "#"
-        }
-    ]);
+    const [articles, setArticles] = useState([]);
+    const [aiSummary, setAiSummary] = useState(""); // AI 요약 상태 추가
+    const [visibleNewsCount, setVisibleNewsCount] = useState(3);
 
-    
+    const [headerDone, setHeaderDone] = useState(false);
+    const [contentDone, setContentDone] = useState(false);
+    const [hotTopicDone, setHotTopicDone] = useState(false);
 
-    // 검색 실행 함수 (이후 검색창 사용 시 동작)
-    const handleSearch = (keyword) => {
+    // 검색 실행 함수 (실제 백엔드 연동)
+    const handleSearch = useCallback(async (keyword) => {
         setSearchTerm(keyword);
         setIsLoading(true);
-        
-        // 검색 시 로딩 애니메이션을 보여주기 위한 시뮬레이션
-        setTimeout(() => {
-            const result = [{
-                id: Date.now(),
-                title: `'${keyword}' 키워드 실시간 데이터`,
-                contents: `'${keyword}'에 대해 분석한 결과입니다. 관련 데이터가 충분히 수집되었습니다.`,
-                company_name: "AI 분석기",
-                img_urls: ["https://via.placeholder.com/300x180"],
-                time: new Date().toISOString(),
-                url: "#"
-            }];
-            setArticles(result);
+        setVisibleNewsCount(3); // 검색 시 초기화
+        setAiSummary(""); // 요약 초기화
+
+        // 애니메이션 상태 초기화
+        setHeaderDone(false);
+        setContentDone(false);
+        setHotTopicDone(false);
+
+        try {
+            // 1. 기사 검색
+            const articleRes = await axios.get(`http://localhost:8000/articles/search`, {
+                params: {
+                    keyword: keyword,
+                    limit: 50
+                }
+            });
+
+            // [Mock] view_count가 없으므로 임의로 생성 (500~3500)
+            const augmentedData = articleRes.data.map(item => ({
+                ...item,
+                view_count: item.view_count || Math.floor(Math.random() * 3000) + 500
+            }));
+
+            setArticles(augmentedData);
+
+            // 2. 이슈(AI 요약) 검색 (search.py 참고)
+            const issueRes = await axios.get(`http://localhost:8000/issues/search`, {
+                params: {
+                    keyword: keyword,
+                    limit: 1
+                }
+            });
+
+            if (issueRes.data && issueRes.data.length > 0) {
+                setAiSummary(issueRes.data[0].contents);
+            } else {
+                setAiSummary("해당 키워드에 대한 AI 분석 리포트가 아직 생성되지 않았습니다.");
+            }
+
+        } catch (error) {
+            console.error("검색 중 오류 발생:", error);
+            setArticles([]);
+            setAiSummary("데이터를 불러오는 중 오류가 발생했습니다.");
+        } finally {
             setIsLoading(false);
-        }, 1500);
-    };
+        }
+    }, []);
 
     useEffect(() => {
-        if (query) {
-            handleSearch(query);
+        const searchParams = new URLSearchParams(location.search);
+        const q = searchParams.get('q');
+        if (q) {
+            handleSearch(q);
         }
-    }, [query]);
+    }, [location.search, handleSearch]);
+
+    // 더보기 버튼 핸들러
+    const handleLoadMore = useCallback(() => {
+        setVisibleNewsCount(prev => prev + 3);
+    }, []);
+
+    // 접기 버튼 핸들러
+    const handleCollapse = useCallback(() => {
+        setVisibleNewsCount(prev => Math.max(3, prev - 3));
+    }, []);
+
+    // Hot Topic 필터링: 이미지 있고 & 조회수 1000 이상 (Memoized)
+    const hotTopicArticles = useMemo(() => {
+        return articles.filter(item =>
+            (item.img_urls && item.img_urls.length > 0) && item.view_count >= 1000
+        );
+    }, [articles]);
+
+    useEffect(() => {
+        if (!isLoading && contentDone && hotTopicArticles.length === 0) {
+            setHotTopicDone(true);
+        }
+    }, [isLoading, contentDone, hotTopicArticles.length]);
 
     return (
         <div className="SearchResult_Main">
             <div className="Header_Container">
-                <Header leftChild={<Logo/>} midChild={<Searchbar maxWidth="600px" onSearch={handleSearch} />} rightChild={<UserMenu/>} headerBottom="on" />
+                <Header leftChild={<Logo />} midChild={<Searchbar maxWidth="600px" />} rightChild={<UserMenu />} headerBottom="on" />
             </div>
 
             <div className="Content_Section">
                 <div className="Searchbar_Wrapper">
-                    
+
                 </div>
 
                 {/* 데이터가 있을 때 항상 표시 */}
                 <div className="SearchResult_AI">
                     <div className="Title_Wrapper">
                         <h3 className="AI_Title">
-                            {isLoading ? `"${searchTerm}" 키워드 검색 중` : `"${searchTerm}" 검색 결과`}
+                            {isLoading ? `'${searchTerm}' 검색 결과` : `'${searchTerm}' 검색 결과`}
                         </h3>
-                        {isLoading && <div className="Loading_Spinner"></div>}
+
                     </div>
 
-                    <div className="AI_Content_Wrapper">
-                        <div className="AI_Left_Section">
-                            <div className="Hot_Topic_Section">
-                                <p style={{fontWeight: 'bold'}}>Hot Topic!</p>
-                                <div className="Topic_Cards">
-                                    {isLoading ? [1, 2].map(i => (
-                                        <div key={i} className="Topic_Card skeleton"></div>
-                                    )) : articles.slice(0, 2).map(item => (
-                                        <div key={item.id} className="Topic_Card">
-                                            <img src={item.img_urls[0]} alt="news" />
-                                            <div className="Card_Text">{item.title}</div>
+                    <div className="AI_Content_Wrapper" style={{ flexDirection: 'column' }}>
+                        {!isLoading && articles.length === 0 ? (
+                            <div className="No_Result_Container">
+                                <h2>'{searchTerm}'에 대한 검색 결과가 없습니다.</h2>
+                                <p>단어의 철자가 정확한지 확인해 주세요.</p>
+                            </div>
+                        ) : (
+                            <>
+                                <div style={{ display: 'flex', width: '100%' }}>
+                                    <div className="AI_Left_Section">
+                                        <div className="Analysis_Text_Section">
+                                            <h4>
+                                                {isLoading ? (
+                                                    <TypewriterText text={`${searchTerm} 검색 중...`} delay={50} />
+                                                ) : (
+                                                    <TypewriterText
+                                                        key={`header-${searchTerm}`}
+                                                        text={`AI가 탐색한 ${articles.length}개의 기사 요약입니다.`}
+                                                        delay={50}
+                                                        onComplete={() => setHeaderDone(true)}
+                                                    />
+                                                )}
+                                            </h4>
+                                            <div className="Analysis_Contents">
+                                                <div className={headerDone ? "fade-in" : "hidden"} onAnimationEnd={() => setContentDone(true)}>
+                                                    {aiSummary}
+                                                </div>
+                                            </div>
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
 
-                            <div className="Analysis_Text_Section">
-                                <h4>
-                                    {isLoading ? (
-                                        <TypewriterText text={`${searchTerm} 관련 기사를 탐색 중...`} delay={50} />
-                                    ) : (
-                                        `AI가 탐색한 ${articles.length}개의 기사 요약입니다.`
-                                    )}
-                                </h4>
-                                <p className="Analysis_Contents">
-                                    {isLoading ? "분석 중..." : articles[0]?.contents}
-                                </p>
-                            </div>
 
-                            <div className="Related_News_Section">
-                                <h4>관련기사</h4>
-                                <ul className="News_List">
-                                    {isLoading ? [1, 2, 3].map(i => (
-                                        <li key={i} className="skeleton_line"></li>
-                                    )) : articles.map(item => (
-                                        <li key={item.id} onClick={() => window.open(item.url)}>
-                                            <span>[{item.company_name}]</span> {item.title}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        </div>
 
-                        <div className="AI_Right_Section">
-                            <div className={`Analysis_Big_Box ${isLoading ? 'loading' : ''}`}>
-                                {!isLoading && (
-                                    <div className="Result_Data_View" style={{padding:'20px'}}>
-                                        <p>분석 통계 시각화</p>
-                                        <div style={{marginTop:'20px', height:'200px', background:'#f9f9f9', borderRadius:'10px', display:'flex', alignItems:'center', justifyContent:'center', color:'#ccc'}}>
-                                            차트/그래프 영역
+                                        <div className={`Related_News_Section ${!isLoading && hotTopicDone ? 'fade-in' : 'hidden'}`} style={{ marginTop: '40px', width: '100%', textAlign: 'left' }}>
+                                            <h4>관련기사</h4>
+                                            <ul className="News_List">
+                                                {isLoading ? [1, 2, 3].map(i => (
+                                                    <li key={i} className="skeleton_line"></li>
+                                                )) : articles.slice(0, visibleNewsCount).map(item => (
+                                                    <li key={item.id} onClick={() => window.open(item.url)}>
+                                                        <span>[{item.company_name}]</span> {item.title}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                            {!isLoading && articles.length > 0 && (
+                                                <div style={{ textAlign: 'center', marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                                                    {visibleNewsCount < articles.length && (
+                                                        <Button
+                                                            text="더보기 ▼"
+                                                            onClick={handleLoadMore}
+                                                            className="Action_Button"
+                                                        />
+                                                    )}
+                                                    {visibleNewsCount > 3 && (
+                                                        <Button
+                                                            text="접기 ▲"
+                                                            onClick={handleCollapse}
+                                                            className="Action_Button"
+                                                        />
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                )}
-                            </div>
-                        </div>
+
+                                    {(isLoading || hotTopicArticles.length > 0) && (
+                                        <>
+                                            <div className="Section_Divider"></div>
+                                            <div className={`AI_Right_Section ${!isLoading && contentDone ? 'fade-in' : 'hidden'}`} onAnimationEnd={() => setHotTopicDone(true)}>
+                                                <div className="Hot_Topic_Section">
+                                                    <p style={{ fontWeight: 'bold', marginBottom: '10px', textAlign: 'left' }}>Hot Topic!</p>
+                                                    <div className="Topic_Cards">
+                                                        {isLoading ? [1, 2, 3, 4].map(i => (
+                                                            <div key={i} className="Topic_Card skeleton"></div>
+                                                        )) : hotTopicArticles.slice(0, 4).map(item => (
+                                                            <div
+                                                                key={item.id}
+                                                                className="Topic_Card"
+                                                                onClick={() => window.open(item.url)}
+                                                                style={{ cursor: 'pointer' }}
+                                                            >
+                                                                <img
+                                                                    src={item.img_urls[0]}
+                                                                    alt="news"
+                                                                    onError={(e) => {
+                                                                        e.target.onerror = null; // Prevent infinite loop
+                                                                        e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
+                                                                    }}
+                                                                />
+                                                                <div className="Card_Text">{item.title}</div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

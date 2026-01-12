@@ -23,11 +23,12 @@ function Button({
     onClick = () => { },     // 버튼 클릭 시 실행할 함수 (기본값: 빈 함수)
     disabled = false,       // 버튼 비활성화 여부 (기본값: false)
     className = "",         // 외부에서 추가할 CSS 클래스 이름
+    style: customStyle,     // 외부에서 전달받는 커스텀 스타일
     width,                  // 버튼 너비 (선택 사항)
     height                  // 버튼 높이 (선택 사항)
 }) {
     // 인라인 스타일 객체: props로 받은 동적인 값들을 스타일로 변환합니다.
-    const style = {
+    const defaultStyle = {
         backgroundColor: color,
         color: textColor,
         fontSize: fontSize,
@@ -36,12 +37,14 @@ function Button({
         height: height,
     };
 
+    const finalStyle = { ...defaultStyle, ...customStyle };
+
     return (
         <button
             // 기본 클래스 'Button'과 외부에서 받아온 'className'을 합쳐서 적용합니다.
             className={`Button ${className}`}
             // 위에서 정의한 인라인 스타일을 적용합니다.
-            style={style}
+            style={finalStyle}
             // 클릭 이벤트 핸들러를 연결합니다.
             onClick={onClick}
             // disabled 속성이 true가 되면 버튼이 비활성화됩니다.

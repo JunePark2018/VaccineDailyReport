@@ -57,6 +57,21 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+from fastapi.middleware.cors import CORSMiddleware
+
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # DB 세션 의존성
 def get_db():
     db = SessionLocal()
@@ -105,6 +120,7 @@ def search_issues(
     
     search_pattern = f"%{keyword}%"
 
+    # 1. DB에서 이슈 검색
     results = db.query(Issue).filter(
         or_(
             Issue.title.ilike(search_pattern),
@@ -113,9 +129,14 @@ def search_issues(
     )\
     .offset(skip)\
     .limit(limit)\
-    .all()  # [중요] offset과 limit은 .all() 부르기 전에 써야 합니다.
+    .all()
     
-    return results
+    # 2. 결과가 있으면 반환 (Cache Hit)
+    if results:
+        return results
+
+    # 3. 결과가 없으면 빈 리스트 반환
+    return []
 
 @app.get("/issues/{issue_id}")
 def get_issue_detail(
