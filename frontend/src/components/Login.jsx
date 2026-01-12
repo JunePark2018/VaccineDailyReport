@@ -33,7 +33,7 @@ const Login = () => {
             localStorage.setItem('token', 'fake-token');
             // For testing, we don't set userName here because 'test' is an ID, not a real name.
             // In a real app, this would come from the user profile after authentication.
-            nav('/mypage');
+            nav('/');
         } else {
             setError('아이디 또는 비밀번호가 일치하지 않습니다. (테스트 계정: test / test)');
         }
