@@ -18,9 +18,12 @@
 /* 옆으로 붙게 만드는 핵심 클래스 */
 .mypage-container .content-wrapper {
   display: flex;
-  flex-direction: row; /* 가로 나열 강제 */
-  gap: 12px;  /*나의 관심 카테고리 나의 관심 키워드  사이 간격*/
-  overflow-x: auto; /* 화면 좁으면 가로 스크롤 */
+  flex-direction: row;
+  /* 가로 나열 강제 */
+  gap: 12px;
+  /*나의 관심 카테고리 나의 관심 키워드  사이 간격*/
+  overflow-x: auto;
+  /* 화면 좁으면 가로 스크롤 */
   padding-bottom: 16px;
 }
 
@@ -28,7 +31,8 @@
   background-color: white;
   border: 1px solid #e5e7eb;
   padding: 8px;
-  min-width: 350px; /* 옆으로 붙을 때 찌그러짐 방지 */
+  min-width: 350px;
+  /* 옆으로 붙을 때 찌그러짐 방지 */
   flex: 1;
   height: 500px;
   display: flex;
@@ -60,11 +64,15 @@
 .mypage-container .keyword-tag {
   /* 배경은 투명하게, 글자색은 인스타 블루 */
   background-color: transparent;
-  color: #0095f6; /* 인스타그램 공식 브랜드 블루 계열 */
-  padding: 0; /* 배경이 없으므로 패딩 제거 */
+  color: #0095f6;
+  /* 인스타그램 공식 브랜드 블루 계열 */
+  padding: 0;
+  /* 배경이 없으므로 패딩 제거 */
   font-size: 14px;
-  font-weight: 500; /* 너무 얇지 않게 */
-  border: none; /* 테두리 제거 */
+  font-weight: 500;
+  /* 너무 얇지 않게 */
+  border: none;
+  /* 테두리 제거 */
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   cursor: pointer;
   transition: opacity 0.2s;
@@ -77,7 +85,7 @@
 
 .mypage-container .radar-polygon {
   /* points 트랜지션은 지우거나 아주 짧게(0.1s) 설정하세요 */
-  transition: opacity 0.5s ease-out; 
+  transition: opacity 0.5s ease-out;
   opacity: 0;
 }
 
@@ -94,7 +102,8 @@
 }
 
 .mypage-container .bar-wrapper:hover .bar-fill-element {
-  background-color: #0077c7 !important; /* 마우스 올리면 좀 더 진한 파란색으로 변경 */
+  background-color: #0077c7 !important;
+  /* 마우스 올리면 좀 더 진한 파란색으로 변경 */
 }
 
 /* 툴팁 아래 작은 화살표 효과 (선택 사항) */

@@ -34,7 +34,7 @@ const MyPage = () => {
         const id = login_id || 'test_user';
         // const response = await axios.get(`YOUR_BACKEND_URL/users/${id}`);
         // setUserData(response.data);
-        setUserData(MOCK_USER_DATA); 
+        setUserData(MOCK_USER_DATA);
       } catch (error) {
         setUserData(MOCK_USER_DATA);
       } finally {
@@ -101,21 +101,21 @@ const MyPage = () => {
 
         <div className="content-wrapper">
           {/* 1. 레이더 차트 컴포넌트 */}
-          <CategoryRadarChart 
-            targetScores={userData?.read_categories} 
-            dynamicLimit={dynamicLimit} 
-            isActive={isActive} 
+          <CategoryRadarChart
+            targetScores={userData?.read_categories}
+            dynamicLimit={dynamicLimit}
+            isActive={isActive}
           />
-
+          <KeywordBarChart
+            readKeywords={userData?.read_keywords}
+            isActive={isActive}
+          />
           {/* 2. 바 차트 컴포넌트 */}
-         
-          
+
+
         </div>
-        <KeywordBarChart 
-          readKeywords={userData?.read_keywords} 
-          isActive={isActive} 
-        />
-         <SubscribedKeywords 
+
+        <SubscribedKeywords
           keywords={userData?.subscribed_keywords}
           isEditMode={isEditMode}
           onToggleEdit={() => setIsEditMode(!isEditMode)}

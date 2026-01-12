@@ -17,6 +17,16 @@ def create_article(db: Session, news_data: dict):
     if existing_article:
         print(f"  [Skip] 이미 저장된 기사입니다: {news_data['title']}")
         return None
+    time_limit = datetime.now() - timedelta(hours=24)
+    existing_title = db.query(Article).filter(
+        Article.title == news_data["title"],
+        Article.company_name == news_data["company_name"],
+        Article.time >= time_limit
+    ).first()
+    
+    if existing_title:
+        print(f"   [Skip] 중복 제목(최근 24시간 이내) 건너뜀: {news_data['title'][:20]}...")
+        return None
 
     # 2. 날짜 변환 (문자열 -> datetime 객체)
     # 네이버 뉴스 날짜 형식: "2024-05-20 14:00:01"
