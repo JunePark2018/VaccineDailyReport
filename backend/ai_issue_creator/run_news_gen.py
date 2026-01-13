@@ -4,7 +4,7 @@ from collections import defaultdict
 
 # 만든 파일들 불러오기
 # (만약 여기서 에러가 나면 ai_helper.py 파일 문제일 확률이 높습니다)
-from ai_news_generator import generate_balanced_article
+from ai_issue_generator import generate_balanced_article
 from test_data import fake_articles_data
 
 
