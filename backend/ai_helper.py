@@ -10,7 +10,7 @@ from huggingface_hub import login
 # 1. API 키 설정
 # =================================================================
 OPENAI_API_KEY = "".strip()
-GOOGLE_API_KEY = "AIzaSyCo3no8H1b2h1olKA_AdUHxr0m25KFgu9Q".strip()
+GOOGLE_API_KEY = "AIzaSyDmxmulDLDDO3x3k6pw9-xZ93qnTvJsv48".strip()
 HF_TOKEN       = "".strip()
 
 if HF_TOKEN: login(token=HF_TOKEN)
@@ -30,7 +30,7 @@ if GOOGLE_API_KEY:
 loaded_hf_pipelines = {}
 
 # =================================================================
-# 3. 만능 질문 함수
+# 3. 만능 질문 함수 (모든 모델 '기자 모드' 적용)
 # =================================================================
 def ask(model_name, message):
     answer = ""
@@ -47,11 +47,11 @@ def ask(model_name, message):
                 model=model_name,
                 messages=[{"role": "user", "content": message}],
                 
-                # [GPT 전용 설정]
-                temperature=0.2,  
-                max_tokens=2000,
-                top_p=0.9,             
-                frequency_penalty=0.5  
+                # [GPT 최적화 설정]
+                temperature=0.2,       # 냉정하게 (팩트 위주)
+                max_tokens=4000,       # 길이 넉넉히
+                top_p=0.9,
+                frequency_penalty=0.5  # 반복 방지 (GPT는 이게 중요)
             )
             answer = response.choices[0].message.content
 
@@ -63,15 +63,25 @@ def ask(model_name, message):
             
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={GOOGLE_API_KEY}"
             
-            # [Gemini 전용 설정]
             payload = {
                 "contents": [{"parts": [{"text": message}]}],
+                
+                # 1. 생성 설정 (말더듬 방지)
                 "generationConfig": {
                     "temperature": 0.2,
-                    "maxOutputTokens": 2000, 
+                    "maxOutputTokens": 4000,
                     "topP": 0.8,
                     "topK": 40
-                }
+                },
+                
+                # 2. 안전 설정 (끊김 방지 - Gemini 전용)
+                # 금융/주식 뉴스 작성 시 '위험'으로 오인하여 멈추는 것을 방지
+                "safetySettings": [
+                    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+                    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+                    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+                    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"}
+                ]
             }
             
             response = gemini_session.post(url, data=json.dumps(payload))
@@ -85,7 +95,6 @@ def ask(model_name, message):
         # ---------------------------------------------------------
         else:
             if model_name not in loaded_hf_pipelines:
-                # ... (모델 로딩 코드는 동일) ...
                 tokenizer = AutoTokenizer.from_pretrained(model_name)
                 model = AutoModelForCausalLM.from_pretrained(
                     model_name, torch_dtype=torch.float16, device_map="auto"
@@ -97,15 +106,15 @@ def ask(model_name, message):
             pipe = loaded_hf_pipelines[model_name]
             prompt = pipe.tokenizer.apply_chat_template([{"role": "user", "content": message}], tokenize=False, add_generation_prompt=True)
             
-            # [로컬 모델 전용 설정] 
+            # [로컬 모델 최적화 설정]
             outputs = pipe(
                 prompt, 
-                max_new_tokens=2000,     
+                max_new_tokens=4000,     # 길이 넉넉히
                 do_sample=True, 
-                temperature=0.2,         
+                temperature=0.2,         # 냉정하게
                 top_p=0.9,
                 top_k=40,
-                repetition_penalty=1.2  
+                repetition_penalty=1.2   # [중요] 앵무새 방지 (로컬 모델 필수)
             )
             answer = outputs[0]["generated_text"][len(prompt):].strip()
 
