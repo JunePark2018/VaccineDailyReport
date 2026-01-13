@@ -1,90 +1,175 @@
 import numpy as np
+import json
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
-from sklearn.cluster import DBSCAN
-from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer
+import hdbscan
+from sklearn.metrics.pairwise import cosine_similarity
+# 최신 라이브러리 방식인 ModelInference 사용
+from ibm_watsonx_ai.foundation_models import ModelInference
 
-# 기존 파일들에서 필요한 객체 임포트
 from database import SessionLocal, engine
 from models import Base, Article, Issue
 
-# 1. 모델 로드 (서버 기동 시 한 번만)
-print("--- [AI] Ko-sroberta 모델 로딩 중... ---")
-model = SentenceTransformer('jhgan/ko-sroberta-multitask')
+# -------------------------------------------------
+# 1. 모델 로드 (Embedding & LLM)
+# -------------------------------------------------
+print("--- [AI] 모델 로딩 중... ---")
+embed_model = SentenceTransformer("BAAI/bge-m3")
 
-def run_issue_clustering(db: Session, days: int = 1, eps: float = 0.5):
-    # [Step 1] 테이블 생성 확인 (없으면 생성)
+# Watsonx Llama-3-3-70b 설정 (llmtest.py에서 성공한 설정 반영)
+credentials = {
+    "apikey":  # 사용자님의 키 유지
+    "url": "https://us-south.ml.cloud.ibm.com"
+}
+
+llm_model = ModelInference(
+    model_id="meta-llama/llama-3-3-70b-instruct",
+    credentials=credentials,
+    project_id=
+)
+
+# -------------------------------------------------
+# 2. Stage 2: LLM 검증 및 요약 함수
+# -------------------------------------------------
+def run_stage2_issue_refine(cluster_articles):
+    titles = [a.title for a in cluster_articles]
+    
+    # [로그] 현재 검증 대상 출력
+    print(f"\n      [LLM 검증 중] 기사 {len(titles)}건 후보 발견")
+    for i, t in enumerate(titles[:3]): # 최대 3개만 미리보기
+        print(f"        - {t}")
+    if len(titles) > 3: print(f"        ... 외 {len(titles)-3}건")
+
+    # 프롬프트 보강: 팩트 체크 및 인물 관계 명시 요청
+    prompt = f"""
+역할: 너는 뉴스 편집자다. 다음 뉴스 제목들이 '하나의 동일한 구체적 사건'인지 판단하라.
+단순히 카테고리가 같은 것은 하나의 이슈가 아니다.
+
+[뉴스 제목 목록]
+{chr(10).join(f"- {t}" for t in titles)}
+
+요청:
+1. 이 묶음이 동일한 사건을 다루는지 판단하라 (is_issue: True/False)
+2. 판단 이유를 적어라 (reason: ) - 예: 주체와 사건의 내용이 일치함 / 서로 다른 사건임
+3. 동일 사건이라면 독자가 이해하기 쉬운 대표 제목을 생성하라 (title: )
+4. 사건의 핵심을 2문장 이내로 요약하라 (summary: ) - 인물 관계(예: 교사-교사)를 정확히 명시할 것.
+
+출력 형식:
+is_issue: 
+reason:
+title: 
+summary: 
+"""
+    try:
+        # llmtest.py에서 성공한 파라미터 적용
+        response = llm_model.generate_text(
+            prompt=prompt,
+            params={
+                "max_new_tokens": 500,
+                "temperature": 0.1, # 일관성을 위해 낮게 설정
+                "decoding_method": "sample"
+            }
+        )
+        
+        # 파싱 로직
+        res_dict = {}
+        lines = response.strip().split('\n')
+        for line in lines:
+            if ':' in line:
+                key, val = line.split(':', 1)
+                res_dict[key.strip().lower()] = val.strip()
+        
+        # [로그] LLM의 판단 결과 출력
+        status_icon = "✅" if res_dict.get('is_issue') == 'True' else "❌"
+        print(f"      {status_icon} 결과: {res_dict.get('is_issue')}")
+        print(f"      📝 이유: {res_dict.get('reason')}")
+        if res_dict.get('is_issue') == 'True':
+            print(f"      💡 생성된 제목: {res_dict.get('title')}")
+            
+        return res_dict
+    except Exception as e:
+        print(f"      ⚠️ [LLM Error] {e}")
+        return None
+
+# -------------------------------------------------
+# 3. 메인 클러스터링 함수
+# -------------------------------------------------
+def run_issue_clustering(db: Session, days: int = 1):
     Base.metadata.create_all(bind=engine)
 
-    # [Step 2] 최근 n일간의 이슈가 배정되지 않은 기사들 가져오기
+    # 미분류 기사 가져오기
     time_threshold = datetime.now() - timedelta(days=days)
     articles = db.query(Article).filter(
         Article.time >= time_threshold,
-        Article.issue_id == None  # 아직 분류되지 않은 기사 위주로 처리
+        Article.issue_id.is_(None)
     ).all()
 
-    if len(articles) < 2:
-        print(f"--- [Skip] 분류할 기사가 부족합니다. (현재: {len(articles)}개) ---")
+    if len(articles) < 3:
+        print(f"--- [Skip] 분류할 기사가 부족합니다. ({len(articles)}개) ---")
         return
 
-    # [Step 3] 텍스트 가공 및 임베딩 생성
-    input_texts = [f"{a.title} {a.contents[:100]}" for a in articles]
-    embeddings = model.encode(input_texts)
+    # [Stage 1] 임베딩 및 HDBSCAN
+    print(f"--- [Stage 1] {len(articles)}개 기사 임베딩 생성 중... ---")
+    # 제목 반복을 통해 고유명사 가중치 강화
+    input_texts = [f"{a.title} {a.title} {(a.contents or '')[:50]}" for a in articles]
+    embeddings = embed_model.encode(input_texts, normalize_embeddings=True)
 
-    # [Step 4] DBSCAN 군집화
-    # metric='cosine'은 문장 유사도 분석의 표준입니다.
-    dbscan = DBSCAN(eps=eps, min_samples=2, metric='cosine')
-    clusters = dbscan.fit_predict(embeddings)
+    clusterer = hdbscan.HDBSCAN(
+        min_cluster_size=2,
+        min_samples=1,
+        metric="euclidean",
+        cluster_selection_epsilon=0.35,
+        cluster_selection_method="eom"
+    )
+    labels = clusterer.fit_predict(embeddings)
 
-    # [Step 5] 군집별 결과 처리
-    unique_clusters = set(clusters)
-    print(f"--- [AI] 분석 완료: {len(unique_clusters) - (1 if -1 in unique_clusters else 0)}개 이슈 발견 ---")
+    unique_clusters = set(labels)
+    print(f"--- [Stage 2] 후보 군집 검증 시작 ---")
 
     for cluster_id in unique_clusters:
-        if cluster_id == -1: # 어떤 군집에도 속하지 못한 기사
-            continue
+        if cluster_id == -1: continue
 
-        # 해당 군집에 속한 기사 인덱스 추출
-        indices = [i for i, val in enumerate(clusters) if val == cluster_id]
-        cluster_embeddings = embeddings[indices]
+        indices = np.where(labels == cluster_id)[0]
         cluster_articles = [articles[i] for i in indices]
 
-        # [Centroid 로직] 중심점 계산하여 대표 기사 선정
-        centroid = np.mean(cluster_embeddings, axis=0)
-        sims = cosine_similarity([centroid], cluster_embeddings)[0]
-        rep_idx = np.argmax(sims)
-        topic_article = cluster_articles[rep_idx]
+        # [Stage 2] LLM에게 최종 확인 및 요약 요청
+        refine_result = run_stage2_issue_refine(cluster_articles)
 
-        # [Step 6] DB 저장: Issue 생성 및 Article 연결
+        if not refine_result or refine_result.get('is_issue') != 'True':
+            print(f"   [Skip] LLM이 이슈가 아니라고 판단함 (기사 {len(cluster_articles)}건)")
+            continue
+
+        # [Step 6] 최종 DB 저장
         try:
-            # 1. 부모 테이블(Issue)에 새로운 이슈 행 생성
             new_issue = Issue(
-                title=topic_article.title, # 대표 기사 제목을 이슈 제목으로 사용
-                contents=f"{len(cluster_articles)}개의 기사가 포함된 이슈입니다.",
-                analysis_result={"status": "clustered", "main_company": topic_article.company_name},
+                title=refine_result.get('title', cluster_articles[0].title),
+                contents=refine_result.get('summary', "요약 정보 없음"),
+                analysis_result={
+                    "status": "verified",
+                    "article_count": len(cluster_articles),
+                    "reason": refine_result.get('reason')
+                },
                 created_at=datetime.now()
             )
             db.add(new_issue)
-            db.flush() # new_issue.id를 미리 할당받음
+            db.flush()
 
-            # 2. 자식 테이블(Article)들에 방금 만든 Issue ID 연결
             for a in cluster_articles:
                 a.issue_id = new_issue.id
-            
-            print(f"   > 이슈 생성 완료: {new_issue.title} ({len(cluster_articles)}건)")
-            
+
+            print(f"   ✅ 이슈 확정: {new_issue.title}")
+
         except Exception as e:
-            print(f"   > 이슈 저장 중 오류: {e}")
             db.rollback()
+            print(f"   ❌ 저장 실패: {e}")
 
     db.commit()
-    print("--- [Success] 모든 군집 결과가 DB에 반영되었습니다. ---")
+    print("--- [Success] 클러스터링 및 검증 완료 ---")
 
 if __name__ == "__main__":
     db = SessionLocal()
     try:
-        # eps=0.5: 적절한 묶음 수준. 더 깐깐하게 하려면 0.45로 조정하세요.
-        run_issue_clustering(db, eps=0.5)
+        run_issue_clustering(db, days=3)
     finally:
         db.close()
