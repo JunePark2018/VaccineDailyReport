@@ -24,7 +24,7 @@ def run_background_worker():
         try:
             # 스마트 수집 (중복 만나면 중단)
             # news_list = crawl_breaking_news(limit=20, db_check_session=db)
-            news_list = run_article_crawler(["조선일보", "한국일보", "연합뉴스"], False)
+            news_list = run_article_crawler([], False)
             count = 0
             for news in news_list:
                 # 기사 db에 저장
