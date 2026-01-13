@@ -1,27 +1,28 @@
-class NewsEditor:
-    def __init__(self, ai_helper):
-        self.ai = ai_helper
+from ai_helper import ask
 
-    def generate_balanced_article(self, cluster_topic, articles):
-        """
-        cluster_topic: 해당 군집의 주제 (예: 'IT/과학', '경제')
-        articles: 해당 군집에 속한 기사 리스트
-        """
-        
-        # 1. 기사 내용 합치기
-        context_text = ""
-        for idx, art in enumerate(articles):
-            context_text += f"[{idx+1}] 언론사: {art['company_name']} | 제목: {art['title']}\n    내용: {art['contents']}\n\n"
 
-        # 2. 시스템 프롬프트 (역할 부여)
-        # [수정] '팩트 검증에 철저한'이라는 수식어를 추가하여 역할 정의
-        system_role = (
-            "당신은 중복 없이 간결하고 명확한 문장을 구사하며, 팩트 검증에 철저한 '수석 편집장'입니다. "
-            "여러 기사를 읽고, 독자가 한 번에 이해할 수 있도록 내용을 재구성하십시오."
+def generate_balanced_article(model_name, cluster_topic, articles):
+    """
+    cluster_topic: 해당 군집의 주제 (예: 'IT/과학', '경제')
+    articles: 해당 군집에 속한 기사 리스트
+    """
+
+    # 1. 기사 내용 합치기
+    context_text = ""
+    for idx, art in enumerate(articles):
+        context_text += (
+            f"[{idx+1}] 언론사: {art['company_name']} | 제목: {art['title']}\n    내용: {art['contents']}\n\n"
         )
 
-        # 3. 유저 프롬프트 (팩트 준수 원칙 추가)
-        user_prompt = f"""
+    # 2. 시스템 프롬프트 (역할 부여)
+    # [수정] '팩트 검증에 철저한'이라는 수식어를 추가하여 역할 정의
+    system_role = (
+        "당신은 중복 없이 간결하고 명확한 문장을 구사하며, 팩트 검증에 철저한 '수석 편집장'입니다. "
+        "여러 기사를 읽고, 독자가 한 번에 이해할 수 있도록 내용을 재구성하십시오."
+    )
+
+    # 3. 유저 프롬프트 (팩트 준수 원칙 추가)
+    user_prompt = f"""
         주제: '{cluster_topic}'
         
         아래 제공된 기사 소스들을 바탕으로 **하나의 완결된 스트레이트 뉴스**를 작성하세요.
@@ -47,5 +48,6 @@ class NewsEditor:
         위 가이드라인을 철저히 지켜 기사를 작성해 주세요.
         """
 
-        # 4. AI에게 요청
-        return self.ai.ask(system_role, user_prompt)
+    # 4. AI에게 요청
+    full_message = f"{system_role}\n\n[요청사항]\n{user_prompt}"
+    return ask(model_name, full_message)
