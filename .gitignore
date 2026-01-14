@@ -1,6 +1,10 @@
 # IDE
 .idea/
 
+# Cache
+**/__pycache__/
+*.py[cod]
+
 # frontend
 frontend/node_modules
 
