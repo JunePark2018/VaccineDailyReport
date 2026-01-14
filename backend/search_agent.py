@@ -11,14 +11,14 @@ from ibm_watsonx_ai.foundation_models import ModelInference
 
 # Initialize IBM WatsonX Model
 credentials = {
-    "apikey": "4CTFdctIbbuufbgyxVCOWBtDCNp5yDUWFkLauBzWQF6x", 
+    "apikey": "", 
     "url": "https://us-south.ml.cloud.ibm.com/"
 }
 
 llm_model = ModelInference(
     model_id="meta-llama/llama-3-3-70b-instruct",
     credentials=credentials,
-    project_id="6fca979d-39d2-42e8-b45d-02c7cebd1222"
+    project_id=
 )
 
 def get_llm_summary(prompt: str) -> str:
