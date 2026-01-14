@@ -10,17 +10,15 @@ from models import Issue, Article
 from ibm_watsonx_ai.foundation_models import ModelInference
 
 # Initialize IBM WatsonX Model
-credentials = {
-    "apikey": "4CTFdctIbbuufbgyxVCOWBtDCNp5yDUWFkLauBzWQF6x", 
-    "url": "https://us-south.ml.cloud.ibm.com/"
-}
+#------------------------------------
 
-llm_model = ModelInference(
-    model_id="meta-llama/llama-3-3-70b-instruct",
-    credentials=credentials,
-    project_id="6fca979d-39d2-42e8-b45d-02c7cebd1222"
-)
 
+
+#          API 키 여기다 넣기
+
+
+
+#------------------------------------
 def get_llm_summary(prompt: str) -> str:
     """
     IBM WatsonX ModelInference를 사용하여 요약/분석을 생성합니다.
@@ -56,6 +54,7 @@ def search_wikipedia(keyword: str) -> Optional[Dict[str, str]]:
     """
     위키피디아 API를 통해 정의와 요약을 가져온 후, LLM을 통해 내용을 정리합니다.
     API 검색 실패 시 None을 반환합니다.
+    위키피디아의 출처를 표시하지 않습니다.
     (개선: 키워드로 먼저 '검색'하여 가장 적절한 문서 제목을 찾은 뒤 요약을 가져옴)
     """
     
@@ -104,6 +103,8 @@ def search_wikipedia(keyword: str) -> Optional[Dict[str, str]]:
                 llm_prompt = (
                     f"다음은 위키피디아의 '{target_title}'에 대한 요약 내용입니다. "
                     "위키피디아의 정보를 정확하게 전달해야 합니다."
+                    "위키피디아의 출처는 표시하지 않습니다."
+                    "한문과 한자가 포함되어있다면 번역하여 출력합니다."
                     f"이 내용을 읽기 쉽게 핵심만 정리해서 한국어로 설명해 주세요:\n\n{raw_summary}"
                 )
                 
@@ -163,7 +164,6 @@ def search_issues_by_keyword(db: Session, keyword: str) -> Dict[str, Any]:
         "위 내용(Issue)들을 바탕으로 트렌드나 핵심 내용을 종합적으로 분석하여 요약해 주세요. "
         "각 내용의 출처(제목)를 인용하며 자연스럽게 한국어로 설명해 주세요."
         "한자는 제외합니다. 포함될 시 한글로 번역합니다."
-        "위키피디아의 내용을 근거로 참고해도 좋습니다."
         "특수 기호는 제외합니다. 예시) *, #, @, $, %, ^, &, _, /, \, |, ;,{, }, `"
     )
     
