@@ -6,9 +6,7 @@ from sqlalchemy.orm import sessionmaker
 SQLALCHEMY_DATABASE_URL = "sqlite:///./sql.db"
 
 # 데이터베이스 엔진 생성
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-)
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 
 # DB 세션(접속창구) 생성기
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

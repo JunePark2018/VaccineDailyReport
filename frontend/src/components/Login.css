@@ -16,22 +16,128 @@
     text-align: center;
 }
 
-.Login .id_box, .Login .pw_box {
+.Login .id_box,
+.Login .pw_box {
     width: 300px;
     height: 40px;
     padding-left: 10px;
     border: 1.5px solid rgba(0, 0, 0, 0.2);
-    border-radius: 4px;
     margin-bottom: 10px;
     box-sizing: border-box;
 }
+
 .Login .button_wrapper {
     display: flex;
     width: 300px;
-    gap: 10px; 
+    gap: 10px;
     margin-top: 10px;
 }
 
-.Login .button_wrapper > div {
-    flex: 1; 
+.Login .button_wrapper>div {
+    flex: 1;
+}
+
+.Login {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+}
+
+.Login .Login_Logo {
+    margin-top: 80px;
+    padding: 50px;
+    padding-left: 30px;
+}
+
+.Login .Login_main_box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px;
+    border: 0.5px solid rgb(221, 221, 221);
+    width: 450px;
+    margin: 0 auto;
+}
+
+.Login .Login_total {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 400px;
+    margin: 0 auto;
+    text-align: center;
+    padding-top: 30px;
+}
+
+.Login .signup_text {
+    width: 350px;
+    margin: 0 auto;
+    padding-bottom: 30px;
+}
+
+.line {
+    display: flex;
+    align-items: center;
+    margin: 20px 0;
+    color: #888;
+    font-size: 14px;
+}
+
+.line_01 {
+    flex: 1;
+    height: 1px;
+    background-color: #ddd;
+}
+
+.line_text {
+    margin: 0 10px;
+}
+
+.Button {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+
+.Login .id_box,
+.Login .pw_box {
+    font-size: 15px;
+    width: 350px;
+    height: 55px;
+    padding-left: 0px;
+    padding-top: 15px;
+    border: none;
+    border-bottom: 1.5px solid rgba(0, 0, 0, 0.2);
+    transition: border-bottom 0.3s ease;
+    box-sizing: border-box;
+    outline: none;
+}
+
+/* placeholder 숨김 처리 (focus 시) */
+.Login .id_box:focus::placeholder,
+.Login .pw_box:focus::placeholder {
+    color: transparent;
+}
+
+/* hover 및 focus 시 bottom line 굵게 */
+.Login .id_box:hover,
+.Login .pw_box:hover,
+.Login .id_box:focus,
+.Login .pw_box:focus {
+    border-bottom: 1.5px solid black;
+}
+
+.Login .button_wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 350px;
+    margin: 90px auto 0;
+    gap: 10px;
+}
+
+.Login .button_wrapper>div {
+    width: 100%;
 }
