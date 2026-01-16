@@ -10,7 +10,7 @@ from huggingface_hub import login
 # 1. API 키 설정
 # =================================================================
 OPENAI_API_KEY = "".strip()
-GOOGLE_API_KEY = "AIzaSyDPE_vxnvHVqHtWJIxUGc8qM7TBhH36pMU".strip()
+GOOGLE_API_KEY = "".strip()
 HF_TOKEN = "".strip()
 
 if HF_TOKEN:
