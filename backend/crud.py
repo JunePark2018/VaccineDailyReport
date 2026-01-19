@@ -46,8 +46,7 @@ def create_article(db: Session, news_data: dict):
         url=news_data["url"],
         company_name=news_data["company_name"],
         img_urls=news_data["img_urls"],
-        time=pub_date,
-        author=news_data["author"]
+        time=pub_date
         # issue_id는 나중에 AI가 클러스터링할 때 채워줍니다. 지금은 비워둡니다(NULL).
     )
 

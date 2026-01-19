@@ -15,7 +15,6 @@ class ArticleResponse(BaseModel):
     company_name: 언론사명<br/>
     img_urls: 기사 내 사진 URL 목록 (옵션)<br/>
     time: 기사 발행 시각 (옵션)<br/>
-    author: 기자 이름<br/>
     """
     id: int
     title: str
@@ -25,7 +24,6 @@ class ArticleResponse(BaseModel):
     company_name: str
     img_urls: Optional[List[str]] = None
     time: Optional[datetime]
-    author: str
 
     class Config:
         from_attributes = True

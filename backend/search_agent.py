@@ -16,14 +16,14 @@ from ibm_watsonx_ai.foundation_models import ModelInference
 load_dotenv()
 
 credentials = {
-    "apikey": os.getenv("WATSONX_API_KEY"),
-    "url": os.getenv("WATSONX_URL"),
+    "apikey": "MX2AXEQ3gPivBT6XCjj3ETnC4tAfEPisG4Y8SOdn8Eag", # 사용자님의 키 유지
+    "url": "https://us-south.ml.cloud.ibm.com/"
 }
 
 llm_model = ModelInference(
     model_id="meta-llama/llama-3-3-70b-instruct",
     credentials=credentials,
-    project_id=os.getenv("WATSONX_PROJECT_ID"),
+    project_id="6fca979d-39d2-42e8-b45d-02c7cebd1222"
 )
 
 # ------------------------------------

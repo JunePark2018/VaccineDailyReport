@@ -17,10 +17,6 @@ def is_korean_article(text, threshold=0.25):
 
 
 def get_news_data(url):
-    """
-    [상세 페이지 파싱 함수]
-    역할: 제목, 시간, 언론사, 카테고리, 기자, 본문, 이미지를 추출합니다.
-    """
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
     }
@@ -29,87 +25,68 @@ def get_news_data(url):
         response = requests.get(url, headers=headers)
         soup = BeautifulSoup(response.text, "html.parser")
 
-        # 1. 기사 제목 및 언론사 추출
-        title = (
-            soup.select_one("h2#title_area span").get_text(strip=True)
-            if soup.select_one("h2#title_area span")
-            else "제목 없음"
-        )
-        company_name = (
-            soup.select_one(".media_end_head_top_logo img")["title"]
-            if soup.select_one(".media_end_head_top_logo img")
-            else "언론사 미상"
-        )
+        # 1. 기사 제목 추출 및 정제
+        title_el = soup.select_one("h2#title_area span")
+        raw_title = title_el.get_text(strip=True) if title_el else "제목 없음"
+        
+        # [추가] 제목 정제 로직: [속보], (상보), <단독> 등 제거
+        # 분석 성능을 높이기 위해 특수기호 안의 텍스트를 삭제합니다.
+        clean_title = re.sub(r'\[.*?\]|\(.*?\)|\<.*?\>', '', raw_title).strip()
+        # 만약 정제 후 제목이 비어버리면 원본 사용
+        if not clean_title:
+            clean_title = raw_title
 
-        # 네이버 뉴스 상단에 노출되는 섹션 정보(정치, 경제 등)를 가져옵니다.
-        category_el = soup.select_one(".media_end_head_top_channel_layer_text strong")
-        category = category_el.get_text(strip=True) if category_el else "미분류"
+        # 언론사 추출
+        company_el = soup.select_one(".media_end_head_top_logo img")
+        company_name = company_el["title"] if company_el else "언론사 미상"
 
-        # 2. 기사 시간 추출
-        time_el = soup.select_one(".media_end_head_info_datestamp_time._ARTICLE_DATE_TIME")
-        time_val = time_el["data-date-time"] if time_el and time_el.has_attr("data-date-time") else "시간 정보 없음"
-
-        # 3. 본문 영역 확보 (기자명 추출을 위해 정제 전 원본 텍스트 보관 필요)
+        # 2. 본문 영역 확보
         content_area = soup.select_one("#newsct_article")
         if not content_area:
             return None
-        raw_content_text = content_area.get_text(separator=" ", strip=True) if content_area else ""
 
-        # 3-2 한글 필터링 적용
-        if not is_korean_article(raw_content_text):
+        for extra in content_area.select(".img_desc, .article_caption, em, script, style, .sidebar, .ad"):
+            extra.decompose()
+
+        contents = content_area.get_text(separator=" ", strip=True)
+
+        # ---------------------------------------------------------
+        # [본문 정제 로직 - 기존 유지 및 강화]
+        # ---------------------------------------------------------
+        contents = re.sub(r'^[가-힣]{2,4}\s?=\s?[가-힣]{2,5}뉴스\)', '', contents)
+        contents = re.sub(r'^[가-힣]{2,10}\s?뉴스', '', contents)
+        contents = re.sub(r'.*?기자\s?=', '', contents)
+
+        contents = re.sub(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', '', contents)
+        contents = re.sub(r'[^\w\s가-힣.?!,]', ' ', contents)
+
+        stop_phrases = ["무단전재", "재배포 금지", "저작권자", "Copyrights", "구독 신청", "관련기사", "제보하기"]
+        for phrase in stop_phrases:
+            if phrase in contents:
+                contents = contents.split(phrase)[0].strip()
+
+        contents = re.sub(r'\s+', ' ', contents).strip()
+
+        if not is_korean_article(contents):
             return None
 
-        # 4. [강화된 기자명 추출 로직]
-        author = "기자 미상"
-
-        # 4-1. 1순위: 네이버 표준 레이아웃(상단 기자명 영역) 탐색
-        author_el = soup.select_one(".media_end_head_journalist_name")
-        if author_el:
-            author = author_el.get_text(strip=True)
-
-        # 4-2. 2순위: 레이아웃에 없을 경우 본문 텍스트 내에서 패턴 매칭 (KBS, 연합뉴스 등 대응)
-        if (author == "기자 미상" or not author) and raw_content_text:
-            # 패턴 A: 이메일 앞의 이름 추출 (예: 홍길동 기자 abc@kbs.co.kr)
-            email_match = re.search(r"([가-힣]{2,4})\s?(?:기자)?\s?[\w\.-]+@[\w\.-]+", raw_content_text)
-            # 패턴 B: 본문 하단 'OOO 기자' 문구 추출
-            name_match = re.search(r"([가-힣]{2,4})\s?기자", raw_content_text)
-
-            if email_match:
-                author = email_match.group(1).strip()
-            elif name_match:
-                author = name_match.group(1).strip()
-
-        # 5. 이미지 URL 리스트 수집
-        img_urls = [
-            img.get("data-src") or img.get("src")
-            for img in soup.select("#newsct_article img")
-            if img.get("data-src") or img.get("src")
-        ]
-
-        # 6. 본문 텍스트 정제 (태그 제거)
-        if content_area:
-            # 원본 보존을 위해 copy를 사용하거나, 필요한 데이터를 뽑은 후 제거 진행
-            for extra in content_area.select(".img_desc, .article_caption, em, script, style"):
-                extra.decompose()
-            contents = content_area.get_text(separator=" ", strip=True)
-        else:
-            contents = "내용 없음"
+        if len(contents) < 150:
+            return None
 
         return {
-            "title": title,
-            "time": time_val,  # 날짜
-            "company_name": company_name,  # 언론사
-            "author": author,  # 기자
-            "contents": contents,  # 본문
-            "img_urls": img_urls,  # 이미지
-            "url": url,  # 링크
-            "category": "미분류" # 카테고리는 run_article_crawler에서 줄 예정.
+            "title": raw_title,        # 화면 표시용 원본 제목
+            "search_title": clean_title, # AI 분석/임베딩용 정제 제목 (추천)
+            "time": (soup.select_one("._ARTICLE_DATE_TIME")["data-date-time"] if soup.select_one("._ARTICLE_DATE_TIME") else "시간 정보 없음"),
+            "company_name": company_name,
+            "contents": contents,
+            "img_urls": [img.get("data-src") or img.get("src") for img in soup.select("#newsct_article img")],
+            "url": url,
+            "category": "미분류"
         }
 
     except Exception as e:
-        print(f"[오류] 상세 페이지 파싱 실패: {url} | 사유: {e}")
+        print(f"[오류] 파싱 실패: {url} | {e}")
         return None
-
 
 def run_article_crawler(target_companies=None, debug_save=False, output_file="news_result.json"):
     """

@@ -12,6 +12,7 @@ from schemas import ArticleResponse, IssueResponse, UserCreateRequest, UserLogin
 from scraper import run_article_crawler
 from crud import create_article, create_user, get_user, increase_user_interest
 from ai_processor import process_news_pipeline 
+from clustering import run_issue_clustering
 from search_agent import search_wikipedia, search_issues_by_keyword, search_hot_topics_by_keyword, search_articles_by_keyword
 
 # --- [백그라운드 워커] 주기적으로 뉴스 수집 & AI 분석 ---
@@ -25,7 +26,12 @@ def run_background_worker():
         try:
             # 스마트 수집 (중복 만나면 중단)
             # news_list = crawl_breaking_news(limit=20, db_check_session=db)
-            news_list = run_article_crawler([], False)
+            my_target_media = [
+                "조선", "중앙", "한겨레", "경향", 
+                "YTN", "연합", 
+                "머니", "매일"
+            ]
+            news_list = run_article_crawler(my_target_media, False)
             count = 0
             for news in news_list:
                 # 기사 db에 저장
@@ -33,6 +39,9 @@ def run_background_worker():
                     count += 1
                 pass
             print(f"   -> {count}개의 신규 기사 저장 완료")
+
+            #군집화 시작
+            run_issue_clustering(db, days=3)
         finally:
             db.close()
 
