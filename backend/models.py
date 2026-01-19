@@ -35,15 +35,14 @@ class Article(Base):
     __tablename__ = "articles"
 
     id = Column(Integer, primary_key=True, index=True)
-    title = Column(String)  # 기사 제목
-    contents = Column(Text)  # 기사 본문
-    category = Column(String)  # 카테고리
-    url = Column(String, unique=True)  # 기사 링크 (중복 수집 방지)
-    company_name = Column(String)  # 언론사 (예: 조선일보, 한겨레)
-    img_urls = Column(JSON, nullable=True)  # 기사 이미지 리스트
-    time = Column(DateTime)  # 기사 발행 시간
-    author = Column(String)  # 기자
-
+    title = Column(String)                    # 기사 제목
+    contents = Column(Text)                    # 기사 본문
+    category = Column(String)                   # 카테고리
+    url = Column(String, unique=True)         # 기사 링크 (중복 수집 방지)
+    company_name = Column(String)                # 언론사 (예: 조선일보, 한겨레)
+    img_urls = Column(JSON, nullable=True)   # 기사 이미지 리스트
+    time = Column(DateTime)           # 기사 발행 시간
+    
     # 외래키: 이 기사가 어떤 이슈(Issue)에 속하는지 연결
     issue_id = Column(Integer, ForeignKey("issues.id"))
 
