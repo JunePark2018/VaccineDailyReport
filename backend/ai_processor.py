@@ -4,9 +4,9 @@ import json
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from openai import OpenAI
-from models import Article, Issue
-from database import SessionLocal
-from crud import create_sample_issue
+from database.models import Article, Issue
+from database.engine import SessionLocal
+from database.crud import create_sample_issue
 
 # 🔑 API 키 확인 필수
 os.environ["OPENAI_API_KEY"] = "sk-..." 

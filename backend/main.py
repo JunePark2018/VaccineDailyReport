@@ -6,11 +6,11 @@ from fastapi import FastAPI, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_
 
-from database import engine, SessionLocal
-from models import Base, Article, Issue, User
+from database.engine import engine, SessionLocal
+from database.models import Base, Article, Issue, User
 from schemas import ArticleResponse, IssueResponse, UserCreateRequest, UserLoginRequest, UserResponse, LogViewRequest, UserUpdate
 from scraper import run_article_crawler
-from crud import create_article, create_user, get_user, increase_user_interest
+from database.crud import create_article, create_user, get_user, increase_user_interest
 from ai_processor import process_news_pipeline 
 from clustering import run_issue_clustering
 from search_agent import search_wikipedia, search_issues_by_keyword, search_hot_topics_by_keyword, search_articles_by_keyword

@@ -3,7 +3,6 @@ import re
 import os
 from dotenv import load_dotenv # 추가
 import chromadb
-from chromadb.config import Settings
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sentence_transformers import SentenceTransformer
@@ -13,8 +12,8 @@ from sklearn.preprocessing import normalize
 from ibm_watsonx_ai.foundation_models import ModelInference
 from kiwipiepy import Kiwi
 
-from database import SessionLocal, engine
-from models import Base, Article, Issue
+from database.engine import SessionLocal, engine
+from database.models import Base, Article, Issue
 
 
 load_dotenv()

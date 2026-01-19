@@ -5,7 +5,7 @@ from urllib.parse import quote
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from typing import List, Dict, Any, Optional, Union
-from models import Issue, Article
+from database.models import Issue, Article
 
 # IBM WatsonX AI Import
 from ibm_watsonx_ai.foundation_models import ModelInference
