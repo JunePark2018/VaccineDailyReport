@@ -4,6 +4,7 @@ import Header from '../components/Header';
 import Logo from '../components/Logo';
 import Searchbar from '../components/Searchbar';
 import UserMenu from '../components/UserMenu';
+import axios from 'axios';
 import './CategoryPage.css';
 
 const CategoryPage = () => {
@@ -19,41 +20,22 @@ const CategoryPage = () => {
 
         const loadData = async () => {
             try {
-                // Dynamically import sample data to allow the app to run even if the folder is missing
-                const [articlesModule, imagesModule] = await Promise.all([
-                    import('../sample_/sampleArticle.json').catch(() => ({ default: [] })),
-                    import('../sample_/imageAssets').catch(() => ({ default: {} }))
-                ]);
-
-                const articles = articlesModule.default || [];
-                const images = imagesModule.default || {};
-                
-                setImageMap(images);
-                
-                // Filter articles by category name
-                // If category is '전체메뉴', show all articles
+                // 1. Axios를 이용해 백엔드 API 호출 (카테고리를 파라미터로 전달)
                 const decodedName = decodeURIComponent(name || '');
-                const filtered = (decodedName === '전체메뉴' || !decodedName) 
-                    ? articles 
-                    : articles.filter(a => {
-                        if (!a.category) return false;
-                        if (Array.isArray(a.category)) {
-                            return a.category.includes(decodedName);
-                        }
-                        return a.category === decodedName;
-                    });
-                
-                // Randomly shuffle filtered articles when category changes
-                if (filtered.length > 0) {
-                    const shuffled = [...filtered].sort(() => Math.random() - 0.5);
-                    setDisplayArticles(shuffled);
-                } else {
-                    setDisplayArticles([]);
-                }
+                const response = await axios.get(`http://localhost:8000/issues?skip=60&limit=60`, {
+                    params: { category: decodedName }
+                });
+
+                // 2. 이미지는 기존 방식 유지 혹은 별도 로드
+                const imagesModule = await import('../sample_/imageAssets').catch(() => ({ default: {} }));
+                setImageMap(imagesModule.default);
+
+                // 3. 백엔드에서 이미 섞어서(Random) 보내준다면 바로 세팅
+                setDisplayArticles(response.data);
+
             } catch (error) {
-                console.warn('Sample data could not be loaded:', error);
+                console.error('DB 데이터를 불러올 수 없습니다:', error);
                 setDisplayArticles([]);
-                setImageMap({});
             }
         };
 
@@ -67,7 +49,7 @@ const CategoryPage = () => {
 
         // Use 4 articles per loop to match the new layout (1 main + 3 grid)
         const baseIndex = (index * 4) % displayArticles.length;
-        
+
         const mainArticle = displayArticles[baseIndex];
         const gridArticles = [
             displayArticles[(baseIndex + 1) % displayArticles.length],
@@ -77,7 +59,7 @@ const CategoryPage = () => {
 
         const mainData = {
             title: mainArticle?.title || "News Title Text Sample",
-            description: mainArticle?.short_text || "text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample",
+            description: mainArticle?.contents || "text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample",
             image: mainArticle ? (imageMap[mainArticle.image] || mainArticle.image) : null
         };
 
@@ -98,7 +80,7 @@ const CategoryPage = () => {
             <React.Fragment key={index}>
                 {/* Main 3-Column Section */}
                 <section className="main-article-section">
-                    <div className="article-info-side" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
+                    <div className="article-info-side" onClick={() => navigate('/article/' + mainArticle.id)} style={{ cursor: 'pointer' }}>
                         <h2>{mainData.title}</h2>
                         <h3>"TEXT SAMPLE"</h3>
                         <p>{mainData.description}</p>
@@ -109,12 +91,12 @@ const CategoryPage = () => {
                             </div>
                         </div>
                     </div>
-                    
-                    <div className="article-image-center" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
+
+                    <div className="article-image-center" onClick={() => navigate('/article/' + mainArticle.id)} style={{ cursor: 'pointer' }}>
                         <img src={mainData.image} alt="Main" />
                         <div className="image-placeholder-text">IMAGE</div>
                     </div>
-                    
+
                     <div className="highlights-side">
                         {highlights.map((item, hIndex) => (
                             <div key={hIndex} className="highlight-item">
@@ -130,7 +112,7 @@ const CategoryPage = () => {
                 {/* Grid Section (3 items) */}
                 <section className="bottom-grid-section">
                     {grid.map((news) => (
-                        <div key={news.id} className="grid-item" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
+                        <div key={news.id} className="grid-item" onClick={() => navigate('/article/' + news.id)} style={{ cursor: 'pointer' }}>
                             <div className="grid-image">
                                 <img src={news.image} alt={news.title} />
                                 <div className="image-placeholder-text">IMAGE</div>
@@ -161,7 +143,7 @@ const CategoryPage = () => {
                 <h3>AI 추천 뉴스</h3>
                 <div className="ai-articles-container">
                     {aiArticles.map((art, i) => (
-                        <div key={i} className="ai-article-item" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
+                        <div key={i} className="ai-article-item" onClick={() => navigate('/article/' + art.id)} style={{ cursor: 'pointer' }}>
                             <div className="ai-article-text">
                                 <h4>{art?.title || "Title Text Sample"}</h4>
                                 <p>{art?.short_text || "TEXT SAMPLE"}</p>
@@ -189,7 +171,7 @@ const CategoryPage = () => {
                 headerMain="on"
                 headerBottom="on"
             />
-            
+
             <main className="category-content">
                 <div className="category-header">
                     <h1>{decodeURIComponent(name || '경제')}</h1>
@@ -208,7 +190,7 @@ const CategoryPage = () => {
 
                 {/* Pagination */}
                 <div className="pagination">
-                    <span 
+                    <span
                         onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                         style={{ cursor: 'pointer' }}
                     >
@@ -216,7 +198,7 @@ const CategoryPage = () => {
                     </span>
                     {[...Array(totalPages)].map((_, i) => (
                         <React.Fragment key={i + 1}>
-                            <span 
+                            <span
                                 className={`page-num ${currentPage === i + 1 ? 'active' : ''}`}
                                 onClick={() => setCurrentPage(i + 1)}
                             >
@@ -225,7 +207,7 @@ const CategoryPage = () => {
                             {i < totalPages - 1 && <span className="separator">|</span>}
                         </React.Fragment>
                     ))}
-                    <span 
+                    <span
                         onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                         style={{ cursor: 'pointer' }}
                     >

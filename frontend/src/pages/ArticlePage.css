@@ -1,7 +1,8 @@
 .ArticlePage .page-content {
   display: flex;
   flex-direction: column;
-  width: calc(100% - 72px); /* Total width minus Sidebar width */
+  width: calc(100% - 72px);
+  /* Total width minus Sidebar width */
   min-height: 100vh;
 }
 
@@ -12,11 +13,12 @@
   flex-direction: row;
   justify-content: center;
   padding: 20px;
-  background-color: #ffffff; /* Dark theme to match your wireframe */
+  background-color: #ffffff;
+  /* Dark theme to match your wireframe */
 }
 
 .ArticlePage .main-content .article-section {
-  min-width: 1000px;
+  max-width: 900px;
 }
 
 .ArticlePage .main-content .additional-section {

@@ -1,20 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Sources from '../components/Sources';
 import RightSideBar from '../components/RightSideBar';
 import NewsText from '../components/NewsText';
 import Header from '../components/Header';
 import Searchbar from '../components/Searchbar';
-import Button from '../components/Button';
 import Logo from '../components/Logo';
 import UserMenu from '../components/UserMenu';
 import './ArticlePage.css';
+import axios from 'axios';
 
 function ArticlePage() {
 
-  const navigate = useNavigate();
+  const { id } = useParams();
 
-  const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [article, setArticle] = useState({
+    title: "기사를 찾을 수 없습니다.",
+    contents: "기사 내용을 찾을 수 없습니다."
+  });
+
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
 
   // 2. 사이드바를 여는 함수 (문장 클릭 시 실행)
   const openSidebar = () => {
@@ -26,6 +31,20 @@ function ArticlePage() {
   const closeSidebar = () => {
     setSidebarOpen(false);
   };
+
+  useEffect(() => {
+    const fetchArticle = async () => {
+      try {
+        const response = await axios.get(`http://localhost:8000/issues/${id}`);
+        const article = response.data;
+        console.log(article);
+        setArticle(article);
+      } catch (error) {
+        console.error('DB 데이터를 불러올 수 없습니다:', error);
+      }
+    };
+    fetchArticle();
+  }, []);
 
   return (
     <div className="ArticlePage" style={{ display: 'flex' }}>
@@ -42,7 +61,7 @@ function ArticlePage() {
         {/* 하단 */}
         <main className="main-content">
           <div className='article-section'>
-            <NewsText title="TEST 기사 제목" contents="AI가 쓴 TEST 기사 본문입니다." />
+            <NewsText title={article.title} contents={article.contents} />
             <Sources articles={[{ title: "원본 기사 제목", company_name: "언론사명", url: "https://example.com" }]} />
           </div>
           <div className="additional-section">

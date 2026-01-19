@@ -15,13 +15,13 @@ import SearchResult from './pages/SearchResult.jsx';
 function App() {
   return (
     <BrowserRouter future={{
-        v7_startTransition: true,
-        v7_relativeSplatPath: true,
-      }}>
+      v7_startTransition: true,
+      v7_relativeSplatPath: true,
+    }}>
       <div className="App">
         <Routes>
           <Route path="/" element={<Main />} />
-          <Route path="/article" element={<ArticlePage />} />
+          <Route path="/article/:id" element={<ArticlePage />} />
           <Route path="/category/:name" element={<CategoryPage />} />
           <Route path="/issues" element={<Issues />} />
           <Route path='/login' element={<Login />} />
