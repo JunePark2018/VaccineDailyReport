@@ -1,26 +1,37 @@
 .ArticlePage .page-content {
   display: flex;
   flex-direction: column;
-  width: calc(100% - 72px);
-  /* Total width minus Sidebar width */
+  width: 100%;
   min-height: 100vh;
 }
 
 .ArticlePage .main-content {
   flex: 1;
-
   display: flex;
   flex-direction: row;
-  justify-content: center;
-  padding: 20px;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 40px 20px;
   background-color: #ffffff;
-  /* Dark theme to match your wireframe */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .ArticlePage .main-content .article-section {
-  max-width: 900px;
+  flex: 1;
+  min-width: 0;
 }
 
 .ArticlePage .main-content .additional-section {
   width: 300px;
+  margin-left: 40px;
+  background-color: #eeeeee;
+}
+
+.ArticlePage .article-footer-actions {
+  margin: 20px 0;
+  display: flex;
+  justify-content: flex-start;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 20px;
 }

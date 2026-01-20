@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Iterable, List, Optional, Sequence, Tuple
+from typing import Iterable, List, Optional, Sequence, Tuple, Dict
 
 from sqlalchemy import and_, delete, func, select, update
 from sqlalchemy.exc import IntegrityError
@@ -246,16 +246,25 @@ def list_ai_generated_news_by_cluster(db: Session, cluster_id: int, limit: int =
 def create_ai_news_issue(db: Session, *, title: str, article_ids: List[int]) -> AiGeneratedNews:
     """
     clustering.py에서 사용하는 이슈 생성 함수.
+    Cluster를 생성하고, AiGeneratedNews와 News를 연결합니다.
     """
-    # 1. 이슈 생성
-    issue = AiGeneratedNews(title=title, created_at=datetime.utcnow())
-    db.add(issue)
-    db.flush()  # issue.id 확보
+    # 1. Cluster 생성
+    cluster = Cluster(title=title)
+    db.add(cluster)
+    db.flush()  # cluster.id 확보
 
-    # 2. 기사 연결 (News.issue_id 업데이트)
-    # issue_id 컬럼이 News 모델에 있다고 가정 (clustering.py 로직 참조)
+    # 2. AiGeneratedNews 생성
+    issue = AiGeneratedNews(cluster_id=cluster.id, title=title, created_at=datetime.utcnow())
+    db.add(issue)
+    db.flush()
+
+    # 3. 기사 연결 (M:N 관계 테이블에 추가)
     if article_ids:
-        db.execute(update(News).where(News.id.in_(article_ids)).values(issue_id=issue.id))
+        # bulk insert for M:N
+        # 이미 존재하는지 체크하지 않고 넣으면 중복 에러 가능성 있음
+        # 하지만 새로 만든 클러스터라 비어있음이 보장됨.
+        vals = [{"cluster_id": cluster.id, "news_id": nid} for nid in article_ids]
+        db.execute(cluster_news_link.insert(), vals)
         db.flush()
 
     return issue
@@ -386,14 +395,8 @@ def update_user_subscriptions(
             # 주의: (user_id, keyword) PK이므로 중복 없는지 체크 필요?
             # clear() 했으므로 중복은 입력 리스트 내 중복만 체크하면 됨.
 
-            # Check duplicates in input list effectively handled by ensuring we don't add same kw twice here?
-            # Or reliance on flush error? Better to check internally.
-
             # We can't easily check against `user.keyword_subscriptions` because it's pending flush/clear.
             # actually `clear()` removes them from session.
-
-            # Simple approach: append new objects. If input has duplicates, second one might fail?
-            # Let's deduplicate input first.
             pass
 
         # Deduplicate and add

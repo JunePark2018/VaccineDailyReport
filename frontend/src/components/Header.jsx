@@ -4,6 +4,8 @@ import './Header.css';
 import { categories } from './categoryIcon/categoryData';
 import sampleArticles from '../sample_/sampleArticle.json';
 
+import Weather from './Weather';
+
 const Header = ({
   className = "",
   leftChild,
@@ -32,14 +34,14 @@ const Header = ({
       {headerTop === "on" && (
         <div className="Header-Top">
           <div className="header-top-content">
-            <span 
-              className="updated-articles" 
-              onClick={() => nav('/article')} 
+            <span
+              className="updated-articles"
+              onClick={() => nav('/article')}
               style={{ cursor: 'pointer' }}
             >
               {sampleArticles[currentArticleIndex].title}
             </span>
-            <span className="weather">서울 날씨</span>
+            <Weather />
           </div>
         </div>
       )}
@@ -68,25 +70,20 @@ const Header = ({
             {categories.map((item) => (
               <div
                 key={item.id}
-                className={`category-item ${
-                  activeCategory === item.label || (item.label === '이슈' && location.pathname === '/issues') 
-                  ? 'active' : ''
-                }`}
+                className={`category-item ${activeCategory === item.label || (item.label === '이슈' && location.pathname === '/issues')
+                    ? 'active' : ''
+                  }`}
                 onClick={() => {
-                  if (item.label === '이슈') {
-                    nav('/issues');
-                  } else {
-                    nav(`/category/${encodeURIComponent(item.label)}`);
-                  }
+                  if (item.label === '이슈') nav('/issues');
+                  else if (item.label === '정치') nav('/politics');
+                  else if (item.label === '경제') nav('/economy');
+                  else if (item.label === '사회') nav('/society');
+                  else if (item.label === '생활/문화') nav('/living-culture');
+                  else if (item.label === 'IT/과학') nav('/science');
+                  else if (item.label === '세계') nav('/world');
+                  else if (item.label === '홈') nav('/');
                 }}
               >
-                <div className="icon-wrapper">
-                  <img
-                    src={item.icon}
-                    alt={item.label}
-                    className="category-icon"
-                  />
-                </div>
                 <span>{item.label}</span>
               </div>
             ))}

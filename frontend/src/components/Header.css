@@ -19,7 +19,7 @@
 
 .Header-Container .header-top-content {
     width: 100%;
-    max-width: 1200px;
+    max-width: 1320px;
     display: flex;
     justify-content: space-between;
     padding: 0 20px;
@@ -43,7 +43,7 @@
 
 .Header-Container .Header-Main .header-main-content {
     width: 100%;
-    max-width: 1200px;
+    max-width: 1320px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -59,7 +59,8 @@
 
 /* 2. Middle Section: Searchbar centered on all sides */
 .Header-Container .Header-Main .mid-child {
-    flex: 2;                        /* Increased territory to 200% compared to side children */
+    flex: 2;
+    /* Increased territory to 200% compared to side children */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -69,19 +70,20 @@
 .Header-Container .Header-Main .right-child {
     flex: 1;
     display: flex;
-    justify-content: flex-end;      /* Aligns button to the far right */
+    justify-content: flex-end;
+    /* Aligns button to the far right */
     align-items: center;
 }
 
 /* Header 3: Bottom Section */
 .Header-Container .Header-Bottom {
-    height: 50px;
+    height: 34px;
     background-color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
     border-bottom: 1px solid #ddd;
-    padding: 10px 0;
+    padding: 2px 0;
 }
 
 /* Category List Container */
@@ -90,9 +92,10 @@
     flex-direction: row;
     justify-content: center;
     align-items: center;
-    gap: 20px;
+    gap: 10px;
+    /* Reduced from 20px */
     width: 100%;
-    max-width: 1200px;
+    max-width: 1320px;
     overflow-x: auto;
 }
 
@@ -103,14 +106,14 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    padding: 8px 12px;
+    padding: 2px 12px;
     position: relative;
     transition: transform 0.2s ease, color 0.2s ease;
 }
 
 .Header-Container .Header-Bottom .category-item:hover {
     transform: translateY(-2px);
-    color: #007bff;
+    color: #000;
 }
 
 /* Active state with underbar */
@@ -143,14 +146,15 @@
 
 /* Text Label */
 .Header-Container .Header-Bottom .category-item span {
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 500;
     text-align: center;
     word-break: keep-all;
     color: #333;
-    transition: color 0.2s ease;
+    transition: color 0.2s ease, font-weight 0.2s ease;
 }
 
 .Header-Container .Header-Bottom .category-item:hover span {
-    color: #007bff;
+    color: #000;
+    font-weight: 800;
 }

@@ -6,6 +6,7 @@ import axios from 'axios';
 import Logo from '../components/Logo';
 import UserMenu from '../components/UserMenu';
 import Header from '../components/Header';
+import Searchbar from '../components/Searchbar';
 
 import CategoryRadarChart from '../components/CategoryRadarChart';
 import KeywordBarChart from '../components/KeywordBarChart';
@@ -88,9 +89,17 @@ const MyPage = () => {
   return (
     <div className="mypage-container">
       <Header
-        headerTop="on" headerMain="on" headerBottom="off"
-        leftChild={<Logo />}
-        rightChild={<UserMenu />}
+        headerTop="on" headerMain="on" headerBottom="on"
+        leftChild={<div />}
+        midChild={<Logo />}
+        rightChild={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
+            <div style={{ position: 'relative' }}>
+              <Searchbar />
+            </div>
+            <UserMenu />
+          </div>
+        }
       />
 
       <main className="mypage-main">

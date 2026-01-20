@@ -1,26 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Header from '../components/Header';
 import Logo from '../components/Logo';
 import Searchbar from '../components/Searchbar';
 import UserMenu from '../components/UserMenu';
-import axios from 'axios';
-import './CategoryPage.css';
+import './SciencePage.css';
 
-const CategoryPage = () => {
-    const { name } = useParams();
+const SciencePage = () => {
+    const name = 'IT/과학';
     const navigate = useNavigate();
+    const location = useLocation();
     const [currentPage, setCurrentPage] = useState(1);
     const [displayArticles, setDisplayArticles] = useState([]);
     const [imageMap, setImageMap] = useState({});
-    const itemsPerPage = 5;
 
     useEffect(() => {
         setCurrentPage(1);
 
         const loadData = async () => {
             try {
-                // Dynamically import sample data to allow the app to run even if the folder is missing
                 const [articlesModule, imagesModule] = await Promise.all([
                     import('../sample_/sampleArticle.json').catch(() => ({ default: [] })),
                     import('../sample_/imageAssets').catch(() => ({ default: {} }))
@@ -28,23 +26,16 @@ const CategoryPage = () => {
 
                 const articles = articlesModule.default || [];
                 const images = imagesModule.default || {};
-
                 setImageMap(images);
 
-                // Filter articles by category name
-                // If category is '전체메뉴', show all articles
-                const decodedName = decodeURIComponent(name || '');
-                const filtered = (decodedName === '전체메뉴' || !decodedName)
-                    ? articles
-                    : articles.filter(a => {
-                        if (!a.category) return false;
-                        if (Array.isArray(a.category)) {
-                            return a.category.includes(decodedName);
-                        }
-                        return a.category === decodedName;
-                    });
+                const filtered = articles.filter(a => {
+                    if (!a.category) return false;
+                    if (Array.isArray(a.category)) {
+                        return a.category.includes(name);
+                    }
+                    return a.category === name;
+                });
 
-                // Randomly shuffle filtered articles when category changes
                 if (filtered.length > 0) {
                     const shuffled = [...filtered].sort(() => Math.random() - 0.5);
                     setDisplayArticles(shuffled);
@@ -52,22 +43,18 @@ const CategoryPage = () => {
                     setDisplayArticles([]);
                 }
             } catch (error) {
-                console.error('DB 데이터를 불러올 수 없습니다:', error);
+                console.warn('Sample data could not be loaded:', error);
                 setDisplayArticles([]);
+                setImageMap({});
             }
         };
 
         loadData();
-    }, [name]);
+    }, []);
 
-    // Function to render the main content block (Featured, Highlights, Grid)
-    // This is repeated 5 times as requested by the user
     const renderMainContent = (index) => {
         if (!displayArticles || displayArticles.length === 0) return null;
-
-        // Use 4 articles per loop to match the new layout (1 main + 3 grid)
         const baseIndex = (index * 4) % displayArticles.length;
-
         const mainArticle = displayArticles[baseIndex];
         const gridArticles = [
             displayArticles[(baseIndex + 1) % displayArticles.length],
@@ -77,7 +64,7 @@ const CategoryPage = () => {
 
         const mainData = {
             title: mainArticle?.title || "News Title Text Sample",
-            description: mainArticle?.contents || "text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample",
+            description: mainArticle?.short_text || "text sample...",
             image: mainArticle ? (imageMap[mainArticle.image] || mainArticle.image) : null
         };
 
@@ -87,25 +74,12 @@ const CategoryPage = () => {
             image: art ? (imageMap[art.image] || art.image) : null
         }));
 
-        const highlights = [
-            { keyword: '중점으로 둔 키워드', content: '"해당 키워드에 대한 요약한 내용"' },
-            { keyword: '중점으로 둔 키워드', content: '"해당 키워드에 대한 요약한 내용"' },
-            { keyword: '중점으로 둔 키워드', content: '"해당 키워드에 대한 요약한 내용"' },
-            { keyword: '중점으로 둔 키워드', content: '"해당 키워드에 대한 요약한 내용"' }
-        ];
+
 
         return (
             <React.Fragment key={index}>
-                {/* Main 3-Column Section */}
                 <section className="main-article-section">
-                    <div className="article-info-side" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
-                        <div className="analysis-box-large">
-                            <div className="analysis-placeholder">
-                                <div className="analysis-x"></div>
-                                <span className="analysis-text">분석</span>
-                            </div>
-                        </div>
-                    </div>
+
 
                     <div className="article-image-center" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
                         <img src={mainData.image} alt="Main" />
@@ -115,22 +89,12 @@ const CategoryPage = () => {
                         </div>
                     </div>
 
-                    <div className="highlights-side">
-                        {highlights.map((item, hIndex) => (
-                            <div key={hIndex} className="highlight-item">
-                                <span className="highlight-keyword">{item.keyword}</span>
-                                <span className="highlight-content">{item.content}</span>
-                            </div>
-                        ))}
-                    </div>
+
                 </section>
-
                 <div className="section-divider"></div>
-
-                {/* Grid Section (3 items) */}
                 <section className="bottom-grid-section">
                     {grid.map((news) => (
-                        <div key={news.id} className="grid-item" onClick={() => navigate('/article/' + news.id)} style={{ cursor: 'pointer' }}>
+                        <div key={news.id} className="grid-item" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
                             <div className="grid-image">
                                 <img src={news.image} alt={news.title} />
                                 <div className="image-placeholder-text">IMAGE</div>
@@ -141,7 +105,6 @@ const CategoryPage = () => {
                         </div>
                     ))}
                 </section>
-
                 <div className="divider"></div>
             </React.Fragment>
         );
@@ -150,7 +113,7 @@ const CategoryPage = () => {
 
 
 
-    const totalPages = 5; // Fixed to 5 pages as requested for the loop
+    const totalPages = 5;
 
     return (
         <div className="category-page">
@@ -172,10 +135,9 @@ const CategoryPage = () => {
 
             <main className="category-content">
                 <div className="category-header">
-                    <h1>{decodeURIComponent(name || '경제')}</h1>
+                    <h1>{name}</h1>
                 </div>
 
-                {/* Repeat the main content 5 times, offset by current page */}
                 {displayArticles.length > 0 ? (
                     [...Array(5)].map((_, i) => renderMainContent(i + (currentPage - 1) * 5))
                 ) : (
@@ -187,15 +149,8 @@ const CategoryPage = () => {
 
 
 
-
-                {/* Pagination */}
                 <div className="pagination">
-                    <span
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                        style={{ cursor: 'pointer' }}
-                    >
-                        {"<"}
-                    </span>
+                    <span onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} style={{ cursor: 'pointer' }}>{"<"}</span>
                     {[...Array(totalPages)].map((_, i) => (
                         <React.Fragment key={i + 1}>
                             <span
@@ -207,16 +162,11 @@ const CategoryPage = () => {
                             {i < totalPages - 1 && <span className="separator">|</span>}
                         </React.Fragment>
                     ))}
-                    <span
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                        style={{ cursor: 'pointer' }}
-                    >
-                        {">"}
-                    </span>
+                    <span onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} style={{ cursor: 'pointer' }}>{">"}</span>
                 </div>
             </main>
         </div>
     );
 };
 
-export default CategoryPage;
+export default SciencePage;

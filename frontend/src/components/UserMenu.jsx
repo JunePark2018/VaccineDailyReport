@@ -65,11 +65,13 @@ const UserMenu = () => {
         {isLoggedIn && (
           <span className="user-name">{(userName || "회원") + "님"}</span>
         )}
-        <img
-          src={loginIcon}
-          alt={isLoggedIn ? "User Menu" : "Login"}
-          className="user-icon"
-        />
+        <div className="user-icon-box">
+          <img
+            src={loginIcon}
+            alt={isLoggedIn ? "User Menu" : "Login"}
+            className="user-icon"
+          />
+        </div>
       </div>
       {isLoggedIn && showMenu && (
         <div className="dropdown-menu">

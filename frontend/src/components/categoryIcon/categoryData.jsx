@@ -8,7 +8,7 @@ import scienceIcon from './science.png';
 import worldIcon from './world.png';
 
 export const categories = [
-    { id: 'sub1', label: '전체메뉴', icon: totalmenuIcon },
+    { id: 'sub1', label: '홈', icon: totalmenuIcon },
     { id: 'sub2', label: '이슈', icon: issueIcon },
     { id: 'sub3', label: '정치', icon: governmentIcon },
     { id: 'sub4', label: '경제', icon: economicsIcon },

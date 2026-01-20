@@ -47,15 +47,25 @@ function ArticlePage() {
   }, []);
 
   return (
-    <div className="ArticlePage" style={{ display: 'flex' }}>
+    <div className="ArticlePage">
       {/* 2. 오른쪽: 헤더 + 본문 영역을 감싸는 컨테이너 */}
-      <div className="page-content" style={{ flex: 1 }}>
+      <div className="page-content">
 
         {/* 상단 */}
         <Header
-          leftChild={<Logo />}
-          midChild={<Searchbar />}
-          rightChild={<UserMenu />}
+          leftChild={<div />}
+          midChild={<Logo />}
+          rightChild={
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
+              <div style={{ position: 'relative' }}>
+                <Searchbar />
+              </div>
+              <UserMenu />
+            </div>
+          }
+          headerTop="on"
+          headerMain="on"
+          headerBottom="on"
         />
 
         {/* 하단 */}

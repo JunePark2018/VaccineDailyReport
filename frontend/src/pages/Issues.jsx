@@ -11,13 +11,20 @@ const Issues = () => {
 
   return (
     <div className="Issues">
-      <Header 
-        leftChild={<Logo />}
-        midChild={<Searchbar />}
-        rightChild={<UserMenu />}
-        headerTop="on" 
-        headerMain="on" 
-        headerBottom="on" 
+      <Header
+        leftChild={<div />}
+        midChild={<Logo />}
+        rightChild={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
+            <div style={{ position: 'relative' }}>
+              <Searchbar />
+            </div>
+            <UserMenu />
+          </div>
+        }
+        headerTop="on"
+        headerMain="on"
+        headerBottom="on"
       />
       <main className="Issues-Main">
         {/* Blank page content as requested */}

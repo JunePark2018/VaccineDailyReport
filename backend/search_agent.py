@@ -16,14 +16,14 @@ from ibm_watsonx_ai.foundation_models import ModelInference
 load_dotenv()
 
 credentials = {
-    "apikey": "MX2AXEQ3gPivBT6XCjj3ETnC4tAfEPisG4Y8SOdn8Eag", # 사용자님의 키 유지
-    "url": "https://us-south.ml.cloud.ibm.com/"
+    "apikey": os.getenv("WATSONX_API_KEY"),
+    "url": os.getenv("WATSONX_URL")
 }
 
 llm_model = ModelInference(
     model_id="meta-llama/llama-3-3-70b-instruct",
     credentials=credentials,
-    project_id="6fca979d-39d2-42e8-b45d-02c7cebd1222"
+    project_id=os.getenv("WATSONX_PROJECT_ID")
 )
 
 # ------------------------------------
@@ -163,6 +163,73 @@ def search_issues_by_keyword(db: Session, keyword: str) -> Dict[str, Any]:
 
     return {"analysis": analysis_result, "issues": issues_list}
 
+def deduplicate_articles(articles: List[Article], limit: int) -> List[Article]:
+    """
+    기사 리스트에서 중복을 제거하고 대표 기사만 추려냅니다.
+    1. issue_id가 있는 경우: 같은 이슈 그룹 중 가장 최신 기사 1개만 선택
+    2. issue_id가 없는 경우: 그대로 유지 (단, 제목이 완전히 같다면 제거)
+    """
+    seen_issue_ids = set()
+    unique_articles = []
+
+    # 제목 중복 방지용
+    seen_titles = set()
+
+    for art in articles:
+        # 이미 충분한 수량이 모였으면 중단
+        if len(unique_articles) >= limit:
+            break
+
+        # 1. 제목 완전 일치 중복 제거
+        if art.title in seen_titles:
+            continue
+        seen_titles.add(art.title)
+
+        # 2. 이슈 그룹 중복 제거 (issue_id 활용)
+        if art.issue_id is not None:
+            if art.issue_id in seen_issue_ids:
+                continue # 이미 이 이슈의 기사가 하나 들어갔으므로 스킵
+            seen_issue_ids.add(art.issue_id)
+
+        # 통과한 기사 추가
+        unique_articles.append(art)
+
+    return unique_articles
+
+
+def deduplicate_articles(articles: List[Article], limit: int) -> List[Article]:
+    """
+    기사 리스트에서 중복을 제거하고 대표 기사만 추려냅니다.
+    1. issue_id가 있는 경우: 같은 이슈 그룹 중 가장 최신 기사 1개만 선택
+    2. issue_id가 없는 경우: 그대로 유지 (단, 제목이 완전히 같다면 제거)
+    """
+    seen_issue_ids = set()
+    unique_articles = []
+    
+    # 제목 중복 방지용
+    seen_titles = set()
+
+    for art in articles:
+        # 이미 충분한 수량이 모였으면 중단
+        if len(unique_articles) >= limit:
+            break
+
+        # 1. 제목 완전 일치 중복 제거
+        if art.title in seen_titles:
+            continue
+        seen_titles.add(art.title)
+
+        # 2. 이슈 그룹 중복 제거 (issue_id 활용)
+        if art.issue_id is not None:
+            if art.issue_id in seen_issue_ids:
+                continue # 이미 이 이슈의 기사가 하나 들어갔으므로 스킵
+            seen_issue_ids.add(art.issue_id)
+        
+        # 통과한 기사 추가
+        unique_articles.append(art)
+    
+    return unique_articles
+
 
 # 3. 핫토픽(Articles) 검색 (Section 3)
 def search_hot_topics_by_keyword(db: Session, keyword: str) -> List[Dict[str, Any]]:
@@ -175,12 +242,18 @@ def search_hot_topics_by_keyword(db: Session, keyword: str) -> List[Dict[str, An
         db.query(News)
         .filter(or_(News.title.ilike(search_pattern), News.contents.ilike(search_pattern)))
         .order_by(News.created_at.desc())
-        .limit(50)
+        .limit(100)
         .all()
     )
+    
+    # 중복 제거 로직 적용 (최대 10개)
+    unique_articles = deduplicate_articles(articles, limit=10)
+
+    # 중복 제거 로직 적용 (최대 10개)
+    unique_articles = deduplicate_articles(articles, limit=10)
 
     hot_topics = []
-    for art in articles:
+    for art in unique_articles:
         if art.img_urls and len(art.img_urls) > 0:
             hot_topics.append(
                 {
@@ -191,8 +264,6 @@ def search_hot_topics_by_keyword(db: Session, keyword: str) -> List[Dict[str, An
                     "company_name": art.company.name,
                 }
             )
-            if len(hot_topics) >= 10:
-                break
 
     return hot_topics
 
@@ -208,12 +279,14 @@ def search_articles_by_keyword(db: Session, keyword: str) -> List[Dict[str, Any]
         db.query(Article)
         .filter(or_(Article.title.ilike(search_pattern), Article.contents.ilike(search_pattern)))
         .order_by(Article.time.desc())
-        .limit(20)
-    )  # 최대 20개
+        .limit(100) # 필터링 위해 넉넉히
+        .all()
+    )  
 
-    # 쿼리 결과 사용
+    # 중복 제거 로직 적용 (최대 20개)
+    unique_articles = deduplicate_articles(articles, limit=20)
 
     return [
-        {"id": art.id, "title": art.title, "url": art.url, "company_name": art.company.name, "view_count": 0}
-        for art in articles
+        {"id": art.id, "title": art.title, "url": art.url, "company_name": art.company_name, "view_count": 0}
+        for art in unique_articles
     ]
