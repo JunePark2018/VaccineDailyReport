@@ -15,6 +15,7 @@ from sqlalchemy import (
     CheckConstraint,
 )
 from sqlalchemy.orm import relationship, declarative_base
+from sqlalchemy.ext.hybrid import hybrid_property
 
 Base = declarative_base()
 
@@ -99,6 +100,10 @@ class News(Base):
         lazy="selectin",
     )
 
+    @hybrid_property
+    def company_name(self):
+        return self.company.name if self.company else None
+
 
 class AiGeneratedNews(Base):
     __tablename__ = "ai_generated_news"
@@ -151,7 +156,7 @@ class User(Base):
     searches = relationship("SearchLog", back_populates="user", cascade="all, delete-orphan")
 
     keyword_stats = relationship(
-        "UserKeywordStat",
+        "UserKeywordReadStat",
         back_populates="user",
         cascade="all, delete-orphan",
         lazy="selectin",
@@ -163,7 +168,9 @@ class User(Base):
         lazy="selectin",
     )
 
-    subscribed_categories = relationship("Category", secondary="user_category_sub", back_populates="subscribers")
+    subscribed_categories = relationship(
+        "Category", secondary="user_category_subscriptions", back_populates="subscribers"
+    )
     keyword_subscriptions = relationship(
         "UserKeywordSubscription",
         back_populates="user",
@@ -214,7 +221,7 @@ class NewsView(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     news_id = Column(Integer, ForeignKey("ai_generated_news.id", ondelete="CASCADE"), nullable=False, index=True)
 
-    __table_args__ = UniqueConstraint("user_id", "news_id", name="uq_user_news_view")
+    __table_args__ = (UniqueConstraint("user_id", "news_id", name="uq_user_news_view"),)
 
     viewed_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
@@ -246,11 +253,11 @@ class Category(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(50), unique=True, nullable=False, index=True)
 
-    subscribers = relationship("User", secondary="user_category_sub", back_populates="subscribed_categories")
+    subscribers = relationship("User", secondary="user_category_subscriptions", back_populates="subscribed_categories")
 
 
-user_category_sub = Table(
-    "user_category_sub",
+user_category_subscriptions = Table(
+    "user_category_subscriptions",
     Base.metadata,
     Column("user_id", ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
     Column("category_id", ForeignKey("categories.id", ondelete="CASCADE"), primary_key=True),
@@ -272,8 +279,8 @@ class UserCategoryReadStat(Base):
     user = relationship("User", back_populates="category_stats")
 
 
-class UserKeywordStat(Base):
-    __tablename__ = "user_keyword_stats"
+class UserKeywordReadStat(Base):
+    __tablename__ = "user_keyword_read_stats"
 
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
     keyword = Column(String(200), primary_key=True)

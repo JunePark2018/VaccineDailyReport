@@ -22,7 +22,7 @@ const CategoryPage = () => {
             try {
                 // 1. Axios를 이용해 백엔드 API 호출 (카테고리를 파라미터로 전달)
                 const decodedName = decodeURIComponent(name || '');
-                const response = await axios.get(`http://localhost:8000/issues?skip=60&limit=60`, {
+                const response = await axios.get(`http://localhost:8000/generated-news?skip=0&limit=60`, {
                     params: { category: decodedName }
                 });
 

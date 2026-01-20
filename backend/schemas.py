@@ -23,7 +23,7 @@ class NewsResponse(BaseModel):
     contents: Optional[str] = None
     img_urls: Optional[List[str]] = None
     url: str
-    company_name: str  # 모델에서는 relation이지만, 응답엔 이름만 줘도 무방
+    company_name: Optional[str] = None  # 모델에서는 relation이지만, 응답엔 이름만 줘도 무방
     created_at: datetime
     region: str
 
@@ -160,3 +160,59 @@ class UserLoginRequest(BaseModel):
 
     login_id: str
     password: str
+
+
+# --- 추가된 스키마 ---
+class ArticleResponse(BaseModel):
+    """
+    뉴스 기사 응답 스키마 (ArticleResponse)
+
+    id: 기사 ID
+    title: 기사 제목
+    contents: 기사 내용 (옵션)
+    img_urls: 기사 내 사진 URL 목록 (옵션)
+    url: 기사 URL
+    company_name: 언론사명 (Company 테이블의 name)
+    created_at: 기사 발행 시각
+    region: 'domestic' | 'global'
+    """
+
+    id: int
+    title: Optional[str] = None
+    contents: Optional[str] = None
+    img_urls: Optional[List[str]] = None
+    url: str
+    company_name: str
+    created_at: datetime
+    region: str
+
+    class Config:
+        from_attributes = True
+
+
+class IssueResponse(BaseModel):
+    """
+    AI 생성 기사 응답 스키마 (IssueResponse)
+
+    id: 기사 ID
+    title: 기사 제목
+    contents: 기사 내용
+    created_at: 기사 생성 시각
+    analysis_result: AI 비교분석 (JSON)
+    keywords: 키워드 (JSON)
+    """
+
+    id: int
+    cluster_id: int
+    title: Optional[str] = None
+    contents: Optional[str] = None
+    created_at: datetime
+    analysis_result: Optional[Any]
+    keywords: Optional[List[str]] = None
+
+    # 반응/조회수 (옵션)
+    like_count: int = 0
+    dislike_count: int = 0
+
+    class Config:
+        from_attributes = True

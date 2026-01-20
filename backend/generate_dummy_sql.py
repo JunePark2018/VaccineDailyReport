@@ -92,10 +92,14 @@ def generate_article(index):
     random_date_str = random_date.strftime("%Y-%m-%d %H:%M:%S")
 
     return f"""(
+    {random.randint(1, 3)},
     '{title.replace("'", "''")}',
     '{content.replace("'", "''")}',
+    '{json.dumps(keywords, ensure_ascii=False).replace("'", "''")}',
     '{json.dumps(analysis_result, ensure_ascii=False).replace("'", "''")}',
-    '{random_date_str}'
+    '{random_date_str}',
+    0,
+    0
 )"""
 
 
@@ -105,7 +109,7 @@ for i in range(100):
     entries.append(generate_article(i))
 
 # Create the SQL content
-sql_content = "-- 임시용 Issue 데이터 생성기입니다.\n\nDELETE FROM issues;\n\nINSERT INTO issues (title, contents, analysis_result, created_at) VALUES \n"
+sql_content = "-- 임시용 AiGeneratedNews 데이터 생성기입니다.\n\nDELETE FROM ai_generated_news;\n\nINSERT INTO ai_generated_news (cluster_id, title, contents, keywords, analysis_result, created_at, like_count, dislike_count) VALUES \n"
 sql_content += ",\n".join(entries)
 sql_content += ";"
 
@@ -114,4 +118,4 @@ sql_content += ";"
 with open(r"c:\Users\201-03\PycharmProjects\FinalProject\backend\init.sql", "w", encoding="utf-8") as f:
     f.write(sql_content)
 
-print("Successfully generated init.sql with 100 Korean articles.")
+print("Successfully generated init.sql with 100 Korean AiGeneratedNews entries.")

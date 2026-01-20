@@ -35,7 +35,7 @@ function ArticlePage() {
   useEffect(() => {
     const fetchArticle = async () => {
       try {
-        const response = await axios.get(`http://localhost:8000/issues/${id}`);
+        const response = await axios.get(`http://localhost:8000/generated-news/${id}`);
         const article = response.data;
         console.log(article);
         setArticle(article);

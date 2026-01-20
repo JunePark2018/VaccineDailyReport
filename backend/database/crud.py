@@ -9,7 +9,7 @@ from sqlalchemy import and_, delete, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from models import (
+from .models import (
     Company,
     CompanyAlias,
     Cluster,
@@ -21,7 +21,7 @@ from models import (
     NewsView,
     SearchLog,
     UserCategoryReadStat,
-    UserKeywordStat,
+    UserKeywordReadStat,
     UserKeywordSubscription,
     cluster_news_link,
 )
@@ -120,7 +120,12 @@ def create_news(
     region: str,  # "domestic" | "global"
     img_urls: Optional[dict | list] = None,
     created_at: Optional[datetime] = None,
-) -> News:
+) -> Optional[News]:
+    # Check if news with this URL already exists
+    existing = get_news_by_url(db, url)
+    if existing:
+        return None  # Already exists, don't create
+
     obj = News(
         title=title,
         contents=contents,
@@ -141,6 +146,10 @@ def get_news_by_url(db: Session, url: str) -> Optional[News]:
 
 def get_news(db: Session, news_id: int) -> Optional[News]:
     return db.get(News, news_id)
+
+
+def get_recent_news(db: Session, since: datetime) -> List[News]:
+    return db.query(News).filter(News.created_at >= since).all()
 
 
 # -------------------------
@@ -234,6 +243,24 @@ def list_ai_generated_news_by_cluster(db: Session, cluster_id: int, limit: int =
     )
 
 
+def create_ai_news_issue(db: Session, *, title: str, article_ids: List[int]) -> AiGeneratedNews:
+    """
+    clustering.py에서 사용하는 이슈 생성 함수.
+    """
+    # 1. 이슈 생성
+    issue = AiGeneratedNews(title=title, created_at=datetime.utcnow())
+    db.add(issue)
+    db.flush()  # issue.id 확보
+
+    # 2. 기사 연결 (News.issue_id 업데이트)
+    # issue_id 컬럼이 News 모델에 있다고 가정 (clustering.py 로직 참조)
+    if article_ids:
+        db.execute(update(News).where(News.id.in_(article_ids)).values(issue_id=issue.id))
+        db.flush()
+
+    return issue
+
+
 # -------------------------
 # User
 # -------------------------
@@ -249,6 +276,8 @@ def create_user(
     fcm_token: Optional[str] = None,
     marketing_agree: bool = False,
     user_status: int = 1,
+    subscribed_categories: Optional[List[str]] = None,
+    subscribed_keywords: Optional[List[str]] = None,
 ) -> User:
     obj = User(
         login_id=login_id,
@@ -263,7 +292,42 @@ def create_user(
         created_at=datetime.utcnow(),
     )
     db.add(obj)
-    db.flush()
+    db.commit()  # To get obj.id
+
+    # Handle Subscriptions
+    if subscribed_categories:
+        for cat_name in subscribed_categories:
+            cat_name = cat_name.strip()
+            if not cat_name:
+                continue
+
+            # Check if category exists, if not create it
+            cat = db.execute(select(Category).where(Category.name == cat_name)).scalar_one_or_none()
+            if not cat:
+                cat = Category(name=cat_name)
+                db.add(cat)
+                db.flush()  # Ensure ID is generated and name persistence
+
+            # Now append to user subscriptions
+            # Avoid duplicates if user sends same category twice
+            if cat not in obj.subscribed_categories:
+                obj.subscribed_categories.append(cat)
+
+    if subscribed_keywords:
+        for keyword in subscribed_keywords:
+            # Check for existing subscription to avoid duplicates handled by unique constraint or add logic
+            # Since it's a new user, we can just add.
+            # But safer to use the helper or just add manually.
+            # Using normalize_keyword helper if available or just strip.
+            # crud.py has normalize_keyword at top.
+            normalized_kw = normalize_keyword(keyword)
+            if normalized_kw:
+                obj.keyword_subscriptions.append(UserKeywordSubscription(keyword=normalized_kw))
+
+    if subscribed_categories or subscribed_keywords:
+        db.commit()
+
+    db.refresh(obj)  # 최신 상태로 갱신
     return obj
 
 
@@ -272,7 +336,77 @@ def get_user(db: Session, user_id: int) -> Optional[User]:
 
 
 def get_user_by_login_id(db: Session, login_id: str) -> Optional[User]:
-    return db.execute(select(User).where(User.login_id == login_id)).scalar_one_or_none()
+    print(f"[DEBUG] get_user_by_login_id called with login_id: '{login_id}'")  # 디버깅용
+    result = db.execute(select(User).where(User.login_id == login_id)).scalar_one_or_none()
+    print(f"[DEBUG] Query result: {result}")  # 디버깅용
+    return result
+
+
+def update_user_subscriptions(
+    db: Session, user: User, new_categories: Optional[List[str]], new_keywords: Optional[List[str]]
+) -> None:
+    """
+    사용자의 구독 정보(카테고리, 키워드)를 완전히 교체(Replace)합니다.
+    None이 들어오면 해당 항목은 건드리지 않고, 빈 리스트([])가 들어오면 모두 삭제합니다.
+    """
+    # 1. Categories
+    if new_categories is not None:
+        # 기존 구독 모두 해제 (관계만 끊김)
+        user.subscribed_categories.clear()
+
+        for cat_name in new_categories:
+            cat_name = cat_name.strip()
+            if not cat_name:
+                continue
+
+            # Find or Create
+            cat = db.execute(select(Category).where(Category.name == cat_name)).scalar_one_or_none()
+            if not cat:
+                cat = Category(name=cat_name)
+                db.add(cat)
+                db.flush()
+
+            if cat not in user.subscribed_categories:
+                user.subscribed_categories.append(cat)
+
+    # 2. Keywords
+    if new_keywords is not None:
+        # 기존 키워드 구독 날리기 (delete-orphan cascade 동작 기대)
+        # user.keyword_subscriptions is a relationship list.
+        # Clearing it should trigger deletion if cascade="all, delete-orphan" is set.
+        # User defined: keyword_subscriptions = relationship(..., cascade="all, delete-orphan", ...)
+        user.keyword_subscriptions.clear()
+
+        for k in new_keywords:
+            normalized_kw = normalize_keyword(k)
+            if not normalized_kw:
+                continue
+
+            # Add new subscription
+            # 주의: (user_id, keyword) PK이므로 중복 없는지 체크 필요?
+            # clear() 했으므로 중복은 입력 리스트 내 중복만 체크하면 됨.
+
+            # Check duplicates in input list effectively handled by ensuring we don't add same kw twice here?
+            # Or reliance on flush error? Better to check internally.
+
+            # We can't easily check against `user.keyword_subscriptions` because it's pending flush/clear.
+            # actually `clear()` removes them from session.
+
+            # Simple approach: append new objects. If input has duplicates, second one might fail?
+            # Let's deduplicate input first.
+            pass
+
+        # Deduplicate and add
+        unique_kws = set()
+        for k in new_keywords:
+            n = normalize_keyword(k)
+            if n:
+                unique_kws.add(n)
+
+        for kw in unique_kws:
+            user.keyword_subscriptions.append(UserKeywordSubscription(keyword=kw))
+
+    db.flush()
 
 
 # -------------------------
@@ -400,6 +534,27 @@ def get_reaction(db: Session, *, user_id: int, ai_news_id: int) -> Optional[int]
     return r
 
 
+def get_view_count(db: Session, *, news_id: int) -> int:
+    """
+    뉴스의 조회수 반환.
+    """
+    return db.query(NewsView).filter(NewsView.news_id == news_id).count()
+
+
+def get_reaction_counts(db: Session, *, news_id: int) -> Dict[str, int]:
+    """
+    뉴스의 like/dislike 수 반환.
+    """
+    ai = db.get(AiGeneratedNews, news_id)
+    if ai:
+        return {"likes": ai.like_count, "dislikes": ai.dislike_count}
+
+    # Fallback if news not found or relying on table count (though ai table is source of truth now)
+    likes = db.query(NewsReaction).filter(NewsReaction.news_id == news_id, NewsReaction.value == 1).count()
+    dislikes = db.query(NewsReaction).filter(NewsReaction.news_id == news_id, NewsReaction.value == -1).count()
+    return {"likes": likes, "dislikes": dislikes}
+
+
 # -------------------------
 # Category subscriptions
 # -------------------------
@@ -480,7 +635,7 @@ def bump_user_keyword_stats_from_ai_news(
     keyword_limit: int = 200,
 ) -> int:
     """
-    AiGeneratedNews.keywords(JSON 배열)를 읽어서 UserKeywordStat(user_id, keyword) count를 +inc.
+    AiGeneratedNews.keywords(JSON 배열)를 읽어서 UserKeywordReadStat(user_id, keyword) count를 +inc.
     반환: 업데이트된 키워드 개수
 
     keyword_limit: 한 기사에서 처리할 최대 키워드 수(폭주 방지)
@@ -501,12 +656,12 @@ def bump_user_keyword_stats_from_ai_news(
         if not kw:
             continue
 
-        stat = db.get(UserKeywordStat, {"user_id": user_id, "keyword": kw})
+        stat = db.get(UserKeywordReadStat, {"user_id": user_id, "keyword": kw})
         if stat:
             stat.count += inc
             stat.updated_at = datetime.utcnow()
         else:
-            db.add(UserKeywordStat(user_id=user_id, keyword=kw, count=inc, updated_at=datetime.utcnow()))
+            db.add(UserKeywordReadStat(user_id=user_id, keyword=kw, count=inc, updated_at=datetime.utcnow()))
         updated += 1
 
     db.flush()
@@ -515,9 +670,9 @@ def bump_user_keyword_stats_from_ai_news(
 
 def list_user_top_keywords(db: Session, *, user_id: int, limit: int = 30) -> List[Tuple[str, int]]:
     rows = db.execute(
-        select(UserKeywordStat.keyword, UserKeywordStat.count)
-        .where(UserKeywordStat.user_id == user_id)
-        .order_by(UserKeywordStat.count.desc(), UserKeywordStat.updated_at.desc())
+        select(UserKeywordReadStat.keyword, UserKeywordReadStat.count)
+        .where(UserKeywordReadStat.user_id == user_id)
+        .order_by(UserKeywordReadStat.count.desc(), UserKeywordReadStat.updated_at.desc())
         .limit(limit)
     ).all()
     return [(r[0], r[1]) for r in rows]
