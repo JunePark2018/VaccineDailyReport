@@ -4,6 +4,7 @@ import Header from '../components/Header';
 import Logo from '../components/Logo';
 import Searchbar from '../components/Searchbar';
 import UserMenu from '../components/UserMenu';
+import axios from 'axios';
 import './CategoryPage.css';
 
 const CategoryPage = () => {
@@ -51,9 +52,8 @@ const CategoryPage = () => {
                     setDisplayArticles([]);
                 }
             } catch (error) {
-                console.warn('Sample data could not be loaded:', error);
+                console.error('DB 데이터를 불러올 수 없습니다:', error);
                 setDisplayArticles([]);
-                setImageMap({});
             }
         };
 
@@ -77,7 +77,7 @@ const CategoryPage = () => {
 
         const mainData = {
             title: mainArticle?.title || "News Title Text Sample",
-            description: mainArticle?.short_text || "text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample",
+            description: mainArticle?.contents || "text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample text sample",
             image: mainArticle ? (imageMap[mainArticle.image] || mainArticle.image) : null
         };
 
@@ -130,7 +130,7 @@ const CategoryPage = () => {
                 {/* Grid Section (3 items) */}
                 <section className="bottom-grid-section">
                     {grid.map((news) => (
-                        <div key={news.id} className="grid-item" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
+                        <div key={news.id} className="grid-item" onClick={() => navigate('/article/' + news.id)} style={{ cursor: 'pointer' }}>
                             <div className="grid-image">
                                 <img src={news.image} alt={news.title} />
                                 <div className="image-placeholder-text">IMAGE</div>

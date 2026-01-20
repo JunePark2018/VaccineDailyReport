@@ -5,7 +5,7 @@ from urllib.parse import quote
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from typing import List, Dict, Any, Optional, Union
-from models import Issue, Article
+from database.models import AiGeneratedNews, News
 
 # IBM WatsonX AI Import
 from ibm_watsonx_ai.foundation_models import ModelInference
@@ -16,14 +16,14 @@ from ibm_watsonx_ai.foundation_models import ModelInference
 load_dotenv()
 
 credentials = {
-    "apikey": "MX2AXEQ3gPivBT6XCjj3ETnC4tAfEPisG4Y8SOdn8Eag",
-    "url": "https://us-south.ml.cloud.ibm.com/",
+    "apikey": os.getenv("WATSONX_API_KEY"),
+    "url": os.getenv("WATSONX_URL")
 }
 
 llm_model = ModelInference(
     model_id="meta-llama/llama-3-3-70b-instruct",
     credentials=credentials,
-    project_id="6fca979d-39d2-42e8-b45d-02c7cebd1222",
+    project_id=os.getenv("WATSONX_PROJECT_ID")
 )
 
 # ------------------------------------
@@ -123,16 +123,16 @@ def search_wikipedia(keyword: str) -> Optional[Dict[str, str]]:
 # 2. AI 요약(Issues) 검색 (Section 2)
 def search_issues_by_keyword(db: Session, keyword: str) -> Dict[str, Any]:
     """
-    DB Issue 테이블에서만 키워드가 포함된 이슈를 검색하고, LLM을 통해 분석합니다.
-    (Article 테이블은 참조하지 않음)
+    DB AiGeneratedNews 테이블에서만 키워드가 포함된 이슈를 검색하고, LLM을 통해 분석합니다.
+    (News 테이블은 참조하지 않음)
     """
     search_pattern = f"%{keyword}%"
 
-    # Issue 테이블 검색
+    # AiGeneratedNews 테이블 검색
     results = (
-        db.query(Issue)
-        .filter(or_(Issue.title.ilike(search_pattern), Issue.contents.ilike(search_pattern)))
-        .order_by(Issue.created_at.desc())
+        db.query(AiGeneratedNews)
+        .filter(or_(AiGeneratedNews.title.ilike(search_pattern), AiGeneratedNews.contents.ilike(search_pattern)))
+        .order_by(AiGeneratedNews.created_at.desc())
         .limit(5)
         .all()
     )
@@ -162,6 +162,39 @@ def search_issues_by_keyword(db: Session, keyword: str) -> Dict[str, Any]:
     analysis_result = get_llm_summary(prompt)
 
     return {"analysis": analysis_result, "issues": issues_list}
+
+def deduplicate_articles(articles: List[Article], limit: int) -> List[Article]:
+    """
+    기사 리스트에서 중복을 제거하고 대표 기사만 추려냅니다.
+    1. issue_id가 있는 경우: 같은 이슈 그룹 중 가장 최신 기사 1개만 선택
+    2. issue_id가 없는 경우: 그대로 유지 (단, 제목이 완전히 같다면 제거)
+    """
+    seen_issue_ids = set()
+    unique_articles = []
+
+    # 제목 중복 방지용
+    seen_titles = set()
+
+    for art in articles:
+        # 이미 충분한 수량이 모였으면 중단
+        if len(unique_articles) >= limit:
+            break
+
+        # 1. 제목 완전 일치 중복 제거
+        if art.title in seen_titles:
+            continue
+        seen_titles.add(art.title)
+
+        # 2. 이슈 그룹 중복 제거 (issue_id 활용)
+        if art.issue_id is not None:
+            if art.issue_id in seen_issue_ids:
+                continue # 이미 이 이슈의 기사가 하나 들어갔으므로 스킵
+            seen_issue_ids.add(art.issue_id)
+
+        # 통과한 기사 추가
+        unique_articles.append(art)
+
+    return unique_articles
 
 
 def deduplicate_articles(articles: List[Article], limit: int) -> List[Article]:
@@ -201,17 +234,20 @@ def deduplicate_articles(articles: List[Article], limit: int) -> List[Article]:
 # 3. 핫토픽(Articles) 검색 (Section 3)
 def search_hot_topics_by_keyword(db: Session, keyword: str) -> List[Dict[str, Any]]:
     """
-    DB Article 테이블에서 키워드가 포함되고 이미지가 있는 기사를 검색합니다.
+    DB News 테이블에서 키워드가 포함되고 이미지가 있는 기사를 검색합니다.
     """
     search_pattern = f"%{keyword}%"
 
     articles = (
-        db.query(Article)
-        .filter(or_(Article.title.ilike(search_pattern), Article.contents.ilike(search_pattern)))
-        .order_by(Article.time.desc())
-        .limit(100) # 필터링을 위해 넉넉히 가져옴
+        db.query(News)
+        .filter(or_(News.title.ilike(search_pattern), News.contents.ilike(search_pattern)))
+        .order_by(News.created_at.desc())
+        .limit(100)
         .all()
     )
+    
+    # 중복 제거 로직 적용 (최대 10개)
+    unique_articles = deduplicate_articles(articles, limit=10)
 
     # 중복 제거 로직 적용 (최대 10개)
     unique_articles = deduplicate_articles(articles, limit=10)
@@ -225,7 +261,7 @@ def search_hot_topics_by_keyword(db: Session, keyword: str) -> List[Dict[str, An
                     "title": art.title,
                     "img_urls": art.img_urls,
                     "url": art.url,
-                    "company_name": art.company_name,
+                    "company_name": art.company.name,
                 }
             )
 

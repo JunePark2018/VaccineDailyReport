@@ -7,6 +7,12 @@
   /* 여백 넉넉하게 */
   margin: 0 auto;
   /* 중앙 정렬 */
+  color: #1a1a1a;
+  /* 완전 검정보다 눈이 편한 짙은 회색 */
+  padding: 40px 30px;
+  /* 여백 넉넉하게 */
+  margin: 0 auto;
+  /* 중앙 정렬 */
   font-family: 'Pretendard', -apple-system, sans-serif;
 }
 
@@ -14,11 +20,15 @@
 .NewsText .news-title {
   font-size: 2.4rem;
   /* 매우 크게 */
+  font-size: 2.4rem;
+  /* 매우 크게 */
   font-weight: 800;
   line-height: 1.3;
   margin-bottom: 15px;
   letter-spacing: -1px;
   color: #000000;
+  word-break: keep-all;
+  /* 단어 단위 줄바꿈 */
   word-break: keep-all;
   /* 단어 단위 줄바꿈 */
 }
@@ -55,11 +65,19 @@
 .NewsText .news-paragraph {
   margin-bottom: 20px;
   /* 문단 사이 간격 */
+  margin-bottom: 20px;
+  /* 문단 사이 간격 */
   word-break: break-all;
 }
 
 /* [핵심] 클릭 가능한 문장 스타일 */
 .NewsText .clickable-sentence {
+  transition: all 0.2s;
+  /* 부드러운 효과 */
+  border-radius: 4px;
+  /* 배경색 모서리 둥글게 */
+  padding: 2px 0;
+  /* 텍스트 위아래 살짝 여백 */
   transition: all 0.2s;
   /* 부드러운 효과 */
   border-radius: 4px;

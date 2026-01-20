@@ -1,196 +1,333 @@
 import numpy as np
 import re
+import os
+from dotenv import load_dotenv  # 추가
 import chromadb
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sentence_transformers import SentenceTransformer
 import hdbscan
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.preprocessing import normalize
 from ibm_watsonx_ai.foundation_models import ModelInference
-from sklearn.preprocessing import normalize 
-from database import SessionLocal, engine
-from models import Base, Article, Issue
+from kiwipiepy import Kiwi
 
+from database.engine import SessionLocal, engine
+from database.models import Base, News, AiGeneratedNews
+
+
+load_dotenv()
+kiwi = Kiwi()
+WATSONX_API_KEY = os.getenv("WATSONX_API_KEY")
+WATSONX_PROJECT_ID = os.getenv("WATSONX_PROJECT_ID")
+WATSONX_URL = os.getenv("WATSONX_URL")
 # -------------------------------------------------
-# 1. 모델 및 벡터 DB 초기화
+# 1. 초기화 및 ChromaDB 설정 (전문 벡터 DB)
 # -------------------------------------------------
 print("--- [AI] 모델 및 ChromaDB 로딩 중... ---")
-embed_model = SentenceTransformer("BAAI/bge-m3")
-chroma_client = chromadb.PersistentClient(path="./chroma_db")
-collection = chroma_client.get_or_create_collection(name="news_articles")
+embed_model = SentenceTransformer("jhgan/ko-sroberta-multitask")
 
-credentials = {
-    "apikey": "",
-    "url": "https://us-south.ml.cloud.ibm.com/"
-}
+# ChromaDB 물리적 저장 경로 설정 (./chroma_db 폴더에 저장됨)
+CHROMA_PATH = "./chroma_db"
+chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
 
-llm_model = ModelInference(
-    model_id="meta-llama/llama-3-3-70b-instruct",
-    credentials=credentials,
-    project_id=""
+# 컬렉션 생성 또는 로드 (거리 측정 방식은 코사인 유사도로 설정)
+collection = chroma_client.get_or_create_collection(
+    name="news_articles_ko", metadata={"hnsw:space": "cosine"}  # 새 모델용 컬렉션 이름
 )
 
+# Watsonx LLM 설정 (기존 유지)
+credentials = {"apikey": WATSONX_API_KEY, "url": WATSONX_URL}
+
+llm_model = ModelInference(
+    model_id="meta-llama/llama-3-3-70b-instruct", credentials=credentials, project_id=WATSONX_PROJECT_ID
+)
+
+
 # -------------------------------------------------
-# 2. 보조 함수 정의
+# 2. ChromaDB 기반 Embedding 캐시 로직
 # -------------------------------------------------
 def get_embeddings_with_cache(articles):
+    """ChromaDB를 조회하여 캐시된 임베딩이 있으면 가져오고, 없으면 생성 후 저장"""
     article_ids = [str(a.id) for a in articles]
-    existing_data = collection.get(ids=article_ids, include=['embeddings'])
-    existing_ids = set(existing_data['ids'])
-    
-    needed_articles = [a for a in articles if str(a.id) not in existing_ids]
-    if needed_articles:
-        print(f"      [Cache] 본문 포함 {len(needed_articles)}건 임베딩 생성 중...")
-        texts = [f"제목: {a.title} 내용: {(a.contents or '')[:200]}" for a in needed_articles]
-        new_embeddings = embed_model.encode(texts, normalize_embeddings=True).tolist()
+
+    # 1. ChromaDB에서 기존 임베딩 일괄 조회
+    existing_data = collection.get(ids=article_ids, include=["embeddings"])
+    existing_ids = set(existing_data["ids"])
+
+    # 결과 담을 리스트 (순서 보장)
+    embeddings = [None] * len(articles)
+    id_to_idx = {str(a.id): i for i, a in enumerate(articles)}
+
+    # 기존 데이터 채우기
+    for i, aid in enumerate(existing_data["ids"]):
+        idx = id_to_idx[aid]
+        embeddings[idx] = np.array(existing_data["embeddings"][i], dtype=np.float32)
+
+    # 2. 없는 데이터만 임베딩 생성
+    to_embed_indices = [i for i, emb in enumerate(embeddings) if emb is None]
+
+    if to_embed_indices:
+        print(f"      [ChromaDB] {len(to_embed_indices)}건 신규 임베딩 생성 및 저장 중...")
+        to_embed_texts = []
+        for i in to_embed_indices:
+            a = articles[i]
+            # 텍스트 정제
+            clean_title = re.sub(r"\[.*?\]|\(.*?\)", "", a.title).strip()
+            clean_content = (a.contents or "")[:200].replace("\n", " ")
+            to_embed_texts.append(f"제목: {clean_title} 내용: {clean_content}")
+
+        # 신규 임베딩 생성
+        new_embs = embed_model.encode(to_embed_texts, normalize_embeddings=True)
+
+        # ChromaDB에 신규 데이터 추가
         collection.add(
-            ids=[str(a.id) for a in needed_articles],
-            embeddings=new_embeddings,
-            metadatas=[{"title": a.title} for a in needed_articles]
+            ids=[str(articles[i].id) for i in to_embed_indices],
+            embeddings=new_embs.tolist(),
+            metadatas=[{"title": articles[i].title} for i in to_embed_indices],
         )
-    
-    final_data = collection.get(ids=article_ids, include=['embeddings'])
-    id_to_embedding = {idx: emb for idx, emb in zip(final_data['ids'], final_data['embeddings'])}
-    return np.array([id_to_embedding[str(a.id)] for a in articles])
 
+        # 결과 리스트 업데이트
+        for i, emb in zip(to_embed_indices, new_embs):
+            embeddings[i] = emb
+
+    return np.array(embeddings, dtype="float32")
+
+
+# -------------------------------------------------
+# 3. 보조 로직 (기존 KG 및 LLM 유지)
+# -------------------------------------------------
 def simple_kg_check(articles):
-    if len(articles) < 2: return True
-    generic_words = {'오늘', '내일', '속보', '단독', '종합', '포토', '영상', '게시', '출시', '진행', '개최', 
-                     '사고', '발생', '사망', '부상', '혐의', '검거', '확인', '관련', '명과', '명이', '명은'}
-
-    def get_clean_keywords(text):
-        words = re.findall(r'[가-힣A-Za-z]{2,}', text)
-        return set([w for w in words if w not in generic_words])
-
-    base_entities = get_clean_keywords(articles[0].title)
-    for other in articles[1:]:
-        target_entities = get_clean_keywords(other.title)
-        if len(base_entities.intersection(target_entities)) >= 1:
-            continue
+    if len(articles) < 3:
         return False
-    return True
+    stopwords = {
+        # 기존 단어들
+        "오늘",
+        "내일",
+        "속보",
+        "단독",
+        "종합",
+        "기자",
+        "보도",
+        "사진",
+        "포토",
+        "관련",
+        "어제",
+        "진행",
+        "개최",
+        "출시",
+        "등록",
+        "확인",
+        "발표",
+        "예정",
+        "위해",
+        "의해",
+        "정치",
+        "지난",
+        "이번",
+        "통해",
+        "대한",
+        "업계",
+        "시장",
+        "국내",
+        "글로벌",
+        "의료",
+        "의료계",
+        # 추가 제안: 뉴스 일반 (기사 구조 관련)
+        "뉴스",
+        "기사",
+        "소식",
+        "정보",
+        "현장",
+        "특징",
+        "정리",
+        "무단",
+        "배포",
+        "금지",
+        "전재",
+        # 추가 제안: 비즈니스/산업 일반 (모든 회사 기사에 겹치는 단어)
+        "기업",
+        "업체",
+        "동향",
+        "현황",
+        "사업",
+        "추진",
+        "기대",
+        "전망",
+        "성장",
+        "강화",
+        "목표",
+        "주목",
+        "가속",
+        "본격",
+        "최근",
+        "성공",
+        "결과",
+        "계획",
+        "선정",
+        "확대",
+        # 추가 제안: 제약/바이오 특화 노이즈 (사건의 본질이 아닌 단어)
+        "바이오",
+        "제약사",
+        "치료",
+        "제품",
+        "기술",
+        "개발",
+        "환자",
+        "사용",
+        "도움",
+        "기능",
+        "효과",
+        "시스템",
+        "도입",
+        "제공",
+        "서비스",
+        "운영",
+        "관리",
+        "인증",
+        "수상",
+        "지원",
+    }
 
-def run_stage2_issue_refine(cluster_articles):
-    article_summaries = []
-    for a in cluster_articles[:10]:
-        clean_content = re.sub(r'\s+', ' ', (a.contents or ''))[:150]
-        article_summaries.append(f"제목: {a.title}\n요약: {clean_content}")
+    def extract_nouns(text):
+        # Kiwi로 명사만 추출 (NNG: 일반명사, NNP: 고유명사)
+        tokens = kiwi.tokenize(text)
+        return set(t.form for t in tokens if t.tag in ["NNG", "NNP"] and t.form not in stopwords and len(t.form) > 1)
 
+    # 모든 기사 제목에서 명사 추출
+    docs_nouns = [extract_nouns(a.title) for a in articles]
+
+    # 전체 교집합 확인
+    common = docs_nouns[0]
+    for d in docs_nouns[1:]:
+        common = common.intersection(d)
+
+    return len(common) >= 1
+
+
+def run_stage2_issue_refine(articles):
+    summaries = [f"[{i}] 제목: {a.title}\n요약: {(a.contents or '')[:150]}" for i, a in enumerate(articles[:10])]
     prompt = f"""
-역할: 뉴스 분석 전문가.
-목표: 아래 기사들이 '동일한 구체적 사건' 혹은 '직접적으로 이어진 후속 보도'인지 판단하라.
+역할: 뉴스 통찰력이 뛰어난 베테랑 데스크 기자.
+목표: 제공된 기사 목록에서 '완벽하게 동일한 사건'을 다루는 기사들만 골라내어 그룹화하라.
 
-[분석 가이드]
-1. 인물/조직: 기사에 등장하는 주체(사람 이름, 기업명, 국가 등)가 일치하는가?
-2. 장소/대상: 사건이 벌어진 구체적 장소나 대상물이 같은가?
-3. 인과관계: 앞 기사의 결과로 뒤 기사가 발생했는가?
+[검증 및 필터링 규칙 - 반드시 준수]
+1. **주체(Entity) 일치성:** 기사들의 핵심 주인공(인물, 기업, 기관)이 단 한 명이라도 다르면 절대 같은 이슈가 아닙니다.
+   - 오답 예시: 'A배우 별세'와 'B감독 별세'는 '별세'라는 주제만 같을 뿐, 사건은 별개이므로 함께 묶지 마십시오.
+2. **사건(Event)의 단일성:** '제약업계 동향'이나 '인사 소식'처럼 여러 사건을 나열한 기사는 이슈로 묶지 말고 제외하십시오.
+3. **불순물 제거:** 목록 중 대다수와 다른 주어를 가진 기사가 섞여 있다면, 그 번호는 `valid_indices`에서 반드시 제외하십시오.
+4. **최소 요건:** 결과적으로 3개 이상의 기사가 완벽하게 동일한 사건을 다루지 않는다면 `valid_indices: none`을 반환하십시오.
 
-[주의] 단순히 카테고리가 같다고 해서 같은 이슈로 묶지 마라. 
-
-[기사 목록]
-{chr(10).join(article_summaries)}
+[목록]
+{chr(10).join(summaries)}
 
 [출력 형식]
-is_issue: (True/False)
-reason: (판단 이유)
-title: (대표 제목)
+valid_indices: 골라낸 기사 번호들 (예: 0, 1, 3 / 없으면 none)
+title: 선택된 기사들을 포괄하는 핵심 요약 제목
 """
     try:
-        response = llm_model.generate_text(
-            prompt=prompt,
-            params={"max_new_tokens": 400, "temperature": 0.1}
-        )
-        res_dict = {}
-        for line in response.strip().split('\n'):
-            if ':' in line:
-                key, val = line.split(':', 1)
-                res_dict[key.strip().lower().replace('*', '')] = val.strip().replace('*', '')
-        
-        is_issue_val = res_dict.get('is_issue', 'FALSE').upper()
-        res_dict['is_issue'] = 'True' if 'TRUE' in is_issue_val else 'False'
-        return res_dict
-    except Exception as e:
-        print(f"      ⚠️ [LLM Error] {e}")
-        return {"is_issue": "False", "reason": "Error"}
+        res = llm_model.generate_text(prompt=prompt, params={"max_new_tokens": 300, "temperature": 0.1})
+        parsed = {}
+        for line in res.splitlines():
+            if ":" in line:
+                k, v = line.split(":", 1)
+                parsed[k.strip().lower()] = v.strip()
+        raw = parsed.get("valid_indices", "none").lower()
+        parsed["valid_ids"] = [] if "none" in raw else [int(x) for x in re.findall(r"\d+", raw)]
+        return parsed
+    except:
+        return {"valid_ids": []}
 
-def save_issue_to_db(db: Session, res: dict, cluster_articles: list):
-    new_issue = Issue(
-        title=res.get('title', cluster_articles[0].title),
-        created_at=datetime.now()
-    )
-    db.add(new_issue)
-    db.flush() 
-    for article in cluster_articles:
-        article.issue_id = new_issue.id
-    print(f"      ✨ 이슈 생성: {new_issue.title} ({len(cluster_articles)}건)")
 
 # -------------------------------------------------
-# 3. 메인 클러스터링 로직
+# 4. 메인 파이프라인 (ChromaDB + HDBSCAN)
 # -------------------------------------------------
-def run_issue_clustering(db: Session, days: int = 3):
+def run_issue_clustering(db: Session, days=3):
     Base.metadata.create_all(bind=engine)
-    time_threshold = datetime.now() - timedelta(days=days)
-    articles = db.query(Article).filter(Article.time >= time_threshold, Article.issue_id.is_(None)).all()
+    since = datetime.now() - timedelta(days=days)
 
+    from database import crud
+
+    articles = crud.get_recent_news(db, since)
     if len(articles) < 2:
         return
 
-    all_embeddings = np.array(get_embeddings_with_cache(articles)).astype('float32')
+    # [Fix] AttributeError 방지를 위해 임시 속성 초기화
+    for a in articles:
+        a.issue_id = None
 
-    # 1. 기존 이슈 매칭
-    recent_issues = db.query(Issue).filter(Issue.created_at >= time_threshold).all()
+    # 1. 모든 대상 기사의 임베딩 확보 (ChromaDB 캐시 활용)
+    from database import crud
+
+    embeddings = get_embeddings_with_cache(articles)
+
+    # 2. 기존 이슈 흡수 (ChromaDB에서 벡터 직접 호출)
+    recent_issues = db.query(AiGeneratedNews).filter(AiGeneratedNews.created_at >= since).all()
     for issue in recent_issues:
-        sample = db.query(Article).filter(Article.issue_id == issue.id).first()
-        if not sample: continue
-        
-        res = collection.get(ids=[str(sample.id)], include=['embeddings'])
-        
-        # [ValueError 해결] NumPy 배열의 비어있음을 확인하는 더 정확한 방법
-        target_embs = res.get('embeddings')
-        if target_embs is None or len(target_embs) == 0:
+        sample = db.query(News).filter(News.id == issue.id).first()  # 임시로 issue.id와 같은 News 찾기
+        if not sample:
             continue
-        
-        issue_vec = np.array(target_embs[0]).reshape(1, -1)
-        for i, article in enumerate(articles):
-            if article.issue_id is not None: continue
-            sim = cosine_similarity(all_embeddings[i].reshape(1, -1), issue_vec)[0][0]
-            if sim > 0.85:
-                article.issue_id = issue.id
 
-    # 2. 신규 군집화
-    rem_idx = [i for i, a in enumerate(articles) if a.issue_id is None]
-    rem_arts = [articles[i] for i in rem_idx]
-    if len(rem_arts) < 2:
+        # ChromaDB에서 기존 이슈의 대표 기사 벡터 가져오기
+        res = collection.get(ids=[str(sample.id)], include=["embeddings"])
+        embeddings_list = res.get("embeddings")
+        if embeddings_list is None or len(embeddings_list) == 0:
+            continue
+        issue_vec = np.array(res["embeddings"][0]).reshape(1, -1)
+
+        for i, a in enumerate(articles):
+            if a.issue_id is not None:
+                continue
+            sim = cosine_similarity(embeddings[i].reshape(1, -1), issue_vec)[0][0]
+            if sim >= 0.85:
+                a.issue_id = issue.id
+
+    # 3. 신규 클러스터링
+    print("클러스터링 시작")
+    rem = [(i, a) for i, a in enumerate(articles)]  # 모든 articles 사용
+    if len(rem) < 3:  # 최소 군집 사이즈 3 고려
         db.commit()
         return
 
-    rem_embs = all_embeddings[rem_idx]
-    norm_embs = normalize(rem_embs)
+    idxs, rem_articles = zip(*rem)
+    rem_embs = normalize(embeddings[list(idxs)])
 
-    clusterer = hdbscan.HDBSCAN(
-        min_cluster_size=2,
-        min_samples=1,
-        metric='euclidean',
-        cluster_selection_epsilon=0.4
-    )
-    labels = clusterer.fit_predict(norm_embs)
+    clusterer = hdbscan.HDBSCAN(min_cluster_size=3, min_samples=1, metric="euclidean", cluster_selection_epsilon=0.28)
+    labels = clusterer.fit_predict(rem_embs)
 
-    # 3. 검증 및 저장
     for cid in set(labels):
-        if cid == -1: continue
-        c_articles = [rem_arts[i] for i in np.where(labels == cid)[0]]
-        if not simple_kg_check(c_articles): continue
-        
-        res = run_stage2_issue_refine(c_articles)
-        if res and res.get('is_issue') == 'True':
-            save_issue_to_db(db, res, c_articles)
+        if cid == -1:
+            continue
+        cluster = [rem_articles[i] for i in np.where(labels == cid)[0]]
+
+        if not simple_kg_check(cluster):
+            continue
+        res = run_stage2_issue_refine(cluster)
+        valid_ids = res.get("valid_ids", [])
+
+        if len(valid_ids) < 3:
+            continue
+
+        picked = [cluster[i] for i in valid_ids if i < len(cluster)]
+
+        # issue = crud.create_ai_news_issue(db, title=res.get("title", picked[0].title), article_ids=[a.id for a in picked])
+
+        print(f"✨ [ChromaDB 기반 이슈 생성] {res.get('title', picked[0].title)} (기사 {len(picked)}건)")
+
+        # 4. 이슈 생성 및 DB 반영
+        issue = crud.create_ai_news_issue(
+            db, title=res.get("title", picked[0].title), article_ids=[a.id for a in picked]
+        )
+
+        # 5. 클러스터 내 기사들에 이슈 ID 연결
+        for a in picked:
+            a.issue_id = issue.id
 
     db.commit()
-    print("--- [Success] 클러스터링 완료 ---")
+    print("--- [DONE] 클러스터링 및 이슈 업데이트 완료 ---")
 
-if __name__ == "__main__":
-    db = SessionLocal()
-    try:
-        run_issue_clustering(db, days=3)
-    finally:
-        db.close()
+
+# if __name__ == "__main__":
+#     db = SessionLocal()
+#     try: run_issue_clustering(db)
+#     finally: db.close()

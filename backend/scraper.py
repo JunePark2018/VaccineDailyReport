@@ -1,8 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
-import json
 import time
 import re
+from datetime import datetime, timedelta
 
 
 # 기사에 한글 비중이 25%이하면 무시합니다.
@@ -17,153 +17,136 @@ def is_korean_article(text, threshold=0.25):
 
 
 def get_news_data(url):
-    """
-    [상세 페이지 파싱 함수]
-    역할: 제목, 시간, 언론사, 카테고리, 기자, 본문, 이미지를 추출합니다.
-    """
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
     }
 
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
         soup = BeautifulSoup(response.text, "html.parser")
 
-        # 1. 기사 제목 및 언론사 추출
-        title = (
-            soup.select_one("h2#title_area span").get_text(strip=True)
-            if soup.select_one("h2#title_area span")
-            else "제목 없음"
-        )
-        company_name = (
-            soup.select_one(".media_end_head_top_logo img")["title"]
-            if soup.select_one(".media_end_head_top_logo img")
-            else "언론사 미상"
-        )
+        title_el = soup.select_one("h2#title_area span")
+        raw_title = title_el.get_text(strip=True) if title_el else "제목 없음"
 
-        # 네이버 뉴스 상단에 노출되는 섹션 정보(정치, 경제 등)를 가져옵니다.
-        category_el = soup.select_one(".media_end_head_top_channel_layer_text strong")
-        category = category_el.get_text(strip=True) if category_el else "미분류"
+        clean_title = re.sub(r"\[.*?\]|\(.*?\)|\<.*?\>", "", raw_title).strip()
+        if not clean_title:
+            clean_title = raw_title
 
-        # 2. 기사 시간 추출
-        time_el = soup.select_one(".media_end_head_info_datestamp_time._ARTICLE_DATE_TIME")
-        time_val = time_el["data-date-time"] if time_el and time_el.has_attr("data-date-time") else "시간 정보 없음"
+        company_el = soup.select_one(".media_end_head_top_logo img")
+        company_name = company_el["title"] if company_el else "언론사 미상"
 
-        # 3. 본문 영역 확보 (기자명 추출을 위해 정제 전 원본 텍스트 보관 필요)
         content_area = soup.select_one("#newsct_article")
         if not content_area:
             return None
-        raw_content_text = content_area.get_text(separator=" ", strip=True) if content_area else ""
 
-        # 3-2 한글 필터링 적용
-        if not is_korean_article(raw_content_text):
+        for extra in content_area.select(".img_desc, .article_caption, em, script, style, .sidebar, .ad"):
+            extra.decompose()
+
+        contents = content_area.get_text(separator=" ", strip=True)
+
+        contents = re.sub(r"^[가-힣]{2,4}\s?=\s?[가-힣]{2,5}뉴스\)", "", contents)
+        contents = re.sub(r"^[가-힣]{2,10}\s?뉴스", "", contents)
+        contents = re.sub(r".*?기자\s?=", "", contents)
+
+        contents = re.sub(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", "", contents)
+        contents = re.sub(r"[^\w\s가-힣.?!,]", " ", contents)
+
+        stop_phrases = ["무단전재", "재배포 금지", "저작권자", "Copyrights", "구독 신청", "관련기사", "제보하기"]
+        for phrase in stop_phrases:
+            if phrase in contents:
+                contents = contents.split(phrase)[0].strip()
+
+        contents = re.sub(r"\s+", " ", contents).strip()
+
+        if not is_korean_article(contents):
+            return None
+        if len(contents) < 150:
             return None
 
-        # 4. [강화된 기자명 추출 로직]
-        author = "기자 미상"
-
-        # 4-1. 1순위: 네이버 표준 레이아웃(상단 기자명 영역) 탐색
-        author_el = soup.select_one(".media_end_head_journalist_name")
-        if author_el:
-            author = author_el.get_text(strip=True)
-
-        # 4-2. 2순위: 레이아웃에 없을 경우 본문 텍스트 내에서 패턴 매칭 (KBS, 연합뉴스 등 대응)
-        if (author == "기자 미상" or not author) and raw_content_text:
-            # 패턴 A: 이메일 앞의 이름 추출 (예: 홍길동 기자 abc@kbs.co.kr)
-            email_match = re.search(r"([가-힣]{2,4})\s?(?:기자)?\s?[\w\.-]+@[\w\.-]+", raw_content_text)
-            # 패턴 B: 본문 하단 'OOO 기자' 문구 추출
-            name_match = re.search(r"([가-힣]{2,4})\s?기자", raw_content_text)
-
-            if email_match:
-                author = email_match.group(1).strip()
-            elif name_match:
-                author = name_match.group(1).strip()
-
-        # 5. 이미지 URL 리스트 수집
-        img_urls = [
-            img.get("data-src") or img.get("src")
-            for img in soup.select("#newsct_article img")
-            if img.get("data-src") or img.get("src")
-        ]
-
-        # 6. 본문 텍스트 정제 (태그 제거)
-        if content_area:
-            # 원본 보존을 위해 copy를 사용하거나, 필요한 데이터를 뽑은 후 제거 진행
-            for extra in content_area.select(".img_desc, .article_caption, em, script, style"):
-                extra.decompose()
-            contents = content_area.get_text(separator=" ", strip=True)
-        else:
-            contents = "내용 없음"
+        time_el = soup.select_one("._ARTICLE_DATE_TIME")
+        time_str = time_el["data-date-time"] if time_el and time_el.has_attr("data-date-time") else "시간 정보 없음"
 
         return {
-            "title": title,
-            "time": time_val,  # 날짜
-            "company_name": company_name,  # 언론사
-            "author": author,  # 기자
-            "contents": contents,  # 본문
-            "img_urls": img_urls,  # 이미지
-            "url": url,  # 링크
-            "category": "미분류" # 카테고리는 run_article_crawler에서 줄 예정.
+            "title": raw_title,
+            "search_title": clean_title,
+            "time": time_str,
+            "company_name": company_name,
+            "contents": contents,
+            "img_urls": [img.get("data-src") or img.get("src") for img in soup.select("#newsct_article img")],
+            "url": url,
+            "category": "미분류",
         }
 
     except Exception as e:
-        print(f"[오류] 상세 페이지 파싱 실패: {url} | 사유: {e}")
+        print(f"[오류] 파싱 실패: {url} | {e}")
         return None
 
 
-def run_article_crawler(target_companies=None, debug_save=False, output_file="news_result.json"):
+def run_article_crawler(target_companies=None, days=7, max_pages=5):
     """
-    통합 크롤링 제어 함수.
-    반환값: [get_news_data(url)가 반환한 값 리스트]
-
-    섹션 100(정치) ~ 105(IT/과학)까지 순회하며 크롤링
-    001:전체 100:정치, 101:경제, 102:사회, 103:생활/문화, 104:세계, 105:IT/과학
+    최근 n일(days)치 뉴스 수집.
+    - date=YYYYMMDD 로 하루치 목록을 긁어옴
+    - 페이지가 있는 경우 page=1..max_pages 까지 순회
     """
-    is_filter_mode = True if target_companies else False
-
     sections = ["100", "101", "102", "103", "104", "105"]
     section_names = {"100": "정치", "101": "경제", "102": "사회", "103": "생활/문화", "104": "세계", "105": "IT/과학"}
+
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
     }
 
     all_news_data = []
-    # 중복 수집 방지를 위한 세트
     seen_urls = set()
 
+    today = datetime.now()
+    date_list = [(today - timedelta(days=i)).strftime("%Y%m%d") for i in range(days)]
+
     for sid in sections:
-        print(f"\n[섹션 수집] {section_names[sid]} 뉴스 수집 중...")
-        list_url = f"https://news.naver.com/main/list.naver?mode=LSD&mid=sec&sid1={sid}"
+        print(f"\n[섹션 수집] {section_names[sid]} (최근 {days}일) 수집 중...")
 
-        try:
-            response = requests.get(list_url, headers=headers)
-            soup = BeautifulSoup(response.text, "html.parser")
+        for ymd in date_list:
+            for page in range(1, max_pages + 1):
+                list_url = f"https://news.naver.com/main/list.naver?mode=LSD&mid=sec&sid1={sid}&date={ymd}&page={page}"
 
-            # 목록에서 기사 URL 추출
-            atags = soup.select(".list_body a, .sa_text_title")
+                try:
+                    response = requests.get(list_url, headers=headers, timeout=10)
+                    response.raise_for_status()
+                    soup = BeautifulSoup(response.text, "html.parser")
 
-            # 리스트 컴프리헨션으로 URL 정리 및 중복 제거
-            urls = [a.get("href") for a in atags if a.get("href") and "article" in a.get("href")]
+                    atags = soup.select(".list_body a, .sa_text_title")
+                    urls = [a.get("href") for a in atags if a.get("href") and "article" in a.get("href")]
+                    urls = list(set(urls))
 
-            for url in set(urls):  # 현재 섹션 내 중복 제거
-                if url in seen_urls:
-                    continue  # 이미 수집한 URL이면 패스
+                    # 해당 날짜/페이지에서 더 이상 뽑을 URL이 없으면 페이지 루프 중단
+                    if not urls:
+                        break
 
-                data = get_news_data(url)
-                if data:
-                    # 만약 상세페이지에서 카테고리를 못 찾았을 때만 섹션 이름으로 채워줌
-                    if data["category"] == "미분류":
-                        data["category"] = section_names[sid]
+                    new_count = 0
+                    for url in urls:
+                        if url in seen_urls:
+                            continue
 
-                    if not target_companies or any(tc in data["company_name"] for tc in target_companies):
-                        all_news_data.append(data)
-                        seen_urls.add(url)
-                        print(f"[수집] {data['company_name']} | {data['title'][:15]}...")
+                        data = get_news_data(url)
+                        if data:
+                            if data["category"] == "미분류":
+                                data["category"] = section_names[sid]
 
-                time.sleep(0.1)  # 섹션 내 기사 간 휴식
+                            if (not target_companies) or any(tc in data["company_name"] for tc in target_companies):
+                                all_news_data.append(data)
+                                seen_urls.add(url)
+                                new_count += 1
+                                print(f"[수집] {ymd} p{page} | {data['company_name']} | {data['title'][:15]}...")
 
-        except Exception as e:
-            print(f"[{sid}] 섹션 목록 수집 중 오류: {e}")
-            continue
+                        time.sleep(0.1)
+
+                    # “수집이 거의 안 되는 페이지”면 다음 페이지 의미가 적을 수 있어 조기 종료 옵션
+                    # (원치 않으면 삭제해도 됨)
+                    if new_count == 0 and page >= 2:
+                        break
+
+                except Exception as e:
+                    print(f"[오류] sid={sid}, date={ymd}, page={page} | {e}")
+                    break
 
     return all_news_data
