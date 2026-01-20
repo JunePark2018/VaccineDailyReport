@@ -4,9 +4,8 @@ import json
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from openai import OpenAI
-from models import Article, Issue
-from database import SessionLocal
-from crud import create_sample_issue
+from database.engine import SessionLocal
+from database.crud import create_ai_generated_news
 
 # 🔑 API 키 확인 필수
 os.environ["OPENAI_API_KEY"] = "sk-..." 
@@ -26,6 +25,6 @@ def process_news_pipeline():
 
     # blablablablabla
     
-    create_sample_issue()
+    # create_sample_issue()
     
     print("🧠 [AI] 완료")

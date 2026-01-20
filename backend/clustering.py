@@ -1,9 +1,8 @@
 import numpy as np
 import re
 import os
-from dotenv import load_dotenv # 추가
+from dotenv import load_dotenv  # 추가
 import chromadb
-from chromadb.config import Settings
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sentence_transformers import SentenceTransformer
@@ -13,8 +12,8 @@ from sklearn.preprocessing import normalize
 from ibm_watsonx_ai.foundation_models import ModelInference
 from kiwipiepy import Kiwi
 
-from database import SessionLocal, engine
-from models import Base, Article, Issue
+from database.engine import SessionLocal, engine
+from database.models import Base, News, AiGeneratedNews
 
 
 load_dotenv()
@@ -34,21 +33,16 @@ chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
 
 # 컬렉션 생성 또는 로드 (거리 측정 방식은 코사인 유사도로 설정)
 collection = chroma_client.get_or_create_collection(
-    name="news_articles_ko",  # 새 모델용 컬렉션 이름
-    metadata={"hnsw:space": "cosine"}
+    name="news_articles_ko", metadata={"hnsw:space": "cosine"}  # 새 모델용 컬렉션 이름
 )
 
 # Watsonx LLM 설정 (기존 유지)
-credentials = {
-    "apikey": WATSONX_API_KEY,
-    "url": WATSONX_URL
-}
+credentials = {"apikey": WATSONX_API_KEY, "url": WATSONX_URL}
 
 llm_model = ModelInference(
-    model_id="meta-llama/llama-3-3-70b-instruct",
-    credentials=credentials,
-    project_id=WATSONX_PROJECT_ID
+    model_id="meta-llama/llama-3-3-70b-instruct", credentials=credentials, project_id=WATSONX_PROJECT_ID
 )
+
 
 # -------------------------------------------------
 # 2. ChromaDB 기반 Embedding 캐시 로직
@@ -56,31 +50,31 @@ llm_model = ModelInference(
 def get_embeddings_with_cache(articles):
     """ChromaDB를 조회하여 캐시된 임베딩이 있으면 가져오고, 없으면 생성 후 저장"""
     article_ids = [str(a.id) for a in articles]
-    
+
     # 1. ChromaDB에서 기존 임베딩 일괄 조회
-    existing_data = collection.get(ids=article_ids, include=['embeddings'])
-    existing_ids = set(existing_data['ids'])
-    
+    existing_data = collection.get(ids=article_ids, include=["embeddings"])
+    existing_ids = set(existing_data["ids"])
+
     # 결과 담을 리스트 (순서 보장)
     embeddings = [None] * len(articles)
     id_to_idx = {str(a.id): i for i, a in enumerate(articles)}
 
     # 기존 데이터 채우기
-    for i, aid in enumerate(existing_data['ids']):
+    for i, aid in enumerate(existing_data["ids"]):
         idx = id_to_idx[aid]
-        embeddings[idx] = np.array(existing_data['embeddings'][i], dtype=np.float32)
+        embeddings[idx] = np.array(existing_data["embeddings"][i], dtype=np.float32)
 
     # 2. 없는 데이터만 임베딩 생성
     to_embed_indices = [i for i, emb in enumerate(embeddings) if emb is None]
-    
+
     if to_embed_indices:
         print(f"      [ChromaDB] {len(to_embed_indices)}건 신규 임베딩 생성 및 저장 중...")
         to_embed_texts = []
         for i in to_embed_indices:
             a = articles[i]
             # 텍스트 정제
-            clean_title = re.sub(r'\[.*?\]|\(.*?\)', '', a.title).strip()
-            clean_content = (a.contents or '')[:200].replace('\n', ' ')
+            clean_title = re.sub(r"\[.*?\]|\(.*?\)", "", a.title).strip()
+            clean_content = (a.contents or "")[:200].replace("\n", " ")
             to_embed_texts.append(f"제목: {clean_title} 내용: {clean_content}")
 
         # 신규 임베딩 생성
@@ -90,7 +84,7 @@ def get_embeddings_with_cache(articles):
         collection.add(
             ids=[str(articles[i].id) for i in to_embed_indices],
             embeddings=new_embs.tolist(),
-            metadatas=[{"title": articles[i].title} for i in to_embed_indices]
+            metadatas=[{"title": articles[i].title} for i in to_embed_indices],
         )
 
         # 결과 리스트 업데이트
@@ -99,42 +93,117 @@ def get_embeddings_with_cache(articles):
 
     return np.array(embeddings, dtype="float32")
 
+
 # -------------------------------------------------
 # 3. 보조 로직 (기존 KG 및 LLM 유지)
 # -------------------------------------------------
 def simple_kg_check(articles):
-    if len(articles) < 3: return False
+    if len(articles) < 3:
+        return False
     stopwords = {
-    # 기존 단어들
-    '오늘', '내일', '속보', '단독', '종합', '기자', '보도', '사진', '포토', '관련', '어제',
-    '진행', '개최', '출시', '등록', '확인', '발표', '예정', '위해', '의해', '정치',
-    '지난', '이번', '통해', '대한', '업계', '시장', '국내', '글로벌', '의료', '의료계',
+        # 기존 단어들
+        "오늘",
+        "내일",
+        "속보",
+        "단독",
+        "종합",
+        "기자",
+        "보도",
+        "사진",
+        "포토",
+        "관련",
+        "어제",
+        "진행",
+        "개최",
+        "출시",
+        "등록",
+        "확인",
+        "발표",
+        "예정",
+        "위해",
+        "의해",
+        "정치",
+        "지난",
+        "이번",
+        "통해",
+        "대한",
+        "업계",
+        "시장",
+        "국내",
+        "글로벌",
+        "의료",
+        "의료계",
+        # 추가 제안: 뉴스 일반 (기사 구조 관련)
+        "뉴스",
+        "기사",
+        "소식",
+        "정보",
+        "현장",
+        "특징",
+        "정리",
+        "무단",
+        "배포",
+        "금지",
+        "전재",
+        # 추가 제안: 비즈니스/산업 일반 (모든 회사 기사에 겹치는 단어)
+        "기업",
+        "업체",
+        "동향",
+        "현황",
+        "사업",
+        "추진",
+        "기대",
+        "전망",
+        "성장",
+        "강화",
+        "목표",
+        "주목",
+        "가속",
+        "본격",
+        "최근",
+        "성공",
+        "결과",
+        "계획",
+        "선정",
+        "확대",
+        # 추가 제안: 제약/바이오 특화 노이즈 (사건의 본질이 아닌 단어)
+        "바이오",
+        "제약사",
+        "치료",
+        "제품",
+        "기술",
+        "개발",
+        "환자",
+        "사용",
+        "도움",
+        "기능",
+        "효과",
+        "시스템",
+        "도입",
+        "제공",
+        "서비스",
+        "운영",
+        "관리",
+        "인증",
+        "수상",
+        "지원",
+    }
 
-    # 추가 제안: 뉴스 일반 (기사 구조 관련)
-    '뉴스', '기사', '소식', '정보', '현장', '특징', '정리', '무단', '배포', '금지', '전재', 
-
-    # 추가 제안: 비즈니스/산업 일반 (모든 회사 기사에 겹치는 단어)
-    '기업', '업체', '동향', '현황', '사업', '추진', '기대', '전망', '성장', '강화', 
-    '목표', '주목', '가속', '본격', '최근', '성공', '결과', '계획', '선정', '확대',
-
-    # 추가 제안: 제약/바이오 특화 노이즈 (사건의 본질이 아닌 단어)
-    '바이오', '제약사', '치료', '제품', '기술', '개발', '환자', '사용', '도움', '기능', 
-    '효과', '시스템', '도입', '제공', '서비스', '운영', '관리', '인증', '수상', '지원'
-}
     def extract_nouns(text):
         # Kiwi로 명사만 추출 (NNG: 일반명사, NNP: 고유명사)
         tokens = kiwi.tokenize(text)
-        return set(t.form for t in tokens if t.tag in ['NNG', 'NNP'] and t.form not in stopwords and len(t.form) > 1)
+        return set(t.form for t in tokens if t.tag in ["NNG", "NNP"] and t.form not in stopwords and len(t.form) > 1)
 
     # 모든 기사 제목에서 명사 추출
     docs_nouns = [extract_nouns(a.title) for a in articles]
-    
+
     # 전체 교집합 확인
     common = docs_nouns[0]
     for d in docs_nouns[1:]:
         common = common.intersection(d)
 
     return len(common) >= 1
+
 
 def run_stage2_issue_refine(articles):
     summaries = [f"[{i}] 제목: {a.title}\n요약: {(a.contents or '')[:150]}" for i, a in enumerate(articles[:10])]
@@ -166,7 +235,9 @@ title: 선택된 기사들을 포괄하는 핵심 요약 제목
         raw = parsed.get("valid_indices", "none").lower()
         parsed["valid_ids"] = [] if "none" in raw else [int(x) for x in re.findall(r"\d+", raw)]
         return parsed
-    except: return {"valid_ids": []}
+    except:
+        return {"valid_ids": []}
+
 
 # -------------------------------------------------
 # 4. 메인 파이프라인 (ChromaDB + HDBSCAN)
@@ -174,68 +245,71 @@ title: 선택된 기사들을 포괄하는 핵심 요약 제목
 def run_issue_clustering(db: Session, days=3):
     Base.metadata.create_all(bind=engine)
     since = datetime.now() - timedelta(days=days)
-    articles = db.query(Article).filter(Article.time >= since, Article.issue_id.is_(None)).all()
-    if len(articles) < 2: return
+
+    from database import crud
+
+    articles = crud.get_recent_news(db, since)
+    if len(articles) < 2:
+        return
 
     # 1. 모든 대상 기사의 임베딩 확보 (ChromaDB 캐시 활용)
+    from database import crud
+
     embeddings = get_embeddings_with_cache(articles)
 
     # 2. 기존 이슈 흡수 (ChromaDB에서 벡터 직접 호출)
-    recent_issues = db.query(Issue).filter(Issue.created_at >= since).all()
-    for issue in recent_issues:
-        sample = db.query(Article).filter(Article.issue_id == issue.id).first()
-        if not sample: continue
-        
-        # ChromaDB에서 기존 이슈의 대표 기사 벡터 가져오기
-        res = collection.get(ids=[str(sample.id)], include=['embeddings'])
-        embeddings_list = res.get('embeddings')
-        if embeddings_list is None or len(embeddings_list) == 0:
-            continue
-        issue_vec = np.array(res['embeddings'][0]).reshape(1, -1)
+    # recent_issues = db.query(AiGeneratedNews).filter(AiGeneratedNews.created_at >= since).all()
+    # for issue in recent_issues:
+    #     sample = db.query(News).filter(News.id == issue.id).first()  # 임시로 issue.id와 같은 News 찾기
+    #     if not sample: continue
 
-        for i, a in enumerate(articles):
-            if a.issue_id is not None: continue
-            sim = cosine_similarity(embeddings[i].reshape(1, -1), issue_vec)[0][0]
-            if sim >= 0.85: a.issue_id = issue.id
+    #     # ChromaDB에서 기존 이슈의 대표 기사 벡터 가져오기
+    #     res = collection.get(ids=[str(sample.id)], include=['embeddings'])
+    #     embeddings_list = res.get('embeddings')
+    #     if embeddings_list is None or len(embeddings_list) == 0:
+    #         continue
+    #     issue_vec = np.array(res['embeddings'][0]).reshape(1, -1)
+
+    #     for i, a in enumerate(articles):
+    #         if a.issue_id is not None: continue
+    #         sim = cosine_similarity(embeddings[i].reshape(1, -1), issue_vec)[0][0]
+    #         if sim >= 0.85: a.issue_id = issue.id
 
     # 3. 신규 클러스터링
-    rem = [(i, a) for i, a in enumerate(articles) if a.issue_id is None]
-    if len(rem) < 3: # 최소 군집 사이즈 3 고려
+    print("클러스터링 시작")
+    rem = [(i, a) for i, a in enumerate(articles)]  # 모든 articles 사용
+    if len(rem) < 3:  # 최소 군집 사이즈 3 고려
         db.commit()
         return
 
     idxs, rem_articles = zip(*rem)
     rem_embs = normalize(embeddings[list(idxs)])
-    
-    clusterer = hdbscan.HDBSCAN(
-        min_cluster_size=3, 
-        min_samples=1, 
-        metric="euclidean", 
-        cluster_selection_epsilon=0.28
-    )
+
+    clusterer = hdbscan.HDBSCAN(min_cluster_size=3, min_samples=1, metric="euclidean", cluster_selection_epsilon=0.28)
     labels = clusterer.fit_predict(rem_embs)
 
     for cid in set(labels):
-        if cid == -1: continue 
+        if cid == -1:
+            continue
         cluster = [rem_articles[i] for i in np.where(labels == cid)[0]]
-        
-        if not simple_kg_check(cluster): continue
+
+        if not simple_kg_check(cluster):
+            continue
         res = run_stage2_issue_refine(cluster)
         valid_ids = res.get("valid_ids", [])
-        
-        if len(valid_ids) < 3: continue 
-            
+
+        if len(valid_ids) < 3:
+            continue
+
         picked = [cluster[i] for i in valid_ids if i < len(cluster)]
-        issue = Issue(title=res.get("title", picked[0].title), created_at=datetime.now())
-        db.add(issue)
-        db.flush() 
-        
-        for a in picked: 
-            a.issue_id = issue.id
-        print(f"✨ [ChromaDB 기반 이슈 생성] {issue.title} (기사 {len(picked)}건)")
+
+        # issue = crud.create_ai_news_issue(db, title=res.get("title", picked[0].title), article_ids=[a.id for a in picked])
+
+        print(f"✨ [ChromaDB 기반 이슈 생성] {res.get('title', picked[0].title)} (기사 {len(picked)}건)")
 
     db.commit()
     print("--- [DONE] 클러스터링 및 이슈 업데이트 완료 ---")
+
 
 # if __name__ == "__main__":
 #     db = SessionLocal()

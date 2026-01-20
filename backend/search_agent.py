@@ -5,7 +5,7 @@ from urllib.parse import quote
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from typing import List, Dict, Any, Optional, Union
-from models import Issue, Article
+from database.models import AiGeneratedNews, News
 
 # IBM WatsonX AI Import
 from ibm_watsonx_ai.foundation_models import ModelInference
@@ -123,16 +123,16 @@ def search_wikipedia(keyword: str) -> Optional[Dict[str, str]]:
 # 2. AI 요약(Issues) 검색 (Section 2)
 def search_issues_by_keyword(db: Session, keyword: str) -> Dict[str, Any]:
     """
-    DB Issue 테이블에서만 키워드가 포함된 이슈를 검색하고, LLM을 통해 분석합니다.
-    (Article 테이블은 참조하지 않음)
+    DB AiGeneratedNews 테이블에서만 키워드가 포함된 이슈를 검색하고, LLM을 통해 분석합니다.
+    (News 테이블은 참조하지 않음)
     """
     search_pattern = f"%{keyword}%"
 
-    # Issue 테이블 검색
+    # AiGeneratedNews 테이블 검색
     results = (
-        db.query(Issue)
-        .filter(or_(Issue.title.ilike(search_pattern), Issue.contents.ilike(search_pattern)))
-        .order_by(Issue.created_at.desc())
+        db.query(AiGeneratedNews)
+        .filter(or_(AiGeneratedNews.title.ilike(search_pattern), AiGeneratedNews.contents.ilike(search_pattern)))
+        .order_by(AiGeneratedNews.created_at.desc())
         .limit(5)
         .all()
     )
@@ -167,14 +167,14 @@ def search_issues_by_keyword(db: Session, keyword: str) -> Dict[str, Any]:
 # 3. 핫토픽(Articles) 검색 (Section 3)
 def search_hot_topics_by_keyword(db: Session, keyword: str) -> List[Dict[str, Any]]:
     """
-    DB Article 테이블에서 키워드가 포함되고 이미지가 있는 기사를 검색합니다.
+    DB News 테이블에서 키워드가 포함되고 이미지가 있는 기사를 검색합니다.
     """
     search_pattern = f"%{keyword}%"
 
     articles = (
-        db.query(Article)
-        .filter(or_(Article.title.ilike(search_pattern), Article.contents.ilike(search_pattern)))
-        .order_by(Article.time.desc())
+        db.query(News)
+        .filter(or_(News.title.ilike(search_pattern), News.contents.ilike(search_pattern)))
+        .order_by(News.created_at.desc())
         .limit(50)
         .all()
     )
@@ -188,7 +188,7 @@ def search_hot_topics_by_keyword(db: Session, keyword: str) -> List[Dict[str, An
                     "title": art.title,
                     "img_urls": art.img_urls,
                     "url": art.url,
-                    "company_name": art.company_name,
+                    "company_name": art.company.name,
                 }
             )
             if len(hot_topics) >= 10:
@@ -214,6 +214,6 @@ def search_articles_by_keyword(db: Session, keyword: str) -> List[Dict[str, Any]
     # 쿼리 결과 사용
 
     return [
-        {"id": art.id, "title": art.title, "url": art.url, "company_name": art.company_name, "view_count": 0}
+        {"id": art.id, "title": art.title, "url": art.url, "company_name": art.company.name, "view_count": 0}
         for art in articles
     ]

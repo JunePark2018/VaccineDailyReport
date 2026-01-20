@@ -1,4 +1,3 @@
-# database.py
 from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
@@ -16,6 +15,7 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
     cursor = dbapi_connection.cursor()
     cursor.execute("PRAGMA journal_mode=WAL")  # 읽기/쓰기 동시성 향상
     cursor.execute("PRAGMA synchronous=NORMAL")  # 쓰기 속도 향상 (안전성 약간 타협)
+    cursor.execute("PRAGMA foreign_keys=ON")  # FK 켜기
     cursor.close()
 
 

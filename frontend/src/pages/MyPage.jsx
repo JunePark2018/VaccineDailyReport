@@ -32,7 +32,7 @@ const MyPage = () => {
     const fetchUserData = async () => {
       try {
         const id = login_id || 'test_user';
-        // const response = await axios.get(`YOUR_BACKEND_URL/users/${id}`);
+        // const response = await axios.get(`http://localhost:8000/users/${id}`);
         // setUserData(response.data);
         setUserData(MOCK_USER_DATA);
       } catch (error) {
@@ -61,7 +61,7 @@ const MyPage = () => {
   // 서버 업데이트 로직
   const updateKeywordsOnServer = async (newList) => {
     try {
-      await axios.patch(`YOUR_BACKEND_URL/users/${login_id}`, { subscribed_keywords: newList });
+      await axios.patch(`http://localhost:8000/users/${login_id}`, { subscribed_keywords: newList });
     } catch (error) {
       console.error("서버 업데이트 실패:", error);
     }
