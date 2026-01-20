@@ -1,95 +1,272 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import Carousel from '../components/Carousel';
-import TodayNews from '../components/TodayNews';
-import SlideItem from '../components/SlideItem';
+import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
-import Searchbar from '../components/Searchbar';
-import Button from '../components/Button';
 import Logo from '../components/Logo';
-import './Main.css';
-import SubArticle from '../components/SubArticle';
+import Searchbar from '../components/Searchbar';
 import UserMenu from '../components/UserMenu';
 
-function Main() {
-  const navigate = useNavigate(); 
-  
-  // 슬라이드 데이터 예시
-  const slideData = [
-    {
-      id: 1,
-      image: "https://img.freepik.com/free-photo/downtown-cityscape-night-seoul-south-korea_335224-272.jpg?t=st=1767758567~exp=1767762167~hmac=e4ba534e5c105b48886e453f789bb90395bd99e130b545bd3dda7a37f52f1f55&w=2000", // 실제 이미지 URL
-      title: "의대 증원 극적 타결 조짐?",
-      description: "정부와 의료계 5차 협상... 입장차 좁혀",
-      analysis: { /* 분석 데이터 객체 */ }
-    },
-    {
-      id: 2,
-      image: "https://img.freepik.com/free-photo/banghwa-bridge-night-korea_335224-492.jpg?t=st=1767758818~exp=1767762418~hmac=155ead384e649570fd2cf9e64236f7a64ab7cf9a668b785df37138b3229373da&w=2000",
-      title: "국산 1호 AI 신약 탄생 임박",
-      description: "임상 3상 성공적 완료... 주가 급등",
-      analysis: { /* ... */ }
-    },
-    // ... 더 많은 슬라이드
-  ];
 
-  return (
-    <div className="Main">
-      {/* 1. 왼쪽: 사이드바 (전체 높이) */}
 
-      {/* 2. 오른쪽: 헤더 + 본문 영역을 감싸는 컨테이너 */}
-      <div className="page-content">
+import './Main.css';
 
-        {/* 상단 */}
-        <Header
-          leftChild={<Logo />}
-          midChild={<Searchbar fontSize="16px"/>}
-          rightChild={<UserMenu />}
-        />
+export const Main = () => {
+  // Main page doesn't use useParams for category usually, but keeping structure similar
+  // We can simulate 'name' being undefined or empty to show all articles
+  const { name } = useParams();
+  const navigate = useNavigate();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [displayArticles, setDisplayArticles] = useState([]);
+  const [imageMap, setImageMap] = useState({});
+  const itemsPerPage = 5;
 
-        {/* 하단 */}
-        <main className="main-content">         
-          {/* 상단 배너 영역: 캐러셀 + 비교분석 */}
-          <section className="top-banner-section">
+  useEffect(() => {
+    setCurrentPage(1);
 
-            {/* 캐러셀 */}
-            <div className="carousel-container">
-              <Carousel height="100%">
-                {/* SlideItem 컴포넌트 반복 렌더링 */}
-                {slideData.map(data => (
-                  <SlideItem
-                    key={data.id}
-                    image={data.image}
-                    title={data.title}
-                    description={data.description}
-                    analysisData={data.analysis} // 나중에 데이터 연동 시 사용
-                  />
-                ))}
-              </Carousel>
+    const loadData = async () => {
+      try {
+        // Dynamically import sample data to allow the app to run even if the folder is missing
+        const [articlesModule, imagesModule] = await Promise.all([
+          import('../sample_/sampleArticle.json').catch(() => ({ default: [] })),
+          import('../sample_/imageAssets').catch(() => ({ default: {} }))
+        ]);
+
+        const articles = articlesModule.default || [];
+        const images = imagesModule.default || {};
+
+        setImageMap(images);
+
+        // Filter articles by category name
+        // If category is '전체메뉴', show all articles
+        // For Main page, name is likely undefined, so it behaves like '전체메뉴'
+        const decodedName = decodeURIComponent(name || '');
+        const filtered = (decodedName === '전체메뉴' || !decodedName)
+          ? articles
+          : articles.filter(a => {
+            if (!a.category) return false;
+            if (Array.isArray(a.category)) {
+              return a.category.includes(decodedName);
+            }
+            return a.category === decodedName;
+          });
+
+        // Randomly shuffle filtered articles when category changes
+        if (filtered.length > 0) {
+          const shuffled = [...filtered].sort(() => Math.random() - 0.5);
+          setDisplayArticles(shuffled);
+        } else {
+          setDisplayArticles([]);
+        }
+      } catch (error) {
+        console.warn('Sample data could not be loaded:', error);
+        setDisplayArticles([]);
+        setImageMap({});
+      }
+    };
+
+    loadData();
+  }, [name]);
+
+  // Function to render the main content block (Featured, Highlights, Grid)
+  // This is repeated 5 times as requested by the user
+  const renderMainContent = (index) => {
+    if (!displayArticles || displayArticles.length === 0) return null;
+
+    // Use 7 articles per loop to match the new layout (1 main + 6 grid)
+    const baseIndex = (index * 7) % displayArticles.length;
+
+    const mainArticle = displayArticles[baseIndex];
+    const gridArticles = [
+      displayArticles[(baseIndex + 1) % displayArticles.length],
+      displayArticles[(baseIndex + 2) % displayArticles.length],
+      displayArticles[(baseIndex + 3) % displayArticles.length],
+      displayArticles[(baseIndex + 4) % displayArticles.length],
+      displayArticles[(baseIndex + 5) % displayArticles.length],
+      displayArticles[(baseIndex + 6) % displayArticles.length],
+    ];
+
+    const mainData = {
+      title: mainArticle?.title || "AI 생성 기사 제목",
+      description: mainArticle?.short_text || "AI 생성 기사 내용 (추후 데이터 연동 예정)",
+      image: mainArticle ? (imageMap[mainArticle.image] || mainArticle.image) : null
+    };
+
+    // Helper to format article data
+    const getArticleData = (article) => ({
+      title: article?.title || "AI 생성 기사 제목",
+      description: article?.short_text || "AI 생성 기사 내용"
+    });
+
+    const leftArticles = [
+      getArticleData(gridArticles[0]),
+      getArticleData(gridArticles[1]),
+      getArticleData(gridArticles[2])
+    ];
+    const rightArticles = [
+      getArticleData(gridArticles[3]),
+      getArticleData(gridArticles[4]),
+      getArticleData(gridArticles[5])
+    ];
+
+    const highlights = [
+      { keyword: '중점으로 둔 키워드', content: '"해당 키워드에 대한 요약한 내용"' },
+      { keyword: '중점으로 둔 키워드', content: '"해당 키워드에 대한 요약한 내용"' }
+    ];
+
+    return (
+      <React.Fragment key={index}>
+        {/* Main 3-Column Section */}
+        <section className="main-article-section">
+          {/* Left Column */}
+          <div className="article-info-side" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
+            <div className="analysis-block">
+              <h2>{leftArticles[0].title}</h2>
+              <p>{leftArticles[0].description}</p>
             </div>
-          </section>
-            <section className="bottom-news-section">
-              {[1, 2, 3].map((item) => (
-                <div 
-                  key={item} 
-                  onClick={() => navigate('/article')} 
-                  style={{ cursor: 'pointer' }}
-                  className="sub-article-wrapper"
-                >
-                  <SubArticle 
-                    title="의대 증원 극적 타결 조짐" 
-                    height="200px" 
-                    fontSize="24px" 
-                    img_url="https://image.ichannela.com/images/channela/2026/01/02/000002924491/00000292449120260102113532802.webp" 
-                  />
+            <div className="info-divider"></div>
+            <div className="analysis-block">
+              <h2>{leftArticles[1].title}</h2>
+              <p>{leftArticles[1].description}</p>
+            </div>
+            <div className="info-divider"></div>
+            <div className="analysis-block">
+              <h2>{leftArticles[2].title}</h2>
+              <p>{leftArticles[2].description}</p>
+            </div>
+          </div>
+
+          {/* Center Column (Image) */}
+          <div className="main-image-column">
+            <div className="ai-news-badge">AI 뉴스</div>
+            <div className="article-image-center" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
+              <img src={mainData.image} alt="Main" />
+              <div className="main-image-text">
+                <h3>{mainData.title || "AI 생성 기사 제목"}</h3>
+                <p>{mainData.description || "AI 생성 기사 내용"}</p>
+              </div>
+            </div>
+
+            <div className="highlights-container">
+              {highlights.map((item, hIndex) => (
+                <React.Fragment key={hIndex}>
+                  <div className="highlight-item">
+                    <span className="highlight-keyword">{item.keyword}</span>
+                    <span className="highlight-content">{item.content}</span>
+                  </div>
+                  {hIndex < highlights.length - 1 && <div className="highlight-divider"></div>}
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
+
+          {/* Right Column */}
+          <div className="article-info-side" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
+            <div className="analysis-block">
+              <h2>{rightArticles[0].title}</h2>
+              <p>{rightArticles[0].description}</p>
+            </div>
+            <div className="info-divider"></div>
+            <div className="analysis-block">
+              <h2>{rightArticles[1].title}</h2>
+              <p>{rightArticles[1].description}</p>
+            </div>
+            <div className="info-divider"></div>
+            <div className="analysis-block">
+              <h2>{rightArticles[2].title}</h2>
+              <p>{rightArticles[2].description}</p>
+            </div>
+          </div>
+        </section>
+
+
+
+
+        <div className="divider"></div>
+      </React.Fragment>
+    );
+  };
+
+  const renderAIRecommendedNews = (mainBaseIndex) => {
+    if (!displayArticles || displayArticles.length === 0) return null;
+
+    // Use an offset from the articles displayed in the main section (which uses 7 articles)
+    const offset = 7;
+    const aiBaseIndex = (mainBaseIndex + offset) % displayArticles.length;
+
+    // Pick 5 articles for AI recommendation
+    const aiMainArticle = displayArticles[aiBaseIndex];
+    const aiRelatedArticles = [
+      displayArticles[(aiBaseIndex + 1) % displayArticles.length],
+      displayArticles[(aiBaseIndex + 2) % displayArticles.length],
+      displayArticles[(aiBaseIndex + 3) % displayArticles.length],
+      displayArticles[(aiBaseIndex + 4) % displayArticles.length]
+    ];
+
+    const mainImage = aiMainArticle ? (imageMap[aiMainArticle.image] || aiMainArticle.image) : null;
+
+    return (
+      <section className="ai-recommended-section">
+        <div className="ai-content-wrapper">
+          <h3>AI 추천 뉴스</h3>
+          <div className="ai-layout-split">
+            {/* Left: List of 4 related articles (Text only) */}
+            <div className="ai-related-list">
+              {aiRelatedArticles.map((art, i) => (
+                <div key={i} className="ai-related-item-wrapper">
+                  <div className="ai-related-item" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
+                    <h4>{art?.title || "Title Text Sample"}</h4>
+                    <p>{art?.short_text || "TEXT SAMPLE content description..."}</p>
+                  </div>
+                  {i < aiRelatedArticles.length - 1 && <div className="ai-divider"></div>}
                 </div>
               ))}
-            </section>
-        </main>
+            </div>
 
-      </div>
+            {/* Right: One large image */}
+            <div className="ai-main-image-container">
+              <img src={mainImage} alt="AI Main" />
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  };
+
+  const totalPages = 5; // Fixed to 5 pages as requested for the loop
+
+  return (
+    <div className="main-page">
+      <Header
+        leftChild={<div />}
+        midChild={<Logo />}
+        rightChild={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
+            <div style={{ position: 'relative' }}>
+              <Searchbar />
+            </div>
+            <UserMenu />
+          </div>
+        }
+        headerTop="on"
+        headerMain="on"
+        headerBottom="on"
+      />
+
+      <main className="category-content">
+
+        {/* Repeat the main content 5 times, offset by current page */}
+        {displayArticles.length > 0 ? (
+          renderMainContent(0 + (currentPage - 1) * 7) // Using 7 as the step since we show 7 articles in body
+        ) : (
+          <div className="empty-category">
+            <p>해당 카테고리에 표시할 기사가 없습니다.</p>
+          </div>
+        )}
+
+        {renderAIRecommendedNews(0 + (currentPage - 1) * 7)}
+
+      </main>
     </div>
   );
-}
+};
 
-export default Main;
+

@@ -10,9 +10,33 @@
   gap: 15px;
 }
 
+
+/* Icon Wrapper Box */
+.user-menu-container .user-icon-box {
+  width: 40px;
+  height: 40px;
+  border: 1px solid #6d6d6d;
+  border-left: none;
+  /* Merge with adjacent element */
+  border-radius: 0px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #ffffff;
+  box-sizing: border-box;
+  transition: background-color 0.2s;
+}
+
+.user-menu-container .user-info-wrapper:hover .user-icon-box {
+  background-color: #f8f8f8;
+}
+
 .user-menu-container .user-icon {
-  width: 35px;
+  width: 24px;
+  /* Reduced from 35px to fit in box */
+  height: 24px;
   display: block;
+  object-fit: contain;
 }
 
 .user-menu-container .user-name {
@@ -27,7 +51,7 @@
   right: 0;
   background-color: white;
   min-width: 120px;
-  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
   z-index: 1000;
   border-radius: 4px;
   margin-top: 5px;

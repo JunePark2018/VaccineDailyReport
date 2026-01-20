@@ -1,4 +1,5 @@
 import React from 'react';
+import LikeButton from './LikeButton';
 import './NewsText.css';
 
 /**
@@ -6,7 +7,7 @@ import './NewsText.css';
  * 외부에서 함수를 받지 않고 내부에서 클릭 이벤트를 처리합니다.
  */
 const NewsText = ({ title, contents }) => {
-  
+
   // [내부 함수] 문장 클릭 시 실행될 로직
   const handleSentenceClick = (sentence) => {
     // 1. 현재 브라우저에서 선택(드래그)된 텍스트 가져오기
@@ -14,7 +15,7 @@ const NewsText = ({ title, contents }) => {
 
     // 2. 선택된 텍스트가 있다면? -> 사용자가 드래그 중인 것임 -> 클릭 이벤트 무시
     if (selection.toString().length > 0) {
-      return; 
+      return;
     }
 
     // 3. 순수 클릭일 때만 아래 로직 실행
@@ -28,29 +29,33 @@ const NewsText = ({ title, contents }) => {
     if (!text) return null;
 
     // 1. 줄바꿈(\n)으로 문단 분리
-    return text.split('\n').map((line, lineIndex) => {
-      if (line.trim() === '') return null; 
+    const lines = text.split('\n');
+    return lines.map((line, lineIndex) => {
+      if (line.trim() === '') return null;
 
       // 2. 마침표(.)로 문장 분리
       const sentences = line.split('.');
+      const isLastParagraph = lineIndex === lines.length - 1;
 
       return (
         <p key={lineIndex} className="news-paragraph">
           {sentences.map((sentence, sentenceIndex) => {
-            // 빈 문장은 렌더링하지 않음
             if (sentence.trim() === '') return null;
-
             return (
-              <span 
-                key={sentenceIndex} 
+              <span
+                key={sentenceIndex}
                 className="clickable-sentence"
                 onClick={() => handleSentenceClick(sentence)}
               >
-                {/* 문장 내용 + 마침표 복구 + 띄어쓰기 */}
                 {sentence}.{' '}
               </span>
             );
           })}
+          {isLastParagraph && (
+            <span className="news-inline-like">
+              <LikeButton initialLiked={false} initialCount={120} />
+            </span>
+          )}
         </p>
       );
     });

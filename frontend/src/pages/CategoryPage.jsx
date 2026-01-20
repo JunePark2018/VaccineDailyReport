@@ -27,14 +27,14 @@ const CategoryPage = () => {
 
                 const articles = articlesModule.default || [];
                 const images = imagesModule.default || {};
-                
+
                 setImageMap(images);
-                
+
                 // Filter articles by category name
                 // If category is '전체메뉴', show all articles
                 const decodedName = decodeURIComponent(name || '');
-                const filtered = (decodedName === '전체메뉴' || !decodedName) 
-                    ? articles 
+                const filtered = (decodedName === '전체메뉴' || !decodedName)
+                    ? articles
                     : articles.filter(a => {
                         if (!a.category) return false;
                         if (Array.isArray(a.category)) {
@@ -42,7 +42,7 @@ const CategoryPage = () => {
                         }
                         return a.category === decodedName;
                     });
-                
+
                 // Randomly shuffle filtered articles when category changes
                 if (filtered.length > 0) {
                     const shuffled = [...filtered].sort(() => Math.random() - 0.5);
@@ -67,7 +67,7 @@ const CategoryPage = () => {
 
         // Use 4 articles per loop to match the new layout (1 main + 3 grid)
         const baseIndex = (index * 4) % displayArticles.length;
-        
+
         const mainArticle = displayArticles[baseIndex];
         const gridArticles = [
             displayArticles[(baseIndex + 1) % displayArticles.length],
@@ -99,9 +99,6 @@ const CategoryPage = () => {
                 {/* Main 3-Column Section */}
                 <section className="main-article-section">
                     <div className="article-info-side" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
-                        <h2>{mainData.title}</h2>
-                        <h3>"TEXT SAMPLE"</h3>
-                        <p>{mainData.description}</p>
                         <div className="analysis-box-large">
                             <div className="analysis-placeholder">
                                 <div className="analysis-x"></div>
@@ -109,12 +106,15 @@ const CategoryPage = () => {
                             </div>
                         </div>
                     </div>
-                    
+
                     <div className="article-image-center" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
                         <img src={mainData.image} alt="Main" />
-                        <div className="image-placeholder-text">IMAGE</div>
+                        <div className="main-image-text">
+                            <h3>{mainData.title}</h3>
+                            <p>{mainData.description}</p>
+                        </div>
                     </div>
-                    
+
                     <div className="highlights-side">
                         {highlights.map((item, hIndex) => (
                             <div key={hIndex} className="highlight-item">
@@ -147,31 +147,43 @@ const CategoryPage = () => {
         );
     };
 
-    const renderAIRecommendedNews = () => {
-        if (!displayArticles || displayArticles.length < 2) return null;
 
-        // Pick two articles for AI recommendation
-        const aiArticles = [
-            displayArticles[displayArticles.length % displayArticles.length],
-            displayArticles[(displayArticles.length + 1) % displayArticles.length]
+    const renderAIRecommendedNews = (mainBaseIndex) => {
+        if (!displayArticles || displayArticles.length === 0) return null;
+
+        const totalShown = 20;
+        const aiBaseIndex = (mainBaseIndex + totalShown) % displayArticles.length;
+
+        const aiMainArticle = displayArticles[aiBaseIndex];
+        const aiRelatedArticles = [
+            displayArticles[(aiBaseIndex + 1) % displayArticles.length],
+            displayArticles[(aiBaseIndex + 2) % displayArticles.length],
+            displayArticles[(aiBaseIndex + 3) % displayArticles.length],
+            displayArticles[(aiBaseIndex + 4) % displayArticles.length]
         ];
+
+        const mainImage = aiMainArticle ? (imageMap[aiMainArticle.image] || aiMainArticle.image) : null;
 
         return (
             <section className="ai-recommended-section">
-                <h3>AI 추천 뉴스</h3>
-                <div className="ai-articles-container">
-                    {aiArticles.map((art, i) => (
-                        <div key={i} className="ai-article-item" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
-                            <div className="ai-article-text">
-                                <h4>{art?.title || "Title Text Sample"}</h4>
-                                <p>{art?.short_text || "TEXT SAMPLE"}</p>
-                            </div>
-                            <div className="ai-article-image">
-                                <img src={art ? (imageMap[art.image] || art.image) : null} alt="AI Recommended" />
-                                <div className="image-placeholder-text" style={{ fontSize: '12px' }}>IMAGE</div>
-                            </div>
+                <div className="ai-content-wrapper">
+                    <h3>AI 추천 뉴스</h3>
+                    <div className="ai-layout-split">
+                        <div className="ai-related-list">
+                            {aiRelatedArticles.map((art, i) => (
+                                <div key={i} className="ai-related-item-wrapper">
+                                    <div className="ai-related-item" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
+                                        <h4>{art?.title || "Title Text Sample"}</h4>
+                                        <p>{art?.short_text || "TEXT SAMPLE content description..."}</p>
+                                    </div>
+                                    {i < aiRelatedArticles.length - 1 && <div className="ai-divider"></div>}
+                                </div>
+                            ))}
                         </div>
-                    ))}
+                        <div className="ai-main-image-container">
+                            <img src={mainImage} alt="AI Main" />
+                        </div>
+                    </div>
                 </div>
             </section>
         );
@@ -182,14 +194,21 @@ const CategoryPage = () => {
     return (
         <div className="category-page">
             <Header
-                leftChild={<Logo />}
-                midChild={<Searchbar />}
-                rightChild={<UserMenu />}
+                leftChild={<div />}
+                midChild={<Logo />}
+                rightChild={
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
+                        <div style={{ position: 'relative' }}>
+                            <Searchbar />
+                        </div>
+                        <UserMenu />
+                    </div>
+                }
                 headerTop="on"
                 headerMain="on"
                 headerBottom="on"
             />
-            
+
             <main className="category-content">
                 <div className="category-header">
                     <h1>{decodeURIComponent(name || '경제')}</h1>
@@ -204,11 +223,13 @@ const CategoryPage = () => {
                     </div>
                 )}
 
-                {renderAIRecommendedNews()}
+                {renderAIRecommendedNews((currentPage - 1) * 20)}
+
+
 
                 {/* Pagination */}
                 <div className="pagination">
-                    <span 
+                    <span
                         onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                         style={{ cursor: 'pointer' }}
                     >
@@ -216,7 +237,7 @@ const CategoryPage = () => {
                     </span>
                     {[...Array(totalPages)].map((_, i) => (
                         <React.Fragment key={i + 1}>
-                            <span 
+                            <span
                                 className={`page-num ${currentPage === i + 1 ? 'active' : ''}`}
                                 onClick={() => setCurrentPage(i + 1)}
                             >
@@ -225,7 +246,7 @@ const CategoryPage = () => {
                             {i < totalPages - 1 && <span className="separator">|</span>}
                         </React.Fragment>
                     ))}
-                    <span 
+                    <span
                         onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                         style={{ cursor: 'pointer' }}
                     >

@@ -1,66 +1,139 @@
-/* 검색바 전체를 중앙에 배치하기 위한 컨테이너 */
+/* 검색바 전체를 배치하기 위한 컨테이너 */
 .Searchbar {
     display: flex;
-    justify-content: center; /* 가로 방향 중앙 정렬 */
-    padding: 17px;          /* 주변 여백 (20px -> 17px to reduce height to ~85%) */
-    width: 100%;            /* 부모 요소의 너비를 가득 채우도록 설정 */
+    justify-content: flex-end;
+    /* 오른쪽 정렬 (왼쪽으로 확장되도록) */
+    padding: 0;
+    width: 40px;
+    /* 고정 너비 (아이콘 크기) - 레이아웃 영향 방지 */
+    height: 40px;
+    /* 고정 높이 */
+    position: relative;
+    /* 절대 위치 자식의 기준점 */
 }
 
-/* 검색창 본체: 배경색과 둥근 테두리 설정 */
+/* 검색창 본체: 배경색과 테두리 설정 */
 .Searchbar .search-box {
-    display: flex;          /* 내부 요소(input, button)를 가로로 배치 */
-    align-items: center;    /* 요소들을 세로축 중앙에 정렬 */
-    background-color: #ffffff; /* 흰색 배경 */
-    border: 1px solid #6d6d6d; /* 검정색 테두리 추가 */
-    border-radius: 40px;       /* 알약 형태의 둥근 모서리 */
-    padding: 3px 20px;         /* 내부 상하 여백 (8px -> 6px to reduce height to ~85%) */
-    width: 100%;               /* 부모 너비에 맞춤 */
-    max-width: 1600px;         /* 기본 최대 너비를 2배(800px -> 1600px)로 확장 */
+    display: flex;
+    /* 내부 요소(input, button)를 가로로 배치 */
+    align-items: center;
+    /* 요소들을 세로축 중앙에 정렬 */
+    background-color: #ffffff;
+    /* 흰색 배경 */
+    border: 1px solid #6d6d6d;
+    /* 검정색 테두리 추가 */
+    border-radius: 0px;
+    /* 모서리 직각 */
+    padding: 0;
+    /* 패딩 제거 (내부 요소로 조절) */
+    width: 40px;
+    /* 초기 너비 (아이콘 크기에 맞춤) */
+    height: 40px;
+    /* 높이 고정 */
+    overflow: hidden;
+    /* 넘치는 내용 숨김 */
+    transition: width 0.4s ease;
+    /* 너비 변경 애니메이션 */
+    position: absolute;
+    /* 절대 위치로 확장 시 레이아웃 침범 방지 */
+    right: 0;
+    /* 오른쪽 끝 기준 */
+    top: 0;
+    z-index: 20;
+    /* 다른 요소 위에 표시 */
+    box-sizing: border-box;
+    /* 테두리 포함 크기 계산 */
+}
+
+/* 검색창 클릭(포커스) 시 너비 확장 */
+.Searchbar .search-box:focus-within {
+    width: 300px;
+    /* 확장 시 너비 */
 }
 
 /* 텍스트 입력창 스타일 */
 .Searchbar .search-box input {
-    flex: 1;                /* 버튼을 제외한 나머지 공간을 모두 차지 */
-    background: transparent; /* 배경을 투명하게 하여 search-box 색상이 보이게 함 */
-    border: none;           /* 기본 테두리 제거 */
-    outline: none;          /* 클릭 시 나타나는 강조 테두리 제거 */
-    color: #000000;         /* 글자 색상 (검정색) */
-    padding: 8px 0;        /* 상하 높이 조절 (10px -> 8px to reduce height to ~85%) */
-    
-    /* [수정] JS에서 넘겨주는 fontSize가 적용되도록 고정값을 제거합니다 */
-    font-size: inherit;     
+    width: 100%;
+    /* 가득 채우기 (패딩으로 조절) */
+    height: 100%;
+    /* 높이 채우기 */
+    opacity: 0;
+    /* 초기 투명 */
+    padding: 0 45px 0 10px;
+    /* 오른쪽은 버튼 공간(45px), 왼쪽은 여백(10px) */
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #000000;
+    font-size: inherit;
+    transition: opacity 0.3s ease;
+    /* 투명도 애니메이션만 */
+    white-space: nowrap;
+    box-sizing: border-box;
+    /* 패딩 포함 크기 계산 */
+    position: absolute;
+    /* 겹치게 배치 (너비 조절 위해) */
+    left: 0;
+    top: 0;
+    pointer-events: none;
+    /* 닫혀있을 때 클릭 방지? 아니면 z-index */
+    /* pointer-events none하면 입력 불가. opacity로 조절. */
+}
+
+/* 확장 시 입력창 스타일 */
+.Searchbar .search-box:focus-within input {
+    opacity: 1;
+    /* 보이게 설정 */
+    pointer-events: auto;
+    /* 입력 가능 */
 }
 
 /* 입력창의 가이드 문구(placeholder) 스타일 */
 .Searchbar .search-box input::placeholder {
-    color: #888;            /* 연한 회색으로 설정 */
+    color: #888;
 }
 
-/* 검색 버튼 스타일 */
+/* 돋보기 아이콘(버튼) 스타일 - 절대 위치 고정 */
 .Searchbar .search-box button {
-    background: none;       /* 배경 제거 */
-    border: none;           /* 테두리 제거 */
-    cursor: pointer;        /* 마우스를 올리면 손가락 모양으로 변경 */
-    display: flex;          /* 아이콘 정렬을 위해 flex 사용 */
+    position: absolute;
+    /* 절대 위치 */
+    right: 0;
+    /* 오른쪽 끝 고정 */
+    top: 0;
+    width: 40px;
+    /* 정사각형 */
+    height: 100%;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
     align-items: center;
     justify-content: center;
-    padding: 5px;           /* 클릭 영역 확보 */
+    z-index: 10;
+    /* 입력창보다 위에 */
 }
 
 /* 돋보기 아이콘(SVG) 스타일 */
 .Searchbar .search-box button svg {
     /* [수정] JS에서 fontSize에 맞춰 조절하므로 기본 최소 크기만 유지하거나 제거합니다 */
-    width: 1.2em;           /* 현재 글자 크기에 비례하도록 설정 */
+    width: 1.2em;
+    /* 현재 글자 크기에 비례하도록 설정 */
     height: 1.2em;
-    
-    stroke: #000000;        /* 돋보기 선 색상 (검정색) */
-    stroke-width: 1.5;      /* 선 두께 (얇고 깔끔하게) */
-    fill: none;             /* 아이콘 내부 채우지 않음 */
-    transition: transform 0.2s ease; /* 애니메이션 효과 (0.2초 동안 부드럽게) */
+
+    stroke: #000000;
+    /* 돋보기 선 색상 (검정색) */
+    stroke-width: 1.5;
+    /* 선 두께 (얇고 깔끔하게) */
+    fill: none;
+    /* 아이콘 내부 채우지 않음 */
+    transition: transform 0.2s ease;
+    /* 애니메이션 효과 (0.2초 동안 부드럽게) */
 }
 
 /* 버튼 위에 마우스를 올렸을 때(Hover) 효과 */
 .Searchbar .search-box button:hover svg {
-    transform: scale(1.1);  /* 아이콘 크기를 10% 확대 */
-    stroke: #333333;        /* 선 색상을 어두운 회색으로 변경 */
+    transform: scale(1.1);
+    /* 아이콘 크기를 10% 확대 */
+    stroke: #333333;
+    /* 선 색상을 어두운 회색으로 변경 */
 }

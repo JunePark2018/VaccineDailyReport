@@ -25,7 +25,7 @@ def run_background_worker():
         try:
             # 스마트 수집 (중복 만나면 중단)
             # news_list = crawl_breaking_news(limit=20, db_check_session=db)
-            news_list = run_article_crawler([], False)
+            news_list = run_article_crawler(["조선일보", "한국일보", "연합뉴스"], False)
             count = 0
             for news in news_list:
                 # 기사 db에 저장
@@ -57,6 +57,8 @@ async def lifespan(app: FastAPI):
     print("👋 서버 종료")
 
 app = FastAPI(lifespan=lifespan)
+
+
 #--------------------------------------------------
 #             프론트-백 FastAPI 연결
 from fastapi.middleware.cors import CORSMiddleware
@@ -407,3 +409,5 @@ def update_user_simple(
         raise HTTPException(status_code=500, detail="DB 업데이트 실패")
 
     return {"message": f"'{login_id}'님의 정보가 수정되었습니다."}
+
+

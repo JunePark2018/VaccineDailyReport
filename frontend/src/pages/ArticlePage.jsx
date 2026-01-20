@@ -34,9 +34,19 @@ function ArticlePage() {
 
         {/* 상단 */}
         <Header
-          leftChild={<Logo />}
-          midChild={<Searchbar />}
-          rightChild={<UserMenu />}
+          leftChild={<div />}
+          midChild={<Logo />}
+          rightChild={
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
+              <div style={{ position: 'relative' }}>
+                <Searchbar />
+              </div>
+              <UserMenu />
+            </div>
+          }
+          headerTop="on"
+          headerMain="on"
+          headerBottom="on"
         />
 
         {/* 하단 */}
