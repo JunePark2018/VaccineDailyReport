@@ -39,31 +39,32 @@ def run_background_worker():
         # 1. 뉴스 수집 (DB 연결)
         db = SessionLocal()
         try:
-            # 스마트 수집 (중복 만나면 중단)
-            # news_list = crawl_breaking_news(limit=20, db_check_session=db)
-            # my_target_media = ["조선", "중앙", "한겨레", "경향", "YTN", "연합", "머니", "매일"]
-            my_target_media = []  # 모든 뉴스 수집. 테스트용
-            news_list = run_article_crawler(my_target_media, False)
-            count = 0
-            for news in news_list:
-                # 기사 db에 저장
-                company = get_or_create_company_by_raw_name(db, news["company_name"])
-                if create_news(
-                    db,
-                    title=news["title"],
-                    contents=news["contents"],
-                    url=news["url"],
-                    company_id=company.id,
-                    region="domestic",  # 기본값
-                    img_urls=news.get("img_urls"),
-                    created_at=datetime.fromisoformat(news["time"]) if news["time"] != "시간 정보 없음" else None,
-                ):
-                    count += 1
-                pass
-            print(f"   -> {count}개의 신규 기사 저장 완료")
+            # # 스마트 수집 (중복 만나면 중단)
+            # # news_list = crawl_breaking_news(limit=20, db_check_session=db)
+            # # my_target_media = ["조선", "중앙", "한겨레", "경향", "YTN", "연합", "머니", "매일"]
+            # my_target_media = []  # 모든 뉴스 수집. 테스트용
+            # news_list = run_article_crawler(my_target_media, days=1, max_pages=5)
+            # count = 0
+            # for news in news_list:
+            #     # 기사 db에 저장
+            #     company = get_or_create_company_by_raw_name(db, news["company_name"])
+            #     if create_news(
+            #         db,
+            #         title=news["title"],
+            #         contents=news["contents"],
+            #         url=news["url"],
+            #         company_id=company.id,
+            #         region="domestic",  # 기본값
+            #         img_urls=news.get("img_urls"),
+            #         created_at=datetime.fromisoformat(news["time"]) if news["time"] != "시간 정보 없음" else None,
+            #     ):
+            #         count += 1
+            #     pass
+            # print(f"   -> {count}개의 신규 기사 저장 완료")
 
             # 군집화 시작
-            run_issue_clustering(db, days=3)
+            run_issue_clustering(db, days=3)  # 잘 됨
+            pass
         finally:
             db.close()
 
@@ -72,7 +73,7 @@ def run_background_worker():
 
         # 10분(600초) 대기
         print("💤 [Sleep] 10분 대기 중...")
-        time.sleep(600)
+        time.sleep(5)
 
 
 # --- [FastAPI 앱 설정] ---

@@ -252,28 +252,35 @@ def run_issue_clustering(db: Session, days=3):
     if len(articles) < 2:
         return
 
+    # [Fix] AttributeError 방지를 위해 임시 속성 초기화
+    for a in articles:
+        a.issue_id = None
+
     # 1. 모든 대상 기사의 임베딩 확보 (ChromaDB 캐시 활용)
     from database import crud
 
     embeddings = get_embeddings_with_cache(articles)
 
     # 2. 기존 이슈 흡수 (ChromaDB에서 벡터 직접 호출)
-    # recent_issues = db.query(AiGeneratedNews).filter(AiGeneratedNews.created_at >= since).all()
-    # for issue in recent_issues:
-    #     sample = db.query(News).filter(News.id == issue.id).first()  # 임시로 issue.id와 같은 News 찾기
-    #     if not sample: continue
+    recent_issues = db.query(AiGeneratedNews).filter(AiGeneratedNews.created_at >= since).all()
+    for issue in recent_issues:
+        sample = db.query(News).filter(News.id == issue.id).first()  # 임시로 issue.id와 같은 News 찾기
+        if not sample:
+            continue
 
-    #     # ChromaDB에서 기존 이슈의 대표 기사 벡터 가져오기
-    #     res = collection.get(ids=[str(sample.id)], include=['embeddings'])
-    #     embeddings_list = res.get('embeddings')
-    #     if embeddings_list is None or len(embeddings_list) == 0:
-    #         continue
-    #     issue_vec = np.array(res['embeddings'][0]).reshape(1, -1)
+        # ChromaDB에서 기존 이슈의 대표 기사 벡터 가져오기
+        res = collection.get(ids=[str(sample.id)], include=["embeddings"])
+        embeddings_list = res.get("embeddings")
+        if embeddings_list is None or len(embeddings_list) == 0:
+            continue
+        issue_vec = np.array(res["embeddings"][0]).reshape(1, -1)
 
-    #     for i, a in enumerate(articles):
-    #         if a.issue_id is not None: continue
-    #         sim = cosine_similarity(embeddings[i].reshape(1, -1), issue_vec)[0][0]
-    #         if sim >= 0.85: a.issue_id = issue.id
+        for i, a in enumerate(articles):
+            if a.issue_id is not None:
+                continue
+            sim = cosine_similarity(embeddings[i].reshape(1, -1), issue_vec)[0][0]
+            if sim >= 0.85:
+                a.issue_id = issue.id
 
     # 3. 신규 클러스터링
     print("클러스터링 시작")
@@ -306,6 +313,15 @@ def run_issue_clustering(db: Session, days=3):
         # issue = crud.create_ai_news_issue(db, title=res.get("title", picked[0].title), article_ids=[a.id for a in picked])
 
         print(f"✨ [ChromaDB 기반 이슈 생성] {res.get('title', picked[0].title)} (기사 {len(picked)}건)")
+
+        # 4. 이슈 생성 및 DB 반영
+        issue = crud.create_ai_news_issue(
+            db, title=res.get("title", picked[0].title), article_ids=[a.id for a in picked]
+        )
+
+        # 5. 클러스터 내 기사들에 이슈 ID 연결
+        for a in picked:
+            a.issue_id = issue.id
 
     db.commit()
     print("--- [DONE] 클러스터링 및 이슈 업데이트 완료 ---")
