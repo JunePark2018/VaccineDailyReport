@@ -74,24 +74,12 @@ const SciencePage = () => {
             image: art ? (imageMap[art.image] || art.image) : null
         }));
 
-        const highlights = [
-            { keyword: '중점으로 둔 키워드', content: '"해당 키워드에 대한 요약한 내용"' },
-            { keyword: '중점으로 둔 키워드', content: '"해당 키워드에 대한 요약한 내용"' },
-            { keyword: '중점으로 둔 키워드', content: '"해당 키워드에 대한 요약한 내용"' },
-            { keyword: '중점으로 둔 키워드', content: '"해당 키워드에 대한 요약한 내용"' }
-        ];
+
 
         return (
             <React.Fragment key={index}>
                 <section className="main-article-section">
-                    <div className="article-info-side" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
-                        <div className="analysis-box-large">
-                            <div className="analysis-placeholder">
-                                <div className="analysis-x"></div>
-                                <span className="analysis-text">분석</span>
-                            </div>
-                        </div>
-                    </div>
+
 
                     <div className="article-image-center" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
                         <img src={mainData.image} alt="Main" />
@@ -101,14 +89,7 @@ const SciencePage = () => {
                         </div>
                     </div>
 
-                    <div className="highlights-side">
-                        {highlights.map((item, hIndex) => (
-                            <div key={hIndex} className="highlight-item">
-                                <span className="highlight-keyword">{item.keyword}</span>
-                                <span className="highlight-content">{item.content}</span>
-                            </div>
-                        ))}
-                    </div>
+
                 </section>
                 <div className="section-divider"></div>
                 <section className="bottom-grid-section">
@@ -130,46 +111,7 @@ const SciencePage = () => {
     };
 
 
-    const renderAIRecommendedNews = (mainBaseIndex) => {
-        if (!displayArticles || displayArticles.length === 0) return null;
 
-        const totalShown = 20;
-        const aiBaseIndex = (mainBaseIndex + totalShown) % displayArticles.length;
-
-        const aiMainArticle = displayArticles[aiBaseIndex];
-        const aiRelatedArticles = [
-            displayArticles[(aiBaseIndex + 1) % displayArticles.length],
-            displayArticles[(aiBaseIndex + 2) % displayArticles.length],
-            displayArticles[(aiBaseIndex + 3) % displayArticles.length],
-            displayArticles[(aiBaseIndex + 4) % displayArticles.length]
-        ];
-
-        const mainImage = aiMainArticle ? (imageMap[aiMainArticle.image] || aiMainArticle.image) : null;
-
-        return (
-            <section className="ai-recommended-section">
-                <div className="ai-content-wrapper">
-                    <h3>AI 추천 뉴스</h3>
-                    <div className="ai-layout-split">
-                        <div className="ai-related-list">
-                            {aiRelatedArticles.map((art, i) => (
-                                <div key={i} className="ai-related-item-wrapper">
-                                    <div className="ai-related-item" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
-                                        <h4>{art?.title || "Title Text Sample"}</h4>
-                                        <p>{art?.short_text || "TEXT SAMPLE content description..."}</p>
-                                    </div>
-                                    {i < aiRelatedArticles.length - 1 && <div className="ai-divider"></div>}
-                                </div>
-                            ))}
-                        </div>
-                        <div className="ai-main-image-container">
-                            <img src={mainImage} alt="AI Main" />
-                        </div>
-                    </div>
-                </div>
-            </section>
-        );
-    };
 
     const totalPages = 5;
 
@@ -204,7 +146,7 @@ const SciencePage = () => {
                     </div>
                 )}
 
-                {renderAIRecommendedNews((currentPage - 1) * 20)}
+
 
 
                 <div className="pagination">

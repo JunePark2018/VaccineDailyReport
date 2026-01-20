@@ -125,46 +125,7 @@ const TotalMenuPage = () => {
     };
 
 
-    const renderAIRecommendedNews = (mainBaseIndex) => {
-        if (!displayArticles || displayArticles.length === 0) return null;
 
-        const totalShown = 20;
-        const aiBaseIndex = (mainBaseIndex + totalShown) % displayArticles.length;
-
-        const aiMainArticle = displayArticles[aiBaseIndex];
-        const aiRelatedArticles = [
-            displayArticles[(aiBaseIndex + 1) % displayArticles.length],
-            displayArticles[(aiBaseIndex + 2) % displayArticles.length],
-            displayArticles[(aiBaseIndex + 3) % displayArticles.length],
-            displayArticles[(aiBaseIndex + 4) % displayArticles.length]
-        ];
-
-        const mainImage = aiMainArticle ? (imageMap[aiMainArticle.image] || aiMainArticle.image) : null;
-
-        return (
-            <section className="ai-recommended-section">
-                <div className="ai-content-wrapper">
-                    <h3>AI 추천 뉴스</h3>
-                    <div className="ai-layout-split">
-                        <div className="ai-related-list">
-                            {aiRelatedArticles.map((art, i) => (
-                                <div key={i} className="ai-related-item-wrapper">
-                                    <div className="ai-related-item" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
-                                        <h4>{art?.title || "Title Text Sample"}</h4>
-                                        <p>{art?.short_text || "TEXT SAMPLE content description..."}</p>
-                                    </div>
-                                    {i < aiRelatedArticles.length - 1 && <div className="ai-divider"></div>}
-                                </div>
-                            ))}
-                        </div>
-                        <div className="ai-main-image-container">
-                            <img src={mainImage} alt="AI Main" />
-                        </div>
-                    </div>
-                </div>
-            </section>
-        );
-    };
 
     const totalPages = 5;
 
@@ -199,7 +160,7 @@ const TotalMenuPage = () => {
                     </div>
                 )}
 
-                {renderAIRecommendedNews((currentPage - 1) * 20)}
+
 
 
                 <div className="pagination">

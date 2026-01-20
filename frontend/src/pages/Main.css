@@ -153,7 +153,7 @@
   color: #000;
   padding: 0 0 2px 0;
   /* Padding below text for underline spacing */
-  font-size: 14px;
+  font-size: 22px;
   font-weight: 800;
   text-transform: uppercase;
   border-bottom: 2px solid #000;
@@ -179,7 +179,8 @@
   border-top: 1px solid #eee;
   padding-top: 15px;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  /* Aligned to left */
   /* Added for centering */
   /* Align items vertically center */
 }
@@ -293,6 +294,19 @@
   margin: 50px 0;
 }
 
+.main-page .full-width-divider {
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  border-top: 1px solid #d9d9d9;
+  /* Slightly darker gray for visibility */
+  margin-top: 50px;
+  margin-bottom: 40px;
+}
+
 .main-page .divider {
   border-top: 1px solid #000000;
   margin: 50px 0;
@@ -306,11 +320,15 @@
   right: 50%;
   margin-left: -50vw;
   margin-right: -50vw;
-  background-color: #000;
+  background-color: #1a1a1a;
+  /* 10% Lighter */
   color: #fff;
-  padding: 40px 0;
-  margin-top: 40px;
-  margin-bottom: 100px;
+  padding: 54px 0;
+  /* Reduced by 10% from 60px */
+  margin-top: 36px;
+  /* Reduced by 10% from 40px */
+  margin-bottom: 90px;
+  /* Reduced by 10% from 100px */
 }
 
 .main-page .ai-content-wrapper {
@@ -322,9 +340,11 @@
 }
 
 .main-page .ai-recommended-section h3 {
-  font-size: 20px;
-  font-weight: bold;
-  margin-bottom: 30px;
+  font-size: 21px;
+  /* Matched to Politics/Economy */
+  font-weight: 800;
+  margin-bottom: 20px;
+  /* Matched (was 30px) */
   text-align: left;
   color: #fff;
   display: inline-block;
@@ -333,6 +353,8 @@
   /* Increased thickness */
   padding-bottom: 5px;
   /* Reduced spacing */
+  align-self: flex-start;
+  /* Prevent stretching in flex container */
 }
 
 .main-page .ai-layout-split {
@@ -358,6 +380,28 @@
   overflow: hidden;
   background: #000;
   margin-bottom: 30px;
+}
+
+.main-page .ai-main-image-container::before,
+.main-page .ai-main-image-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.main-page .ai-main-image-container::before {
+  background: linear-gradient(to right, #1a1a1a, transparent 15%, transparent 85%, #1a1a1a);
+}
+
+.main-page .ai-main-image-container::after {
+  background: linear-gradient(to bottom, #1a1a1a, transparent 15%, transparent 85%, #1a1a1a);
 }
 
 .main-page .ai-main-image-container img {
@@ -454,4 +498,283 @@
   font-size: 18px;
   border: 1px dashed #ccc;
   margin: 20px 0;
+}
+
+/* Main Split Layout (7:3) */
+.main-page .main-content-split {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+  margin-bottom: 60px;
+}
+
+.main-page .main-left-col {
+  flex: 7;
+  /* 70% width */
+  min-width: 0;
+  /* Prevent flex overflow */
+}
+
+.main-page .vertical-divider {
+  width: 1px;
+  background-color: #ccc;
+  align-self: stretch;
+  /* Full height */
+}
+
+.main-page .main-right-col {
+  flex: 3;
+  /* 30% width */
+  min-width: 0;
+}
+
+
+/* TOP 10 Section Styles (Sidebar) */
+.main-page .top10-section {
+  margin-top: 0;
+  /* Reset top margin as it's in a column now */
+  margin-bottom: 30px;
+  text-align: left;
+}
+
+.main-page .top10-section h3 {
+  font-size: 21px;
+  /* Matched to Politics/Economy */
+  font-weight: 800;
+  margin: 0 auto 20px auto;
+  /* Centers the header */
+  width: fit-content;
+  border-bottom: 3px solid #000;
+  padding-bottom: 5px;
+  text-align: center;
+  /* Centers text */
+  letter-spacing: 0.5px;
+}
+
+.main-page .top10-grid {
+  display: flex;
+  flex-direction: column;
+  /* Vertical list */
+  gap: 15px;
+}
+
+.main-page .top10-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.main-page .top10-rank {
+  font-size: 24px;
+  /* Smaller rank for sidebar */
+  font-weight: 900;
+  font-style: italic;
+  color: #333;
+  line-height: 1;
+  min-width: 30px;
+  text-align: center;
+}
+
+/* Specific colors for top ranks */
+.main-page .top10-item:nth-child(1) .top10-rank,
+.main-page .top10-item:nth-child(2) .top10-rank,
+.main-page .top10-item:nth-child(3) .top10-rank {
+  color: #cc0000;
+}
+
+
+.main-page .top10-image-wrapper {
+  flex: none;
+  width: 40%;
+  /* Approx 50% smaller impact */
+  position: relative;
+  border-radius: 4px;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+}
+
+.main-page .top10-image-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.main-page .top10-text-overlay {
+  display: none;
+  /* Hide overlay text for small sidebar version if preferred, 
+     but user asked for "sort top 10". 
+     Usually sidebar items have text NEXT to image, not overlay. 
+     Let's try overlay removed and text next to it? 
+     Or keep overlay? User said "images 50% smaller". 
+     Small images with overlay text might be unreadable.
+     Let's MOVE text outside. */
+}
+
+/* Alternative: Text next to image */
+.main-page .top10-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.main-page .top10-title {
+  font-size: 14px;
+  font-weight: bold;
+  color: #000;
+  margin: 0;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Category Box Section (Politics & Economy) */
+.main-page .category-detailed-section {
+  margin-top: 37px;
+  /* Reduced by 3px */
+  border-top: 1px solid #eee;
+  padding-top: 37px;
+  /* Reduced by 3px */
+  padding-bottom: 37px;
+  /* Added spacing below */
+}
+
+.main-page .cat-split-row {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 50px;
+}
+
+.main-page .cat-box-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-page .cat-box-header {
+  font-size: 21px;
+  /* Reduced from 24px */
+  font-weight: 800;
+  margin: 0 0 20px 0;
+  padding-bottom: 5px;
+  border-bottom: 3px solid #000;
+  /* Thick underline style */
+  display: inline-block;
+  width: fit-content;
+}
+
+.main-page .cat-box-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.main-page .cat-box-main {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  text-align: left;
+  /* Ensure main article is left aligned */
+}
+
+.main-page .cat-box-img {
+  width: 90%;
+  aspect-ratio: 16 / 9;
+  /* border: 1px solid #000; Removed */
+  overflow: hidden;
+  border-radius: 10px;
+  /* Added roundness */
+}
+
+.main-page .cat-box-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.main-page .cat-box-title {
+  font-size: 18px;
+  /* Reduced from 20px */
+  font-weight: 800;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.main-page .cat-box-list {
+  display: flex;
+  flex-direction: column;
+  gap: 45px;
+  /* Increased from 30px */
+  margin-top: 35px;
+  /* Increased from 25px */
+  text-align: left;
+  /* Ensure sub-articles are left aligned */
+}
+
+.main-page .cat-box-list-item h5 {
+  font-size: 14px;
+  /* Reduced from 16px */
+  font-weight: bold;
+  margin: 0 0 5px 0;
+}
+
+.main-page .cat-box-list-item p {
+  font-size: 11px;
+  /* Reduced from 13px */
+  color: #666;
+  margin: 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Global Section */
+.main-page .cat-global-row {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.main-page .global-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.main-page .global-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.main-page .global-img {
+  width: 90%;
+  /* Reduced by 10% */
+  aspect-ratio: 16 / 9;
+  /* border: 1px solid #000; Removed */
+  overflow: hidden;
+  border-radius: 10px;
+  /* Added roundness */
+}
+
+.main-page .global-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.main-page .global-card h4 {
+  font-size: 16px;
+  font-weight: 800;
+  margin: 0;
+  line-height: 1.4;
 }

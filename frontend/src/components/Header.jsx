@@ -69,15 +69,15 @@ const Header = ({
               <div
                 key={item.id}
                 className={`category-item ${location.pathname === (
-                    item.label === '이슈' ? '/issues' :
-                      item.label === '정치' ? '/politics' :
-                        item.label === '경제' ? '/economy' :
-                          item.label === '사회' ? '/society' :
-                            item.label === '생활/문화' ? '/living-culture' :
-                              item.label === 'IT/과학' ? '/science' :
-                                item.label === '세계' ? '/world' :
-                                  item.label === '전체메뉴' ? '/total' : ''
-                  ) ? 'active' : ''
+                  item.label === '이슈' ? '/issues' :
+                    item.label === '정치' ? '/politics' :
+                      item.label === '경제' ? '/economy' :
+                        item.label === '사회' ? '/society' :
+                          item.label === '생활/문화' ? '/living-culture' :
+                            item.label === 'IT/과학' ? '/science' :
+                              item.label === '세계' ? '/world' :
+                                item.label === '전체메뉴' ? '/total' : ''
+                ) ? 'active' : ''
                   }`}
                 onClick={() => {
                   if (item.label === '이슈') nav('/issues');
@@ -87,7 +87,7 @@ const Header = ({
                   else if (item.label === '생활/문화') nav('/living-culture');
                   else if (item.label === 'IT/과학') nav('/science');
                   else if (item.label === '세계') nav('/world');
-                  else if (item.label === '전체메뉴') nav('/total');
+                  else if (item.label === '홈') nav('/');
                 }}
               >
                 <span>{item.label}</span>
