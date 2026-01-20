@@ -71,7 +71,21 @@ export default function SearchResult() {
     return (
         <div className="SearchResult_Main">
             <div className="Header_Container">
-                <Header leftChild={<Logo />} midChild={<Searchbar maxWidth="600px" />} rightChild={<UserMenu />} headerBottom="on" />
+                <Header
+                    leftChild={<div />}
+                    midChild={<Logo />}
+                    rightChild={
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
+                            <div style={{ position: 'relative' }}>
+                                <Searchbar maxWidth="600px" />
+                            </div>
+                            <UserMenu />
+                        </div>
+                    }
+                    headerTop="on"
+                    headerMain="on"
+                    headerBottom="on"
+                />
             </div>
 
             <div className="Content_Section">

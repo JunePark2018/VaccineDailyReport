@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Logo from '../components/Logo';
+import Searchbar from '../components/Searchbar';
 import UserMenu from '../components/UserMenu';
 import { categories as categoryData } from '../components/categoryIcon/categoryData';
 import './CreateAccount.css';
@@ -59,10 +60,10 @@ export default function CreateAccount() {
 
         // Cap score at 4
         const finalScore = Math.min(score, 4);
-        setPasswordStrength({ 
-            score: finalScore, 
-            label: strengthConfig[finalScore].label, 
-            color: strengthConfig[finalScore].color 
+        setPasswordStrength({
+            score: finalScore,
+            label: strengthConfig[finalScore].label,
+            color: strengthConfig[finalScore].color
         });
     }, [formData.password]);
 
@@ -74,7 +75,7 @@ export default function CreateAccount() {
             ...prev,
             [name]: type === 'checkbox' ? checked : value
         }));
-        
+
         // Clear specific error when user types
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: null }));
@@ -103,7 +104,7 @@ export default function CreateAccount() {
     // --- Validation Logic ---
     const validate = () => {
         let newErrors = {};
-        
+
         // 1. Name Check
         if (!formData.name.trim()) {
             newErrors.name = "이름을 입력해주세요.";
@@ -156,7 +157,7 @@ export default function CreateAccount() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        
+
         if (validate()) {
             // Prepare data for backend (matching your SQL structure mostly)
             const submitData = {
@@ -181,9 +182,17 @@ export default function CreateAccount() {
             <Header
                 headerTop="on"
                 headerMain="on"
-                headerBottom="off"
-                leftChild={<Logo />}
-                rightChild={<UserMenu />}
+                headerBottom="on"
+                leftChild={<div />}
+                midChild={<Logo />}
+                rightChild={
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
+                        <div style={{ position: 'relative' }}>
+                            <Searchbar />
+                        </div>
+                        <UserMenu />
+                    </div>
+                }
             />
             <div className="create-account-box">
                 <h2>회원가입</h2>
@@ -192,16 +201,16 @@ export default function CreateAccount() {
                 </p>
 
                 <form onSubmit={handleSubmit}>
-                    
+
                     {/* 1. Name Section */}
                     <div className="input-group">
                         <label>이름</label>
-                        <input 
-                            type="text" 
-                            name="name" 
-                            placeholder="홍길동" 
+                        <input
+                            type="text"
+                            name="name"
+                            placeholder="홍길동"
                             value={formData.name}
-                            onChange={handleChange} 
+                            onChange={handleChange}
                             className={errors.name ? "input-error" : ""}
                         />
                         {errors.name && <span className="error-msg">{errors.name}</span>}
@@ -210,10 +219,10 @@ export default function CreateAccount() {
                     {/* 2. Login ID Section */}
                     <div className="input-group">
                         <label>아이디</label>
-                        <input 
-                            type="text" 
-                            name="loginId" 
-                            placeholder="영문+숫자 포함 6자 이상 (숫자 2개 필수)" 
+                        <input
+                            type="text"
+                            name="loginId"
+                            placeholder="영문+숫자 포함 6자 이상 (숫자 2개 필수)"
                             value={formData.loginId}
                             onChange={handleChange}
                             className={errors.loginId ? "input-error" : ""}
@@ -225,16 +234,16 @@ export default function CreateAccount() {
                     <div className="input-group">
                         <label>비밀번호</label>
                         <div className="password-wrapper">
-                            <input 
-                                type={showPassword ? "text" : "password"} 
-                                name="password" 
-                                placeholder="8자 이상, 대문자/특수문자 포함 권장" 
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                name="password"
+                                placeholder="8자 이상, 대문자/특수문자 포함 권장"
                                 value={formData.password}
                                 onChange={handleChange}
                                 className={errors.password ? "input-error" : ""}
                             />
-                            <button 
-                                type="button" 
+                            <button
+                                type="button"
                                 className="toggle-btn"
                                 onClick={() => setShowPassword(!showPassword)}
                             >
@@ -244,11 +253,11 @@ export default function CreateAccount() {
                         {/* Strength Meter */}
                         {formData.password && (
                             <div className="strength-meter-container">
-                                <div 
-                                    className="strength-bar" 
-                                    style={{ 
-                                        width: `${(passwordStrength.score + 1) * 20}%`, 
-                                        backgroundColor: passwordStrength.color 
+                                <div
+                                    className="strength-bar"
+                                    style={{
+                                        width: `${(passwordStrength.score + 1) * 20}%`,
+                                        backgroundColor: passwordStrength.color
                                     }}
                                 ></div>
                                 <span style={{ color: passwordStrength.color }}>
@@ -263,16 +272,16 @@ export default function CreateAccount() {
                     <div className="input-group">
                         <label>비밀번호 확인</label>
                         <div className="password-wrapper">
-                            <input 
-                                type={showPassword ? "text" : "password"} 
-                                name="confirmPassword" 
-                                placeholder="비밀번호를 다시 입력해주세요" 
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                name="confirmPassword"
+                                placeholder="비밀번호를 다시 입력해주세요"
                                 value={formData.confirmPassword}
                                 onChange={handleChange}
                                 className={errors.confirmPassword ? "input-error" : ""}
                             />
-                            <button 
-                                type="button" 
+                            <button
+                                type="button"
                                 className="toggle-btn"
                                 onClick={() => setShowPassword(!showPassword)}
                             >
@@ -290,10 +299,10 @@ export default function CreateAccount() {
                     {/* 4. Email Section */}
                     <div className="input-group">
                         <label>이메일</label>
-                        <input 
-                            type="email" 
-                            name="email" 
-                            placeholder="example@email.com" 
+                        <input
+                            type="email"
+                            name="email"
+                            placeholder="example@email.com"
                             value={formData.email}
                             onChange={handleChange}
                             className={errors.email ? "input-error" : ""}
@@ -305,9 +314,9 @@ export default function CreateAccount() {
                     <div className="input-row">
                         <div className="input-group half">
                             <label>연령대</label>
-                            <select 
-                                name="ageGroup" 
-                                value={formData.ageGroup} 
+                            <select
+                                name="ageGroup"
+                                value={formData.ageGroup}
                                 onChange={handleChange}
                                 className={errors.ageGroup ? "input-error" : ""}
                             >
@@ -318,9 +327,9 @@ export default function CreateAccount() {
                         </div>
                         <div className="input-group half">
                             <label>성별</label>
-                            <select 
-                                name="gender" 
-                                value={formData.gender} 
+                            <select
+                                name="gender"
+                                value={formData.gender}
                                 onChange={handleChange}
                                 className={errors.gender ? "input-error" : ""}
                             >
@@ -339,7 +348,7 @@ export default function CreateAccount() {
                                 const index = selectedCategories.indexOf(cat);
                                 const isSelected = index !== -1;
                                 return (
-                                    <div 
+                                    <div
                                         key={cat}
                                         className={`category-box ${isSelected ? 'selected' : ''}`}
                                         onClick={() => handleCategoryClick(cat)}
@@ -356,9 +365,9 @@ export default function CreateAccount() {
                     {/* 6. Agreement Section */}
                     <div className="agreement-section">
                         <label className="checkbox-container">
-                            <input 
-                                type="checkbox" 
-                                name="marketingAgree" 
+                            <input
+                                type="checkbox"
+                                name="marketingAgree"
                                 checked={formData.marketingAgree}
                                 onChange={handleChange}
                             />
@@ -371,7 +380,7 @@ export default function CreateAccount() {
                     </div>
 
                     <button type="submit" className="submit-btn">계정 생성하기</button>
-                    
+
                     <div className="login-redirect">
                         이미 계정이 있으신가요? <span onClick={() => navigate('/login')}>로그인 하기</span>
                     </div>

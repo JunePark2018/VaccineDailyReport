@@ -91,6 +91,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+
+#--------------------------------------------------
 # --------------------------------------------------
 #             프론트-백 FastAPI 연결
 from fastapi.middleware.cors import CORSMiddleware

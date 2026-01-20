@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Logo from '../components/Logo';
+import Searchbar from '../components/Searchbar';
 import UserMenu from '../components/UserMenu';
 import { categories as categoryData } from '../components/categoryIcon/categoryData';
 import './EditAccount.css';
@@ -12,7 +13,7 @@ export default function EditAccount() {
     // --- State Management ---
     const [formData, setFormData] = useState({
         name: '홍길동', // Pre-filled mock data
-        loginId: 'test_user', 
+        loginId: 'test_user',
         password: '',
         confirmPassword: '',
         email: 'gildong@example.com',
@@ -57,10 +58,10 @@ export default function EditAccount() {
         ];
 
         const finalScore = Math.min(score, 4);
-        setPasswordStrength({ 
-            score: finalScore, 
-            label: strengthConfig[finalScore].label, 
-            color: strengthConfig[finalScore].color 
+        setPasswordStrength({
+            score: finalScore,
+            label: strengthConfig[finalScore].label,
+            color: strengthConfig[finalScore].color
         });
     }, [formData.password]);
 
@@ -71,7 +72,7 @@ export default function EditAccount() {
             ...prev,
             [name]: type === 'checkbox' ? checked : value
         }));
-        
+
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: null }));
         }
@@ -95,7 +96,7 @@ export default function EditAccount() {
     // --- Validation Logic ---
     const validate = () => {
         let newErrors = {};
-        
+
         if (!formData.name.trim()) {
             newErrors.name = "이름을 입력해주세요.";
         }
@@ -135,7 +136,7 @@ export default function EditAccount() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        
+
         if (validate()) {
             const submitData = {
                 login_id: formData.loginId,
@@ -159,9 +160,17 @@ export default function EditAccount() {
             <Header
                 headerTop="on"
                 headerMain="on"
-                headerBottom="off"
-                leftChild={<Logo />}
-                rightChild={<UserMenu />}
+                headerBottom="on"
+                leftChild={<div />}
+                midChild={<Logo />}
+                rightChild={
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
+                        <div style={{ position: 'relative' }}>
+                            <Searchbar />
+                        </div>
+                        <UserMenu />
+                    </div>
+                }
             />
             <div className="edit-account-box">
                 <h2>정보 수정</h2>
@@ -170,15 +179,15 @@ export default function EditAccount() {
                 </p>
 
                 <form onSubmit={handleSubmit}>
-                    
+
                     <div className="input-group">
                         <label>이름</label>
-                        <input 
-                            type="text" 
-                            name="name" 
-                            placeholder="홍길동" 
+                        <input
+                            type="text"
+                            name="name"
+                            placeholder="홍길동"
                             value={formData.name}
-                            onChange={handleChange} 
+                            onChange={handleChange}
                             className={errors.name ? "input-error" : ""}
                         />
                         {errors.name && <span className="error-msg">{errors.name}</span>}
@@ -186,9 +195,9 @@ export default function EditAccount() {
 
                     <div className="input-group">
                         <label>아이디</label>
-                        <input 
-                            type="text" 
-                            name="loginId" 
+                        <input
+                            type="text"
+                            name="loginId"
                             value={formData.loginId}
                             disabled
                             style={{ backgroundColor: '#f0f0f0', cursor: 'not-allowed' }}
@@ -199,16 +208,16 @@ export default function EditAccount() {
                     <div className="input-group">
                         <label>새 비밀번호 (변경 시에만 입력)</label>
                         <div className="password-wrapper">
-                            <input 
-                                type={showPassword ? "text" : "password"} 
-                                name="password" 
-                                placeholder="8자 이상, 대문자/특수문자 포함 권장" 
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                name="password"
+                                placeholder="8자 이상, 대문자/특수문자 포함 권장"
                                 value={formData.password}
                                 onChange={handleChange}
                                 className={errors.password ? "input-error" : ""}
                             />
-                            <button 
-                                type="button" 
+                            <button
+                                type="button"
                                 className="toggle-btn"
                                 onClick={() => setShowPassword(!showPassword)}
                             >
@@ -217,11 +226,11 @@ export default function EditAccount() {
                         </div>
                         {formData.password && (
                             <div className="strength-meter-container">
-                                <div 
-                                    className="strength-bar" 
-                                    style={{ 
-                                        width: `${(passwordStrength.score + 1) * 20}%`, 
-                                        backgroundColor: passwordStrength.color 
+                                <div
+                                    className="strength-bar"
+                                    style={{
+                                        width: `${(passwordStrength.score + 1) * 20}%`,
+                                        backgroundColor: passwordStrength.color
                                     }}
                                 ></div>
                                 <span style={{ color: passwordStrength.color }}>
@@ -235,16 +244,16 @@ export default function EditAccount() {
                     <div className="input-group">
                         <label>비밀번호 확인</label>
                         <div className="password-wrapper">
-                            <input 
-                                type={showPassword ? "text" : "password"} 
-                                name="confirmPassword" 
-                                placeholder="비밀번호를 다시 입력해주세요" 
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                name="confirmPassword"
+                                placeholder="비밀번호를 다시 입력해주세요"
                                 value={formData.confirmPassword}
                                 onChange={handleChange}
                                 className={errors.confirmPassword ? "input-error" : ""}
                             />
-                            <button 
-                                type="button" 
+                            <button
+                                type="button"
                                 className="toggle-btn"
                                 onClick={() => setShowPassword(!showPassword)}
                             >
@@ -261,10 +270,10 @@ export default function EditAccount() {
 
                     <div className="input-group">
                         <label>이메일</label>
-                        <input 
-                            type="email" 
-                            name="email" 
-                            placeholder="example@email.com" 
+                        <input
+                            type="email"
+                            name="email"
+                            placeholder="example@email.com"
                             value={formData.email}
                             onChange={handleChange}
                             className={errors.email ? "input-error" : ""}
@@ -276,9 +285,9 @@ export default function EditAccount() {
                     <div className="input-row">
                         <div className="input-group half">
                             <label>연령대</label>
-                            <select 
-                                name="ageGroup" 
-                                value={formData.ageGroup} 
+                            <select
+                                name="ageGroup"
+                                value={formData.ageGroup}
                                 onChange={handleChange}
                                 className={errors.ageGroup ? "input-error" : ""}
                             >
@@ -289,9 +298,9 @@ export default function EditAccount() {
                         </div>
                         <div className="input-group half">
                             <label>성별</label>
-                            <select 
-                                name="gender" 
-                                value={formData.gender} 
+                            <select
+                                name="gender"
+                                value={formData.gender}
                                 onChange={handleChange}
                                 className={errors.gender ? "input-error" : ""}
                             >
@@ -309,7 +318,7 @@ export default function EditAccount() {
                                 const index = selectedCategories.indexOf(cat);
                                 const isSelected = index !== -1;
                                 return (
-                                    <div 
+                                    <div
                                         key={cat}
                                         className={`category-box ${isSelected ? 'selected' : ''}`}
                                         onClick={() => handleCategoryClick(cat)}
@@ -325,9 +334,9 @@ export default function EditAccount() {
 
                     <div className="agreement-section">
                         <label className="checkbox-container">
-                            <input 
-                                type="checkbox" 
-                                name="marketingAgree" 
+                            <input
+                                type="checkbox"
+                                name="marketingAgree"
                                 checked={formData.marketingAgree}
                                 onChange={handleChange}
                             />
@@ -340,7 +349,7 @@ export default function EditAccount() {
                     </div>
 
                     <button type="submit" className="submit-btn">수정 완료</button>
-                    
+
                     <div className="login-redirect">
                         <span onClick={() => navigate('/mypage')}>마이페이지로 돌아가기</span>
                     </div>
