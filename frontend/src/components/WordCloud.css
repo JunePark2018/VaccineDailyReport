@@ -1,0 +1,15 @@
+.word-cloud-container {
+    width: 100%;
+    height: 300px;
+    overflow: hidden;
+    /* Clean look: no border, no background */
+}
+
+.word-cloud-container text {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.word-cloud-container text:hover {
+    opacity: 0.8;
+}

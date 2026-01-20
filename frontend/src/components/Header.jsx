@@ -4,6 +4,8 @@ import './Header.css';
 import { categories } from './categoryIcon/categoryData';
 import sampleArticles from '../sample_/sampleArticle.json';
 
+import Weather from './Weather';
+
 const Header = ({
   className = "",
   leftChild,
@@ -39,7 +41,7 @@ const Header = ({
             >
               {sampleArticles[currentArticleIndex].title}
             </span>
-            <span className="weather">서울 날씨</span>
+            <Weather />
           </div>
         </div>
       )}
@@ -68,16 +70,8 @@ const Header = ({
             {categories.map((item) => (
               <div
                 key={item.id}
-                className={`category-item ${location.pathname === (
-                  item.label === '이슈' ? '/issues' :
-                    item.label === '정치' ? '/politics' :
-                      item.label === '경제' ? '/economy' :
-                        item.label === '사회' ? '/society' :
-                          item.label === '생활/문화' ? '/living-culture' :
-                            item.label === 'IT/과학' ? '/science' :
-                              item.label === '세계' ? '/world' :
-                                item.label === '전체메뉴' ? '/total' : ''
-                ) ? 'active' : ''
+                className={`category-item ${activeCategory === item.label || (item.label === '이슈' && location.pathname === '/issues')
+                    ? 'active' : ''
                   }`}
                 onClick={() => {
                   if (item.label === '이슈') nav('/issues');
