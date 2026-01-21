@@ -165,7 +165,7 @@ def deduplicate_articles(articles: List[News], limit: int) -> List[News]:
     1. issue_id가 있는 경우: 같은 이슈 그룹 중 가장 최신 기사 1개만 선택
     2. issue_id가 없는 경우: 그대로 유지 (단, 제목이 완전히 같다면 제거)
     """
-    seen_issue_ids = set()
+    seen_ids = set()
     unique_articles = []
 
     # 제목 중복 방지용
@@ -181,45 +181,10 @@ def deduplicate_articles(articles: List[News], limit: int) -> List[News]:
             continue
         seen_titles.add(art.title)
 
-        # 2. 이슈 그룹 중복 제거 (issue_id 활용)
-        if art.issue_id is not None:
-            if art.issue_id in seen_issue_ids:
-                continue  # 이미 이 이슈의 기사가 하나 들어갔으므로 스킵
-            seen_issue_ids.add(art.issue_id)
-
-        # 통과한 기사 추가
-        unique_articles.append(art)
-
-    return unique_articles
-
-
-def deduplicate_articles(articles: List[News], limit: int) -> List[News]:
-    """
-    기사 리스트에서 중복을 제거하고 대표 기사만 추려냅니다.
-    1. issue_id가 있는 경우: 같은 이슈 그룹 중 가장 최신 기사 1개만 선택
-    2. issue_id가 없는 경우: 그대로 유지 (단, 제목이 완전히 같다면 제거)
-    """
-    seen_issue_ids = set()
-    unique_articles = []
-
-    # 제목 중복 방지용
-    seen_titles = set()
-
-    for art in articles:
-        # 이미 충분한 수량이 모였으면 중단
-        if len(unique_articles) >= limit:
-            break
-
-        # 1. 제목 완전 일치 중복 제거
-        if art.title in seen_titles:
-            continue
-        seen_titles.add(art.title)
-
-        # 2. 이슈 그룹 중복 제거 (issue_id 활용)
-        if art.issue_id is not None:
-            if art.issue_id in seen_issue_ids:
-                continue  # 이미 이 이슈의 기사가 하나 들어갔으므로 스킵
-            seen_issue_ids.add(art.issue_id)
+        # 2. 이슈 그룹 중복 제거
+        if art.id in seen_ids:
+            continue  # 이미 이 이슈의 기사가 하나 들어갔으므로 스킵
+        seen_ids.add(art.id)
 
         # 통과한 기사 추가
         unique_articles.append(art)
@@ -241,9 +206,6 @@ def search_hot_topics_by_keyword(db: Session, keyword: str) -> List[Dict[str, An
         .limit(100)
         .all()
     )
-
-    # 중복 제거 로직 적용 (최대 10개)
-    unique_articles = deduplicate_articles(articles, limit=10)
 
     # 중복 제거 로직 적용 (최대 10개)
     unique_articles = deduplicate_articles(articles, limit=10)
@@ -274,7 +236,7 @@ def search_articles_by_keyword(db: Session, keyword: str) -> List[Dict[str, Any]
     articles = (
         db.query(News)
         .filter(or_(News.title.ilike(search_pattern), News.contents.ilike(search_pattern)))
-        .order_by(News.time.desc())
+        .order_by(News.created_at.desc())  # time → created_at
         .limit(100)  # 필터링 위해 넉넉히
         .all()
     )

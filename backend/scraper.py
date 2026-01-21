@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import requests
 from bs4 import BeautifulSoup
 import json
@@ -147,5 +148,91 @@ def run_article_crawler(target_companies=None, debug_save=False, output_file="ne
         except Exception as e:
             print(f"[{sid}] 섹션 목록 수집 중 오류: {e}")
             continue
+
+    return all_news_data
+
+
+def crawl_n_days(
+    n_days: int,
+    sections=("100", "101", "102", "103", "104", "105"),
+    pages_per_day=5,
+    target_companies=None,
+    sleep_sec=0.1,
+):
+    """
+    네이버 뉴스 '목록'을 날짜(date=YYYYMMDD)와 페이지(page=)로 확장해서 n일치 기사 수집.
+    - n_days: 오늘 포함 최근 n일
+    - pages_per_day: 하루당 각 섹션에서 몇 페이지까지 긁을지 (보통 1~10 적당)
+    - target_companies: 특정 언론사만 필터링 (부분 포함 매칭)
+    반환: 기사 dict 리스트
+    """
+    section_names = {
+        "100": "정치",
+        "101": "경제",
+        "102": "사회",
+        "103": "생활/문화",
+        "104": "세계",
+        "105": "IT/과학",
+    }
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
+    }
+
+    all_news_data = []
+    seen_urls = set()
+
+    today = datetime.now()
+
+    for d in range(n_days):
+        day = today - timedelta(days=d)
+        ymd = day.strftime("%Y%m%d")
+        print(f"\n[날짜 수집] {ymd} (D-{d})")
+
+        for sid in sections:
+            print(f"  - 섹션: {section_names.get(sid, sid)}")
+
+            for page in range(1, pages_per_day + 1):
+                list_url = (
+                    "https://news.naver.com/main/list.naver" f"?mode=LSD&mid=sec&sid1={sid}&date={ymd}&page={page}"
+                )
+
+                try:
+                    resp = requests.get(list_url, headers=headers, timeout=10)
+                    resp.raise_for_status()
+                    soup = BeautifulSoup(resp.text, "html.parser")
+
+                    # 목록에서 기사 URL 추출 (네이버가 클래스 바꾸는 경우가 있어 넓게 잡음)
+                    atags = soup.select(".list_body a, .sa_text_title, a[href*='article']")
+                    urls = [a.get("href") for a in atags if a.get("href") and "article" in a.get("href")]
+
+                    if not urls:
+                        # 페이지 끝났거나 날짜에 기사가 없을 수 있음
+                        break
+
+                    for url in set(urls):
+                        if url in seen_urls:
+                            continue
+
+                        data = get_news_data(url)  # 네가 이미 만든 상세 파서 재사용
+                        if not data:
+                            continue
+
+                        if data.get("category") == "미분류":
+                            data["category"] = section_names.get(sid, "미분류")
+
+                        if target_companies and not any(tc in data["company_name"] for tc in target_companies):
+                            continue
+
+                        all_news_data.append(data)
+                        seen_urls.add(url)
+                        print(f"    [수집] p{page} | {data['company_name']} | {data['title'][:18]}...")
+
+                        time.sleep(sleep_sec)
+
+                except Exception as e:
+                    print(f"    [오류] {ymd} sid={sid} page={page} | {e}")
+                    # 네트워크 일시 오류는 다음으로 진행
+                    continue
 
     return all_news_data

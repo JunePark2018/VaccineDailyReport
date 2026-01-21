@@ -98,8 +98,11 @@ def get_embeddings_with_cache(articles):
 # 3. 보조 로직 (기존 KG 및 LLM 유지)
 # -------------------------------------------------
 def simple_kg_check(articles):
-    if len(articles) < 3:
+    """간단한 KG 기반 클러스터 검증"""
+    if len(articles) < 2:  # 3 → 2로 변경 (min_cluster_size와 일치)
+        print(f"    ⚠️ [DEBUG] KG 체크: 기사 수 부족 ({len(articles)}개 < 2)")
         return False
+
     stopwords = {
         # 기존 단어들
         "오늘",
@@ -202,7 +205,12 @@ def simple_kg_check(articles):
     for d in docs_nouns[1:]:
         common = common.intersection(d)
 
-    return len(common) >= 1
+    result = len(common) >= 1
+    if result:
+        print(f"    ✅ [DEBUG] KG 체크 통과: 공통 명사 {len(common)}개 - {common}")
+    else:
+        print(f"    ❌ [DEBUG] KG 체크 실패: 공통 명사 0개")
+    return result
 
 
 def run_stage2_issue_refine(articles):
@@ -244,12 +252,17 @@ title: 선택된 기사들을 포괄하는 핵심 요약 제목
 # -------------------------------------------------
 def run_issue_clustering(db: Session, days=3):
     Base.metadata.create_all(bind=engine)
-    since = datetime.now() - timedelta(days=days)
+    since = datetime.utcnow() - timedelta(days=days)
 
     from database import crud
 
     articles = crud.get_recent_news(db, since)
+    print(f"🔍 [DEBUG] 조회된 기사 수: {len(articles) if articles else 0}개")
+    if not articles:
+        print("⚠️ [DEBUG] 조회된 기사가 없어 클러스터링을 건너뜁니다.")
+        return
     if len(articles) < 2:
+        print(f"⚠️ [DEBUG] 기사 수 부족 (최소 2개 필요, 현재 {len(articles)}개)")
         return
 
     # [Fix] AttributeError 방지를 위해 임시 속성 초기화
@@ -257,12 +270,12 @@ def run_issue_clustering(db: Session, days=3):
         a.issue_id = None
 
     # 1. 모든 대상 기사의 임베딩 확보 (ChromaDB 캐시 활용)
-    from database import crud
-
     embeddings = get_embeddings_with_cache(articles)
+    print(f"📊 [DEBUG] 임베딩 생성 완료: {len(embeddings)}개")
 
     # 2. 기존 이슈 흡수 (ChromaDB에서 벡터 직접 호출)
     recent_issues = db.query(AiGeneratedNews).filter(AiGeneratedNews.created_at >= since).all()
+    print(f"📰 [DEBUG] 기존 이슈 수: {len(recent_issues)}개")
     for issue in recent_issues:
         sample = db.query(News).filter(News.id == issue.id).first()  # 임시로 issue.id와 같은 News 찾기
         if not sample:
@@ -279,45 +292,60 @@ def run_issue_clustering(db: Session, days=3):
             if a.issue_id is not None:
                 continue
             sim = cosine_similarity(embeddings[i].reshape(1, -1), issue_vec)[0][0]
-            if sim >= 0.85:
+            if sim >= 0.80:  # 보수적 값으로 복원
                 a.issue_id = issue.id
+                print(f"  🔗 [DEBUG] 기사 {a.id}를 기존 이슈 {issue.id}에 연결 (유사도: {sim:.2f})")
 
     # 3. 신규 클러스터링
     print("클러스터링 시작")
-    rem = [(i, a) for i, a in enumerate(articles)]  # 모든 articles 사용
-    if len(rem) < 3:  # 최소 군집 사이즈 3 고려
+    rem = [(i, a) for i, a in enumerate(articles) if a.issue_id is None]
+    print(f"🔗 [DEBUG] 클러스터링 대상 기사: {len(rem)}개")
+    if len(rem) < 2:  # 최소 군집 사이즈 2로 완화
+        print(f"⚠️ [DEBUG] 클러스터링 대상 기사 수 부족 (최소 2개 필요, 현재 {len(rem)}개)")
         db.commit()
         return
 
     idxs, rem_articles = zip(*rem)
     rem_embs = normalize(embeddings[list(idxs)])
 
-    clusterer = hdbscan.HDBSCAN(min_cluster_size=3, min_samples=1, metric="euclidean", cluster_selection_epsilon=0.28)
+    clusterer = hdbscan.HDBSCAN(
+        min_cluster_size=2,
+        min_samples=1,
+        metric="euclidean",
+        cluster_selection_epsilon=0.28,  # 보수적 값으로 복원
+    )
     labels = clusterer.fit_predict(rem_embs)
+    unique_labels = set(labels)
+    cluster_count = len([l for l in unique_labels if l != -1])
+    noise_count = sum(1 for l in labels if l == -1)
+    print(f"🎯 [DEBUG] HDBSCAN 결과: {cluster_count}개 클러스터, {noise_count}개 노이즈")
 
     for cid in set(labels):
         if cid == -1:
             continue
-        cluster = [rem_articles[i] for i in np.where(labels == cid)[0]]
+        cluster = [rem_articles[i] for i, lbl in enumerate(labels) if lbl == cid]
+        print(f"  ├─ 클러스터 {cid}: {len(cluster)}개 기사")
 
         if not simple_kg_check(cluster):
+            print(f"    └─ ❌ 클러스터 {cid} KG 검증 실패")
             continue
         res = run_stage2_issue_refine(cluster)
         valid_ids = res.get("valid_ids", [])
+        print(f"    ├─ LLM 검증 결과: {len(valid_ids)}개 유효")
 
-        if len(valid_ids) < 3:
+        if len(valid_ids) < 2:  # 최소 2개 유지
+            print(f"    └─ ❌ 유효 기사 부족 (최소 2개 필요)")
             continue
 
         picked = [cluster[i] for i in valid_ids if i < len(cluster)]
-
-        # issue = crud.create_ai_news_issue(db, title=res.get("title", picked[0].title), article_ids=[a.id for a in picked])
-
-        print(f"✨ [ChromaDB 기반 이슈 생성] {res.get('title', picked[0].title)} (기사 {len(picked)}건)")
 
         # 4. 이슈 생성 및 DB 반영
         issue = crud.create_ai_news_issue(
             db, title=res.get("title", picked[0].title), article_ids=[a.id for a in picked]
         )
+        db.flush()
+        print(f"    └─ ✅ 새 이슈 생성: {issue.title}")
+        print(f"       (ID: {issue.id}, 기사 {len(picked)}개)")
 
         # 5. 클러스터 내 기사들에 이슈 ID 연결
         for a in picked:

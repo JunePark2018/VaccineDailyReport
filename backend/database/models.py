@@ -92,6 +92,8 @@ class News(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     region = Column(Enum("domestic", "global", name="news_region"), nullable=False, index=True)
+    category_id = Column(Integer, ForeignKey("categories.id", ondelete="SET NULL"), nullable=True, index=True)
+    category = relationship("Category")
 
     clusters = relationship(
         "Cluster",

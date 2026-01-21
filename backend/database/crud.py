@@ -118,6 +118,7 @@ def create_news(
     url: str,
     company_id: int,
     region: str,  # "domestic" | "global"
+    category: Optional[str] = None,  # 정치, 경제, 사회, 생활/문화, 세계, IT/과학
     img_urls: Optional[dict | list] = None,
     created_at: Optional[datetime] = None,
 ) -> Optional[News]:
@@ -126,18 +127,63 @@ def create_news(
     if existing:
         return None  # Already exists, don't create
 
+    # Category 처리: 문자열을 받아서 Category 테이블에서 찾거나 생성
+    category_id = None
+    if category:
+        category_name = category.strip()
+        cat = db.execute(select(Category).where(Category.name == category_name)).scalar_one_or_none()
+        if not cat:
+            cat = Category(name=category_name)
+            db.add(cat)
+            db.flush()
+        category_id = cat.id
+
     obj = News(
         title=title,
         contents=contents,
         url=url,
         company_id=company_id,
         region=region,
+        category_id=category_id,
         img_urls=img_urls,
         created_at=created_at or datetime.utcnow(),
     )
     db.add(obj)
     db.flush()
     return obj
+
+
+def get_news_statistics(db: Session) -> dict:
+    """
+    News 통계 반환: 전체 개수 + 카테고리별 개수
+    Returns:
+        {
+            "total": 100,
+            "by_category": {
+                "정치": 20,
+                "경제": 30,
+                ...
+            }
+        }
+    """
+    from sqlalchemy import func
+
+    # 전체 개수
+    total = db.query(func.count(News.id)).scalar()
+
+    # 카테고리별 개수 (category_id, count)
+    category_counts = db.query(News.category_id, func.count(News.id)).group_by(News.category_id).all()
+
+    # category_id를 category name으로 변환
+    by_category = {}
+    for cat_id, count in category_counts:
+        if cat_id:
+            cat_name = get_category_name(db, cat_id)
+            by_category[cat_name or f"ID:{cat_id}"] = count
+        else:
+            by_category["미분류"] = count
+
+    return {"total": total, "by_category": by_category}
 
 
 def get_news_by_url(db: Session, url: str) -> Optional[News]:
@@ -579,6 +625,14 @@ def get_reaction_counts(db: Session, *, news_id: int) -> Dict[str, int]:
 # -------------------------
 # Category subscriptions
 # -------------------------
+def get_category_name(db: Session, category_id: int) -> Optional[str]:
+    """
+    category_id로 카테고리 이름 조회
+    """
+    cat = db.get(Category, category_id)
+    return cat.name if cat else None
+
+
 def subscribe_category(db: Session, *, user_id: int, category_id: int) -> None:
     user = db.get(User, user_id)
     cat = db.get(Category, category_id)
@@ -720,3 +774,52 @@ def list_ai_news_feed_for_user(
         stmt = stmt.where(AiGeneratedNews.id.notin_(viewed_subq))
 
     return list(db.execute(stmt).scalars())
+
+
+# -------------------------
+# Search Log (검색 기록)
+# -------------------------
+def create_search_log(db: Session, *, user_id: int, query: str) -> SearchLog:
+    """
+    검색 기록 저장
+    """
+    log = SearchLog(user_id=user_id, query=query)
+    db.add(log)
+    db.flush()
+    return log
+
+
+def delete_search_log(db: Session, *, log_id: int) -> bool:
+    """
+    특정 검색 기록 삭제
+    Returns: 삭제 성공 여부
+    """
+    log = db.get(SearchLog, log_id)
+    if log:
+        db.delete(log)
+        db.flush()
+        return True
+    return False
+
+
+def delete_user_search_logs(db: Session, *, user_id: int) -> int:
+    """
+    사용자의 모든 검색 기록 삭제
+    Returns: 삭제된 개수
+    """
+    count = db.query(SearchLog).filter(SearchLog.user_id == user_id).delete()
+    db.flush()
+    return count
+
+
+def get_user_search_logs(db: Session, *, user_id: int, limit: int = 20) -> List[SearchLog]:
+    """
+    사용자의 최근 검색 기록 조회
+    """
+    return (
+        db.query(SearchLog)
+        .filter(SearchLog.user_id == user_id)
+        .order_by(SearchLog.searched_at.desc())
+        .limit(limit)
+        .all()
+    )
