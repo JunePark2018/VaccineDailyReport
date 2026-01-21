@@ -99,8 +99,8 @@ def get_embeddings_with_cache(articles):
 # -------------------------------------------------
 def simple_kg_check(articles):
     """간단한 KG 기반 클러스터 검증"""
-    if len(articles) < 2:  # 3 → 2로 변경 (min_cluster_size와 일치)
-        print(f"    ⚠️ [DEBUG] KG 체크: 기사 수 부족 ({len(articles)}개 < 2)")
+    if len(articles) < 5:  # 3 → 5로 변경
+        print(f"    ⚠️ [DEBUG] KG 체크: 기사 수 부족 ({len(articles)}개 < 5)")
         return False
 
     stopwords = {
@@ -197,19 +197,29 @@ def simple_kg_check(articles):
         tokens = kiwi.tokenize(text)
         return set(t.form for t in tokens if t.tag in ["NNG", "NNP"] and t.form not in stopwords and len(t.form) > 1)
 
-    # 모든 기사 제목에서 명사 추출
-    docs_nouns = [extract_nouns(a.title) for a in articles]
+    # 모든 기사 제목 + 본문(200자)에서 명사 추출
+    docs_nouns = [extract_nouns(f"{a.title} {(a.contents or '')[:200]}") for a in articles]
 
-    # 전체 교집합 확인
-    common = docs_nouns[0]
-    for d in docs_nouns[1:]:
-        common = common.intersection(d)
+    # 전체 교집합 대신 과반수 조건으로 완화
+    from collections import Counter
+
+    all_nouns = []
+    for nouns in docs_nouns:
+        all_nouns.extend(nouns)
+
+    noun_counts = Counter(all_nouns)
+    threshold = len(articles) / 2  # 과반수 (50%)
+    common = {noun for noun, count in noun_counts.items() if count >= threshold}
 
     result = len(common) >= 1
     if result:
-        print(f"    ✅ [DEBUG] KG 체크 통과: 공통 명사 {len(common)}개 - {common}")
+        print(f"    ✅ [DEBUG] KG 체크 통과: 과반수 공통 명사 {len(common)}개 - {common}")
     else:
-        print(f"    ❌ [DEBUG] KG 체크 실패: 공통 명사 0개")
+        print(f"    ❌ [DEBUG] KG 체크 실패: 과반수 공통 명사 0개 (threshold={threshold:.1f}개 이상)")
+        # 디버깅용: 가장 많이 나타난 명사 3개 출력
+        if noun_counts:
+            top_nouns = noun_counts.most_common(3)
+            print(f"       가장 많이 나타난 명사: {top_nouns}")
     return result
 
 
@@ -217,7 +227,7 @@ def run_stage2_issue_refine(articles):
     summaries = [f"[{i}] 제목: {a.title}\n요약: {(a.contents or '')[:150]}" for i, a in enumerate(articles[:10])]
     prompt = f"""
 역할: 뉴스 통찰력이 뛰어난 베테랑 데스크 기자.
-목표: 제공된 기사 목록에서 '완벽하게 동일한 사건'을 다루는 기사들만 골라내어 그룹화하라.
+목표: 제공된 기사 목록에서 '같은 이슈'를 다루는 기사들만 골라내어 그룹화하라.
 
 [검증 및 필터링 규칙 - 반드시 준수]
 1. **주체(Entity) 일치성:** 기사들의 핵심 주인공(인물, 기업, 기관)이 단 한 명이라도 다르면 절대 같은 이슈가 아닙니다.
@@ -261,8 +271,8 @@ def run_issue_clustering(db: Session, days=3):
     if not articles:
         print("⚠️ [DEBUG] 조회된 기사가 없어 클러스터링을 건너뜁니다.")
         return
-    if len(articles) < 2:
-        print(f"⚠️ [DEBUG] 기사 수 부족 (최소 2개 필요, 현재 {len(articles)}개)")
+    if len(articles) < 5:
+        print(f"⚠️ [DEBUG] 기사 수 부족 (최소 5개 필요, 현재 {len(articles)}개)")
         return
 
     # [Fix] AttributeError 방지를 위해 임시 속성 초기화
@@ -300,20 +310,15 @@ def run_issue_clustering(db: Session, days=3):
     print("클러스터링 시작")
     rem = [(i, a) for i, a in enumerate(articles) if a.issue_id is None]
     print(f"🔗 [DEBUG] 클러스터링 대상 기사: {len(rem)}개")
-    if len(rem) < 2:  # 최소 군집 사이즈 2로 완화
-        print(f"⚠️ [DEBUG] 클러스터링 대상 기사 수 부족 (최소 2개 필요, 현재 {len(rem)}개)")
+    if len(rem) < 5:  # 최소 5개로 상향
+        print(f"⚠️ [DEBUG] 클러스터링 대상 기사 수 부족 (최소 5개 필요, 현재 {len(rem)}개)")
         db.commit()
         return
 
     idxs, rem_articles = zip(*rem)
     rem_embs = normalize(embeddings[list(idxs)])
 
-    clusterer = hdbscan.HDBSCAN(
-        min_cluster_size=2,
-        min_samples=1,
-        metric="euclidean",
-        cluster_selection_epsilon=0.28,  # 보수적 값으로 복원
-    )
+    clusterer = hdbscan.HDBSCAN(min_cluster_size=5, min_samples=1, metric="euclidean", cluster_selection_epsilon=0.28)
     labels = clusterer.fit_predict(rem_embs)
     unique_labels = set(labels)
     cluster_count = len([l for l in unique_labels if l != -1])
@@ -333,11 +338,13 @@ def run_issue_clustering(db: Session, days=3):
         valid_ids = res.get("valid_ids", [])
         print(f"    ├─ LLM 검증 결과: {len(valid_ids)}개 유효")
 
-        if len(valid_ids) < 2:  # 최소 2개 유지
-            print(f"    └─ ❌ 유효 기사 부족 (최소 2개 필요)")
-            continue
+        # if len(valid_ids) < 3:  # 최소 3개 유지
+        #     print(f"    └─ ❌ 유효 기사 부족 (최소 3개 필요)")
+        #     continue
 
-        picked = [cluster[i] for i in valid_ids if i < len(cluster)]
+        # picked = [cluster[i] for i in valid_ids if i < len(cluster)]
+        picked = [cluster[i] for i in range(len(cluster))]
+        # LLM 유효성 검사가 너무 엄격하여 일단 클러스터 내 기사들을 모두 picked로 설정
 
         # 4. 이슈 생성 및 DB 반영
         issue = crud.create_ai_news_issue(
