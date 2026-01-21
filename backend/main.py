@@ -27,7 +27,7 @@ def run_background_worker():
             # my_target_media = ["조선", "중앙", "한겨레", "경향", "YTN", "연합", "머니", "매일"]
             my_target_media = []  # 모든 뉴스 수집. 테스트용
             # news_list = run_article_crawler(my_target_media) # 속보 긁어오기
-            news_list = crawl_n_days(sections=("100"), n_days=1, pages_per_day=20)  # 최근 n일치 뉴스 긁어오기
+            news_list = crawl_n_days(sections=("100",), n_days=1, pages_per_day=20)  # 최근 n일치 뉴스 긁어오기
             count = 0
             for news in news_list:
                 # 기사 db에 저장
