@@ -146,6 +146,7 @@ def normalize_ui_report(report: Dict[str, Any], company_analyses: Dict[str, Any]
         report = {}
 
     report.setdefault("event", {"topic": None, "time_window": None})
+    report.setdefault("media_comparison_bullets", [])
     report.setdefault("outlet_cards", [])
     report.setdefault("difference_axes", [])
     report.setdefault("highlights", [])
@@ -331,6 +332,7 @@ def build_company_system_prompt() -> str:
 이 언론사의 관점을 '차이 분석에 적합한 구조'로 추출하라.
 
 [중요 규칙]
+- **모든 텍스트 값은 반드시 한국어로 작성하라.**
 - 모든 키를 반드시 포함하라. 모르면 null 또는 "불명확"으로 써라.
 - summary는 반드시 길이 3의 배열.
 - framing과 style은 '주장 방식의 차이'를 드러내는 핵심이다.
@@ -414,6 +416,10 @@ def build_reduce_system_prompt_ui() -> str:
     "topic": "사건/이슈 짧은 제목 (불명확하면 null)",
     "time_window": "분석 대상 기간(불명확하면 null)"
   },
+  "media_comparison_bullets": [
+    "- A일보는 ~~~ (다른 언론사와 차별되는 뚜렷한 특징 한 줄 서술)",
+    "- B일보는 ~~~ (다른 언론사와 차별되는 뚜렷한 특징 한 줄 서술)"
+  ],
   "outlet_cards": [
     {
       "company": "언론사명",
@@ -447,6 +453,11 @@ def build_reduce_system_prompt_ui() -> str:
 }
 
 [규칙]
+- **모든 텍스트 값은 반드시 한국어로 작성하라.**
+- **media_comparison_bullets 형식 준수**: 
+  반드시 "- [언론사명]은 [특징 서술]" 형태로 작성하라. 
+  예: "- 조선일보는 정부의 책임을 강조하며 강력한 처벌을 요구함"
+- media_comparison_bullets에는 분석된 **모든 언론사**에 대해 각각 한 줄씩 서술하라.
 - outlet_cards에는 입력에 존재하는 모든 언론사를 포함하라.
 - difference_axes는 최소 3개 이상 만들고, 가능하면 5개까지.
 - rows는 outlet_cards의 언론사들을 모두 포함하라(값이 불명확하면 '불명확').
@@ -489,20 +500,20 @@ async def generate_final_comparison_report(company_analyses: Dict[str, Any]) -> 
 # Main
 # ======================================================
 async def main():
-    print("🚀 [Step 1] 기사 데이터 전처리 중...")
+    print("[Step 1] 기사 데이터 전처리 중...")
     synthesized = get_synthesized_content_by_company(mock_articles, top_n=TOP_N_PER_COMPANY)
     print(f"   -> {len(synthesized)}개 언론사 데이터 병합 완료.")
     for comp, payload in synthesized.items():
         print(f"      - {comp}: selected_article_ids={payload['selected_article_ids']}")
 
-    print("\n🚀 [Step 2] 언론사별 개별 분석 진행 (Async)...")
+    print("\n[Step 2] 언론사별 개별 분석 진행 (Async)...")
     company_analyses = await process_all_companies_async(synthesized)
     # 예시 출력(안전)
     any_company = next(iter(company_analyses.keys()), None)
     if any_company:
         print(f"   -> 샘플: {any_company} 원인={company_analyses[any_company].get('main_cause')}")
 
-    print("\n🚀 [Step 3] 최종 비교 리포트 생성 중...")
+    print("\n[Step 3] 최종 비교 리포트 생성 중...")
     final_report = await generate_final_comparison_report(company_analyses)
 
     print("\n" + "=" * 60)

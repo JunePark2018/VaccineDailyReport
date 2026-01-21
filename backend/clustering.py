@@ -287,9 +287,12 @@ def run_issue_clustering(db: Session, days=3):
     recent_issues = db.query(AiGeneratedNews).filter(AiGeneratedNews.created_at >= since).all()
     print(f"📰 [DEBUG] 기존 이슈 수: {len(recent_issues)}개")
     for issue in recent_issues:
-        sample = db.query(News).filter(News.id == issue.id).first()  # 임시로 issue.id와 같은 News 찾기
-        if not sample:
+        # [Fix] 이슈 ID로 기사를 찾는 것이 아니라, 이슈와 연결된 클러스터의 기사 중 하나를 대표로 사용
+        if not issue.cluster or not issue.cluster.news:
             continue
+
+        # 첫 번째 기사를 대표 벡터로 사용
+        sample = issue.cluster.news[0]
 
         # ChromaDB에서 기존 이슈의 대표 기사 벡터 가져오기
         res = collection.get(ids=[str(sample.id)], include=["embeddings"])
@@ -298,9 +301,18 @@ def run_issue_clustering(db: Session, days=3):
             continue
         issue_vec = np.array(res["embeddings"][0]).reshape(1, -1)
 
+        # 현재 이슈에 이미 포함된 기사 ID 집합 (중복 연결 방지)
+        existing_news_ids = {n.id for n in issue.cluster.news}
+
         for i, a in enumerate(articles):
             if a.issue_id is not None:
                 continue
+
+            # [Fix] 이미 이 이슈(클러스터)에 포함된 기사라면 유사도 계산 건너뛰기
+            if a.id in existing_news_ids:
+                # 이미 포함되어 있으므로 그냥 건너뛰거나, 혹은 단순히 넘어감
+                continue
+
             sim = cosine_similarity(embeddings[i].reshape(1, -1), issue_vec)[0][0]
             if sim >= 0.80:  # 보수적 값으로 복원
                 a.issue_id = issue.id
