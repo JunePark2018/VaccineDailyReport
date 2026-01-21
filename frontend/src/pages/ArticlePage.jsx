@@ -19,15 +19,18 @@ function ArticlePage() {
     contents: "기사 내용을 찾을 수 없습니다."
   });
 
+  // [수정 1] 사이드바 열림 상태 + '어떤 문장'이 선택되었는지 저장하는 상태 추가
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const [selectedSentence, setSelectedSentence] = useState(null);
 
-  // 2. 사이드바를 여는 함수 (문장 클릭 시 실행)
-  const openSidebar = () => {
-    setSidebarOpen(true);
+  // [수정 2] 문장 클릭 시 실행될 함수 (NewsText에서 호출됨)
+  const handleSentenceClick = (sentence) => {
+    console.log("부모(ArticlePage)가 받은 문장:", sentence);
+    setSelectedSentence(sentence); // 1. 선택된 문장 저장
+    setSidebarOpen(true);          // 2. 사이드바 열기
   };
 
-  // 3. 사이드바를 닫는 함수 (X 버튼 클릭 시 실행)
-  // 사용자님이 원하시는 "저절로 닫히게" 하는 마법의 함수입니다.
+  // 사이드바 닫기 함수
   const closeSidebar = () => {
     setSidebarOpen(false);
   };
@@ -44,11 +47,10 @@ function ArticlePage() {
       }
     };
     fetchArticle();
-  }, []);
+  }, [id]); // id가 바뀔 때마다 다시 불러오도록 의존성 배열 추가
 
   return (
     <div className="ArticlePage">
-      {/* 2. 오른쪽: 헤더 + 본문 영역을 감싸는 컨테이너 */}
       <div className="page-content">
 
         {/* 상단 */}
@@ -71,14 +73,24 @@ function ArticlePage() {
         {/* 하단 */}
         <main className="main-content">
           <div className='article-section'>
-            <NewsText title={article.title} contents={article.contents} />
+            {/* [수정 3] NewsText에 handleSentenceClick 함수 전달 */}
+            <NewsText 
+                title={article.title} 
+                contents={article.contents} 
+                onSentenceClick={handleSentenceClick} 
+            />
             <Sources articles={[{ title: "원본 기사 제목", company_name: "언론사명", url: "https://example.com" }]} />
           </div>
           <div className="additional-section">
             추가 섹션
           </div>
-          {/* 오른쪽 사이드바 */}
-          <RightSideBar isOpen={isSidebarOpen} onClose={closeSidebar} />
+          
+          {/* [수정 4] RightSideBar에 '선택된 문장' 전달 */}
+          <RightSideBar 
+            isOpen={isSidebarOpen} 
+            onClose={closeSidebar} 
+            searchKeyword={selectedSentence} // 사이드바가 검색할 키워드(문장)
+          />
         </main>
       </div>
     </div>
