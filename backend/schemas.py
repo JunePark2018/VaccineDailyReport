@@ -41,10 +41,14 @@ class AiGeneratedNewsResponse(BaseModel):
     created_at: 기사 생성 시각
     analysis_result: AI 비교분석 (JSON)
     keywords: 키워드 (JSON)
+    category_id: 카테고리 ID (옵션)
+    category_name: 카테고리 이름 (옵션)
     """
 
     id: int
     cluster_id: int
+    category_id: Optional[int] = None
+    category_name: Optional[str] = None
     title: Optional[str] = None
     contents: Optional[str] = None
     created_at: datetime
@@ -200,10 +204,14 @@ class IssueResponse(BaseModel):
     created_at: 기사 생성 시각
     analysis_result: AI 비교분석 (JSON)
     keywords: 키워드 (JSON)
+    category_id: 카테고리 ID (옵션)
+    category_name: 카테고리 이름 (옵션)
     """
 
     id: int
     cluster_id: int
+    category_id: Optional[int] = None
+    category_name: Optional[str] = None
     title: Optional[str] = None
     contents: Optional[str] = None
     created_at: datetime
