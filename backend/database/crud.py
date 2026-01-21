@@ -211,10 +211,12 @@ def create_ai_generated_news(
     contents: Optional[str],
     keywords: Optional[list],
     analysis_result: Optional[dict],
+    category_id: Optional[int] = None,
     created_at: Optional[datetime] = None,
 ) -> AiGeneratedNews:
     obj = AiGeneratedNews(
         cluster_id=cluster_id,
+        category_id=category_id,
         title=title,
         contents=contents,
         keywords=keywords,
@@ -243,7 +245,23 @@ def list_ai_generated_news_by_cluster(db: Session, cluster_id: int, limit: int =
     )
 
 
-def create_ai_news_issue(db: Session, *, title: str, article_ids: List[int]) -> AiGeneratedNews:
+def list_ai_generated_news_by_category(db: Session, category_id: int, limit: int = 50) -> List[AiGeneratedNews]:
+    """
+    특정 카테고리의 AI 생성 뉴스 목록 조회.
+    """
+    return list(
+        db.execute(
+            select(AiGeneratedNews)
+            .where(AiGeneratedNews.category_id == category_id)
+            .order_by(AiGeneratedNews.created_at.desc())
+            .limit(limit)
+        ).scalars()
+    )
+
+
+def create_ai_news_issue(
+    db: Session, *, title: str, article_ids: List[int], category_id: Optional[int] = None
+) -> AiGeneratedNews:
     """
     clustering.py에서 사용하는 이슈 생성 함수.
     Cluster를 생성하고, AiGeneratedNews와 News를 연결합니다.
@@ -254,7 +272,7 @@ def create_ai_news_issue(db: Session, *, title: str, article_ids: List[int]) -> 
     db.flush()  # cluster.id 확보
 
     # 2. AiGeneratedNews 생성
-    issue = AiGeneratedNews(cluster_id=cluster.id, title=title, created_at=datetime.utcnow())
+    issue = AiGeneratedNews(cluster_id=cluster.id, category_id=category_id, title=title, created_at=datetime.utcnow())
     db.add(issue)
     db.flush()
 

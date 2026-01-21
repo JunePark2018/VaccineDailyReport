@@ -15,15 +15,10 @@ from ibm_watsonx_ai.foundation_models import ModelInference
 
 load_dotenv()
 
-credentials = {
-    "apikey": os.getenv("WATSONX_API_KEY"),
-    "url": os.getenv("WATSONX_URL")
-}
+credentials = {"apikey": os.getenv("WATSONX_API_KEY"), "url": os.getenv("WATSONX_URL")}
 
 llm_model = ModelInference(
-    model_id="meta-llama/llama-3-3-70b-instruct",
-    credentials=credentials,
-    project_id=os.getenv("WATSONX_PROJECT_ID")
+    model_id="meta-llama/llama-3-3-70b-instruct", credentials=credentials, project_id=os.getenv("WATSONX_PROJECT_ID")
 )
 
 # ------------------------------------
@@ -163,7 +158,8 @@ def search_issues_by_keyword(db: Session, keyword: str) -> Dict[str, Any]:
 
     return {"analysis": analysis_result, "issues": issues_list}
 
-def deduplicate_articles(articles: List[Article], limit: int) -> List[Article]:
+
+def deduplicate_articles(articles: List[News], limit: int) -> List[News]:
     """
     기사 리스트에서 중복을 제거하고 대표 기사만 추려냅니다.
     1. issue_id가 있는 경우: 같은 이슈 그룹 중 가장 최신 기사 1개만 선택
@@ -188,7 +184,7 @@ def deduplicate_articles(articles: List[Article], limit: int) -> List[Article]:
         # 2. 이슈 그룹 중복 제거 (issue_id 활용)
         if art.issue_id is not None:
             if art.issue_id in seen_issue_ids:
-                continue # 이미 이 이슈의 기사가 하나 들어갔으므로 스킵
+                continue  # 이미 이 이슈의 기사가 하나 들어갔으므로 스킵
             seen_issue_ids.add(art.issue_id)
 
         # 통과한 기사 추가
@@ -197,7 +193,7 @@ def deduplicate_articles(articles: List[Article], limit: int) -> List[Article]:
     return unique_articles
 
 
-def deduplicate_articles(articles: List[Article], limit: int) -> List[Article]:
+def deduplicate_articles(articles: List[News], limit: int) -> List[News]:
     """
     기사 리스트에서 중복을 제거하고 대표 기사만 추려냅니다.
     1. issue_id가 있는 경우: 같은 이슈 그룹 중 가장 최신 기사 1개만 선택
@@ -205,7 +201,7 @@ def deduplicate_articles(articles: List[Article], limit: int) -> List[Article]:
     """
     seen_issue_ids = set()
     unique_articles = []
-    
+
     # 제목 중복 방지용
     seen_titles = set()
 
@@ -222,12 +218,12 @@ def deduplicate_articles(articles: List[Article], limit: int) -> List[Article]:
         # 2. 이슈 그룹 중복 제거 (issue_id 활용)
         if art.issue_id is not None:
             if art.issue_id in seen_issue_ids:
-                continue # 이미 이 이슈의 기사가 하나 들어갔으므로 스킵
+                continue  # 이미 이 이슈의 기사가 하나 들어갔으므로 스킵
             seen_issue_ids.add(art.issue_id)
-        
+
         # 통과한 기사 추가
         unique_articles.append(art)
-    
+
     return unique_articles
 
 
@@ -245,7 +241,7 @@ def search_hot_topics_by_keyword(db: Session, keyword: str) -> List[Dict[str, An
         .limit(100)
         .all()
     )
-    
+
     # 중복 제거 로직 적용 (최대 10개)
     unique_articles = deduplicate_articles(articles, limit=10)
 
@@ -271,17 +267,17 @@ def search_hot_topics_by_keyword(db: Session, keyword: str) -> List[Dict[str, An
 # 4. 일반 기사 검색 (Related News용) (Section 3)
 def search_articles_by_keyword(db: Session, keyword: str) -> List[Dict[str, Any]]:
     """
-    DB Article 테이블에서 키워드가 포함된 기사를 검색합니다.
+    DB News 테이블에서 키워드가 포함된 기사를 검색합니다.
     """
     search_pattern = f"%{keyword}%"
 
     articles = (
-        db.query(Article)
-        .filter(or_(Article.title.ilike(search_pattern), Article.contents.ilike(search_pattern)))
-        .order_by(Article.time.desc())
-        .limit(100) # 필터링 위해 넉넉히
+        db.query(News)
+        .filter(or_(News.title.ilike(search_pattern), News.contents.ilike(search_pattern)))
+        .order_by(News.time.desc())
+        .limit(100)  # 필터링 위해 넉넉히
         .all()
-    )  
+    )
 
     # 중복 제거 로직 적용 (최대 20개)
     unique_articles = deduplicate_articles(articles, limit=20)

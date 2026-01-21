@@ -39,28 +39,28 @@ def run_background_worker():
         # 1. 뉴스 수집 (DB 연결)
         db = SessionLocal()
         try:
-            # # 스마트 수집 (중복 만나면 중단)
-            # # news_list = crawl_breaking_news(limit=20, db_check_session=db)
-            # # my_target_media = ["조선", "중앙", "한겨레", "경향", "YTN", "연합", "머니", "매일"]
-            # my_target_media = []  # 모든 뉴스 수집. 테스트용
-            # news_list = run_article_crawler(my_target_media, days=1, max_pages=5)
-            # count = 0
-            # for news in news_list:
-            #     # 기사 db에 저장
-            #     company = get_or_create_company_by_raw_name(db, news["company_name"])
-            #     if create_news(
-            #         db,
-            #         title=news["title"],
-            #         contents=news["contents"],
-            #         url=news["url"],
-            #         company_id=company.id,
-            #         region="domestic",  # 기본값
-            #         img_urls=news.get("img_urls"),
-            #         created_at=datetime.fromisoformat(news["time"]) if news["time"] != "시간 정보 없음" else None,
-            #     ):
-            #         count += 1
-            #     pass
-            # print(f"   -> {count}개의 신규 기사 저장 완료")
+            # 스마트 수집 (중복 만나면 중단)
+            # news_list = crawl_breaking_news(limit=20, db_check_session=db)
+            # my_target_media = ["조선", "중앙", "한겨레", "경향", "YTN", "연합", "머니", "매일"]
+            my_target_media = []  # 모든 뉴스 수집. 테스트용
+            news_list = run_article_crawler(my_target_media)
+            count = 0
+            for news in news_list:
+                # 기사 db에 저장
+                company = get_or_create_company_by_raw_name(db, news["company_name"])
+                if create_news(
+                    db,
+                    title=news["title"],
+                    contents=news["contents"],
+                    url=news["url"],
+                    company_id=company.id,
+                    region="domestic",  # 기본값
+                    img_urls=news.get("img_urls"),
+                    created_at=datetime.fromisoformat(news["time"]) if news["time"] != "시간 정보 없음" else None,
+                ):
+                    count += 1
+                pass
+            print(f"   -> {count}개의 신규 기사 저장 완료")
 
             # 군집화 시작
             run_issue_clustering(db, days=3)  # 잘 됨
@@ -73,7 +73,7 @@ def run_background_worker():
 
         # 10분(600초) 대기
         print("💤 [Sleep] 10분 대기 중...")
-        time.sleep(5)
+        time.sleep(600)
 
 
 # --- [FastAPI 앱 설정] ---
@@ -93,7 +93,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 
-#--------------------------------------------------
+# --------------------------------------------------
 # --------------------------------------------------
 #             프론트-백 FastAPI 연결
 from fastapi.middleware.cors import CORSMiddleware
@@ -163,8 +163,9 @@ def comprehensive_search(keyword: str = Query(..., min_length=1, description="�
 # AI 생성 뉴스 목록 가져오기 (히스토리)
 @app.get("/generated-news", response_model=List[AiGeneratedNewsResponse])
 def get_generated_news(
-    skip: int = 0,  # [추가] 앞에서부터 몇 개를 건너뛸지
-    limit: int = 10,  # 몇 개를 가져올지
+    skip: int = 0,
+    limit: int = 10,
+    category_id: Optional[int] = Query(None, description="카테고리 ID로 필터링"),
     db: Session = Depends(get_db),
 ):
     """
@@ -172,44 +173,86 @@ def get_generated_news(
 
     **skip**: 앞에서부터 건너뛸 데이터의 개수 (페이지 번호 구현 시 사용)<br/>
     **limit**: 한 번에 가져올 최대 데이터 개수 (페이지 당 목록 수)<br/>
-
+    **category_id**: (선택) 특정 카테고리로 필터링<br/>
     """
 
-    # 최신순
-    return db.query(AiGeneratedNews).order_by(AiGeneratedNews.created_at.desc()).offset(skip).limit(limit).all()
+    query = db.query(AiGeneratedNews).options(joinedload(AiGeneratedNews.category))
+
+    if category_id is not None:
+        query = query.filter(AiGeneratedNews.category_id == category_id)
+
+    results = query.order_by(AiGeneratedNews.created_at.desc()).offset(skip).limit(limit).all()
+
+    # 카테고리 이름 포함하여 반환
+    response_data = []
+    for item in results:
+        item_dict = {
+            "id": item.id,
+            "cluster_id": item.cluster_id,
+            "category_id": item.category_id,
+            "category_name": item.category.name if item.category else None,
+            "title": item.title,
+            "contents": item.contents,
+            "created_at": item.created_at,
+            "analysis_result": item.analysis_result,
+            "keywords": item.keywords,
+            "like_count": item.like_count,
+            "dislike_count": item.dislike_count,
+        }
+        response_data.append(item_dict)
+
+    return response_data
 
 
 @app.get("/generated-news/search")
 def search_generated_news(
     keyword: str = Query(..., min_length=1, description="검색어"),
-    skip: int = 0,  # 앞에서부터 몇 개를 건너뛸지 (0이면 처음부터)
-    limit: int = 20,  # 최대 몇 개를 가져올지 (기본값 20개)
+    category_id: Optional[int] = Query(None, description="카테고리 ID로 필터링"),
+    skip: int = 0,
+    limit: int = 20,
     db: Session = Depends(get_db),
 ):
     """
     AI가 생성한 뉴스에서 '내용(contents)' 또는 '제목(title)'에 키워드가 포함된 뉴스를 찾습니다.
 
     **keyword**: 검색할 키워드.<br/>
+    **category_id**: (선택) 특정 카테고리로 필터링<br/>
     **skip**: 앞에서부터 건너뛸 데이터의 개수 (페이지 번호 구현 시 사용)<br/>
     **limit**: 한 번에 가져올 최대 데이터 개수 (페이지 당 목록 수)<br/>
     """
 
     search_pattern = f"%{keyword}%"
 
-    # 1. DB에서 이슈 검색
-    results = (
+    query = (
         db.query(AiGeneratedNews)
+        .options(joinedload(AiGeneratedNews.category))
         .filter(or_(AiGeneratedNews.title.ilike(search_pattern), AiGeneratedNews.contents.ilike(search_pattern)))
-        .offset(skip)
-        .limit(limit)
-        .all()
     )
 
-    # 2. 결과가 있으면 반환 (Cache Hit)
-    if results:
-        return results
+    if category_id is not None:
+        query = query.filter(AiGeneratedNews.category_id == category_id)
 
-    # 3. 결과가 없으면 빈 리스트 반환
+    results = query.offset(skip).limit(limit).all()
+
+    if results:
+        response_data = []
+        for item in results:
+            item_dict = {
+                "id": item.id,
+                "cluster_id": item.cluster_id,
+                "category_id": item.category_id,
+                "category_name": item.category.name if item.category else None,
+                "title": item.title,
+                "contents": item.contents,
+                "created_at": item.created_at,
+                "analysis_result": item.analysis_result,
+                "keywords": item.keywords,
+                "like_count": item.like_count,
+                "dislike_count": item.dislike_count,
+            }
+            response_data.append(item_dict)
+        return response_data
+
     return []
 
 
@@ -219,22 +262,32 @@ def get_generated_news_detail(generated_news_id: int, db: Session = Depends(get_
     AI가 생성한 뉴스 중 특정 ID에 해당하는 뉴스를 가져옵니다.
 
     **generated_news_id**: AI가 생성한 뉴스의 ID.
-
     """
 
-    # 1. 뉴스를 찾으면서 + 연관된 뉴스도 같이 로딩(joinedload)
     generated_news = (
         db.query(AiGeneratedNews)
-        .options(joinedload(AiGeneratedNews.cluster).joinedload(Cluster.news))
+        .options(joinedload(AiGeneratedNews.cluster).joinedload(Cluster.news), joinedload(AiGeneratedNews.category))
         .filter(AiGeneratedNews.id == generated_news_id)
         .first()
     )
 
-    # 2. 없으면 404
     if not generated_news:
         raise HTTPException(status_code=404, detail="해당 뉴스를 찾을 수 없습니다.")
 
-    return generated_news
+    return {
+        "id": generated_news.id,
+        "cluster_id": generated_news.cluster_id,
+        "category_id": generated_news.category_id,
+        "category_name": generated_news.category.name if generated_news.category else None,
+        "title": generated_news.title,
+        "contents": generated_news.contents,
+        "created_at": generated_news.created_at,
+        "analysis_result": generated_news.analysis_result,
+        "keywords": generated_news.keywords,
+        "like_count": generated_news.like_count,
+        "dislike_count": generated_news.dislike_count,
+        "cluster": generated_news.cluster,
+    }
 
 
 # 크롤링한 뉴스 목록 (디버깅용)
