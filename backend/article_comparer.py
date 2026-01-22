@@ -28,50 +28,6 @@ MAX_CONCURRENCY = 8
 MAX_RETRIES = 5
 BASE_BACKOFF_SECONDS = 0.6
 
-
-# ======================================================
-# Mock Data (예시)
-# ======================================================
-now = datetime.now(timezone.utc)
-mock_articles = [
-    {
-        "id": 1,
-        "company_name": "A일보",
-        "title": "[종합] 화재 참사, 예견된 인재였다",
-        "contents": "이번 화재는 정부의 안전 관리 예산 삭감이 직접적인 원인으로 지목된다. 소방 장비 노후화 문제가 심각하다.",
-        "time": now,
-    },
-    {
-        "id": 2,
-        "company_name": "A일보",
-        "title": "소방관들의 눈물",
-        "contents": "현장에 진입한 소방관들은 장비 부족을 호소했다.",
-        "time": now,
-    },
-    {
-        "id": 3,
-        "company_name": "B뉴스",
-        "title": "화재 원인은 관리자 부주의",
-        "contents": "경찰 조사 결과, 건물 관리자가 스프링클러를 꺼둔 것으로 밝혀졌다. 개인의 일탈이 참사를 불렀다.",
-        "time": now,
-    },
-    {
-        "id": 4,
-        "company_name": "B뉴스",
-        "title": "[사설] 안전불감증, 법정 최고형으로 다스려야",
-        "contents": "강력한 처벌만이 재발을 막을 수 있다.",
-        "time": now,
-    },
-    {
-        "id": 5,
-        "company_name": "C경제",
-        "title": "화재로 인한 주변 상권 피해액 500억",
-        "contents": "이번 화재로 인근 시장의 매출이 80% 급감했다. 경제적 파장이 우려된다.",
-        "time": now,
-    },
-]
-
-
 # ======================================================
 # 유틸: 안전한 JSON 처리/스키마 보정
 # ======================================================
@@ -317,38 +273,3 @@ async def generate_final_comparison_report(company_analyses: Dict[str, Any]) -> 
     data.setdefault("media_comparison_bullets", [])
 
     return ensure_reduce_schema(data)
-
-
-# ======================================================
-# Main
-# ======================================================
-async def main():
-    print("[Step 1] 기사 데이터 전처리 중...")
-    synthesized = get_synthesized_content_by_company(mock_articles, top_n=TOP_N_PER_COMPANY)
-    print(f"   -> {len(synthesized)}개 언론사 데이터 병합 완료.")
-    for comp, payload in synthesized.items():
-        print(f"      - {comp}: selected_article_ids={payload['selected_article_ids']}")
-
-    print("\n[Step 2] 언론사별 개별 분석 진행 (Async)...")
-    company_analyses = await process_all_companies_async(synthesized)
-    # 예시 출력(안전)
-    any_company = next(iter(company_analyses.keys()), None)
-    if any_company:
-        print(f"   -> 샘플: {any_company} 원인={company_analyses[any_company].get('main_cause')}")
-
-    print("\n[Step 3] 최종 비교 리포트 생성 중...")
-    final_report = await generate_final_comparison_report(company_analyses)
-
-    print("\n" + "=" * 60)
-    print("📊 최종 비교 분석 결과 (JSON)")
-    print("=" * 60)
-    print(json.dumps(final_report, indent=2, ensure_ascii=False))
-
-    print("\n" + "=" * 60)
-    print("🧩 언론사별 분석 결과 (디버그/검증용)")
-    print("=" * 60)
-    print(json.dumps(company_analyses, indent=2, ensure_ascii=False))
-
-
-if __name__ == "__main__":
-    asyncio.run(main())

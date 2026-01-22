@@ -25,14 +25,24 @@ def signup(user: UserCreateRequest, db: Session = Depends(get_db)):
         db,
         login_id=user.login_id,
         user_real_name=user.user_real_name,
-        password_hash=user.password_hash,  # password → password_hash
+        password_hash=user.password_hash,
         email=user.email,
-        # phone_number 제거 - 스키마에 없음
+        subscribed_categories=user.subscribed_categories,
+        subscribed_keywords=user.subscribed_keywords,
     )
-    db.commit()
-    db.refresh(new_user)
+    # create_user 내부에서 commit/refresh 하므로 id확보됨
 
-    return new_user
+    # 응답 포맷 구성
+    return {
+        "id": new_user.id,
+        "login_id": new_user.login_id,
+        "user_real_name": new_user.user_real_name,
+        "email": new_user.email,
+        "user_status": new_user.user_status,
+        "created_at": new_user.created_at,
+        "subscribed_categories": [cat.name for cat in new_user.subscribed_categories],
+        "subscribed_keywords": [kw.keyword for kw in new_user.keyword_subscriptions],
+    }
 
 
 @router.get("/{login_id}")  # response_model 제거
@@ -45,7 +55,7 @@ def read_user(login_id: str, db: Session = Depends(get_db)):
     if user is None:
         raise HTTPException(status_code=404, detail="해당 아이디의 유저를 찾을 수 없습니다.")
 
-    subscribed_categories = [cat.id for cat in user.subscribed_categories]
+    subscribed_categories = [cat.name for cat in user.subscribed_categories]
     subscribed_keywords = [kw.keyword for kw in user.keyword_subscriptions]
 
     return {

@@ -67,9 +67,9 @@ async def process_single_issue(issue: AiGeneratedNews, kw_extractor: KeywordExtr
             summary_result = generate_balanced_article(
                 model_name=MODEL, cluster_topic=issue.title, articles=articles_data
             )
-            issue.title = summary_result.get("title", issue.title) # AI가 정한 제목으로 업데이트
+            issue.title = summary_result.get("title", issue.title)  # AI가 정한 제목으로 업데이트
             issue.contents = summary_result.get("contents", "")
-            issue.search_keyword = summary_result.get("search_keyword", "") # 외신 검색어 저장
+            issue.search_keyword = summary_result.get("search_keyword", "")  # 외신 검색어 저장
 
             if issue.search_keyword:
                 issue.global_search_status = "PENDING"
@@ -93,7 +93,9 @@ async def process_single_issue(issue: AiGeneratedNews, kw_extractor: KeywordExtr
             # -------------------------------------------------
             try:
                 # issue.contents(요약본) 기반으로 추출
-                extracted_kws = kw_extractor.process_content(title=issue.title, content=summary_result)
+                extracted_kws = kw_extractor.process_content(
+                    title=issue.title, content=summary_result.get("contents", "")
+                )
                 issue.keywords = extracted_kws
                 print(f"      🏷️ 키워드: {extracted_kws}")
             except Exception as kw_e:
