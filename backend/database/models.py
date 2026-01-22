@@ -92,6 +92,8 @@ class News(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     region = Column(Enum("domestic", "global", name="news_region"), nullable=False, index=True)
+    category_id = Column(Integer, ForeignKey("categories.id", ondelete="SET NULL"), nullable=True, index=True)
+    category = relationship("Category")
 
     clusters = relationship(
         "Cluster",
@@ -110,9 +112,14 @@ class AiGeneratedNews(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     cluster_id = Column(Integer, ForeignKey("clusters.id", ondelete="CASCADE"), nullable=False, index=True)
+    category_id = Column(Integer, ForeignKey("categories.id", ondelete="RESTRICT"), nullable=True, index=True)
 
     title = Column(String, nullable=True)
     contents = Column(Text, nullable=True)
+
+    search_keyword = Column(String, nullable=True)  
+    global_search_status = Column(String, default="PENDING")
+    search_retry_count = Column(Integer, default=0) 
 
     keywords = Column(JSON, nullable=True)
     analysis_result = Column(JSON, nullable=True)
@@ -124,6 +131,7 @@ class AiGeneratedNews(Base):
     dislike_count = Column(Integer, default=0, nullable=False)
 
     cluster = relationship("Cluster", back_populates="ai_generated_news")
+    category = relationship("Category", backref="ai_generated_news")
 
     reactions = relationship("NewsReaction", back_populates="news", cascade="all, delete-orphan")
     views = relationship("NewsView", back_populates="news", cascade="all, delete-orphan")
