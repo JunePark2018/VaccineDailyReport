@@ -1,6 +1,9 @@
 import os
+import re
+import json
 from openai import OpenAI
 from dotenv import load_dotenv
+
 
 load_dotenv()
 
@@ -36,7 +39,8 @@ def generate_balanced_article(model_name: str, cluster_topic: str, articles: lis
     # 2) 시스템 프롬프트 (역할 부여)
     system_role = (
         "당신은 중복 없이 간결하고 명확한 문장을 구사하며, 팩트 검증에 철저한 '수석 편집장'입니다. "
-        "여러 기사를 읽고, 독자가 한 번에 이해할 수 있도록 내용을 재구성하십시오."
+        "여러 기사를 읽고, 독자가 한 번에 이해할 수 있도록 내용을 재구성하십시오." \
+        "당신의 응답은 반드시 프로그래밍적으로 파싱 가능한 **정확한 JSON 형식**이어야 합니다."
     )
 
     # 3) 유저 프롬프트 (팩트 준수 원칙 추가)
@@ -44,6 +48,7 @@ def generate_balanced_article(model_name: str, cluster_topic: str, articles: lis
 주제: '{cluster_topic}'
 
 아래 제공된 기사 소스들을 바탕으로 **하나의 완결된 스트레이트 뉴스**를 작성하세요.
+추가로 이 사건에 대한 해외 외신 반응을 추적하기 위한 영문 검색어도 추출하십시오.
 
 [수집된 기사 소스]
 {context_text}
@@ -62,6 +67,14 @@ def generate_balanced_article(model_name: str, cluster_topic: str, articles: lis
    - 시간 순서나 인과 관계(원인->결과)에 따라 내용을 배치하십시오.
    - "A에 따르면", "B에 따르면" 같은 출처 나열을 피하고 사건 중심으로 서술하십시오.
 4. **마무리**: 향후 전망이나 업계 반응으로 끝맺음하십시오.
+5. 추가로 영문 검색어 추출: 이 사건이 해외 언론(Google News)에서 보도될 때 사용될 법한 핵심 영문 키워드 1개를 생성하십시오. (예: 'Samsung earnings shock', 'South Korea ferry incident') 
+
+[출력 형식 가이드 - 반드시 아래 JSON 구조를 지킬 것]
+{{
+    "title": "헤드라인 제목",
+    "contents": "작성된 전체 기사 본문 내용 (마크다운 형식 권장)",
+    "search_keyword": "추출된 영문 검색어"
+}}
 
 위 가이드라인을 철저히 지켜 기사를 작성해 주세요.
 """.strip()
@@ -78,7 +91,28 @@ def generate_balanced_article(model_name: str, cluster_topic: str, articles: lis
             max_tokens=4000,
             top_p=0.9,
             frequency_penalty=0.5,
+            response_format={"type": "json_object"}
         )
-        return response.choices[0].message.content or ""
+        raw_response = response.choices[0].message.content or "{}"
+        try:
+            result = json.loads(raw_response)
+            # 필수 키가 없는 경우 대비
+            if "contents" not in result: result["contents"] = str(raw_response)
+            if "search_keyword" not in result: result["search_keyword"] = ""
+            if "title" not in result: result["title"] = f"{cluster_topic} 이슈"
+            
+            return result
+            
+        except json.JSONDecodeError:
+            print(f"❌ JSON 파싱 실패. Raw: {raw_response[:100]}...")
+            # 마크다운 코드블록 제거 후 재시도
+            clean_json = raw_response.replace("```json", "").replace("```", "").strip()
+            return json.loads(clean_json)
+
     except Exception as e:
-        return f"⚠️ 에러 발생: {str(e)}"
+        print(f"⚠️ 에러 발생: {str(e)}")
+        return {
+            "title": "생성 실패",
+            "contents": f"AI 처리 중 오류가 발생했습니다: {str(e)}",
+            "search_keyword": ""
+        }
