@@ -19,6 +19,7 @@ from schemas import (
     LogViewRequest,
     UserUpdate,
 )
+
 # [수정] scraper.py에서 run_article_crawler 임포트
 from scraper import run_article_crawler
 from database.crud import create_news, create_user, get_user, get_user_by_login_id, get_or_create_company_by_raw_name
@@ -35,20 +36,20 @@ from search_agent import (
 # --- [백그라운드 워커] 주기적으로 뉴스 수집 & AI 분석 ---
 def run_background_worker():
     print("🚀 [System] 백그라운드 워커 가동 시작")
-    
+
     while True:
         print("\n⏰ [Auto] 뉴스 수집 및 분석 사이클 시작...")
         db = SessionLocal()
-        
+
         try:
             # --- [Step 1] 국내 뉴스 수집 ---
             print("🇰🇷 국내 뉴스 수집 중...")
-            target_list = ["조선", "KBS","MBC","SBS","연합","한겨레","중앙","경향","한국","JTBC"]
+            target_list = ["조선", "KBS", "MBC", "SBS", "연합", "한겨레", "중앙", "경향", "한국", "JTBC"]
             # target_list = [] # 테스트용 빈 리스트
-            
+
             # [연동] 수정된 scraper.py의 함수 호출 (db 세션 전달)
             news_list = run_article_crawler(db, target_companies=target_list)
-            
+
             for news in news_list:
                 company = get_or_create_company_by_raw_name(db, news["company_name"])
                 create_news(
@@ -59,18 +60,20 @@ def run_background_worker():
                     company_id=company.id,
                     region="domestic",
                     # [추가] 수집된 카테고리 정보를 DB에 저장 (중요!)
-                    category=news.get("category"), 
+                    category=news.get("category"),
                     img_urls=news.get("img_urls"),
-                    created_at=datetime.fromisoformat(news["time"]) if news["time"] != "시간 정보 없음" else datetime.now()
+                    created_at=(
+                        datetime.fromisoformat(news["time"]) if news["time"] != "시간 정보 없음" else datetime.now()
+                    ),
                 )
             db.commit()
 
             # --- [Step 2] 군집화 및 AI 분석 (요약 + 영문 키워드 생성) ---
             print("🤖 군집화 및 AI 이슈 분석 중...")
             run_issue_clustering(db, days=3)
-            
+
             # 이 단계에서 AiGeneratedNews 테이블에 search_keyword와 함께 저장되어야 함
-            process_news_pipeline() 
+            process_news_pipeline()
             db.commit()
 
             # --- [Step 3] 지연된 외신 추적  ---
@@ -78,30 +81,34 @@ def run_background_worker():
                 # 상태가 PENDING이고 생성된 지 24시간 이내인 이슈들만 추적
                 BATCH_SIZE = 10
 
-                pending_issues = db.query(AiGeneratedNews).filter(
-                    AiGeneratedNews.global_search_status == "PENDING",
-                    AiGeneratedNews.created_at >= datetime.now() - timedelta(hours=24)
-                ).order_by(AiGeneratedNews.search_retry_count.asc()) \
-                 .limit(BATCH_SIZE) \
-                 .all()
+                pending_issues = (
+                    db.query(AiGeneratedNews)
+                    .filter(
+                        AiGeneratedNews.global_search_status == "PENDING",
+                        AiGeneratedNews.created_at >= datetime.now() - timedelta(hours=24),
+                    )
+                    .order_by(AiGeneratedNews.search_retry_count.asc())
+                    .limit(BATCH_SIZE)
+                    .all()
+                )
 
                 if pending_issues:
                     print(f"🌍 [Batch] 대기 중인 이슈 {len(pending_issues)}개 외신 추적 시작 (Limit: {BATCH_SIZE})...")
                     en_scraper = GlobalNewsScraper()
-                    
+
                     for issue in pending_issues:
                         # 1. 24시간 초과 체크 (DB 쿼리 필터와 별개로 안전장치)
                         time_diff = datetime.now() - issue.created_at
                         if time_diff > timedelta(hours=24):
-                             issue.global_search_status = "FAILED"
-                             print(f"💀 '{issue.title}' 시간 초과로 추적 종료")
-                             continue
-                        
+                            issue.global_search_status = "FAILED"
+                            print(f"💀 '{issue.title}' 시간 초과로 추적 종료")
+                            continue
+
                         if not issue.search_keyword:
                             continue
-                            
+
                         print(f"🔍 [Retry {issue.search_retry_count}] 키워드: '{issue.search_keyword}'")
-                        
+
                         # 스크래핑 수행
                         en_results = en_scraper.run(issue.search_keyword)
 
@@ -116,9 +123,9 @@ def run_background_worker():
                                     url=en_data["url"],
                                     company_id=company.id,
                                     region="global",
-                                    category=en_data.get("category"), # 카테고리 추가
+                                    category=en_data.get("category"),  # 카테고리 추가
                                     img_urls=en_data.get("img_urls"),
-                                    created_at=datetime.now()
+                                    created_at=datetime.now(),
                                 )
                             issue.global_search_status = "SUCCESS"
                             print(f"✨ '{issue.title}' 외신 발견 성공!")
@@ -126,8 +133,8 @@ def run_background_worker():
                             # 실패 시: 카운트만 증가시키고 상태는 PENDING 유지
                             issue.search_retry_count += 1
                             print(f"💨 '{issue.title}' 외신 없음. (Retry: {issue.search_retry_count})")
-                    
-                    en_scraper.close() # 브라우저 종료
+
+                    en_scraper.close()  # 브라우저 종료
                     db.commit()
 
         except Exception as e:
@@ -277,10 +284,10 @@ def search_news(
     query = db.query(News)
     if region:
         query = query.filter(News.region == region)
-    
+
     search_pattern = f"%{keyword}%"
     query = query.filter(or_(News.title.ilike(search_pattern), News.contents.ilike(search_pattern)))
-    
+
     return query.order_by(News.created_at.desc()).offset(skip).limit(limit).all()
 
 
@@ -364,6 +371,7 @@ def update_user_simple(
 
     if user_update.subscribed_categories is not None or user_update.subscribed_keywords is not None:
         from database.crud import update_user_subscriptions
+
         update_user_subscriptions(db, user, user_update.subscribed_categories, user_update.subscribed_keywords)
 
     try:
@@ -389,6 +397,7 @@ def add_news_reaction(
         raise HTTPException(status_code=404, detail="User not found")
 
     from database.crud import set_reaction
+
     try:
         status, likes, dislikes = set_reaction(db, user_id=user.id, ai_news_id=news_id, value=value)
         db.commit()
@@ -411,6 +420,7 @@ def get_news_reaction(
         raise HTTPException(status_code=404, detail="User not found")
 
     from database.crud import get_reaction
+
     reaction = get_reaction(db, user_id=user.id, ai_news_id=news_id)
     return {"reaction": reaction}
 
@@ -422,6 +432,7 @@ def add_news_view(news_id: int, login_id: str = Query(..., description="User Log
         raise HTTPException(status_code=404, detail="User not found")
 
     from database.crud import add_view
+
     try:
         add_view(db, user_id=user.id, ai_news_id=news_id, unique_per_user=True)
         db.commit()
@@ -434,6 +445,7 @@ def add_news_view(news_id: int, login_id: str = Query(..., description="User Log
 @app.get("/news/{news_id}/views")
 def get_news_views(news_id: int, db: Session = Depends(get_db)):
     from database.crud import get_view_count
+
     count = get_view_count(db, news_id=news_id)
     return {"views": count}
 
@@ -441,5 +453,6 @@ def get_news_views(news_id: int, db: Session = Depends(get_db)):
 @app.get("/news/{news_id}/reactions")
 def get_news_reactions(news_id: int, db: Session = Depends(get_db)):
     from database.crud import get_reaction_counts
+
     counts = get_reaction_counts(db, news_id=news_id)
     return counts

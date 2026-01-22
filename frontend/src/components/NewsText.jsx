@@ -4,9 +4,12 @@ import './NewsText.css';
 
 /**
  * NewsText 컴포넌트
- * 외부에서 함수를 받지 않고 내부에서 클릭 이벤트를 처리합니다.
+ * props:
+ * - title: 기사 제목
+ * - contents: 기사 본문 (긴 텍스트)
+ * - onSentenceClick: 문장 클릭 시 실행할 부모 함수 [핵심!]
  */
-const NewsText = ({ title, contents }) => {
+const NewsText = ({ title, contents, onSentenceClick }) => {
 
   // [내부 함수] 문장 클릭 시 실행될 로직
   const handleSentenceClick = (sentence) => {
@@ -20,8 +23,11 @@ const NewsText = ({ title, contents }) => {
 
     // 3. 순수 클릭일 때만 아래 로직 실행
     const cleanSentence = sentence.trim();
-    console.log("사용자가 선택한 문장:", cleanSentence);
-    alert(`선택된 문장: \n${cleanSentence}`);
+    
+    // [수정된 부분] alert 대신 부모가 준 함수를 실행합니다.
+    if (onSentenceClick) {
+        onSentenceClick(cleanSentence);
+    }
   };
 
   // [렌더링 로직] 줄바꿈(\n) -> 마침표(.) 순서로 텍스트 분리
@@ -45,6 +51,7 @@ const NewsText = ({ title, contents }) => {
               <span
                 key={sentenceIndex}
                 className="clickable-sentence"
+                // 클릭 시 위에서 정의한 핸들러 실행
                 onClick={() => handleSentenceClick(sentence)}
               >
                 {sentence}.{' '}
