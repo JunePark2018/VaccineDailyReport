@@ -25,7 +25,7 @@
 .ArticlePage .main-content .additional-section {
   width: 300px;
   margin-left: 40px;
-  background-color: #eeeeee;
+  text-align: left;
 }
 
 .ArticlePage .article-footer-actions {

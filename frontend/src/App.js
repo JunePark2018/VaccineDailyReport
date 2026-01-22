@@ -28,7 +28,7 @@ function App() {
       <div className="App">
         <Routes>
           <Route path="/" element={<Main />} />
-          <Route path="/article" element={<ArticlePage />} />
+          <Route path="/article/:id" element={<ArticlePage />} />
           <Route path="/politics" element={<PoliticsPage />} />
           <Route path="/economy" element={<EconomicsPage />} />
           <Route path="/society" element={<SocietyPage />} />

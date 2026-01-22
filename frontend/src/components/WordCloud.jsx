@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import WordCloud from 'react-d3-cloud';
 import './WordCloud.css';
 
-const WordCloudComponent = ({ keywords }) => {
+const WordCloudComponent = ({ keywords, width = 800, height = 300, font = "Times", ...props }) => {
     const navigate = useNavigate();
 
     const handleWordClick = (event, word) => {
         // word.text에 키워드가 있습니다.
-        navigate(`/result?query=${word.text}`);
+        navigate(`/search?q=${word.text}`);
     };
 
     const newData = keywords.map(item => ({
@@ -23,9 +23,9 @@ const WordCloudComponent = ({ keywords }) => {
         <div className="word-cloud-container">
             <WordCloud
                 data={newData}
-                width={800}
-                height={300}
-                font="Times"
+                width={width}
+                height={height}
+                font={font}
                 fontStyle="normal"
                 fontWeight="bold"
                 fontSize={fontSizeMapper}
@@ -33,6 +33,7 @@ const WordCloudComponent = ({ keywords }) => {
                 rotate={rotate}
                 padding={2}
                 onWordClick={handleWordClick}
+                {...props}
             />
         </div>
     );
