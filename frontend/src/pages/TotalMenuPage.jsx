@@ -47,15 +47,15 @@ const TotalMenuPage = () => {
         loadData();
     }, []);
 
-    const renderMainContent = (index) => {
-        if (!displayArticles || displayArticles.length === 0) return null;
-        const baseIndex = (index * 4) % displayArticles.length;
-        const mainArticle = displayArticles[baseIndex];
-        const gridArticles = [
-            displayArticles[(baseIndex + 1) % displayArticles.length],
-            displayArticles[(baseIndex + 2) % displayArticles.length],
-            displayArticles[(baseIndex + 3) % displayArticles.length],
-        ];
+    const articlesPerBlock = 5;
+    const blocksPerPage = 1;
+    const articlesPerPage = articlesPerBlock * blocksPerPage;
+
+    const renderMainContent = (blockArticles, blockIndex) => {
+        if (!blockArticles || blockArticles.length === 0) return null;
+
+        const mainArticle = blockArticles[0];
+        const gridArticles = blockArticles.slice(1, 5);
 
         const mainData = {
             title: mainArticle?.title || "News Title Text Sample",
@@ -66,68 +66,65 @@ const TotalMenuPage = () => {
         const grid = gridArticles.map((art, i) => ({
             id: i,
             title: art?.title || "Title Sample Text",
+            content: art?.short_text || "text sample...",
             image: art ? (imageMap[art.image] || art.image) : null
         }));
 
-        const highlights = [
-            { keyword: '중점으로 둔 키워드', content: '"해당 키워드에 대한 요약한 내용"' },
-            { keyword: '중점으로 둔 키워드', content: '"해당 키워드에 대한 요약한 내용"' },
-            { keyword: '중점으로 둔 키워드', content: '"해당 키워드에 대한 요약한 내용"' },
-            { keyword: '중점으로 둔 키워드', content: '"해당 키워드에 대한 요약한 내용"' }
-        ];
-
         return (
-            <React.Fragment key={index}>
-                <section className="main-article-section">
-                    <div className="article-info-side" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
-                        <div className="analysis-box-large">
-                            <div className="analysis-placeholder">
-                                <div className="analysis-x"></div>
-                                <span className="analysis-text">분석</span>
-                            </div>
-                        </div>
+            <React.Fragment key={blockIndex}>
+                <section className="main-article-section" style={{ display: 'flex', alignItems: 'center', gap: '40px', marginBottom: '30px', minHeight: '300px' }}>
+
+                    {/* Left: Article Title */}
+                    <div className="politics-title-side" onClick={() => navigate('/article')} style={{ flex: 1.47, cursor: 'pointer' }}>
+                        <h2 style={{ fontSize: '36px', fontWeight: 'bold', lineHeight: '1.3', color: '#000', margin: 0 }}>
+                            {mainData.title}
+                        </h2>
+                        <p style={{ fontSize: '16px', color: '#666', marginTop: '15px', lineHeight: '1.6' }}>
+                            {mainData.description}
+                        </p>
                     </div>
 
-                    <div className="article-image-center" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
-                        <img src={mainData.image} alt="Main" />
-                        <div className="main-image-text">
-                            <h3>{mainData.title}</h3>
-                            <p>{mainData.description}</p>
+                    {/* Right: Article Photo */}
+                    <div className="politics-image-side" onClick={() => navigate('/article')} style={{ flex: 1.53, cursor: 'pointer' }}>
+                        <div className="article-image-center" style={{ width: '100%', aspectRatio: '2.4 / 1', borderRadius: '1px' }}>
+                            <img src={mainData.image} alt="Main" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </div>
-                    </div>
-
-                    <div className="highlights-side">
-                        {highlights.map((item, hIndex) => (
-                            <div key={hIndex} className="highlight-item">
-                                <span className="highlight-keyword">{item.keyword}</span>
-                                <span className="highlight-content">{item.content}</span>
-                            </div>
-                        ))}
                     </div>
                 </section>
                 <div className="section-divider"></div>
-                <section className="bottom-grid-section">
-                    {grid.map((news) => (
-                        <div key={news.id} className="grid-item" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
-                            <div className="grid-image">
-                                <img src={news.image} alt={news.title} />
-                                <div className="image-placeholder-text">IMAGE</div>
-                                <div className="grid-title-overlay">
-                                    <h3>{news.title}</h3>
+
+                {grid.length > 0 && (
+                    <>
+                        <section className="bottom-grid-section" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '40px' }}>
+                            {grid.map((news) => (
+                                <div key={news.id} className="grid-item" onClick={() => navigate('/article')} style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                    <div className="grid-image" style={{ width: '100%', aspectRatio: '1.5/1', border: '1px solid #eee', position: 'relative', overflow: 'hidden' }}>
+                                        <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    </div>
+                                    <div className="grid-info">
+                                        <h3 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 5px 0', lineHeight: '1.4' }}>{news.title}</h3>
+                                        <p style={{ fontSize: '13px', color: '#666', margin: 0, lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                            {news.content}
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                    ))}
-                </section>
-                <div className="divider"></div>
+                            ))}
+                        </section>
+                    </>
+                )}
             </React.Fragment>
         );
     };
 
+    const totalPages = Math.max(1, Math.ceil(displayArticles.length / articlesPerPage));
 
-
-
-    const totalPages = 5;
+    // Group articles for current page
+    const startIndex = (currentPage - 1) * articlesPerPage;
+    const pageArticles = displayArticles.slice(startIndex, startIndex + articlesPerPage);
+    const articleBlocks = [];
+    for (let i = 0; i < pageArticles.length; i += articlesPerBlock) {
+        articleBlocks.push(pageArticles.slice(i, i + articlesPerBlock));
+    }
 
     return (
         <div className="category-page">
@@ -152,16 +149,13 @@ const TotalMenuPage = () => {
                     <h1>{name}</h1>
                 </div>
 
-                {displayArticles.length > 0 ? (
-                    [...Array(5)].map((_, i) => renderMainContent(i + (currentPage - 1) * 5))
+                {articleBlocks.length > 0 ? (
+                    articleBlocks.map((block, i) => renderMainContent(block, i))
                 ) : (
                     <div className="empty-category">
                         <p>해당 카테고리에 표시할 기사가 없습니다.</p>
                     </div>
                 )}
-
-
-
 
                 <div className="pagination">
                     <span onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} style={{ cursor: 'pointer' }}>{"<"}</span>

@@ -237,6 +237,7 @@
     overflow: hidden;
 }
 
+/*
 .category-page .grid-image::before,
 .category-page .grid-image::after {
     content: '';
@@ -254,6 +255,7 @@
 .category-page .grid-image::after {
     transform: rotate(-45deg);
 }
+*/
 
 .category-page .grid-image img {
     width: 100%;
@@ -283,12 +285,12 @@
 }
 
 .category-page .section-divider {
-    border-top: 1px solid #ccc;
+    border-top: 2px solid #000;
     margin: 50px 0;
 }
 
 .category-page .divider {
-    border-top: 1px solid #000000;
+    border-top: 2px solid #000;
     margin: 50px 0;
 }
 

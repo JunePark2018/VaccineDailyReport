@@ -30,14 +30,13 @@
   height: 1px;
   /* Increased from 0.5px for visibility */
   background-color: #ccc;
-  margin: 15px 0 20px 0;
-  /* Reduced from 20px 0 40px 0 */
+  margin: 10px 0 10px 0;
 }
 
 .main-page .article-info-side h2 {
   font-size: 18px;
   margin-top: 0;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
   line-height: 1.2;
 }
 
@@ -51,10 +50,10 @@
   font-size: 12px;
   color: #333;
   line-height: 1.6;
-  margin-bottom: 20px;
+  margin-bottom: 5px;
   display: -webkit-box;
-  -webkit-line-clamp: 10;
-  line-clamp: 10;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   position: relative;
@@ -83,7 +82,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border-radius: 10px;
+  border-radius: 1px;
 }
 
 .main-page .article-image-center::before,
@@ -530,51 +529,59 @@
 
 
 /* TOP 10 Section Styles (Sidebar) */
+/* TOP 10 Section Styles (Sidebar) */
 .main-page .top10-section {
   margin-top: 0;
-  /* Reset top margin as it's in a column now */
   margin-bottom: 30px;
   text-align: left;
+  /* Fixed height window for ONE item - INCREASED ~50% from 90px */
+  height: 135px;
+  overflow: hidden;
+  position: relative;
+  background: #fff;
+  /* border & rounded corners REMOVED */
+  perspective: 1000px;
+  /* Enable 3D perspective */
 }
 
 .main-page .top10-section h3 {
-  font-size: 21px;
-  /* Matched to Politics/Economy */
+  font-size: 18px;
+  /* Standardized to 18px */
   font-weight: 800;
-  margin: 0 auto 20px auto;
-  /* Centers the header */
+  margin: 0 0 20px 0;
+  border-bottom: none;
+  /* Remove bottom border */
+  border-left: 5px solid #000;
+  /* Add left border */
+  padding-left: 10px;
+  padding-bottom: 2px;
+  /* Extend border down slightly */
+  line-height: 1;
+  background: #fff;
   width: fit-content;
-  border-bottom: 3px solid #000;
-  padding-bottom: 5px;
-  text-align: center;
-  /* Centers text */
-  letter-spacing: 0.5px;
 }
 
+/* Reseting Grid for Static Layout */
 .main-page .top10-grid {
-  display: flex;
-  flex-direction: column;
-  /* Vertical list */
-  gap: 15px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
 }
 
 .main-page .top10-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  position: relative;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 10px;
+  gap: 20px;
 }
 
 .main-page .top10-rank {
-  font-size: 24px;
-  /* Smaller rank for sidebar */
+  font-size: 36px;
+  /* Increase 50% from 24px */
   font-weight: 900;
   font-style: italic;
   color: #333;
-  line-height: 1;
-  min-width: 30px;
+  min-width: 45px;
+  /* Increased */
   text-align: center;
 }
 
@@ -585,32 +592,22 @@
   color: #cc0000;
 }
 
-
 .main-page .top10-image-wrapper {
   flex: none;
-  width: 40%;
-  /* Approx 50% smaller impact */
+  width: 180px;
+  /* Increase 50% maybe? Previously was auto/small. Let's make it bigger. was 50px in prev attempt? no, 50% bigger than default */
+  /* Default was small icon-like? Let's aim for substantial size */
+  height: 100px;
+  /* Aspect */
   position: relative;
-  border-radius: 4px;
+  border-radius: 1px;
   overflow: hidden;
-  aspect-ratio: 16 / 9;
 }
 
 .main-page .top10-image-wrapper img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.main-page .top10-text-overlay {
-  display: none;
-  /* Hide overlay text for small sidebar version if preferred, 
-     but user asked for "sort top 10". 
-     Usually sidebar items have text NEXT to image, not overlay. 
-     Let's try overlay removed and text next to it? 
-     Or keep overlay? User said "images 50% smaller". 
-     Small images with overlay text might be unreadable.
-     Let's MOVE text outside. */
 }
 
 /* Alternative: Text next to image */
@@ -622,7 +619,8 @@
 }
 
 .main-page .top10-title {
-  font-size: 14px;
+  font-size: 21px;
+  /* Increase 50% from 14px */
   font-weight: bold;
   color: #000;
   margin: 0;
@@ -658,13 +656,16 @@
 }
 
 .main-page .cat-box-header {
-  font-size: 21px;
-  /* Reduced from 24px */
+  font-size: 18px;
+  /* Standardize */
   font-weight: 800;
   margin: 0 0 20px 0;
-  padding-bottom: 5px;
-  border-bottom: 3px solid #000;
-  /* Thick underline style */
+  padding: 0 0 2px 10px;
+  /* Left padding for border */
+  border-left: 5px solid #000;
+  border-bottom: none;
+  line-height: 1;
+  /* Match border height to text */
   display: inline-block;
   width: fit-content;
 }
@@ -688,7 +689,7 @@
   aspect-ratio: 16 / 9;
   /* border: 1px solid #000; Removed */
   overflow: hidden;
-  border-radius: 10px;
+  border-radius: 1px;
   /* Added roundness */
 }
 
@@ -762,7 +763,7 @@
   aspect-ratio: 16 / 9;
   /* border: 1px solid #000; Removed */
   overflow: hidden;
-  border-radius: 10px;
+  border-radius: 1px;
   /* Added roundness */
 }
 

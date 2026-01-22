@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Logo from '../components/Logo';
 import Searchbar from '../components/Searchbar';
@@ -9,13 +9,14 @@ import './PoliticsPage.css';
 const PoliticsPage = () => {
     const name = '정치';
     const navigate = useNavigate();
-    const location = useLocation();
     const [currentPage, setCurrentPage] = useState(1);
     const [displayArticles, setDisplayArticles] = useState([]);
     const [imageMap, setImageMap] = useState({});
+    const [feedPage, setFeedPage] = useState(1);
 
     useEffect(() => {
         setCurrentPage(1);
+        setFeedPage(1);
 
         const loadData = async () => {
             try {
@@ -37,7 +38,13 @@ const PoliticsPage = () => {
                 });
 
                 if (filtered.length > 0) {
-                    const shuffled = [...filtered].sort(() => Math.random() - 0.5);
+                    let expanded = [...filtered];
+                    // Ensure at least 33 items (1 Main + 4 Grid + 8 List + 20 Feed) for testing
+                    while (expanded.length < 33) {
+                        expanded = [...expanded, ...filtered];
+                    }
+                    // Shuffle and slice to exactly 33 for this test
+                    const shuffled = expanded.sort(() => Math.random() - 0.5).slice(0, 33);
                     setDisplayArticles(shuffled);
                 } else {
                     setDisplayArticles([]);
@@ -52,15 +59,23 @@ const PoliticsPage = () => {
         loadData();
     }, []);
 
-    const renderMainContent = (index) => {
-        if (!displayArticles || displayArticles.length === 0) return null;
-        const baseIndex = (index * 4) % displayArticles.length;
-        const mainArticle = displayArticles[baseIndex];
-        const gridArticles = [
-            displayArticles[(baseIndex + 1) % displayArticles.length],
-            displayArticles[(baseIndex + 2) % displayArticles.length],
-            displayArticles[(baseIndex + 3) % displayArticles.length],
-        ];
+    // 1 Main + 4 Grid + 8 List + 20 Feed items (4 pages * 5) = 33 items total
+    const articlesPerBlock = 33;
+    const blocksPerPage = 1;
+    const articlesPerPage = articlesPerBlock * blocksPerPage;
+
+    const renderMainContent = (blockArticles, blockIndex) => {
+        if (!blockArticles || blockArticles.length === 0) return null;
+
+        const mainArticle = blockArticles[0];
+        const gridArticles = blockArticles.slice(1, 5); // 4 items (1 to 4)
+        const listArticles = blockArticles.slice(5, 13); // 8 items (5 to 12)
+
+        // Feed Logic
+        const allFeedArticles = blockArticles.slice(13); // 20 items (13 to 32)
+        const feedPageSize = 5;
+        const totalFeedPages = Math.ceil(allFeedArticles.length / feedPageSize);
+        const currentFeedArticles = allFeedArticles.slice((feedPage - 1) * feedPageSize, feedPage * feedPageSize);
 
         const mainData = {
             title: mainArticle?.title || "News Title Text Sample",
@@ -71,68 +86,179 @@ const PoliticsPage = () => {
         const grid = gridArticles.map((art, i) => ({
             id: i,
             title: art?.title || "Title Sample Text",
+            content: art?.short_text || "text sample...",
             image: art ? (imageMap[art.image] || art.image) : null
         }));
 
-        const highlights = [
-            { keyword: '중점으로 둔 키워드', content: '"해당 키워드에 대한 요약한 내용"' },
-            { keyword: '중점으로 둔 키워드', content: '"해당 키워드에 대한 요약한 내용"' },
-            { keyword: '중점으로 둔 키워드', content: '"해당 키워드에 대한 요약한 내용"' },
-            { keyword: '중점으로 둔 키워드', content: '"해당 키워드에 대한 요약한 내용"' }
-        ];
+        const list = listArticles.map((art, i) => ({
+            id: i,
+            title: art?.title || "Title Sample Text",
+            content: art?.short_text || "text sample...",
+            image: art ? (imageMap[art.image] || art.image) : null
+        }));
+
+        const feed = currentFeedArticles.map((art, i) => ({
+            id: i,
+            title: art?.title || "Title Sample Text",
+            content: art?.short_text || "text sample...",
+            image: art ? (imageMap[art.image] || art.image) : null
+        }));
 
         return (
-            <React.Fragment key={index}>
-                <section className="main-article-section">
-                    <div className="article-info-side" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
-                        <div className="analysis-box-large">
-                            <div className="analysis-placeholder">
-                                <div className="analysis-x"></div>
-                                <span className="analysis-text">분석</span>
-                            </div>
+            <React.Fragment key={blockIndex}>
+                <section className="main-article-section" style={{ display: 'flex', alignItems: 'center', gap: '40px', marginBottom: '30px', minHeight: '300px', textAlign: 'left' }}>
+
+                    {/* Left: Article Photo (Now Left) */}
+                    <div className="politics-image-side" onClick={() => navigate('/article')} style={{ flex: 1.53, cursor: 'pointer' }}>
+                        <div className="article-image-center" style={{ width: '100%', aspectRatio: '2.4 / 1', borderRadius: '1px' }}>
+                            <img src={mainData.image} alt="Main" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </div>
                     </div>
 
-                    <div className="article-image-center" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
-                        <img src={mainData.image} alt="Main" />
-                        <div className="main-image-text">
-                            <h3>{mainData.title}</h3>
-                            <p>{mainData.description}</p>
-                        </div>
-                    </div>
-
-                    <div className="highlights-side">
-                        {highlights.map((item, hIndex) => (
-                            <div key={hIndex} className="highlight-item">
-                                <span className="highlight-keyword">{item.keyword}</span>
-                                <span className="highlight-content">{item.content}</span>
-                            </div>
-                        ))}
+                    {/* Right: Article Title (Now Right) */}
+                    <div className="politics-title-side" onClick={() => navigate('/article')} style={{ flex: 1.47, cursor: 'pointer' }}>
+                        <h2 style={{ fontSize: '36px', fontWeight: 'bold', lineHeight: '1.3', color: '#000', margin: 0 }}>
+                            {mainData.title}
+                        </h2>
+                        <p style={{ fontSize: '16px', color: '#666', marginTop: '15px', lineHeight: '1.6' }}>
+                            {mainData.description}
+                        </p>
                     </div>
                 </section>
-                <div className="section-divider"></div>
-                <section className="bottom-grid-section">
-                    {grid.map((news) => (
-                        <div key={news.id} className="grid-item" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
-                            <div className="grid-image">
-                                <img src={news.image} alt={news.title} />
-                                <div className="image-placeholder-text">IMAGE</div>
-                                <div className="grid-title-overlay">
-                                    <h3>{news.title}</h3>
+
+                {/* Grid Section (4 items) */}
+                {grid.length > 0 && (
+                    <>
+                        <section className="bottom-grid-section" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '40px', marginBottom: '50px', textAlign: 'left' }}>
+                            {grid.map((news) => (
+                                <div key={news.id} className="grid-item" onClick={() => navigate('/article')} style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                    {/* Image Removed for Text-Only Layout */}
+                                    <div className="grid-info">
+                                        <h3 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 5px 0', lineHeight: '1.4' }}>{news.title}</h3>
+                                        <p style={{ fontSize: '13px', color: '#666', margin: 0, lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                            {news.content}
+                                        </p>
+                                    </div>
                                 </div>
+                            ))}
+                        </section>
+                    </>
+                )}
+
+                {/* List Section (8 items, 2 cols x 4 rows) */}
+                {list.length > 0 && (
+                    <>
+                        <div className="section-divider"></div>
+                        <section className="bottom-list-section" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', columnGap: '40px', rowGap: '30px', textAlign: 'left' }}>
+                            {list.map((news) => (
+                                <div key={news.id} className="list-item" onClick={() => navigate('/article')} style={{ cursor: 'pointer', display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
+                                    <div className="list-image" style={{ width: '120px', height: '76px', flexShrink: 0, border: '1px solid #eee', overflow: 'hidden' }}>
+                                        <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    </div>
+                                    <div className="list-info" style={{ flex: 1 }}>
+                                        <h3 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 8px 0', lineHeight: '1.3' }}>{news.title}</h3>
+                                        <p style={{ fontSize: '13px', color: '#666', margin: 0, lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                            {news.content}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </section>
+                    </>
+                )}
+
+                {/* Feed Section (Pagination) */}
+                {feed.length > 0 && (
+                    <>
+                        <div className="section-divider"></div>
+                        <section className="bottom-feed-section" style={{ display: 'flex', flexDirection: 'column', gap: '30px', textAlign: 'left', marginTop: '30px', padding: '0 120px' }}>
+                            {feed.map((news) => (
+                                <div key={news.id} className="feed-item" onClick={() => navigate('/article')} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px' }}>
+
+                                    {/* Left Container: Like + Text */}
+                                    <div style={{ display: 'flex', flex: 1, paddingRight: '0px' }}>
+                                        {/* Like Button (Display Only) */}
+                                        <div className="like-icon" style={{
+                                            marginRight: '50px',
+                                            paddingRight: '15px',
+                                            borderRight: '1px solid #ddd',
+                                            marginTop: '5px',
+                                            display: 'flex',
+                                            flexDirection: 'row', // Horizontal
+                                            alignItems: 'center',
+                                            justifyContent: 'center', // Center content in fixed width
+                                            color: '#999',
+                                            minWidth: '100px', // Reserve space for 6 digits
+                                            gap: '8px' // Gap between icon and number
+                                        }}>
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 0 0 1-2-2v-7a2 0 0 1 2-2h3" />
+                                            </svg>
+                                            <span style={{ fontSize: '14px', fontWeight: '500' }}>{120 + news.id}</span>
+                                        </div>
+
+                                        {/* Text Info */}
+                                        <div className="feed-info">
+                                            <h3 style={{ fontSize: '20px', fontWeight: 'bold', margin: '0 0 12px 0', lineHeight: '1.3' }}>{news.title}</h3>
+                                            <p style={{ fontSize: '15px', color: '#666', margin: 0, lineHeight: '1.6', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                                {news.content}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Image Right (Reduced Height: aspect-ratio 1.8/1) */}
+                                    <div className="feed-image" style={{ width: '312px', aspectRatio: '1.8/1', flexShrink: 0, overflow: 'hidden', borderRadius: '4px', marginLeft: '-20px' }}>
+                                        <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    </div>
+                                </div>
+                            ))}
+                        </section>
+
+                        {/* Pagination Numbers (Box Style) */}
+                        {totalFeedPages > 1 && (
+                            <div style={{ textAlign: 'center', marginTop: '40px', marginBottom: '100px', display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                                {Array.from({ length: totalFeedPages }, (_, i) => i + 1).map((pageNum) => (
+                                    <button
+                                        key={pageNum}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setFeedPage(pageNum);
+                                        }}
+                                        style={{
+                                            width: '36px',
+                                            height: '36px',
+                                            display: 'flex',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            fontSize: '14px',
+                                            border: feedPage === pageNum ? '1px solid #333' : '1px solid #eee',
+                                            backgroundColor: feedPage === pageNum ? '#333' : '#fff',
+                                            color: feedPage === pageNum ? '#fff' : '#666',
+                                            cursor: 'pointer',
+                                            fontWeight: feedPage === pageNum ? 'bold' : 'normal',
+                                            borderRadius: '0px'
+                                        }}
+                                    >
+                                        {pageNum}
+                                    </button>
+                                ))}
                             </div>
-                        </div>
-                    ))}
-                </section>
-                <div className="divider"></div>
+                        )}
+                    </>
+                )}
             </React.Fragment>
         );
     };
 
+    const totalPages = Math.max(1, Math.ceil(displayArticles.length / articlesPerPage));
 
-
-
-    const totalPages = 5;
+    // Group articles for current page
+    const startIndex = (currentPage - 1) * articlesPerPage;
+    const pageArticles = displayArticles.slice(startIndex, startIndex + articlesPerPage);
+    const articleBlocks = [];
+    for (let i = 0; i < pageArticles.length; i += articlesPerBlock) {
+        articleBlocks.push(pageArticles.slice(i, i + articlesPerBlock));
+    }
 
     return (
         <div className="category-page">
@@ -157,32 +283,15 @@ const PoliticsPage = () => {
                     <h1>{name}</h1>
                 </div>
 
-                {displayArticles.length > 0 ? (
-                    [...Array(5)].map((_, i) => renderMainContent(i + (currentPage - 1) * 5))
+                {articleBlocks.length > 0 ? (
+                    articleBlocks.map((block, i) => renderMainContent(block, i))
                 ) : (
                     <div className="empty-category">
                         <p>해당 카테고리에 표시할 기사가 없습니다.</p>
                     </div>
                 )}
 
-
-
-
-                <div className="pagination">
-                    <span onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} style={{ cursor: 'pointer' }}>{"<"}</span>
-                    {[...Array(totalPages)].map((_, i) => (
-                        <React.Fragment key={i + 1}>
-                            <span
-                                className={`page-num ${currentPage === i + 1 ? 'active' : ''}`}
-                                onClick={() => setCurrentPage(i + 1)}
-                            >
-                                {i + 1}
-                            </span>
-                            {i < totalPages - 1 && <span className="separator">|</span>}
-                        </React.Fragment>
-                    ))}
-                    <span onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} style={{ cursor: 'pointer' }}>{">"}</span>
-                </div>
+                {/* Pagination Removed */}
             </main>
         </div>
     );
