@@ -62,9 +62,6 @@ const UserMenu = () => {
   return (
     <div className="user-menu-container" ref={menuRef}>
       <div className="user-info-wrapper" onClick={handleIconClick}>
-        {isLoggedIn && (
-          <span className="user-name">{(userName || "회원") + "님"}</span>
-        )}
         <div className="user-icon-box">
           <img
             src={loginIcon}
@@ -72,6 +69,9 @@ const UserMenu = () => {
             className="user-icon"
           />
         </div>
+        {isLoggedIn && (
+          <span className="user-name">{(userName || "회원") + "님"}</span>
+        )}
       </div>
       {isLoggedIn && showMenu && (
         <div className="dropdown-menu">

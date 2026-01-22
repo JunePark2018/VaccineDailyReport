@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ArticlePage from './pages/ArticlePage.jsx';
 import CategoryPage from './pages/CategoryPage.jsx';
 import CreateAccount from './pages/CreateAccount.jsx';
-import Issues from './pages/Issues.jsx';
 import Login from './components/Login.jsx';
 import MyPage from './pages/MyPage.jsx';
 import EditAccount from './pages/EditAccount.jsx';
@@ -38,7 +37,6 @@ function App() {
           <Route path="/world" element={<WorldPage />} />
           <Route path="/total" element={<TotalMenuPage />} />
           <Route path="/category/:name" element={<CategoryPage />} />
-          <Route path="/issues" element={<Issues />} />
           <Route path='/login' element={<Login />} />
           <Route path='/CreateAccount' element={<CreateAccount />} />
           <Route path='/mypage' element={<MyPage />} />

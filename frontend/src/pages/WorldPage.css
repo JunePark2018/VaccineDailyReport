@@ -283,12 +283,12 @@
 }
 
 .category-page .section-divider {
-    border-top: 1px solid #ccc;
+    border-top: 2px solid #000;
     margin: 50px 0;
 }
 
 .category-page .divider {
-    border-top: 1px solid #000000;
+    border-top: 2px solid #000;
     margin: 50px 0;
 }
 

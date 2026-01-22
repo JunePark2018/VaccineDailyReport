@@ -70,12 +70,11 @@ const Header = ({
             {categories.map((item) => (
               <div
                 key={item.id}
-                className={`category-item ${activeCategory === item.label || (item.label === '이슈' && location.pathname === '/issues')
-                    ? 'active' : ''
+                className={`category-item ${activeCategory === item.label
+                  ? 'active' : ''
                   }`}
                 onClick={() => {
-                  if (item.label === '이슈') nav('/issues');
-                  else if (item.label === '정치') nav('/politics');
+                  if (item.label === '정치') nav('/politics');
                   else if (item.label === '경제') nav('/economy');
                   else if (item.label === '사회') nav('/society');
                   else if (item.label === '생활/문화') nav('/living-culture');

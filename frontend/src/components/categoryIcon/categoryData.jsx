@@ -1,5 +1,4 @@
 import totalmenuIcon from './totalmenu.png';
-import issueIcon from './issue.png';
 import governmentIcon from './government.png';
 import economicsIcon from './economics.png';
 import societyIcon from './society.png';
@@ -9,7 +8,6 @@ import worldIcon from './world.png';
 
 export const categories = [
     { id: 'sub1', label: '홈', icon: totalmenuIcon },
-    { id: 'sub2', label: '이슈', icon: issueIcon },
     { id: 'sub3', label: '정치', icon: governmentIcon },
     { id: 'sub4', label: '경제', icon: economicsIcon },
     { id: 'sub5', label: '사회', icon: societyIcon },
