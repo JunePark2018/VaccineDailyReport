@@ -9,6 +9,7 @@ from sqlalchemy import or_
 
 from routers import get_db
 from database.models import AiGeneratedNews, Cluster
+from database import crud
 
 # schemas import 제거 - dict 반환으로 충분
 
@@ -163,3 +164,13 @@ def get_generated_news_detail(generated_news_id: int, db: Session = Depends(get_
         "dislike_count": generated_news.dislike_count,
         "cluster": generated_news.cluster,
     }
+
+
+@router.get("/clusters/{cluster_id}/news")
+def read_cluster_news(cluster_id: int, db: Session = Depends(get_db)):
+    """
+    클러스터 ID를 받아서 연결된 원본 기사 목록(제목, URL, 언론사명)을 반환합니다.
+    """
+    original_news_list = crud.get_original_news_details_by_cluster(db, cluster_id)
+
+    return original_news_list

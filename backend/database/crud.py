@@ -246,6 +246,24 @@ def remove_news_from_cluster(db: Session, *, cluster_id: int, news_id: int) -> i
     return res.rowcount or 0
 
 
+def get_original_news_details_by_cluster(db: Session, cluster_id: int) -> List[dict]:
+    """
+    cluster_id를 받아서 연결된 원본 기사들의 [제목, URL, 언론사명]을 반환합니다.
+    (Sources 컴포넌트용 데이터)
+    """
+    # 1. News, Company, cluster_news_link 3개를 조인(Join)합니다.
+    results = (
+        db.query(News.title, News.url, Company.name.label("company_name"))
+        .join(cluster_news_link, News.id == cluster_news_link.c.news_id)
+        .join(Company, News.company_id == Company.id)
+        .filter(cluster_news_link.c.cluster_id == cluster_id)
+        .all()
+    )
+
+    # 2. 프론트엔드가 쓰기 편한 리스트 형태로 변환
+    return [{"title": row.title, "url": row.url, "company_name": row.company_name} for row in results]
+
+
 # -------------------------
 # AiGeneratedNews
 # -------------------------

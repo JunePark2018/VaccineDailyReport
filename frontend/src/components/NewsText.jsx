@@ -23,10 +23,10 @@ const NewsText = ({ title, contents, onSentenceClick }) => {
 
     // 3. 순수 클릭일 때만 아래 로직 실행
     const cleanSentence = sentence.trim();
-    
+
     // [수정된 부분] alert 대신 부모가 준 함수를 실행합니다.
     if (onSentenceClick) {
-        onSentenceClick(cleanSentence);
+      onSentenceClick(cleanSentence);
     }
   };
 
@@ -40,21 +40,25 @@ const NewsText = ({ title, contents, onSentenceClick }) => {
       if (line.trim() === '') return null;
 
       // 2. 마침표(.)로 문장 분리
-      const sentences = line.split('.');
+      const sentences = line.split('. ');
       const isLastParagraph = lineIndex === lines.length - 1;
 
       return (
         <p key={lineIndex} className="news-paragraph">
           {sentences.map((sentence, sentenceIndex) => {
-            if (sentence.trim() === '') return null;
+            const s = sentence.trim();
+            if (!s) return null;
+
+            const punctRe = /[.!?…]$/;
+            const endsWithPunct = punctRe.test(s);
+
             return (
               <span
                 key={sentenceIndex}
                 className="clickable-sentence"
-                // 클릭 시 위에서 정의한 핸들러 실행
-                onClick={() => handleSentenceClick(sentence)}
+                onClick={() => handleSentenceClick(s)}
               >
-                {sentence}.{' '}
+                {s}{endsWithPunct ? '' : '.'}{' '}
               </span>
             );
           })}

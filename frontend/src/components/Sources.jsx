@@ -1,76 +1,78 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import './Sources.css';
 
-/**
- * Sources 컴포넌트
- * 뉴스 기사 목록을 보여주고, '더 보기' 및 '전체보기' 기능을 제공합니다.
- * @param {Array} articles - { title, company_name, url } 형태의 기사 데이터 리스트
- */
-const Sources = ({ articles = [] }) => {
-  // [상태 관리] 처음에 보여줄 기사의 개수 (초기값: 5개)
+const Sources = ({ clusterId }) => {
+  const [articles, setArticles] = useState([]);
   const [visibleCount, setVisibleCount] = useState(5);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // [이벤트 핸들러] '10개 더 보기' 버튼 클릭 시 실행
-  const handleLoadMore = () => {
-    setVisibleCount((prevCount) => prevCount + 10);
-  };
+  useEffect(() => {
+    const fetchArticles = async () => {
+      if (!clusterId) return;
 
-  // [이벤트 핸들러] '전체보기' 버튼 클릭 시 실행 (전체 길이로 설정)
-  const handleShowAll = () => {
-    setVisibleCount(articles.length);
-  };
+      setIsLoading(true);
+      try {
+        console.log(`[Sources] Cluster ID ${clusterId}로 원본 기사 요청 중...`);
 
-  // 데이터가 없거나 비어있으면 아무것도 렌더링하지 않음 (보호 코드)
-  if (!articles || articles.length === 0) return null;
+        const response = await axios.get(`http://localhost:8000/generated-news/clusters/${clusterId}/news`);
 
-  // [데이터 가공]
-  // 1. 현재 보여줄 개수만큼 배열을 자름
+        console.log("[Sources] 원본 기사 로딩 완료:", response.data);
+        setArticles(response.data);
+      } catch (error) {
+        console.error("[Sources] 원본 기사 불러오기 실패:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchArticles();
+  }, [clusterId]);
+
+  // [수정] handleLoadMore 함수 삭제됨
+
+  // 전체보기 기능은 유지
+  const handleShowAll = () => setVisibleCount(articles.length);
+
   const currentArticles = articles.slice(0, visibleCount);
-  // 2. 보여주지 않은 남은 기사 개수 계산
   const remainingCount = articles.length - visibleCount;
 
   return (
     <div className="Sources">
-      {/* --- 상단 타이틀 영역 --- */}
       <h1 className="sources-header">
-        원본 기사 
-        {/* 타이틀 옆에 전체 기사 개수를 괄호와 함께 표시 */}
-        <span className="article-count">( {articles.length}개 )</span>
+        참조된 원본 기사
+        <span className="article-count"> ({articles.length}개)</span>
       </h1>
-      
-      {/* --- 기사 리스트 영역 --- */}
+
+      {isLoading && <p style={{ padding: '10px', color: '#888' }}>불러오는 중...</p>}
+
+      {!isLoading && articles.length === 0 && (
+        <p style={{ padding: '10px', color: '#888', fontSize: '14px' }}>
+          연결된 원본 기사가 없습니다.
+        </p>
+      )}
+
       <ul className="sources-list">
-        {currentArticles.map(({ title, company_name, url }, index) => (
+        {currentArticles.map((article, index) => (
           <li key={index} className="source-item">
-            {/* 언론사명 */}
-            <span className="company-name">{company_name}</span>
-            {/* 구분선 (-) */}
+            <span className="company-name">{article.company_name}</span>
             <span className="separator">-</span>
-            {/* 기사 제목 (클릭 시 새 창으로 이동) */}
-            <a 
-              href={url} 
-              target="_blank" 
-              rel="noopener noreferrer" 
+            <a
+              href={article.url}
+              target="_blank"
+              rel="noopener noreferrer"
               className="article-link"
             >
-              {title}
+              {article.title}
             </a>
           </li>
         ))}
       </ul>
 
-      {/* --- 하단 버튼 영역 (남은 기사가 있을 때만 표시) --- */}
+      {/* [수정] 10개 더보기 버튼 삭제하고 전체보기 버튼만 남김 */}
       {remainingCount > 0 && (
         <div className="load-more-container">
-          {/* 버튼 1: 10개씩 더 불러오기 */}
-          <button className="load-more-button" onClick={handleLoadMore}>
-            <span className="arrow">▼</span> 10개 더 보기
-          </button>
-          
-          {/* 버튼 2: 한 번에 모두 펼치기 */}
-          <button className="load-more-button" onClick={handleShowAll}>
-            <span className="arrow">▼</span> 전체보기
-          </button>
+          <button className="load-more-button" onClick={handleShowAll}>▼ 전체보기</button>
         </div>
       )}
     </div>
