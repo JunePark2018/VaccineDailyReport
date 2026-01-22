@@ -92,7 +92,7 @@ export default function SearchResult() {
                 <div className="SearchResult_Content">
                     <div className="Title_Wrapper">
                         <h3 className="AI_Title">
-                            {isLoading ? `'${searchTerm}' 를 조회중입니다...` : `'${searchTerm}' 검색 결과`}
+                            {isLoading ? `'${searchTerm}' 을(를) 조회중입니다...` : `'${searchTerm}' 검색 결과`}
                         </h3>
                     </div>
 

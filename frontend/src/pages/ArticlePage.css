@@ -22,6 +22,21 @@
   min-width: 0;
 }
 
+.ArticlePage .main-content .article-section .article-img {
+  height: 300px;
+}
+
+.ArticlePage .main-content .article-section .article-img img {
+  max-height: 300px;
+  object-fit: cover;
+}
+
+
+
+.ArticlePage .main-content .article-comparer {
+  text-align: left;
+}
+
 .ArticlePage .main-content .additional-section {
   width: 300px;
   margin-left: 40px;

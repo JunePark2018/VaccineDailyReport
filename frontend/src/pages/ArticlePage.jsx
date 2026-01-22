@@ -22,6 +22,8 @@ function ArticlePage() {
 
   const [keywords, setKeywords] = useState([]);
 
+  const [imgURL, setImgURL] = useState("");
+
   // [수정 1] 사이드바 열림 상태 + '어떤 문장'이 선택되었는지 저장하는 상태 추가
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [selectedSentence, setSelectedSentence] = useState(null);
@@ -40,25 +42,44 @@ function ArticlePage() {
 
   useEffect(() => {
 
-    // 기사 수집
-    const fetchArticle = async () => {
+    const fetchInfo = async () => {
       try {
-        const response = await axios.get(`http://localhost:8000/generated-news/${id}`);
-        const article = response.data;
+        // AI 생성 기사 가져오기
+        const ai_news_response = await axios.get(`http://localhost:8000/generated-news/${id}`);
+        const article = ai_news_response.data;
         console.log(article);
-
         setArticle(article);
 
+        // 키워드 가져오기
         const filteredKeywords = JSON.parse(article.keywords).filter(
-          item => item.value > 50
+          item => item.value > 20
         );
-        console.log(article.keywords);
         setKeywords(filteredKeywords);
+
+        // 사용된 기사들 가져와서 랜덤하게 사진 고르기
+        const img_url_response = await axios.get(`http://localhost:8000/generated-news/clusters/${ai_news_response.data.cluster_id}/news`);
+        const newsList = img_url_response.data;
+
+        // 1모든 기사에서 img_urls만 모아서 평탄화
+        const allImgUrls = newsList
+          .flatMap(news => news.img_urls ?? [])
+          .filter(Boolean);
+
+        // 이미지가 하나도 없으면 중단
+        if (allImgUrls.length === 0) {
+          console.warn("이미지 URL이 없습니다");
+          return;
+        }
+
+        // 랜덤 선택
+        const img_number = Math.floor(Math.random() * allImgUrls.length);
+        setImgURL(allImgUrls[img_number]);
       } catch (error) {
         console.error('DB 데이터를 불러올 수 없습니다:', error);
       }
     };
-    fetchArticle();
+
+    fetchInfo();
   }, [id]); // id가 바뀔 때마다 다시 불러오도록 의존성 배열 추가
 
   // 워드 클라우드 (재렌더링 방지)
@@ -96,12 +117,22 @@ function ArticlePage() {
         {/* 하단 */}
         <main className="main-content">
           <div className='article-section'>
-            {/* [수정 3] NewsText에 handleSentenceClick 함수 전달 */}
+            <div className='article-img'>
+              <img src={imgURL} />
+            </div>
             <NewsText
               title={article.title}
               contents={article.contents}
               onSentenceClick={handleSentenceClick}
             />
+            <div className="article-comparer">
+              <h3 className="section-title">비교분석</h3>
+              <ul>
+                {article?.analysis_result?.media_comparison_bullets?.map((text, idx) => (
+                  <li key={idx}>{text.replace(/^- /, '')}</li>
+                ))}
+              </ul>
+            </div>
             <Sources clusterId={article.cluster_id} />
           </div>
           <div className="additional-section">
