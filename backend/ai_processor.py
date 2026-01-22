@@ -11,7 +11,7 @@ from database.models import AiGeneratedNews
 from dotenv import load_dotenv
 
 # 🔑 API 키 확인 필수
-load_dotenv()
+load_dotenv(override=True)
 
 api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:

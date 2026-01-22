@@ -13,4 +13,3 @@ backend/__pycache__/
 backend/venv/
 backend/.env
 backend/chroma_db
-backend/sql.db

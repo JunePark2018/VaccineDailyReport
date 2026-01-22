@@ -6,6 +6,7 @@ import NewsText from '../components/NewsText';
 import Header from '../components/Header';
 import Searchbar from '../components/Searchbar';
 import Logo from '../components/Logo';
+import logoImg from '../components/Logo.png';
 import UserMenu from '../components/UserMenu';
 import './ArticlePage.css';
 import axios from 'axios';
@@ -41,6 +42,8 @@ function ArticlePage() {
   };
 
   useEffect(() => {
+    // [추가] 페이지 진입 시 스크롤 최상단으로 이동
+    window.scrollTo(0, 0);
 
     const fetchInfo = async () => {
       try {
@@ -118,7 +121,7 @@ function ArticlePage() {
         <main className="main-content">
           <div className='article-section'>
             <div className='article-img'>
-              <img src={imgURL} />
+              <img src={imgURL} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
             </div>
             <NewsText
               title={article.title}

@@ -13,7 +13,7 @@ from ibm_watsonx_ai.foundation_models import ModelInference
 # Initialize IBM WatsonX Model
 # ------------------------------------
 
-load_dotenv()
+load_dotenv(override=True)
 
 credentials = {"apikey": os.getenv("WATSONX_API_KEY"), "url": os.getenv("WATSONX_URL")}
 
