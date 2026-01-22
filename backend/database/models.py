@@ -117,6 +117,10 @@ class AiGeneratedNews(Base):
     title = Column(String, nullable=True)
     contents = Column(Text, nullable=True)
 
+    search_keyword = Column(String, nullable=True)  
+    global_search_status = Column(String, default="PENDING")
+    search_retry_count = Column(Integer, default=0) 
+
     keywords = Column(JSON, nullable=True)
     analysis_result = Column(JSON, nullable=True)
 

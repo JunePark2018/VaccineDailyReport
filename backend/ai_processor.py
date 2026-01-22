@@ -67,7 +67,14 @@ async def process_single_issue(issue: AiGeneratedNews, kw_extractor: KeywordExtr
             summary_result = generate_balanced_article(
                 model_name=MODEL, cluster_topic=issue.title, articles=articles_data
             )
-            issue.contents = summary_result  # Markdown text
+            issue.title = summary_result.get("title", issue.title) # AI가 정한 제목으로 업데이트
+            issue.contents = summary_result.get("contents", "")
+            issue.search_keyword = summary_result.get("search_keyword", "") # 외신 검색어 저장
+
+            if issue.search_keyword:
+                issue.global_search_status = "PENDING"
+                issue.search_retry_count = 0
+                print(f"      🌍 외신 검색어 추출: {issue.search_keyword}")
 
             # -------------------------------------------------
             # 3-2. 비교 분석 (Async Pipeline)
