@@ -275,9 +275,8 @@ def run_issue_clustering(db: Session, days=3):
         print(f"⚠️ [DEBUG] 기사 수 부족 (최소 5개 필요, 현재 {len(articles)}개)")
         return
 
-    # [Fix] AttributeError 방지를 위해 임시 속성 초기화
-    for a in articles:
-        a.issue_id = None
+    # DB 모델에 없는 issue_id 속성을 객체에 강제로 붙이는 대신, 이 딕셔너리를 사용합니다.
+    assigned_issues = {}
 
     # 1. 모든 대상 기사의 임베딩 확보 (ChromaDB 캐시 활용)
     embeddings = get_embeddings_with_cache(articles)
@@ -305,8 +304,6 @@ def run_issue_clustering(db: Session, days=3):
         existing_news_ids = {n.id for n in issue.cluster.news}
 
         for i, a in enumerate(articles):
-            if a.issue_id is not None:
-                continue
 
             # [Fix] 이미 이 이슈(클러스터)에 포함된 기사라면 유사도 계산 건너뛰기
             if a.id in existing_news_ids:
@@ -315,12 +312,12 @@ def run_issue_clustering(db: Session, days=3):
 
             sim = cosine_similarity(embeddings[i].reshape(1, -1), issue_vec)[0][0]
             if sim >= 0.80:  # 보수적 값으로 복원
-                a.issue_id = issue.id
+                assigned_issues[a.id] = issue.id
                 print(f"  🔗 [DEBUG] 기사 {a.id}를 기존 이슈 {issue.id}에 연결 (유사도: {sim:.2f})")
 
     # 3. 신규 클러스터링
     print("클러스터링 시작")
-    rem = [(i, a) for i, a in enumerate(articles) if a.issue_id is None]
+    rem = [(i, a) for i, a in enumerate(articles) if a.id not in assigned_issues]
     print(f"🔗 [DEBUG] 클러스터링 대상 기사: {len(rem)}개")
     if len(rem) < 5:  # 최소 5개로 상향
         print(f"⚠️ [DEBUG] 클러스터링 대상 기사 수 부족 (최소 5개 필요, 현재 {len(rem)}개)")
@@ -366,9 +363,9 @@ def run_issue_clustering(db: Session, days=3):
         print(f"    └─ ✅ 새 이슈 생성: {issue.title}")
         print(f"       (ID: {issue.id}, 기사 {len(picked)}개)")
 
-        # 5. 클러스터 내 기사들에 이슈 ID 연결
+        # 5. 클러스터 내 기사들에 이슈 ID 연결 (로컬 추적용)
         for a in picked:
-            a.issue_id = issue.id
+            assigned_issues[a.id] = issue.id
 
     db.commit()
     print("--- [DONE] 클러스터링 및 이슈 업데이트 완료 ---")

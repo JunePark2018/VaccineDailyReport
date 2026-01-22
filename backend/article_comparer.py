@@ -75,161 +75,33 @@ mock_articles = [
 # ======================================================
 # 유틸: 안전한 JSON 처리/스키마 보정
 # ======================================================
-TONE_LABELS = ["비판적", "옹호적", "중립적", "건조함", "감정적", "선동적", "냉소적"]
 
 
 def ensure_company_schema(company_name: str, data: Dict[str, Any]) -> Dict[str, Any]:
     if not isinstance(data, dict):
         data = {"error": "non-dict"}
 
-    # summary 정규화: 항상 길이 3 리스트
-    summary = data.get("summary")
-    if isinstance(summary, str):
-        lines = [x.strip(" -•\t") for x in summary.splitlines() if x.strip()]
-        summary = (lines + [None, None, None])[:3]
-    elif isinstance(summary, list):
-        summary = (summary + [None, None, None])[:3]
-    else:
-        summary = [None, None, None]
-
-    # framing 보정
-    framing = data.get("framing") if isinstance(data.get("framing"), dict) else {}
-    framing_out = {
-        "primary_frame": framing.get("primary_frame") or "불명확",
-        "blame_target": framing.get("blame_target") or "불명확",
-        "policy_orientation": framing.get("policy_orientation") or "불명확",
-    }
-
-    # style 보정
-    style = data.get("style") if isinstance(data.get("style"), dict) else {}
-    intensity = style.get("rhetorical_intensity", 0)
-    try:
-        intensity = int(intensity)
-    except Exception:
-        intensity = 0
-    intensity = max(0, min(3, intensity))
-
-    style_out = {
-        "evidence_style": style.get("evidence_style") or "불명확",
-        "rhetorical_intensity": intensity,
-    }
-
-    # evidence_quotes 보정: 리스트 + 길이 제한
-    quotes = data.get("evidence_quotes")
-    if not isinstance(quotes, list):
-        quotes = []
-    trimmed = []
-    for q in quotes[:4]:
-        if isinstance(q, str) and q.strip():
-            qq = q.strip()
-            if len(qq) > 240:
-                qq = qq[:240].rstrip() + "…"
-            trimmed.append(qq)
-
     return {
         "company": data.get("company") or company_name,
-        "summary": summary,
-        "main_cause": data.get("main_cause"),
-        "solution": data.get("solution"),
-        "framing": framing_out,
-        "style": style_out,
-        "evidence_quotes": trimmed,
-        "selected_article_ids": data.get("selected_article_ids", []),
+        "title": data.get("title") or "제목 없음",
+        "body": data.get("body") or "내용 없음",
         "error": data.get("error"),
+        "selected_article_ids": data.get("selected_article_ids", []),
     }
 
 
-def normalize_ui_report(report: Dict[str, Any], company_analyses: Dict[str, Any]) -> Dict[str, Any]:
-    companies = [c for c in company_analyses.keys()]
+def ensure_reduce_schema(data: dict) -> dict:
+    if not isinstance(data, dict):
+        return {"media_comparison_bullets": [], "error": "non-dict"}
 
-    if not isinstance(report, dict):
-        report = {}
+    bullets = data.get("media_comparison_bullets", [])
+    if not isinstance(bullets, list):
+        bullets = []
 
-    report.setdefault("event", {"topic": None, "time_window": None})
-    report.setdefault("media_comparison_bullets", [])
-    report.setdefault("outlet_cards", [])
-    report.setdefault("difference_axes", [])
-    report.setdefault("highlights", [])
+    # 문자열 아닌 항목 제거
+    bullets = [b for b in bullets if isinstance(b, str)]
 
-    # outlet_cards가 비었거나 누락이면 Map 결과로 재구성
-    cards = report.get("outlet_cards")
-    if not isinstance(cards, list) or len(cards) == 0:
-        report["outlet_cards"] = [company_analyses[c] for c in companies]
-    else:
-        # 카드가 회사 전체를 포함하도록 보정
-        existing = {c.get("company") for c in cards if isinstance(c, dict)}
-        for c in companies:
-            if c not in existing:
-                report["outlet_cards"].append(company_analyses[c])
-
-    # difference_axes 보정: 최소 축 구성 + 모든 회사 row 포함 강제
-    allowed_axes = {"primary_frame", "blame_target", "policy_orientation", "evidence_style", "rhetorical_intensity"}
-
-    axes = report.get("difference_axes")
-    if not isinstance(axes, list):
-        axes = []
-
-    # 축이 너무 적으면 기본 5축을 코드로 생성
-    if len(axes) < 3:
-        axes = []
-        # 기본 축 생성
-        defaults = [
-            ("primary_frame", "핵심 프레임"),
-            ("blame_target", "책임 대상"),
-            ("policy_orientation", "해결책 성격"),
-            ("evidence_style", "근거 스타일"),
-            ("rhetorical_intensity", "수사 강도"),
-        ]
-        for axis, label in defaults:
-            rows = []
-            for c in companies:
-                a = company_analyses[c]
-                if axis in {"primary_frame", "blame_target", "policy_orientation"}:
-                    val = a["framing"].get(axis, "불명확")
-                elif axis == "evidence_style":
-                    val = a["style"].get("evidence_style", "불명확")
-                else:
-                    val = a["style"].get("rhetorical_intensity", 0)
-                rows.append({"company": c, "value": val})
-            axes.append({"axis": axis, "label": label, "rows": rows})
-        report["difference_axes"] = axes
-    else:
-        # LLM axes를 정리/보정
-        normalized_axes = []
-        for ax in axes:
-            if not isinstance(ax, dict):
-                continue
-            axis = ax.get("axis")
-            if axis not in allowed_axes:
-                continue
-            label = ax.get("label") or axis
-
-            rows = ax.get("rows")
-            if not isinstance(rows, list):
-                rows = []
-
-            row_map = {}
-            for r in rows:
-                if isinstance(r, dict) and r.get("company"):
-                    row_map[r["company"]] = r.get("value", "불명확")
-
-            # 회사 전체 포함 강제
-            fixed_rows = [{"company": c, "value": row_map.get(c, "불명확")} for c in companies]
-            normalized_axes.append({"axis": axis, "label": label, "rows": fixed_rows})
-
-        # 그래도 너무 적으면 기본 축으로 채우기
-        if len(normalized_axes) < 3:
-            report["difference_axes"] = []
-            return normalize_ui_report(report, company_analyses)
-
-        report["difference_axes"] = normalized_axes
-
-    # highlights 최소 보정
-    hl = report.get("highlights")
-    if not isinstance(hl, list) or len(hl) == 0:
-        report["highlights"] = [{"type": "core_conflict", "text": "언론사별 프레임/책임/해결책 관점이 상이함"}]
-
-    return report
+    return {"media_comparison_bullets": bullets, "error": data.get("error")}
 
 
 def safe_json_loads(s: str) -> Dict[str, Any]:
@@ -288,7 +160,9 @@ def get_synthesized_content_by_company(
             selected_ids.append(art.get("id"))
             title = art.get("title", "")
             contents = art.get("contents", "")
-            combined += f"\n--- [기사 {idx+1} | id={art.get('id')} | 제목: {title}] ---\n" f"{contents}"
+            combined += (
+                f"\n--- [기사 {idx+1} | id={art.get('id')} | url={art.get('url')} | 제목: {title}] ---\n{contents}"
+            )
 
         synthesized[company] = {
             "combined_text": combined.strip(),
@@ -328,33 +202,24 @@ async def call_llm_json(messages: List[Dict[str, str]], temperature: float = 0.2
 # ======================================================
 def build_company_system_prompt() -> str:
     return """
-너는 미디어 분석 AI다. 제공된 기사 묶음을 바탕으로
-이 언론사의 관점을 '차이 분석에 적합한 구조'로 추출하라.
+너는 전문 뉴스 편집자(Editor)이다.
+제공된 여러 개의 기사들은 모두 **동일한 언론사**에서 특정 이슈에 대해 보도한 것들이다.
 
-[중요 규칙]
-- **모든 텍스트 값은 반드시 한국어로 작성하라.**
-- 모든 키를 반드시 포함하라. 모르면 null 또는 "불명확"으로 써라.
-- summary는 반드시 길이 3의 배열.
-- framing과 style은 '주장 방식의 차이'를 드러내는 핵심이다.
-- rhetorical_intensity는 기사 표현 강도를 0~3 정수로 평가하라.
-- evidence_quotes는 기사 내용에서 직접 발췌한 근거 문장 2~4개.
+너의 임무는 이 기사들의 내용을 모두 종합하여, **중복을 제거하고 하나의 완벽한 종합 기사(Comprehensive Article)**로 재작성하는 것이다.
+
+[작성 규칙]
+1. **관점 유지**: 원본 기사들의 논조, 프레임, 주요 주장, 단어 선택 등 **해당 언론사의 고유한 색채(Tone & Manner)**를 그대로 유지해야 한다.
+2. **사실 통합**: 여러 기사에 흩어져 있는 팩트들을 시간순이나 논리적 순서에 맞게 통합하라.
+3. **중복 제거**: 똑같은 내용이 반복되지 않도록 하라.
+4. **언어**: 반드시 **한국어**로 작성하라.
+5. **근거 제한**: 제공된 기사들에 등장하지 않는 사실/수치/인용/고유명사는 절대 추가하지 마라.
+6. **불확실성 표기**: 기사들 간 내용이 엇갈리면 단정하지 말고 "기사마다 다르게 전한다"처럼 표기하라.
 
 [출력 JSON 형식]
 {
   "company": "언론사명",
-  "summary": ["...", "...", "..."],
-  "main_cause": "...",
-  "solution": "...",
-  "framing": {
-    "primary_frame": "구조적 실패 | 개인 과실 | 경제 피해 | 복합 | 불명확",
-    "blame_target": "정부 | 기관 | 개인 | 기업 | 구조 | 복합 | 불명확",
-    "policy_orientation": "처벌 강화 | 제도 개선 | 예산/인프라 | 지원/보상 | 조사/원인규명 | 혼합 | 불명확"
-  },
-  "style": {
-    "evidence_style": "데이터 | 공식발표 | 현장/인터뷰 | 논평/추정 | 혼합 | 불명확",
-    "rhetorical_intensity": 0
-  },
-  "evidence_quotes": ["...", "..."]
+  "title": "이 모든 기사를 아우르는 대표 제목 (언론사의 논조 반영)",
+  "body": "종합된 기사 본문 (3~5문단 분량, 내용 충실하게)"
 }
 """.strip()
 
@@ -406,62 +271,27 @@ async def process_all_companies_async(synthesized_map: Dict[str, Dict[str, Any]]
 def build_reduce_system_prompt_ui() -> str:
     return """
 너는 뉴스 비교 분석가다.
-입력은 언론사별 분석 JSON들의 리스트다(analyses).
+입력은 **각 언론사별로 종합된 '대표 기사(Synthesized Article)'들의 리스트**이다.
 
-너의 목표는 "웹앱 UI에서 바로 렌더링 가능한 최종 JSON"을 출력하는 것이다.
+너의 목표는 이 기사들을 정밀하게 비교 독해하여, **"웹앱 UI에서 바로 렌더링 가능한 최종 JSON"**을 출력하는 것이다.
+UI 요소는 모두 배제하고, 오직 **"언론사별 비교 요약(media_comparison_bullets)"의 품질**에만 집중하라.
 
 [출력 JSON 형식 - 반드시 준수]
 {
-  "event": {
-    "topic": "사건/이슈 짧은 제목 (불명확하면 null)",
-    "time_window": "분석 대상 기간(불명확하면 null)"
-  },
   "media_comparison_bullets": [
-    "- A일보는 ~~~ (다른 언론사와 차별되는 뚜렷한 특징 한 줄 서술)",
-    "- B일보는 ~~~ (다른 언론사와 차별되는 뚜렷한 특징 한 줄 서술)"
-  ],
-  "outlet_cards": [
-    {
-      "company": "언론사명",
-      "summary": ["...", "...", "..."],
-      "framing": {
-        "primary_frame": "...",
-        "blame_target": "...",
-        "policy_orientation": "..."
-      },
-      "style": {
-        "evidence_style": "...",
-        "rhetorical_intensity": 0
-      },
-      "evidence_quotes": ["...", "..."],
-      "selected_article_ids": [1, 2, 3]
-    }
-  ],
-  "difference_axes": [
-    {
-      "axis": "primary_frame | blame_target | policy_orientation | evidence_style | rhetorical_intensity",
-      "label": "UI에 표시할 축 이름",
-      "rows": [
-        { "company": "언론사명", "value": "값(정수 가능)" }
-      ]
-    }
-  ],
-  "highlights": [
-    { "type": "core_conflict", "text": "가장 큰 대립 쟁점 1문장" },
-    { "type": "polarization", "axis": "축 이름", "most_divergent": ["언론사A","언론사B"], "why": "왜 가장 갈리는지" }
+    "- A일보는 ...",
+    "- B일보는 ..."
   ]
 }
 
-[규칙]
-- **모든 텍스트 값은 반드시 한국어로 작성하라.**
-- **media_comparison_bullets 형식 준수**: 
-  반드시 "- [언론사명]은 [특징 서술]" 형태로 작성하라. 
-  예: "- 조선일보는 정부의 책임을 강조하며 강력한 처벌을 요구함"
-- media_comparison_bullets에는 분석된 **모든 언론사**에 대해 각각 한 줄씩 서술하라.
-- outlet_cards에는 입력에 존재하는 모든 언론사를 포함하라.
-- difference_axes는 최소 3개 이상 만들고, 가능하면 5개까지.
-- rows는 outlet_cards의 언론사들을 모두 포함하라(값이 불명확하면 '불명확').
-- 과장 금지. 정보가 없으면 '불명확' 또는 null.
+[핵심 규칙 - media_comparison_bullets 작성법]
+1. **형식 준수**: 반드시 "- [언론사명]은 [특징 서술]" 형태로 작성하라.
+2. **언어**: **모든 텍스트는 한국어로 작성하라.**
+3. **비교 분석(Deep Comparison)**:
+   - 각 언론사가 재구성한 기사의 **헤드라인, 강조하는 팩트, 책임 소재를 묻는 대상, 해결책 제시 방향** 등을 비교하라.
+   - 단순 요약이 아니라, **"다른 언론사와 무엇이 다른지"**를 짚어내는 것이 핵심이다.
+   - 예: "A일보는 '인재'임을 강조하며 정부 책임을 강하게 묻는 반면, B일보는 '불가항력'적 측면 부각하며 시민 의식 개선을 촉구함"
+4. **포괄성**: 입력된 **모든 언론사**에 대해 빠짐없이 한 줄씩 작성하라.
 """.strip()
 
 
@@ -480,20 +310,13 @@ async def generate_final_comparison_report(company_analyses: Dict[str, Any]) -> 
     if not isinstance(data, dict):
         return {
             "event": {"topic": None, "time_window": None},
-            "outlet_cards": [],
-            "difference_axes": [],
-            "highlights": [{"type": "core_conflict", "text": "결과 생성 실패"}],
+            "media_comparison_bullets": [],
             "error": "Reduce returned non-dict",
         }
 
-    data.setdefault("event", {"topic": None, "time_window": None})
-    data.setdefault("outlet_cards", [])
-    data.setdefault("difference_axes", [])
-    data.setdefault("highlights", [])
+    data.setdefault("media_comparison_bullets", [])
 
-    data = normalize_ui_report(data, company_analyses)
-
-    return data
+    return ensure_reduce_schema(data)
 
 
 # ======================================================

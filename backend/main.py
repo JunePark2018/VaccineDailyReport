@@ -21,36 +21,36 @@ def run_background_worker():
 
         # 1. 뉴스 수집 (DB 연결)
         db = SessionLocal()
-        try:
-            # # 스마트 수집 (중복 만나면 중단)
-            # # news_list = crawl_breaking_news(limit=20, db_check_session=db)
-            # # my_target_media = ["조선", "중앙", "한겨레", "경향", "YTN", "연합", "머니", "매일"]
-            # my_target_media = []  # 모든 뉴스 수집. 테스트용
-            # # news_list = run_article_crawler(my_target_media) # 속보 긁어오기
-            # news_list = crawl_n_days(sections=("100",), n_days=1, pages_per_day=20)  # 최근 n일치 뉴스 긁어오기
-            # count = 0
-            # for news in news_list:
-            #     # 기사 db에 저장
-            #     company = get_or_create_company_by_raw_name(db, news["company_name"])
-            #     if create_news(
-            #         db,
-            #         title=news["title"],
-            #         contents=news["contents"],
-            #         url=news["url"],
-            #         company_id=company.id,
-            #         region="domestic",  # 기본값
-            #         category=news.get("category"),  # scraper에서 가져온 카테고리
-            #         img_urls=news.get("img_urls"),
-            #         created_at=datetime.fromisoformat(news["time"]) if news["time"] != "시간 정보 없음" else None,
-            #     ):
-            #         count += 1
-            #     pass
-            # print(f"   -> {count}개의 신규 기사 저장 완료")
-            # db.commit()  # DB 커밋
+        # try:
+        #     # # 스마트 수집 (중복 만나면 중단)
+        #     # # news_list = crawl_breaking_news(limit=20, db_check_session=db)
+        #     # # my_target_media = ["조선", "중앙", "한겨레", "경향", "YTN", "연합", "머니", "매일"]
+        #     # my_target_media = []  # 모든 뉴스 수집. 테스트용
+        #     # # news_list = run_article_crawler(my_target_media) # 속보 긁어오기
+        #     # news_list = crawl_n_days(sections=("100",), n_days=1, pages_per_day=20)  # 최근 n일치 뉴스 긁어오기
+        #     # count = 0
+        #     # for news in news_list:
+        #     #     # 기사 db에 저장
+        #     #     company = get_or_create_company_by_raw_name(db, news["company_name"])
+        #     #     if create_news(
+        #     #         db,
+        #     #         title=news["title"],
+        #     #         contents=news["contents"],
+        #     #         url=news["url"],
+        #     #         company_id=company.id,
+        #     #         region="domestic",  # 기본값
+        #     #         category=news.get("category"),  # scraper에서 가져온 카테고리
+        #     #         img_urls=news.get("img_urls"),
+        #     #         created_at=datetime.fromisoformat(news["time"]) if news["time"] != "시간 정보 없음" else None,
+        #     #     ):
+        #     #         count += 1
+        #     #     pass
+        #     # print(f"   -> {count}개의 신규 기사 저장 완료")
+        #     # db.commit()  # DB 커밋
 
-            run_issue_clustering(db, days=3)  # 군집화
-        finally:
-            db.close()
+        #     run_issue_clustering(db, days=3)  # 군집화
+        # finally:
+        #     db.close()
 
         # 2. AI 파이프라인 가동
         process_news_pipeline()
