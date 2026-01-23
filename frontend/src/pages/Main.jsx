@@ -112,6 +112,7 @@ export const Main = () => {
 
     // Helper to format article data
     const getArticleData = (article) => ({
+      id: article?.id, // Added ID
       title: article?.title || "AI 생성 기사 제목",
       description: article?.short_text || "AI 생성 기사 내용"
     });
@@ -135,10 +136,10 @@ export const Main = () => {
         <section className="main-article-section" style={{ display: 'flex', gap: '40px', marginBottom: '30px' }}>
 
           {/* Left: 4 Articles (Restored to Left) */}
-          <div className="article-info-side" onClick={() => navigate(`/article/${displayArticles[(index * 5) % displayArticles.length]?.id}`)} style={{ flex: 1, cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div className="article-info-side" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             {rightArticles.map((art, artIdx) => (
               <React.Fragment key={artIdx}>
-                <div className="analysis-block">
+                <div className="analysis-block" onClick={() => art.id && navigate(`/article/${art.id}`)} style={{ cursor: 'pointer' }}>
                   <h2>{art.title}</h2>
                   <p>{art.description}</p>
                 </div>
