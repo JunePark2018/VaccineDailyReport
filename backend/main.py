@@ -41,40 +41,6 @@ def run_background_worker():
         print("\n⏰ [Auto] 뉴스 수집 및 분석 사이클 시작...")
         db = SessionLocal()
 
-        # try:
-        #     # # 스마트 수집 (중복 만나면 중단)
-        #     # # news_list = crawl_breaking_news(limit=20, db_check_session=db)
-        #     # # my_target_media = ["조선", "중앙", "한겨레", "경향", "YTN", "연합", "머니", "매일"]
-        #     # my_target_media = []  # 모든 뉴스 수집. 테스트용
-        #     # # news_list = run_article_crawler(my_target_media) # 속보 긁어오기
-        #     # news_list = crawl_n_days(sections=("100",), n_days=1, pages_per_day=20)  # 최근 n일치 뉴스 긁어오기
-        #     # count = 0
-        #     # for news in news_list:
-        #     #     # 기사 db에 저장
-        #     #     company = get_or_create_company_by_raw_name(db, news["company_name"])
-        #     #     if create_news(
-        #     #         db,
-        #     #         title=news["title"],
-        #     #         contents=news["contents"],
-        #     #         url=news["url"],
-        #     #         company_id=company.id,
-        #     #         region="domestic",  # 기본값
-        #     #         category=news.get("category"),  # scraper에서 가져온 카테고리
-        #     #         img_urls=news.get("img_urls"),
-        #     #         created_at=datetime.fromisoformat(news["time"]) if news["time"] != "시간 정보 없음" else None,
-        #     #     ):
-        #     #         count += 1
-        #     #     pass
-        #     # print(f"   -> {count}개의 신규 기사 저장 완료")
-        #     # db.commit()  # DB 커밋
-
-        #     run_issue_clustering(db, days=3)  # 군집화
-        # finally:
-        #     db.close()
-
-        # 2. AI 파이프라인 가동
-        # process_news_pipeline()
-
         try:
             # --- [Step 1] 국내 뉴스 수집 ---
             print("🇰🇷 국내 뉴스 수집 중...")
@@ -91,8 +57,8 @@ def run_background_worker():
                     title=news["title"],
                     contents=news["contents"],
                     url=news["url"],
-                    company_id=company.id,
-                    region="domestic",
+                    company_id=company.company_id,
+                    is_domestic=True,
                     # [추가] 수집된 카테고리 정보를 DB에 저장 (중요!)
                     category=news.get("category"),
                     img_urls=news.get("img_urls"),
@@ -155,8 +121,8 @@ def run_background_worker():
                                     title=en_data["title"],
                                     contents=en_data["contents"],
                                     url=en_data["url"],
-                                    company_id=company.id,
-                                    region="global",
+                                    company_id=company.company_id,
+                                    is_domestic=False,
                                     category=en_data.get("category"),  # 카테고리 추가
                                     img_urls=en_data.get("img_urls"),
                                     created_at=datetime.now(),

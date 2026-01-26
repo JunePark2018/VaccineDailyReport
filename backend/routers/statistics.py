@@ -22,10 +22,10 @@ def get_news_stats(db: Session = Depends(get_db)):
 @router.get("/generated-news")
 def get_ai_news_stats(db: Session = Depends(get_db)):
     """AI 생성 뉴스 통계 조회"""
-    total = db.query(func.count(AiGeneratedNews.id)).scalar()
+    total = db.query(func.count(AiGeneratedNews.ai_generated_news_id)).scalar()
 
     category_counts = (
-        db.query(AiGeneratedNews.category_id, func.count(AiGeneratedNews.id))
+        db.query(AiGeneratedNews.category_id, func.count(AiGeneratedNews.ai_generated_news_id))
         .group_by(AiGeneratedNews.category_id)
         .all()
     )

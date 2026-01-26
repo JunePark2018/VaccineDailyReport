@@ -117,7 +117,7 @@ def run_article_crawler(db_session, target_companies=None):
 
             for url in urls:
                 # 1. DB URL 중복 체크 (가장 빠름)
-                if db_session.query(News.id).filter(News.url == url).first():
+                if db_session.query(News.news_id).filter(News.url == url).first():
                     continue
 
                 data = get_news_data(url)
@@ -213,70 +213,70 @@ def crawl_n_days(
                     "https://news.naver.com/main/list.naver" f"?mode=LSD&mid=sec&sid1={sid}&date={ymd}&page={page}"
                 )
 
-                try:
-                    resp = requests.get(list_url, headers=headers, timeout=10)
-                    resp.raise_for_status()
-                    soup = BeautifulSoup(resp.text, "html.parser")
+            try:
+                resp = requests.get(list_url, headers=headers, timeout=10)
+                resp.raise_for_status()
+                soup = BeautifulSoup(resp.text, "html.parser")
 
-                    # 목록에서 기사 URL 추출
-                    atags = soup.select(".list_body a, .sa_text_title, a[href*='article']")
-                    urls = [a.get("href") for a in atags if a.get("href") and "article" in a.get("href")]
+                # 목록에서 기사 URL 추출
+                atags = soup.select(".list_body a, .sa_text_title, a[href*='article']")
+                urls = [a.get("href") for a in atags if a.get("href") and "article" in a.get("href")]
 
-                    if not urls:
-                        break
+                if not urls:
+                    break
 
-                    for url in set(urls):
-                        # ---------------------------------------------------------
-                        # 1. DB URL 중복 체크 (run_article_crawler와 로직 통일)
-                        # ---------------------------------------------------------
-                        if db_session.query(News.id).filter(News.url == url).first():
-                            # print(f"     [PASS] 이미 수집된 URL")
-                            continue
+                for url in set(urls):
+                    # ---------------------------------------------------------
+                    # 1. DB URL 중복 체크 (run_article_crawler와 로직 통일)
+                    # ---------------------------------------------------------
+                    if db_session.query(News.news_id).filter(News.url == url).first():
+                        # print(f"     [PASS] 이미 수집된 URL")
+                        continue
 
-                        data = get_news_data(url)  # 상세 파싱
-                        if not data:
-                            continue
+                    data = get_news_data(url)  # 상세 파싱
+                    if not data:
+                        continue
 
-                        # ---------------------------------------------------------
-                        # 2. 제목+언론사 중복 체크 (메모리 + DB)
-                        # ---------------------------------------------------------
-                        clean_title = data["title"].strip()
-                        title_key = (data["company_name"], clean_title)
+                    # ---------------------------------------------------------
+                    # 2. 제목+언론사 중복 체크 (메모리 + DB)
+                    # ---------------------------------------------------------
+                    clean_title = data["title"].strip()
+                    title_key = (data["company_name"], clean_title)
 
-                        # [메모리 체크]
-                        if title_key in collected_titles:
-                            continue
+                    # [메모리 체크]
+                    if title_key in collected_titles:
+                        continue
 
-                        # [DB 정밀 체크]
-                        exists_content = (
-                            db_session.query(News)
-                            .join(Company)
-                            .filter(News.title == data["title"], Company.name == data["company_name"])
-                            .first()
-                        )
+                    # [DB 정밀 체크]
+                    exists_content = (
+                        db_session.query(News)
+                        .join(Company)
+                        .filter(News.title == data["title"], Company.name == data["company_name"])
+                        .first()
+                    )
 
-                        if exists_content:
-                            collected_titles.add(title_key)
-                            continue
-
-                        # ---------------------------------------------------------
-                        # 3. 필터링 및 데이터 처리
-                        # ---------------------------------------------------------
-                        if data.get("category") == "미분류":
-                            data["category"] = section_names.get(sid, "미분류")
-
-                        if target_companies and not any(tc in data["company_name"] for tc in target_companies):
-                            continue
-
-                        # 수집 성공
-                        all_news_data.append(data)
+                    if exists_content:
                         collected_titles.add(title_key)
-                        print(f"     ✅ [GET] {data['company_name']} | {data['title'][:20]}...")
+                        continue
 
-                        time.sleep(sleep_sec)
+                    # ---------------------------------------------------------
+                    # 3. 필터링 및 데이터 처리
+                    # ---------------------------------------------------------
+                    if data.get("category") == "미분류":
+                        data["category"] = section_names.get(sid, "미분류")
 
-                except Exception as e:
-                    print(f"     ❌ [오류] {ymd} sid={sid} page={page} | {e}")
-                    continue
+                    if target_companies and not any(tc in data["company_name"] for tc in target_companies):
+                        continue
+
+                    # 수집 성공
+                    all_news_data.append(data)
+                    collected_titles.add(title_key)
+                    print(f"     ✅ [GET] {data['company_name']} | {data['title'][:20]}...")
+
+                    time.sleep(sleep_sec)
+
+            except Exception as e:
+                print(f"     ❌ [오류] {ymd} sid={sid} page={page} | {e}")
+                continue
 
     return all_news_data
