@@ -118,7 +118,7 @@ function ArticlePage() {
         />
 
         {/* 하단 */}
-        <main className="main-content">
+        <main className={`main-content ${isSidebarOpen ? 'sidebar-active' : ''}`}>
           <div className='article-section'>
             <div className='article-img'>
               <img src={imgURL} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
