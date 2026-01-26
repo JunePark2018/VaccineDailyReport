@@ -1,13 +1,27 @@
 # 💉 VaccineDailyReport
 ### 하이미디어 1조 AI 웹앱 프로젝트
 
-## 🛠 개발 환경 설정 (Development Setup)
+> 📝 **프로젝트 설명**
+>
+> 원래 여기에 프로젝트 설명이 들어갑니다.<br>
+> 마크다운 문법으로 수정 가능합니다. 문법은 구글링하거나 AI에게 물어보시면 쉽게 알 수 있습니당
 
-### 1. 데이터베이스 및 인프라 (Docker)
+## 🚀 시작하기
+
+### 1. 리포지토리 복제
+
+```bash
+# 터미널에서 아래 명령어로 프로젝트를 다운로드하세요
+git clone https://github.com/JunePark2018/VaccineDailyReport.git
+
+```
+
+### 2. 데이터베이스 설정
 이 프로젝트는 **PostgreSQL**과 **Redis**를 Docker 컨테이너로 실행합니다. 팀원 모두가 동일한 DB 환경에서 작업하기 위해 사용합니다.
 
 1.  **Docker Desktop 설치**: Docker가 설치되어 있고 실행 중이어야 합니다.
-2.  **서비스 실행**: 프로젝트 루트에서 아래 명령어를 실행하세요.
+    *   **링크**: https://www.docker.com/products/docker-desktop/
+2.  **서비스 실행**: 프로젝트 루트 폴더에서 아래 명령어를 실행하세요.
     ```bash
     docker-compose up -d
     ```
@@ -16,9 +30,18 @@
     *   **Adminer** (DB 관리 도구): http://localhost:8080
 3.  **데이터 보존**: DB 데이터는 프로젝트 폴더 내 `./postgres_data` 에 저장되므로, 컨테이너를 꺼도 데이터가 유지됩니다.
 
-### 2. 백엔드 설정
+#### ⚠️ DB 초기화 (데이터 삭제)
+DB를 완전히 삭제하고 처음부터 다시 시작하려면 다음 과정을 따르세요.
+1.  컨테이너 종료: `docker-compose down`
+2.  폴더 삭제: `./postgres_data` 폴더를 삭제
+3.  서비스 재실행: `docker-compose up -d`
+
+### 3. 백엔드 설정
 1.  **가상환경 및 의존성 설치**:
     ```bash
+    # 백엔드 폴더 이동
+    cd ./backend
+
     # 가상환경 생성 (선택 사항)
     python -m venv venv
     
@@ -32,20 +55,20 @@
     uvicorn main:app --reload
     ```
 
----
+### 4. 프론트엔드 설정
+1.  **의존성 설치**:
+    ```bash
+    # 프론트엔드 폴더 이동
+    cd ./frontend
 
-> 📝 **프로젝트 설명**
->
-> 원래 여기에 프로젝트 설명이 들어갑니다.<br>
-> 마크다운 문법으로 수정 가능합니다. 문법은 구글링하거나 AI에게 물어보시면 쉽게 알 수 있습니당
+    # 의존성 설치
+    npm i
+    ```
+2.  **서버 실행**
+    ```bash
+    npm start
+    ```
 
-## 🚀 시작하기
-
-```bash
-# 터미널에서 아래 명령어로 프로젝트를 다운로드하세요
-git clone https://github.com/JunePark2018/VaccineDailyReport.git
-
-```
 
 ## 🤝 쓰실 때
 * 로컬에서 `git add`, `git commit`을 활용해 자유롭게 개발하시면 됩니다.
