@@ -1,6 +1,39 @@
 # 💉 VaccineDailyReport
 ### 하이미디어 1조 AI 웹앱 프로젝트
 
+## 🛠 개발 환경 설정 (Development Setup)
+
+### 1. 데이터베이스 및 인프라 (Docker)
+이 프로젝트는 **PostgreSQL**과 **Redis**를 Docker 컨테이너로 실행합니다. 팀원 모두가 동일한 DB 환경에서 작업하기 위해 사용합니다.
+
+1.  **Docker Desktop 설치**: Docker가 설치되어 있고 실행 중이어야 합니다.
+2.  **서비스 실행**: 프로젝트 루트에서 아래 명령어를 실행하세요.
+    ```bash
+    docker-compose up -d
+    ```
+    *   **Postgres**: 5432 포트
+    *   **Redis**: 6379 포트
+    *   **Adminer** (DB 관리 도구): http://localhost:8080
+3.  **데이터 보존**: DB 데이터는 프로젝트 폴더 내 `./postgres_data` 에 저장되므로, 컨테이너를 꺼도 데이터가 유지됩니다.
+
+### 2. 백엔드 설정
+1.  **가상환경 및 의존성 설치**:
+    ```bash
+    # 가상환경 생성 (선택 사항)
+    python -m venv venv
+    
+    # 의존성 설치
+    pip install -r backend/requirements.txt
+    ```
+2.  **환경 변수 설정**: `.env` 파일이 있는지 확인하세요. (없다면 팀원에게 요청)
+3.  **서버 실행**:
+    ```bash
+    cd backend
+    uvicorn main:app --reload
+    ```
+
+---
+
 > 📝 **프로젝트 설명**
 >
 > 원래 여기에 프로젝트 설명이 들어갑니다.<br>
