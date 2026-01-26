@@ -8,13 +8,19 @@
 .ArticlePage .main-content {
   flex: 1;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   max-width: 1320px;
   margin: 0 auto;
   padding: 40px 20px;
   background-color: #ffffff;
   width: 100%;
   box-sizing: border-box;
+}
+
+.ArticlePage .main-content .article-content-wrapper {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
 }
 
 .ArticlePage .main-content .article-section {
