@@ -11,6 +11,7 @@ import UserMenu from '../components/UserMenu';
 import './ArticlePage.css';
 import axios from 'axios';
 import WordCloudComponent from '../components/WordCloud';
+import AI_News_Recommendation from '../components/AI_News_Recommendation';
 
 function ArticlePage() {
 
@@ -118,38 +119,43 @@ function ArticlePage() {
         />
 
         {/* 하단 */}
-        <main className={`main-content ${isSidebarOpen ? 'sidebar-active' : ''}`}>
-          <div className='article-section'>
-            <div className='article-img'>
-              <img src={imgURL} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
+        <main className="main-content">
+          <div className="article-content-wrapper">
+            <div className='article-section'>
+              <div className='article-img'>
+                <img src={imgURL} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
+              </div>
+              <NewsText
+                title={article.title}
+                contents={article.contents}
+                onSentenceClick={handleSentenceClick}
+              />
+              <div className="article-comparer">
+                <h3 className="section-title">비교분석</h3>
+                <ul className="comparison-list">
+                  {article?.analysis_result?.media_comparison_bullets?.map((text, idx) => (
+                    <li key={idx} className="comparison-item">{text.replace(/^- /, '')}</li>
+                  ))}
+                </ul>
+              </div>
+              <Sources clusterId={article.cluster_id} />
             </div>
-            <NewsText
-              title={article.title}
-              contents={article.contents}
-              onSentenceClick={handleSentenceClick}
+            <div className="additional-section">
+              <h3 className="section-title">키워드</h3>
+              {wordCloud}
+            </div>
+
+            {/* [수정 4] RightSideBar에 '선택된 문장' 전달 */}
+            <RightSideBar
+              isOpen={isSidebarOpen}
+              onClose={closeSidebar}
+              searchKeyword={selectedSentence} // 사이드바가 검색할 키워드(문장)
+              clusterId={article.cluster_id}   // [추가] 리얼 데이터 조회를 위한 clusterId 전달
             />
-            <div className="article-comparer">
-              <h3 className="section-title">비교분석</h3>
-              <ul className="comparison-list">
-                {article?.analysis_result?.media_comparison_bullets?.map((text, idx) => (
-                  <li key={idx} className="comparison-item">{text.replace(/^- /, '')}</li>
-                ))}
-              </ul>
-            </div>
-            <Sources clusterId={article.cluster_id} />
-          </div>
-          <div className="additional-section">
-            <h3 className="section-title">키워드</h3>
-            {wordCloud}
           </div>
 
-          {/* [수정 4] RightSideBar에 '선택된 문장' 전달 */}
-          <RightSideBar
-            isOpen={isSidebarOpen}
-            onClose={closeSidebar}
-            searchKeyword={selectedSentence} // 사이드바가 검색할 키워드(문장)
-            clusterId={article.cluster_id}   // [추가] 리얼 데이터 조회를 위한 clusterId 전달
-          />
+          {/* [추가] AI 뉴스 추천 컴포넌트 */}
+          <AI_News_Recommendation articleId={id} number_of_article={3} />
         </main>
       </div>
     </div>

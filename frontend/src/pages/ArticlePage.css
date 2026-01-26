@@ -11,31 +11,22 @@
 .ArticlePage .main-content {
   flex: 1;
   display: flex;
-  flex-direction: row;
-  
-  /* 너비 및 정렬 고정 */
-  width: 100%;
+  flex-direction: column;
   max-width: 1320px;
-  margin: 0 auto; 
-
+  margin: 0 auto;
   padding: 40px 20px;
   background-color: #ffffff;
   box-sizing: border-box;
-
-  /* transition 제거: 본문 움직임 방지 */
 }
 
-/* 사이드바가 열려도 레이아웃 구조는 변하지 않음 */
-.ArticlePage .main-content.sidebar-active {
-  /* 스타일 유지 */
+.ArticlePage .main-content .article-content-wrapper {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
 }
 
-
-/* =========================================================
-   2. 기사 본문 및 이미지 섹션
-   ========================================================= */
 .ArticlePage .main-content .article-section {
-  flex: 1; /* 남은 공간 모두 차지 (약 74%) */
+  flex: 1;
   min-width: 0;
 }
 
@@ -55,6 +46,7 @@
   padding-top: 20px;
   border-top: 1px solid #eee;
 }
+
 .ArticlePage .main-content .article-comparer .section-title {
   font-size: 1.4rem;
   font-weight: 700;
@@ -63,6 +55,7 @@
   border-left: 5px solid #222;
   padding-left: 12px;
 }
+
 .ArticlePage .main-content .article-comparer .comparison-list {
   list-style: none;
   padding: 0;
@@ -71,6 +64,7 @@
   flex-direction: column;
   gap: 16px;
 }
+
 .ArticlePage .main-content .article-comparer .comparison-item {
   background-color: #fcfcfc;
   border: 1px solid #e0e0e0;
@@ -83,11 +77,14 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   position: relative;
 }
+
 .ArticlePage .main-content .article-comparer .comparison-item:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
   border-color: #bbb;
 }
+
+/* Add a visual indicator/icon before the text */
 .ArticlePage .main-content .article-comparer .comparison-item::before {
   content: "💡";
   margin-right: 12px;
@@ -100,33 +97,11 @@
    3. 키워드 영역 (사이드바 비율과 동기화)
    ========================================================= */
 .ArticlePage .main-content .additional-section {
-  /* [핵심 수정] 
-     사이드바에서 사용한 0.26 비율과 동일하게 26%로 설정합니다.
-     이렇게 하면 컨텐츠 박스 내에서 차지하는 공간이 일치하게 됩니다. 
-  */
-  width: 26%; 
-  min-width: 320px; /* 사이드바 최소 크기와 맞춤 */
-  
+  width: 300px;
   margin-left: 40px;
   text-align: left;
-  
-  /* 투명도 애니메이션 */
-  transition: opacity 0.3s ease;
-  opacity: 1;
-  visibility: visible;
 }
 
-/* [핵심 로직] 사이드바 활성화 시 */
-.ArticlePage .main-content.sidebar-active .additional-section {
-  /* 공간은 26%만큼 차지하되 눈에만 안 보임 -> 본문은 움직이지 않음 */
-  visibility: hidden;
-  opacity: 0;
-}
-
-
-/* =========================================================
-   4. 하단 액션 바
-   ========================================================= */
 .ArticlePage .article-footer-actions {
   margin: 20px 0;
   display: flex;
