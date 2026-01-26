@@ -5,6 +5,9 @@
   min-height: 100vh;
 }
 
+/* =========================================================
+   1. 메인 컨텐츠 영역 (완벽 고정)
+   ========================================================= */
 .ArticlePage .main-content {
   flex: 1;
   display: flex;
@@ -13,7 +16,6 @@
   margin: 0 auto;
   padding: 40px 20px;
   background-color: #ffffff;
-  width: 100%;
   box-sizing: border-box;
 }
 
@@ -37,8 +39,7 @@
   object-fit: cover;
 }
 
-
-
+/* 비교분석 섹션 스타일 */
 .ArticlePage .main-content .article-comparer {
   text-align: left;
   margin-top: 40px;
@@ -70,7 +71,6 @@
   border-radius: 8px;
   padding: 20px 24px;
   font-size: 1.1rem;
-  /* 약 17.6px */
   line-height: 1.65;
   color: #333;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
@@ -87,12 +87,15 @@
 /* Add a visual indicator/icon before the text */
 .ArticlePage .main-content .article-comparer .comparison-item::before {
   content: "💡";
-  /* Insight icon */
   margin-right: 12px;
   font-size: 1.2rem;
   vertical-align: middle;
 }
 
+
+/* =========================================================
+   3. 키워드 영역 (사이드바 비율과 동기화)
+   ========================================================= */
 .ArticlePage .main-content .additional-section {
   width: 300px;
   margin-left: 40px;

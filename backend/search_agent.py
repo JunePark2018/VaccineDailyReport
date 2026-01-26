@@ -133,7 +133,12 @@ def search_issues_by_keyword(db: Session, keyword: str) -> Dict[str, Any]:
     )
 
     issues_list = [
-        {"id": issue.id, "title": issue.title, "contents": issue.contents, "created_at": issue.created_at}
+        {
+            "ai_generated_news_id": issue.ai_generated_news_id,
+            "title": issue.title,
+            "contents": issue.contents,
+            "created_at": issue.created_at,
+        }
         for issue in results
     ]
 
@@ -182,9 +187,9 @@ def deduplicate_articles(articles: List[News], limit: int) -> List[News]:
         seen_titles.add(art.title)
 
         # 2. 이슈 그룹 중복 제거
-        if art.id in seen_ids:
+        if art.news_id in seen_ids:
             continue  # 이미 이 이슈의 기사가 하나 들어갔으므로 스킵
-        seen_ids.add(art.id)
+        seen_ids.add(art.news_id)
 
         # 통과한 기사 추가
         unique_articles.append(art)
@@ -215,7 +220,7 @@ def search_hot_topics_by_keyword(db: Session, keyword: str) -> List[Dict[str, An
         if art.img_urls and len(art.img_urls) > 0:
             hot_topics.append(
                 {
-                    "id": art.id,
+                    "news_id": art.news_id,
                     "title": art.title,
                     "img_urls": art.img_urls,
                     "url": art.url,
@@ -245,6 +250,6 @@ def search_articles_by_keyword(db: Session, keyword: str) -> List[Dict[str, Any]
     unique_articles = deduplicate_articles(articles, limit=20)
 
     return [
-        {"id": art.id, "title": art.title, "url": art.url, "company_name": art.company_name, "view_count": 0}
+        {"news_id": art.news_id, "title": art.title, "url": art.url, "company_name": art.company_name, "view_count": 0}
         for art in unique_articles
     ]

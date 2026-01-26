@@ -49,7 +49,7 @@ def get_embeddings_with_cache(articles):
     """
     기사 목록의 임베딩을 ChromaDB에서 조회하고, 없으면 생성하여 저장합니다.
     """
-    article_ids = [str(a.id) for a in articles]
+    article_ids = [str(a.news_id) for a in articles]
 
     # 1. ChromaDB 조회
     existing_data = collection.get(ids=article_ids, include=["embeddings"])
@@ -58,7 +58,7 @@ def get_embeddings_with_cache(articles):
     }
 
     # 2. 없는 데이터 확인 및 생성
-    to_embed_indices = [i for i, a in enumerate(articles) if str(a.id) not in id_to_embedding]
+    to_embed_indices = [i for i, a in enumerate(articles) if str(a.news_id) not in id_to_embedding]
 
     if to_embed_indices:
         print(f"    [ChromaDB] {len(to_embed_indices)}건 신규 임베딩 생성 중...")
@@ -73,7 +73,7 @@ def get_embeddings_with_cache(articles):
         new_embs = embed_model.encode(to_embed_texts, normalize_embeddings=True)
 
         # ChromaDB 저장
-        new_ids = [str(articles[i].id) for i in to_embed_indices]
+        new_ids = [str(articles[i].news_id) for i in to_embed_indices]
         collection.add(
             ids=new_ids,
             embeddings=new_embs.tolist(),
@@ -84,7 +84,7 @@ def get_embeddings_with_cache(articles):
             id_to_embedding[aid] = emb
 
     # 3. 입력 순서대로 정렬하여 반환
-    return np.array([id_to_embedding[str(a.id)] for a in articles], dtype=np.float32)
+    return np.array([id_to_embedding[str(a.news_id)] for a in articles], dtype=np.float32)
 
 
 # -------------------------------------------------
@@ -180,6 +180,7 @@ def simple_kg_check(articles):
         "인증",
         "수상",
         "지원",
+        "기본",
     }
 
     def extract_nouns(text):
@@ -274,7 +275,7 @@ def run_issue_clustering(db: Session, days=3):
         sample_news = issue.cluster.news[0]
 
         # 대표 기사의 임베딩 가져오기 (ChromaDB 활용)
-        res = collection.get(ids=[str(sample_news.id)], include=["embeddings"])
+        res = collection.get(ids=[str(sample_news.news_id)], include=["embeddings"])
         if len(res["embeddings"]) == 0:
             continue
 
@@ -288,9 +289,9 @@ def run_issue_clustering(db: Session, days=3):
             raw_sim = cosine_similarity(embeddings[i].reshape(1, -1), issue_vec)[0][0]
             sim = float(raw_sim)
             if sim >= 0.85:
-                a.issue_id = issue.id
+                a.issue_id = issue.ai_generated_news_id
                 # DB 연결: Cluster에 뉴스 추가
-                crud.add_news_to_cluster(db, cluster_id=issue.cluster_id, news_id=a.id)
+                crud.add_news_to_cluster(db, cluster_id=issue.cluster_id, news_id=a.news_id)
                 print(f"  🔗 [병합] '{a.title}' -> 기존 이슈 '{issue.title}' (유사도: {sim:.2f})")
 
     # 4. 신규 클러스터링 (HDBSCAN)
@@ -334,11 +335,11 @@ def run_issue_clustering(db: Session, days=3):
         final_title = res.get("title", picked[0].title)
 
         # 5. 이슈 생성 및 DB 저장
-        issue = crud.create_ai_news_issue(db, title=final_title, article_ids=[a.id for a in picked])
+        issue = crud.create_ai_news_issue(db, title=final_title, article_ids=[a.news_id for a in picked])
 
         # 런타임 객체에 issue_id 마킹 (중복 처리 방지용)
         for a in picked:
-            a.issue_id = issue.id
+            a.issue_id = issue.ai_generated_news_id
 
         print(f"✨ [이슈 생성 완료] {final_title} (기사 {len(picked)}건)")
 

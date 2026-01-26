@@ -34,7 +34,7 @@ def signup(user: UserCreateRequest, db: Session = Depends(get_db)):
 
     # 응답 포맷 구성
     return {
-        "id": new_user.id,
+        "user_id": new_user.user_id,
         "login_id": new_user.login_id,
         "user_real_name": new_user.user_real_name,
         "email": new_user.email,
@@ -59,7 +59,7 @@ def read_user(login_id: str, db: Session = Depends(get_db)):
     subscribed_keywords = [kw.keyword for kw in user.keyword_subscriptions]
 
     return {
-        "id": user.id,
+        "user_id": user.user_id,
         "login_id": user.login_id,
         "user_real_name": user.user_real_name,
         "email": user.email,

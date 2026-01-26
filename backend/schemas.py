@@ -8,24 +8,24 @@ class NewsResponse(BaseModel):
     """
     뉴스 기사 응답 스키마
 
-    id: 기사 ID
+    news_id: 기사 ID
     title: 기사 제목
     contents: 기사 내용 (옵션)
     img_urls: 기사 내 사진 URL 목록 (옵션)
     url: 기사 URL
     company_name: 언론사명 (Company 테이블의 name)
     created_at: 기사 발행 시각
-    region: 'domestic' | 'global'
+    is_domestic: bool
     """
 
-    id: int
+    news_id: int
     title: Optional[str] = None
     contents: Optional[str] = None
     img_urls: Optional[List[str]] = None
     url: str
     company_name: Optional[str] = None  # 모델에서는 relation이지만, 응답엔 이름만 줘도 무방
     created_at: datetime
-    region: str
+    is_domestic: bool
 
     class Config:
         from_attributes = True
@@ -35,7 +35,7 @@ class AiGeneratedNewsResponse(BaseModel):
     """
     AI 생성 기사 응답 스키마
 
-    id: 기사 ID
+    ai_generated_news_id: 기사 ID
     title: 기사 제목
     contents: 기사 내용
     created_at: 기사 생성 시각
@@ -45,7 +45,7 @@ class AiGeneratedNewsResponse(BaseModel):
     category_name: 카테고리 이름 (옵션)
     """
 
-    id: int
+    ai_generated_news_id: int
     cluster_id: int
     category_id: Optional[int] = None
     category_name: Optional[str] = None
@@ -95,6 +95,7 @@ class UserResponse(BaseModel):
     """
     사용자 정보 응답 스키마
 
+    user_id: 사용자 ID
     login_id: 사용자 ID
     user_real_name: 실명 (옵션)
     email: 이메일 (옵션)
@@ -106,7 +107,7 @@ class UserResponse(BaseModel):
     user_status: 상태
     """
 
-    id: int
+    user_id: int
     login_id: str
     user_real_name: Optional[str] = None
     email: Optional[str] = None
@@ -171,24 +172,24 @@ class ArticleResponse(BaseModel):
     """
     뉴스 기사 응답 스키마 (ArticleResponse)
 
-    id: 기사 ID
+    news_id: 기사 ID
     title: 기사 제목
     contents: 기사 내용 (옵션)
     img_urls: 기사 내 사진 URL 목록 (옵션)
     url: 기사 URL
     company_name: 언론사명 (Company 테이블의 name)
     created_at: 기사 발행 시각
-    region: 'domestic' | 'global'
+    is_domestic: bool
     """
 
-    id: int
+    news_id: int
     title: Optional[str] = None
     contents: Optional[str] = None
     img_urls: Optional[List[str]] = None
     url: str
     company_name: str
     created_at: datetime
-    region: str
+    is_domestic: bool
 
     class Config:
         from_attributes = True
@@ -198,7 +199,7 @@ class IssueResponse(BaseModel):
     """
     AI 생성 기사 응답 스키마 (IssueResponse)
 
-    id: 기사 ID
+    ai_generated_news_id: 기사 ID
     title: 기사 제목
     contents: 기사 내용
     created_at: 기사 생성 시각
@@ -208,7 +209,7 @@ class IssueResponse(BaseModel):
     category_name: 카테고리 이름 (옵션)
     """
 
-    id: int
+    ai_generated_news_id: int
     cluster_id: int
     category_id: Optional[int] = None
     category_name: Optional[str] = None

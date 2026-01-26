@@ -41,18 +41,18 @@ async def process_single_issue(issue: AiGeneratedNews, kw_extractor: KeywordExtr
         # 2. 관련 기사 가져오기
         cluster = issue.cluster
         if not cluster or not cluster.news:
-            print(f"   -> [Skip] 이슈 ID {issue.id}: 연결된 기사가 없습니다.")
+            print(f"   -> [Skip] 이슈 ID {issue.ai_generated_news_id}: 연결된 기사가 없습니다.")
             return
 
         articles = cluster.news
-        print(f"   -> [Processing] 이슈 ID {issue.id}: '{issue.title}' (기사 {len(articles)}개)")
+        print(f"   -> [Processing] 이슈 ID {issue.ai_generated_news_id}: '{issue.title}' (기사 {len(articles)}개)")
 
         # 변환: SQLAlchemy Object -> List[Dict]
         articles_data = []
         for art in articles:
             articles_data.append(
                 {
-                    "id": art.id,
+                    "news_id": art.news_id,
                     "company_name": art.company_name,
                     "title": art.title,
                     "contents": art.contents,
@@ -117,7 +117,7 @@ async def process_single_issue(issue: AiGeneratedNews, kw_extractor: KeywordExtr
                 print(f"      ⚠️ 카테고리 정보 없음")
 
             db.commit()
-            print(f"      ✅ 분석 완료: {issue.id} (제목: {issue.title})")
+            print(f"      ✅ 분석 완료: {issue.ai_generated_news_id} (제목: {issue.title})")
 
         except Exception as e:
             print(f"      🚫 LLM 처리 중 오류: {e}")
@@ -126,7 +126,7 @@ async def process_single_issue(issue: AiGeneratedNews, kw_extractor: KeywordExtr
             traceback.print_exc()
 
     except Exception as e:
-        print(f"   -> [Error] 이슈 {issue.id} 처리 실패: {e}")
+        print(f"   -> [Error] 이슈 {issue.ai_generated_news_id} 처리 실패: {e}")
 
 
 async def process_news_async_internal():
