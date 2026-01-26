@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Logo from '../components/Logo';
+import logoImg from '../components/Logo.png';
 import Searchbar from '../components/Searchbar';
 import UserMenu from '../components/UserMenu';
 
@@ -9,9 +10,9 @@ import UserMenu from '../components/UserMenu';
 
 import './Main.css';
 
+import axios from 'axios'; // axios imported
+
 export const Main = () => {
-  // Main page doesn't use useParams for category usually, but keeping structure similar
-  // We can simulate 'name' being undefined or empty to show all articles
   const { name } = useParams();
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
@@ -24,40 +25,59 @@ export const Main = () => {
 
     const loadData = async () => {
       try {
-        // Dynamically import sample data to allow the app to run even if the folder is missing
-        const [articlesModule, imagesModule] = await Promise.all([
-          import('../sample_/sampleArticle.json').catch(() => ({ default: [] })),
-          import('../sample_/imageAssets').catch(() => ({ default: {} }))
-        ]);
+        // 1. Fetch AI Generated News (Limit 50 for main page coverage)
+        const response = await axios.get('http://localhost:8000/generated-news?limit=100'); // Fetch enough to cover all sections
+        const realArticles = response.data;
 
-        const articles = articlesModule.default || [];
-        const images = imagesModule.default || {};
+        // 2. Map Backend Data to Frontend Structure
+        const formattedArticles = realArticles.map(art => ({
+          ...art,
+          category: art.category_name, // Map category_name ('정치', '경제'...) to category
+          image: `cluster_${art.cluster_id}`, // Placeholder ID for image map
+          short_text: art.contents ? (art.contents.substring(0, 100) + "...") : "내용 없음"
+        }));
 
-        setImageMap(images);
-
-        // Filter articles by category name
-        // If category is '전체메뉴', show all articles
-        // For Main page, name is likely undefined, so it behaves like '전체메뉴'
+        // 3. Filter by category (if name param exists)
         const decodedName = decodeURIComponent(name || '');
         const filtered = (decodedName === '전체메뉴' || !decodedName)
-          ? articles
-          : articles.filter(a => {
+          ? formattedArticles
+          : formattedArticles.filter(a => {
             if (!a.category) return false;
-            if (Array.isArray(a.category)) {
-              return a.category.includes(decodedName);
-            }
             return a.category === decodedName;
           });
 
-        // Randomly shuffle filtered articles when category changes
-        if (filtered.length > 0) {
-          const shuffled = [...filtered].sort(() => Math.random() - 0.5);
-          setDisplayArticles(shuffled);
-        } else {
-          setDisplayArticles([]);
-        }
+        setDisplayArticles(filtered);
+
+        // 4. Fetch Images for each article (N+1 pattern as requested)
+        // We only fetch images for articles that are actually displayed/loaded to save bandwidth, 
+        // but here we fetch for all 'filtered' to ensure smooth scrolling/rendering.
+        const newImageMap = {};
+
+        // Use Promise.allSettled to fetch images in parallel
+        // Limiting concurrency might be needed in production, but for <100 items localhost it's fine.
+        await Promise.allSettled(filtered.map(async (art) => {
+          try {
+            const imgRes = await axios.get(`http://localhost:8000/generated-news/clusters/${art.cluster_id}/news`);
+            const newsList = imgRes.data;
+
+            // Extract all img_urls and pick one
+            const allImgUrls = newsList
+              .flatMap(news => news.img_urls ?? [])
+              .filter(Boolean);
+
+            if (allImgUrls.length > 0) {
+              const randomImg = allImgUrls[Math.floor(Math.random() * allImgUrls.length)];
+              newImageMap[`cluster_${art.cluster_id}`] = randomImg;
+            }
+          } catch (err) {
+            console.warn(`Failed to fetch image for cluster ${art.cluster_id}`, err);
+          }
+        }));
+
+        setImageMap(prev => ({ ...prev, ...newImageMap }));
+
       } catch (error) {
-        console.warn('Sample data could not be loaded:', error);
+        console.error('Failed to load real data:', error);
         setDisplayArticles([]);
         setImageMap({});
       }
@@ -92,6 +112,7 @@ export const Main = () => {
 
     // Helper to format article data
     const getArticleData = (article) => ({
+      id: article?.id, // Added ID
       title: article?.title || "AI 생성 기사 제목",
       description: article?.short_text || "AI 생성 기사 내용"
     });
@@ -115,10 +136,10 @@ export const Main = () => {
         <section className="main-article-section" style={{ display: 'flex', gap: '40px', marginBottom: '30px' }}>
 
           {/* Left: 4 Articles (Restored to Left) */}
-          <div className="article-info-side" onClick={() => navigate('/article')} style={{ flex: 1, cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div className="article-info-side" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             {rightArticles.map((art, artIdx) => (
               <React.Fragment key={artIdx}>
-                <div className="analysis-block">
+                <div className="analysis-block" onClick={() => art.id && navigate(`/article/${art.id}`)} style={{ cursor: 'pointer' }}>
                   <h2>{art.title}</h2>
                   <p>{art.description}</p>
                 </div>
@@ -130,8 +151,8 @@ export const Main = () => {
           {/* Center Column (Image) */}
           <div className="main-image-column" style={{ flex: 1.6, display: 'flex', flexDirection: 'column' }}>
             <div className="ai-news-badge" style={{ borderBottom: 'none', borderLeft: '5px solid #000', paddingLeft: '10px', paddingBottom: '2px', lineHeight: '1', marginLeft: '0', marginBottom: '10px' }}>AI 뉴스</div>
-            <div className="article-image-center" onClick={() => navigate('/article')} style={{ cursor: 'pointer', width: '100%', aspectRatio: '1.5/1' }}>
-              <img src={mainData.image} alt="Main" />
+            <div className="article-image-center" onClick={() => navigate(`/article/${displayArticles[(index * 5) % displayArticles.length]?.id}`)} style={{ cursor: 'pointer', width: '100%', aspectRatio: '1.5/1' }}>
+              <img src={mainData.image} alt="Main" onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
               <div className="main-image-text">
                 <h3>{mainData.title || "AI 생성 기사 제목"}</h3>
               </div>
@@ -180,7 +201,7 @@ export const Main = () => {
               <h3 style={{ borderLeft: 'none', paddingLeft: '0' }}>AI 추천 뉴스</h3>
               {aiRelatedArticles.map((art, i) => (
                 <div key={i} className="ai-related-item-wrapper">
-                  <div className="ai-related-item" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
+                  <div className="ai-related-item" onClick={() => navigate(`/article/${art.id}`)} style={{ cursor: 'pointer' }}>
                     <h4>{art?.title || "Title Text Sample"}</h4>
                     <p>{art?.short_text || "TEXT SAMPLE content description..."}</p>
                   </div>
@@ -189,7 +210,7 @@ export const Main = () => {
               ))}
             </div>
             <div className="ai-main-image-container">
-              <img src={mainImage} alt="AI Main" />
+              <img src={mainImage} alt="AI Main" onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
             </div>
           </div>
         </div>
@@ -209,12 +230,12 @@ export const Main = () => {
           {top5Articles.map((article, index) => {
             const imgPath = imageMap[article.image] || article.image;
             return (
-              <div key={index} className="top10-item" onClick={() => navigate('/article')} style={{ display: 'flex', flexDirection: 'row', gap: '20px', cursor: 'pointer', alignItems: 'center' }}>
+              <div key={index} className="top10-item" onClick={() => navigate(`/article/${article.id}`)} style={{ display: 'flex', flexDirection: 'row', gap: '20px', cursor: 'pointer', alignItems: 'center' }}>
                 <span className="top10-rank" style={{ fontSize: '36px', fontWeight: '900', fontStyle: 'italic', color: index < 3 ? '#cc0000' : '#333', lineHeight: '1', minWidth: '30px' }}>
                   {index + 1}
                 </span>
                 <div style={{ width: '180px', height: '100px', borderRadius: '1px', overflow: 'hidden', flex: 'none' }}>
-                  <img src={imgPath} alt={article.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={imgPath} alt={article.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                 </div>
                 <div style={{ width: '100%' }}>
                   <h4 className="top10-title" style={{ fontSize: '18px', margin: 0, lineHeight: '1.4', wordBreak: 'keep-all' }}>
@@ -240,9 +261,9 @@ export const Main = () => {
         <h3 className="cat-box-header" onClick={() => navigate(link)} style={{ cursor: 'pointer' }}>{title}</h3>
         {articles.length > 0 && (
           <div className="cat-box-content">
-            <div className="cat-box-main" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
+            <div className="cat-box-main" onClick={() => navigate(`/article/${articles[0].id}`)} style={{ cursor: 'pointer' }}>
               <div className="cat-box-img" style={{ aspectRatio: '16/9', width: '100%' }}>
-                <img src={imageMap[articles[0].image] || articles[0].image} alt={articles[0].title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={imageMap[articles[0].image] || articles[0].image} alt={articles[0].title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
               </div>
               <h4 className="cat-box-title" style={{ fontSize: '16px', margin: '10px 0 5px 0' }}>{articles[0].title}</h4>
               <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>{articles[0].short_text}</p>
@@ -250,7 +271,7 @@ export const Main = () => {
             {articles.length > 1 && (
               <div className="cat-box-list">
                 {articles.slice(1).map((art, i) => (
-                  <div key={i} className="cat-box-list-item" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
+                  <div key={i} className="cat-box-list-item" onClick={() => navigate(`/article/${art.id}`)} style={{ cursor: 'pointer' }}>
                     <h5>{art.title}</h5>
                     <p>{art.short_text}</p>
                   </div>
@@ -281,9 +302,9 @@ export const Main = () => {
           <h3 className="cat-box-header" onClick={() => navigate('/society')} style={{ cursor: 'pointer', borderLeft: '5px solid #000', paddingLeft: '10px', paddingBottom: '2px', lineHeight: '1' }}>사회</h3>
           <div className="global-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
             {society.map((art, i) => (
-              <div key={i} className="global-card" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
+              <div key={i} className="global-card" onClick={() => navigate(`/article/${art.id}`)} style={{ cursor: 'pointer' }}>
                 <div className="global-img">
-                  <img src={imageMap[art.image] || art.image} alt={art.title} />
+                  <img src={imageMap[art.image] || art.image} alt={art.title} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                 </div>
                 <h4 style={{ fontSize: '16px' }}>{art.title}</h4>
               </div>
@@ -303,9 +324,9 @@ export const Main = () => {
           <h3 className="cat-box-header" onClick={() => navigate('/culture')} style={{ cursor: 'pointer', borderLeft: '5px solid #000', paddingLeft: '10px', paddingBottom: '2px', lineHeight: '1' }}>생활/문화</h3>
           <div className="global-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
             {culture.map((art, i) => (
-              <div key={i} className="global-card" onClick={() => navigate('/article')} style={{ cursor: 'pointer' }}>
+              <div key={i} className="global-card" onClick={() => navigate(`/article/${art.id}`)} style={{ cursor: 'pointer' }}>
                 <div className="global-img">
-                  <img src={imageMap[art.image] || art.image} alt={art.title} />
+                  <img src={imageMap[art.image] || art.image} alt={art.title} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                 </div>
                 <h4 style={{ fontSize: '16px' }}>{art.title}</h4>
               </div>
@@ -325,9 +346,9 @@ export const Main = () => {
           <h3 className="cat-box-header" onClick={() => navigate('/science')} style={{ cursor: 'pointer' }}>IT/과학</h3>
           <div className="global-grid" style={{ gridTemplateColumns: '1fr' }}>
             {science.map((art, i) => (
-              <div key={i} className="global-card" onClick={() => navigate('/article')} style={{ cursor: 'pointer', flexDirection: 'row', alignItems: 'center', gap: '30px' }}>
+              <div key={i} className="global-card" onClick={() => navigate(`/article/${art.id}`)} style={{ cursor: 'pointer', flexDirection: 'row', alignItems: 'center', gap: '30px' }}>
                 <div className="global-img" style={{ width: '60%', aspectRatio: '21/9', flex: 'none' }}>
-                  <img src={imageMap[art.image] || art.image} alt={art.title} style={{ objectFit: 'cover', width: '100%', height: '100%' }} />
+                  <img src={imageMap[art.image] || art.image} alt={art.title} style={{ objectFit: 'cover', width: '100%', height: '100%' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                 </div>
                 <div style={{ flex: 1, textAlign: 'left' }}>
                   <h4 style={{ fontSize: '30px', margin: 0 }}>{art.title}</h4>

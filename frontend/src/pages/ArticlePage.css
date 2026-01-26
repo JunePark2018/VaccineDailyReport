@@ -35,6 +35,56 @@
 
 .ArticlePage .main-content .article-comparer {
   text-align: left;
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.ArticlePage .main-content .article-comparer .section-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+  color: #111;
+  border-left: 5px solid #222;
+  padding-left: 12px;
+}
+
+.ArticlePage .main-content .article-comparer .comparison-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ArticlePage .main-content .article-comparer .comparison-item {
+  background-color: #fcfcfc;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px 24px;
+  font-size: 1.1rem;
+  /* 약 17.6px */
+  line-height: 1.65;
+  color: #333;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+}
+
+.ArticlePage .main-content .article-comparer .comparison-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  border-color: #bbb;
+}
+
+/* Add a visual indicator/icon before the text */
+.ArticlePage .main-content .article-comparer .comparison-item::before {
+  content: "💡";
+  /* Insight icon */
+  margin-right: 12px;
+  font-size: 1.2rem;
+  vertical-align: middle;
 }
 
 .ArticlePage .main-content .additional-section {

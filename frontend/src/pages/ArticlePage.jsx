@@ -6,6 +6,7 @@ import NewsText from '../components/NewsText';
 import Header from '../components/Header';
 import Searchbar from '../components/Searchbar';
 import Logo from '../components/Logo';
+import logoImg from '../components/Logo.png';
 import UserMenu from '../components/UserMenu';
 import './ArticlePage.css';
 import axios from 'axios';
@@ -41,6 +42,8 @@ function ArticlePage() {
   };
 
   useEffect(() => {
+    // [추가] 페이지 진입 시 스크롤 최상단으로 이동
+    window.scrollTo(0, 0);
 
     const fetchInfo = async () => {
       try {
@@ -57,7 +60,7 @@ function ArticlePage() {
         setKeywords(filteredKeywords);
 
         // 사용된 기사들 가져와서 랜덤하게 사진 고르기
-        const img_url_response = await axios.get(`http://localhost:8000/generated-news/clusters/${ai_news_response.data.cluster_id}/news`);
+        const img_url_response = await axios.get(`http://localhost:8000/generated-news/clusters/${article.cluster_id}/news`);
         const newsList = img_url_response.data;
 
         // 1모든 기사에서 img_urls만 모아서 평탄화
@@ -118,7 +121,7 @@ function ArticlePage() {
         <main className="main-content">
           <div className='article-section'>
             <div className='article-img'>
-              <img src={imgURL} />
+              <img src={imgURL} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
             </div>
             <NewsText
               title={article.title}
@@ -127,9 +130,9 @@ function ArticlePage() {
             />
             <div className="article-comparer">
               <h3 className="section-title">비교분석</h3>
-              <ul>
+              <ul className="comparison-list">
                 {article?.analysis_result?.media_comparison_bullets?.map((text, idx) => (
-                  <li key={idx}>{text.replace(/^- /, '')}</li>
+                  <li key={idx} className="comparison-item">{text.replace(/^- /, '')}</li>
                 ))}
               </ul>
             </div>
@@ -145,6 +148,7 @@ function ArticlePage() {
             isOpen={isSidebarOpen}
             onClose={closeSidebar}
             searchKeyword={selectedSentence} // 사이드바가 검색할 키워드(문장)
+            clusterId={article.cluster_id}   // [추가] 리얼 데이터 조회를 위한 clusterId 전달
           />
         </main>
       </div>

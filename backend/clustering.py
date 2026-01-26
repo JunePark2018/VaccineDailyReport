@@ -19,7 +19,7 @@ from database.engine import SessionLocal, engine
 from database.models import Base, News, AiGeneratedNews
 from database import crud
 
-load_dotenv()
+load_dotenv(override=True)
 kiwi = Kiwi()
 WATSONX_API_KEY = os.getenv("WATSONX_API_KEY")
 WATSONX_PROJECT_ID = os.getenv("WATSONX_PROJECT_ID")

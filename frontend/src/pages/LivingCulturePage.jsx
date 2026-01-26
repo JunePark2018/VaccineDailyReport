@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import axios from 'axios';
 import Header from '../components/Header';
 import Logo from '../components/Logo';
+import logoImg from '../components/Logo.png';
 import Searchbar from '../components/Searchbar';
 import UserMenu from '../components/UserMenu';
 import './LivingCulturePage.css';
@@ -21,37 +23,58 @@ const LivingCulturePage = () => {
 
         const loadData = async () => {
             try {
-                const [articlesModule, imagesModule] = await Promise.all([
-                    import('../sample_/sampleArticle.json').catch(() => ({ default: [] })),
-                    import('../sample_/imageAssets').catch(() => ({ default: {} }))
-                ]);
+                // 1. Fetch AI Generated News
+                const response = await axios.get('http://localhost:8000/generated-news?limit=100');
+                const realArticles = response.data;
 
-                const articles = articlesModule.default || [];
-                const images = imagesModule.default || {};
-                setImageMap(images);
+                // 2. Map Backend Data to Frontend Structure
+                const formattedArticles = realArticles.map(art => ({
+                    ...art,
+                    category: art.category_name,
+                    image: `cluster_${art.cluster_id}`,
+                    short_text: art.contents ? (art.contents.substring(0, 100) + "...") : "내용 없음"
+                }));
 
-                const filtered = articles.filter(a => {
+                // 3. Filter by category
+                const filtered = formattedArticles.filter(a => {
                     if (!a.category) return false;
-                    if (Array.isArray(a.category)) {
-                        return a.category.includes(name);
-                    }
                     return a.category === name;
                 });
 
                 if (filtered.length > 0) {
                     let expanded = [...filtered];
-                    // Ensure at least 24 items (1 Main + 3 Grid + 20 Feed)
+                    // Ensure at least 24 items for LivingCulturePage layout
                     while (expanded.length < 24) {
                         expanded = [...expanded, ...filtered];
                     }
-                    // Shuffle and slice to exactly 24 for this test
                     const shuffled = expanded.sort(() => Math.random() - 0.5).slice(0, 24);
                     setDisplayArticles(shuffled);
+
+                    // 4. Fetch Images
+                    const uniqueClusters = [...new Set(filtered.map(a => a.cluster_id))];
+                    const newImageMap = {};
+
+                    await Promise.allSettled(uniqueClusters.map(async (clusterId) => {
+                        try {
+                            const imgRes = await axios.get(`http://localhost:8000/generated-news/clusters/${clusterId}/news`);
+                            const newsList = imgRes.data;
+                            const allImgUrls = newsList.flatMap(news => news.img_urls ?? []).filter(Boolean);
+
+                            if (allImgUrls.length > 0) {
+                                const randomImg = allImgUrls[Math.floor(Math.random() * allImgUrls.length)];
+                                newImageMap[`cluster_${clusterId}`] = randomImg;
+                            }
+                        } catch (err) {
+                            console.warn(`Failed to fetch image for cluster ${clusterId}`, err);
+                        }
+                    }));
+
+                    setImageMap(prev => ({ ...prev, ...newImageMap }));
                 } else {
                     setDisplayArticles([]);
                 }
             } catch (error) {
-                console.warn('Sample data could not be loaded:', error);
+                console.error('Failed to load real data:', error);
                 setDisplayArticles([]);
                 setImageMap({});
             }
@@ -79,6 +102,7 @@ const LivingCulturePage = () => {
         const currentFeedArticles = allFeedArticles.slice((feedPage - 1) * feedPageSize, feedPage * feedPageSize);
 
         const mainData = {
+            id: mainArticle?.id,
             title: mainArticle?.title || "News Title Text Sample",
             description: mainArticle?.short_text || "text sample...",
             image: mainArticle ? (imageMap[mainArticle.image] || mainArticle.image) : null
@@ -87,7 +111,7 @@ const LivingCulturePage = () => {
 
 
         const grid = gridArticles.map((art, i) => ({
-            id: i,
+            id: art?.id,
             title: art?.title || "Title Sample Text",
             content: art?.short_text || "text sample...",
             image: art ? (imageMap[art.image] || art.image) : null
@@ -96,7 +120,7 @@ const LivingCulturePage = () => {
 
 
         const feed = currentFeedArticles.map((art, i) => ({
-            id: i,
+            id: art?.id,
             title: art?.title || "Title Sample Text",
             content: art?.short_text || "text sample...",
             image: art ? (imageMap[art.image] || art.image) : null
@@ -110,7 +134,7 @@ const LivingCulturePage = () => {
                     {/* Main Article Section */}
                     <section className="main-article-section" style={{ marginBottom: '50px', position: 'relative' }}>
                         <div className="main-image" style={{ width: '100%', aspectRatio: '2.5/1', position: 'relative', overflow: 'hidden', borderRadius: '4px' }}>
-                            <img src={mainData.image} alt={mainData.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <img src={mainData.image} alt={mainData.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                             <div style={{
                                 position: 'absolute',
                                 bottom: 0,
@@ -132,10 +156,10 @@ const LivingCulturePage = () => {
                         <>
                             <section className="bottom-grid-section" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '40px', marginBottom: '50px', textAlign: 'left' }}>
                                 {grid.map((news) => (
-                                    <div key={news.id} className="grid-item" onClick={() => navigate('/article')} style={{ cursor: 'pointer', position: 'relative', overflow: 'hidden', borderRadius: '4px' }}>
+                                    <div key={news.id} className="grid-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', position: 'relative', overflow: 'hidden', borderRadius: '4px' }}>
                                         {/* Image Container (Vertical Aspect Ratio 3:4) */}
                                         <div className="grid-image" style={{ width: '100%', aspectRatio: '3/4', position: 'relative', border: 'none' }}>
-                                            <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                                            <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
 
                                             {/* Gradient Overlay */}
                                             <div style={{
@@ -186,7 +210,7 @@ const LivingCulturePage = () => {
                         <div className="section-divider"></div>
                         <section className="bottom-feed-section" style={{ display: 'flex', flexDirection: 'column', gap: '30px', textAlign: 'left', marginTop: '30px', padding: '0 120px' }}>
                             {feed.map((news) => (
-                                <div key={news.id} className="feed-item" onClick={() => navigate('/article')} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px' }}>
+                                <div key={news.id} className="feed-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px' }}>
 
                                     {/* Left Container: Like + Text */}
                                     <div style={{ display: 'flex', flex: 1, paddingRight: '0px' }}>
@@ -221,7 +245,7 @@ const LivingCulturePage = () => {
 
                                     {/* Image Right (Reduced Height: aspect-ratio 1.8/1) */}
                                     <div className="feed-image" style={{ width: '312px', aspectRatio: '1.8/1', flexShrink: 0, overflow: 'hidden', borderRadius: '4px', marginLeft: '-20px' }}>
-                                        <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                                     </div>
                                 </div>
                             ))}

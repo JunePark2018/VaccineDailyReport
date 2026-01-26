@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import Header from '../components/Header';
 import Logo from '../components/Logo';
+import logoImg from '../components/Logo.png';
 import Searchbar from '../components/Searchbar';
 import UserMenu from '../components/UserMenu';
 import './PoliticsPage.css';
@@ -20,37 +22,62 @@ const PoliticsPage = () => {
 
         const loadData = async () => {
             try {
-                const [articlesModule, imagesModule] = await Promise.all([
-                    import('../sample_/sampleArticle.json').catch(() => ({ default: [] })),
-                    import('../sample_/imageAssets').catch(() => ({ default: {} }))
-                ]);
+                // 1. Fetch AI Generated News (Limit 100 to ensure coverage)
+                const response = await axios.get('http://localhost:8000/generated-news?limit=100');
+                const realArticles = response.data;
 
-                const articles = articlesModule.default || [];
-                const images = imagesModule.default || {};
-                setImageMap(images);
+                // 2. Map Backend Data to Frontend Structure
+                const formattedArticles = realArticles.map(art => ({
+                    ...art,
+                    category: art.category_name, // Map category_name to category
+                    image: `cluster_${art.cluster_id}`, // Placeholder ID for image map
+                    short_text: art.contents ? (art.contents.substring(0, 100) + "...") : "내용 없음"
+                }));
 
-                const filtered = articles.filter(a => {
+                // 3. Filter by category
+                const filtered = formattedArticles.filter(a => {
                     if (!a.category) return false;
-                    if (Array.isArray(a.category)) {
-                        return a.category.includes(name);
-                    }
                     return a.category === name;
                 });
 
                 if (filtered.length > 0) {
                     let expanded = [...filtered];
-                    // Ensure at least 33 items (1 Main + 4 Grid + 8 List + 20 Feed) for testing
+                    // Ensure at least 33 items (1 Main + 4 Grid + 8 List + 20 Feed) for testing layout
+                    // If real data is too small, duplicate it to fill the layout
                     while (expanded.length < 33) {
                         expanded = [...expanded, ...filtered];
                     }
-                    // Shuffle and slice to exactly 33 for this test
+                    // Shuffle and slice to exactly 33
                     const shuffled = expanded.sort(() => Math.random() - 0.5).slice(0, 33);
                     setDisplayArticles(shuffled);
+
+                    // 4. Fetch Images for the filtered set (N+1 pattern)
+                    // Only need to fetch for unique cluster IDs in the filtered set
+                    const uniqueClusters = [...new Set(filtered.map(a => a.cluster_id))];
+                    const newImageMap = {};
+
+                    await Promise.allSettled(uniqueClusters.map(async (clusterId) => {
+                        try {
+                            const imgRes = await axios.get(`http://localhost:8000/generated-news/clusters/${clusterId}/news`);
+                            const newsList = imgRes.data;
+                            const allImgUrls = newsList.flatMap(news => news.img_urls ?? []).filter(Boolean);
+
+                            if (allImgUrls.length > 0) {
+                                const randomImg = allImgUrls[Math.floor(Math.random() * allImgUrls.length)];
+                                newImageMap[`cluster_${clusterId}`] = randomImg;
+                            }
+                        } catch (err) {
+                            console.warn(`Failed to fetch image for cluster ${clusterId}`, err);
+                        }
+                    }));
+
+                    setImageMap(prev => ({ ...prev, ...newImageMap }));
+
                 } else {
                     setDisplayArticles([]);
                 }
             } catch (error) {
-                console.warn('Sample data could not be loaded:', error);
+                console.error('Failed to load real data:', error);
                 setDisplayArticles([]);
                 setImageMap({});
             }
@@ -78,27 +105,28 @@ const PoliticsPage = () => {
         const currentFeedArticles = allFeedArticles.slice((feedPage - 1) * feedPageSize, feedPage * feedPageSize);
 
         const mainData = {
+            id: mainArticle?.id,
             title: mainArticle?.title || "News Title Text Sample",
             description: mainArticle?.short_text || "text sample...",
             image: mainArticle ? (imageMap[mainArticle.image] || mainArticle.image) : null
         };
 
         const grid = gridArticles.map((art, i) => ({
-            id: i,
+            id: art?.id,
             title: art?.title || "Title Sample Text",
             content: art?.short_text || "text sample...",
             image: art ? (imageMap[art.image] || art.image) : null
         }));
 
         const list = listArticles.map((art, i) => ({
-            id: i,
+            id: art?.id,
             title: art?.title || "Title Sample Text",
             content: art?.short_text || "text sample...",
             image: art ? (imageMap[art.image] || art.image) : null
         }));
 
         const feed = currentFeedArticles.map((art, i) => ({
-            id: i,
+            id: art?.id,
             title: art?.title || "Title Sample Text",
             content: art?.short_text || "text sample...",
             image: art ? (imageMap[art.image] || art.image) : null
@@ -109,14 +137,14 @@ const PoliticsPage = () => {
                 <section className="main-article-section" style={{ display: 'flex', alignItems: 'center', gap: '40px', marginBottom: '30px', minHeight: '300px', textAlign: 'left' }}>
 
                     {/* Left: Article Photo (Now Left) */}
-                    <div className="politics-image-side" onClick={() => navigate('/article')} style={{ flex: 1.53, cursor: 'pointer' }}>
+                    <div className="politics-image-side" onClick={() => navigate(`/article/${mainData.id}`)} style={{ flex: 1.53, cursor: 'pointer' }}>
                         <div className="article-image-center" style={{ width: '100%', aspectRatio: '2.4 / 1', borderRadius: '1px' }}>
-                            <img src={mainData.image} alt="Main" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <img src={mainData.image} alt="Main" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                         </div>
                     </div>
 
                     {/* Right: Article Title (Now Right) */}
-                    <div className="politics-title-side" onClick={() => navigate('/article')} style={{ flex: 1.47, cursor: 'pointer' }}>
+                    <div className="politics-title-side" onClick={() => navigate(`/article/${mainData.id}`)} style={{ flex: 1.47, cursor: 'pointer' }}>
                         <h2 style={{ fontSize: '36px', fontWeight: 'bold', lineHeight: '1.3', color: '#000', margin: 0 }}>
                             {mainData.title}
                         </h2>
@@ -131,7 +159,7 @@ const PoliticsPage = () => {
                     <>
                         <section className="bottom-grid-section" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '40px', marginBottom: '50px', textAlign: 'left' }}>
                             {grid.map((news) => (
-                                <div key={news.id} className="grid-item" onClick={() => navigate('/article')} style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                <div key={news.id} className="grid-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                     {/* Image Removed for Text-Only Layout */}
                                     <div className="grid-info">
                                         <h3 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 5px 0', lineHeight: '1.4' }}>{news.title}</h3>
@@ -151,9 +179,9 @@ const PoliticsPage = () => {
                         <div className="section-divider"></div>
                         <section className="bottom-list-section" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', columnGap: '40px', rowGap: '30px', textAlign: 'left' }}>
                             {list.map((news) => (
-                                <div key={news.id} className="list-item" onClick={() => navigate('/article')} style={{ cursor: 'pointer', display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
+                                <div key={news.id} className="list-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
                                     <div className="list-image" style={{ width: '120px', height: '76px', flexShrink: 0, border: '1px solid #eee', overflow: 'hidden' }}>
-                                        <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                                     </div>
                                     <div className="list-info" style={{ flex: 1 }}>
                                         <h3 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 8px 0', lineHeight: '1.3' }}>{news.title}</h3>
@@ -173,7 +201,7 @@ const PoliticsPage = () => {
                         <div className="section-divider"></div>
                         <section className="bottom-feed-section" style={{ display: 'flex', flexDirection: 'column', gap: '30px', textAlign: 'left', marginTop: '30px', padding: '0 120px' }}>
                             {feed.map((news) => (
-                                <div key={news.id} className="feed-item" onClick={() => navigate('/article')} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px' }}>
+                                <div key={news.id} className="feed-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px' }}>
 
                                     {/* Left Container: Like + Text */}
                                     <div style={{ display: 'flex', flex: 1, paddingRight: '0px' }}>
@@ -208,7 +236,7 @@ const PoliticsPage = () => {
 
                                     {/* Image Right (Reduced Height: aspect-ratio 1.8/1) */}
                                     <div className="feed-image" style={{ width: '312px', aspectRatio: '1.8/1', flexShrink: 0, overflow: 'hidden', borderRadius: '4px', marginLeft: '-20px' }}>
-                                        <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                                     </div>
                                 </div>
                             ))}
