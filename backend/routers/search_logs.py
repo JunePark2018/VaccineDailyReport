@@ -29,12 +29,12 @@ def create_user_search_log(
     if not user:
         raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
 
-    log = create_search_log(db, user_id=user.id, query=query)
+    log = create_search_log(db, user_id=user.user_id, query=query)
     db.commit()
 
     return {
         "message": "검색 기록이 저장되었습니다.",
-        "log_id": log.id,
+        "search_log_id": log.search_log_id,
         "query": log.query,
         "searched_at": log.searched_at,
     }
@@ -51,12 +51,14 @@ def get_user_search_history(
     if not user:
         raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
 
-    logs = get_user_search_logs(db, user_id=user.id, limit=limit)
+    logs = get_user_search_logs(db, user_id=user.user_id, limit=limit)
 
     return {
         "login_id": login_id,
         "count": len(logs),
-        "logs": [{"id": log.id, "query": log.query, "searched_at": log.searched_at} for log in logs],
+        "logs": [
+            {"search_log_id": log.search_log_id, "query": log.query, "searched_at": log.searched_at} for log in logs
+        ],
     }
 
 
@@ -71,7 +73,7 @@ def delete_user_search_log(
     if not user:
         raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
 
-    log = db.query(SearchLog).filter(SearchLog.id == log_id, SearchLog.user_id == user.id).first()
+    log = db.query(SearchLog).filter(SearchLog.search_log_id == log_id, SearchLog.user_id == user.user_id).first()
     if not log:
         raise HTTPException(status_code=404, detail="검색 기록을 찾을 수 없습니다.")
 
@@ -94,7 +96,7 @@ def delete_all_user_search_logs(
     if not user:
         raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
 
-    count = delete_user_search_logs(db, user_id=user.id)
+    count = delete_user_search_logs(db, user_id=user.user_id)
     db.commit()
 
     return {"message": f"{count}개의 검색 기록이 삭제되었습니다.", "deleted_count": count}

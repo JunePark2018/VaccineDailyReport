@@ -11,7 +11,6 @@ from sqlalchemy.orm import Session
 
 from .models import (
     Company,
-    CompanyAlias,
     Cluster,
     News,
     AiGeneratedNews,
@@ -20,7 +19,6 @@ from .models import (
     NewsReaction,
     NewsView,
     SearchLog,
-    UserCategoryReadStat,
     UserKeywordReadStat,
     UserKeywordSubscription,
     cluster_news_link,
@@ -49,12 +47,6 @@ def get_company_by_name(db: Session, name: str) -> Optional[Company]:
     return db.execute(select(Company).where(Company.name == name)).scalar_one_or_none()
 
 
-def get_company_by_alias(db: Session, alias: str) -> Optional[Company]:
-    alias = (alias or "").strip()
-    ca = db.execute(select(CompanyAlias).where(CompanyAlias.alias == alias)).scalar_one_or_none()
-    return ca.company if ca else None
-
-
 def get_or_create_company_by_raw_name(
     db: Session,
     raw_company_name: str,
@@ -62,49 +54,23 @@ def get_or_create_company_by_raw_name(
 ) -> Company:
     """
     크롤러가 준 raw_company_name으로:
-    1) alias 매칭되면 그 회사 반환
-    2) 없으면 Company(name=raw) 생성 + CompanyAlias(alias=raw) 생성
+    1) Company.name으로 찾기
+    2) 없으면 새로 생성
     """
     raw = (raw_company_name or "").strip()
     if not raw:
         raise ValueError("raw_company_name is empty")
 
-    # 1) alias로 먼저 찾기
-    company = get_company_by_alias(db, raw)
-    if company:
-        return company
-
-    # 2) Company.name으로도 찾기(혹시 표준명이 raw와 동일하게 이미 있음)
+    # 1) Company.name으로 찾기
     company = get_company_by_name(db, raw)
     if company:
-        # alias가 없었다면 alias만 추가
-        try:
-            with db.begin_nested():
-                db.add(CompanyAlias(company_id=company.id, alias=raw))
-                db.flush()
-        except IntegrityError:
-            db.rollback()
         return company
 
-    # 3) 새로 만들기
+    # 2) 새로 만들기
     company = Company(name=raw, display_name=display_name)
     db.add(company)
-    db.flush()  # company.id 확보
-
-    db.add(CompanyAlias(company_id=company.id, alias=raw))
-    db.flush()
+    db.flush()  # company.company_id 확보
     return company
-
-
-def add_company_alias(db: Session, company_id: int, alias: str) -> CompanyAlias:
-    alias = (alias or "").strip()
-    if not alias:
-        raise ValueError("alias is empty")
-
-    obj = CompanyAlias(company_id=company_id, alias=alias)
-    db.add(obj)
-    db.flush()
-    return obj
 
 
 # -------------------------
@@ -117,7 +83,7 @@ def create_news(
     contents: Optional[str],
     url: str,
     company_id: int,
-    region: str,  # "domestic" | "global"
+    is_domestic: bool = True,
     category: Optional[str] = None,  # 정치, 경제, 사회, 생활/문화, 세계, IT/과학
     img_urls: Optional[dict | list] = None,
     created_at: Optional[datetime] = None,
@@ -136,14 +102,14 @@ def create_news(
             cat = Category(name=category_name)
             db.add(cat)
             db.flush()
-        category_id = cat.id
+        category_id = cat.category_id
 
     obj = News(
         title=title,
         contents=contents,
         url=url,
         company_id=company_id,
-        region=region,
+        is_domestic=is_domestic,
         category_id=category_id,
         img_urls=img_urls,
         created_at=created_at or datetime.utcnow(),
@@ -169,10 +135,10 @@ def get_news_statistics(db: Session) -> dict:
     from sqlalchemy import func
 
     # 전체 개수
-    total = db.query(func.count(News.id)).scalar()
+    total = db.query(func.count(News.news_id)).scalar()
 
     # 카테고리별 개수 (category_id, count)
-    category_counts = db.query(News.category_id, func.count(News.id)).group_by(News.category_id).all()
+    category_counts = db.query(News.category_id, func.count(News.news_id)).group_by(News.category_id).all()
 
     # category_id를 category name으로 변환
     by_category = {}
@@ -254,15 +220,21 @@ def get_original_news_details_by_cluster(db: Session, cluster_id: int) -> List[d
     # 1. News, Company, cluster_news_link 3개를 조인(Join)합니다.
     results = (
         db.query(News.title, News.url, Company.name.label("company_name"), News.img_urls, News.contents)
-        .join(cluster_news_link, News.id == cluster_news_link.c.news_id)
-        .join(Company, News.company_id == Company.id)
+        .join(cluster_news_link, News.news_id == cluster_news_link.c.news_id)
+        .join(Company, News.company_id == Company.company_id)
         .filter(cluster_news_link.c.cluster_id == cluster_id)
         .all()
     )
 
     # 2. 프론트엔드가 쓰기 편한 리스트 형태로 변환
     return [
-        {"title": row.title, "url": row.url, "company_name": row.company_name, "img_urls": row.img_urls, "contents": row.contents}
+        {
+            "title": row.title,
+            "url": row.url,
+            "company_name": row.company_name,
+            "img_urls": row.img_urls,
+            "contents": row.contents,
+        }
         for row in results
     ]
 
@@ -336,10 +308,12 @@ def create_ai_news_issue(
     # 1. Cluster 생성
     cluster = Cluster(title=title)
     db.add(cluster)
-    db.flush()  # cluster.id 확보
+    db.flush()  # cluster.cluster_id 확보
 
     # 2. AiGeneratedNews 생성
-    issue = AiGeneratedNews(cluster_id=cluster.id, category_id=category_id, title=title, created_at=datetime.utcnow())
+    issue = AiGeneratedNews(
+        cluster_id=cluster.cluster_id, category_id=category_id, title=title, created_at=datetime.utcnow()
+    )
     db.add(issue)
     db.flush()
 
@@ -348,7 +322,7 @@ def create_ai_news_issue(
         # bulk insert for M:N
         # 이미 존재하는지 체크하지 않고 넣으면 중복 에러 가능성 있음
         # 하지만 새로 만든 클러스터라 비어있음이 보장됨.
-        vals = [{"cluster_id": cluster.id, "news_id": nid} for nid in article_ids]
+        vals = [{"cluster_id": cluster.cluster_id, "news_id": nid} for nid in article_ids]
         db.execute(cluster_news_link.insert(), vals)
         db.flush()
 
@@ -386,7 +360,7 @@ def create_user(
         created_at=datetime.utcnow(),
     )
     db.add(obj)
-    db.commit()  # To get obj.id
+    db.commit()  # To get obj.user_id
 
     # Handle Subscriptions
     if subscribed_categories:
@@ -518,7 +492,7 @@ def add_view(
     unique_per_user: bool = True,
 ) -> None:
     """
-    unique_per_user=True: (user_id, news_id) 이미 있으면 업데이트만(또는 무시)
+    unique_per_user=True: (user_id, ai_news_id) 이미 있으면 업데이트만(또는 무시)
     unique_per_user=False: 볼 때마다 이벤트 row 추가
     """
     if not unique_per_user:
@@ -542,7 +516,7 @@ def add_view(
 
 def has_viewed(db: Session, *, user_id: int, ai_news_id: int) -> bool:
     row = db.execute(
-        select(NewsView.id).where(and_(NewsView.user_id == user_id, NewsView.news_id == ai_news_id)).limit(1)
+        select(NewsView.news_view_id).where(and_(NewsView.user_id == user_id, NewsView.news_id == ai_news_id)).limit(1)
     ).first()
     return row is not None
 
@@ -578,7 +552,7 @@ def set_reaction(
 
     # 없으면 새로 생성
     if r is None:
-        db.add(NewsReaction(user_id=user_id, news_id=ai_news_id, value=value, created_at=datetime.utcnow()))
+        db.add(NewsReaction(user_id=user_id, news_id=ai_news_id, value=value))
         if value == 1:
             ai.like_count += 1
         else:
@@ -599,7 +573,6 @@ def set_reaction(
     # 반대 값으로 변경
     old = r.value
     r.value = value
-    r.created_at = datetime.utcnow()
 
     if old == 1 and ai.like_count > 0:
         ai.like_count -= 1
@@ -624,7 +597,7 @@ def get_reaction(db: Session, *, user_id: int, ai_news_id: int) -> Optional[int]
 
 def get_view_count(db: Session, *, news_id: int) -> int:
     """
-    뉴스의 조회수 반환.
+    뉴스의 조회수 반환. (AiGeneratedNews id)
     """
     return db.query(NewsView).filter(NewsView.news_id == news_id).count()
 
@@ -669,7 +642,7 @@ def unsubscribe_category(db: Session, *, user_id: int, category_id: int) -> None
     user = db.get(User, user_id)
     if not user:
         raise ValueError("user not found")
-    user.subscribed_categories = [c for c in user.subscribed_categories if c.id != category_id]
+    user.subscribed_categories = [c for c in user.subscribed_categories if c.category_id != category_id]
     db.flush()
 
 
@@ -692,7 +665,7 @@ def subscribe_keyword(db: Session, *, user_id: int, keyword: str) -> None:
     if existing:
         return
 
-    db.add(UserKeywordSubscription(user_id=user_id, keyword=keyword, created_at=datetime.utcnow()))
+    db.add(UserKeywordSubscription(user_id=user_id, keyword=keyword))
     db.flush()
 
 
@@ -711,11 +684,7 @@ def unsubscribe_keyword(db: Session, *, user_id: int, keyword: str) -> int:
 
 def list_subscribed_keywords(db: Session, *, user_id: int) -> List[str]:
     return list(
-        db.execute(
-            select(UserKeywordSubscription.keyword)
-            .where(UserKeywordSubscription.user_id == user_id)
-            .order_by(UserKeywordSubscription.created_at.desc())
-        ).scalars()
+        db.execute(select(UserKeywordSubscription.keyword).where(UserKeywordSubscription.user_id == user_id)).scalars()
     )
 
 
@@ -792,7 +761,7 @@ def list_ai_news_feed_for_user(
 
     if exclude_viewed:
         viewed_subq = select(NewsView.news_id).where(NewsView.user_id == user_id).scalar_subquery()
-        stmt = stmt.where(AiGeneratedNews.id.notin_(viewed_subq))
+        stmt = stmt.where(AiGeneratedNews.ai_generated_news_id.notin_(viewed_subq))
 
     return list(db.execute(stmt).scalars())
 
