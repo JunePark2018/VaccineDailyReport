@@ -83,14 +83,6 @@ function ArticlePage() {
       }
     };
 
-    // [추가] 읽음 처리 (로그인 시)
-    const login_id = localStorage.getItem('login_id');
-    if (login_id) {
-      axios.post(`http://localhost:8000/users/${login_id}/read/${id}`)
-        .then(() => console.log("Read recorded"))
-        .catch(err => console.error("Failed to record read:", err));
-    }
-
     fetchInfo();
   }, [id]); // id가 바뀔 때마다 다시 불러오도록 의존성 배열 추가
 

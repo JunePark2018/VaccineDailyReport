@@ -24,7 +24,7 @@ const CategoryRadarChart = ({
     <section className="info-section">
       <h3 className="section-title">{title}</h3>
       <div className="chart-container" style={{ display: 'flex', justifyContent: 'center' }}>
-        <div style={{ width: '100%', maxWidth: '500px', aspectRatio: '500/350', margin: '0 auto' }}>
+        <div style={{ width: '500px', height: '350px' }}>
           <svg viewBox="-20 10 250 180" className="w-full h-full" style={{ overflow: 'visible' }}>
             {/* 가이드 라인 생성을 위한 로직 - 가변 라벨 대응 */}
             {[0.2, 0.4, 0.6, 0.8, 1].map((r) => (

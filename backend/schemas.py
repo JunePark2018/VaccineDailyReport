@@ -167,22 +167,6 @@ class UserLoginRequest(BaseModel):
     password: str
 
 
-class UserDashboardResponse(BaseModel):
-    """
-    마이페이지 대시보드용 응답 스키마
-    - user_real_name: 사용자 실명
-    - email: 이메일
-    - read_categories: { "정치": 10, "경제": 5, ... } 형태의 카테고리별 읽은 횟수
-    - read_keywords: { "반도체": 15, "AI": 10, ... } 형태의 키워드별 가중치(읽은 횟수 등)
-    - subscribed_keywords: ["AI", "부동산"] 형태의 구독 키워드 목록
-    """
-    user_real_name: Optional[str] = None
-    email: Optional[str] = None
-    read_categories: Dict[str, int] = {}
-    read_keywords: Dict[str, int] = {}
-    subscribed_keywords: List[str] = []
-
-
 # --- 추가된 스키마 ---
 class ArticleResponse(BaseModel):
     """

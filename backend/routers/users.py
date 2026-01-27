@@ -6,17 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from routers import get_db
-from database.crud import (
-    create_user,
-    get_user_by_login_id,
-    update_user_subscriptions,
-    add_view,
-    bump_user_keyword_stats_from_ai_news,
-    list_user_top_keywords,
-    get_ai_generated_news,
-    get_category_name,
-)
-from schemas import UserCreateRequest, UserLoginRequest, UserUpdate, UserDashboardResponse
+from database.crud import create_user, get_user, get_user_by_login_id, update_user_subscriptions
+from schemas import UserCreateRequest, UserLoginRequest, UserUpdate  # UserResponse 제거
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -72,9 +63,7 @@ def read_user(login_id: str, db: Session = Depends(get_db)):
         "login_id": user.login_id,
         "user_real_name": user.user_real_name,
         "email": user.email,
-        "age_range": user.age_range,
-        "gender": user.gender,
-        "marketing_agree": user.marketing_agree,
+        # phone_number 제거 - 스키마에 없음
         "subscribed_categories": subscribed_categories,
         "subscribed_keywords": subscribed_keywords,
     }
@@ -112,84 +101,3 @@ def update_user(login_id: str, user_update: UserUpdate, db: Session = Depends(ge
         raise HTTPException(status_code=500, detail="DB 업데이트 실패")
 
     return {"message": f"'{login_id}'님의 정보가 수정되었습니다."}
-
-
-@router.post("/{login_id}/read/{news_id}")
-def record_article_read(login_id: str, news_id: int, db: Session = Depends(get_db)):
-    """
-    기사 읽음 처리:
-    1. NewsView에 기록 (중복이면 시간 갱신)
-    2. ai_generated_news에서 키워드 추출하여 UserKeywordReadStat 업데이트
-    """
-    user = get_user_by_login_id(db, login_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    # 1. View 기록
-    # unique_per_user=True: 같은 기사를 여러 번 봐도 카운트는 1번만 오르거나, viewed_at만 갱신
-    # 여기서는 "읽은 이력" 자체를 남기는 게 중요하므로 add_view 호출
-    add_view(db, user_id=user.user_id, ai_news_id=news_id, unique_per_user=True)
-
-    # 2. 키워드 가중치 업데이트
-    # 기사 정보를 가져와서 키워드가 있다면 +1
-    # 이미 본 기사라도 다시 읽으면 관심도가 올라간다고 가정할 수 있음.
-    # 단, 너무 루프 도는 것을 방지하려면 has_viewed 체크를 할 수도 있으나,
-    # 여기서는 "읽을 때마다 관심도 증가"로 구현.
-    bump_user_keyword_stats_from_ai_news(db, user_id=user.user_id, ai_news_id=news_id, inc=1)
-
-    db.commit()
-    return {"message": "Read recorded"}
-
-
-@router.get("/{login_id}/dashboard", response_model=UserDashboardResponse)
-def get_user_dashboard(login_id: str, db: Session = Depends(get_db)):
-    """
-    마이페이지 대시보드 데이터 조회
-    """
-    user = get_user_by_login_id(db, login_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    # 1. Top Interest Keywords (상위 10개)
-    # crud.list_user_top_keywords returns [(keyword, count), ...]
-    top_kws_list = list_user_top_keywords(db, user_id=user.user_id, limit=1000)
-    # 딕셔너리로 변환
-    read_keywords_map = {kw: count for kw, count in top_kws_list}
-
-    # 2. Category Read Counts
-    # user.views (NewsView)를 통해 집계
-    # NewsView에는 category_id가 저장되어 있지 않을 수도 있음(초기 설계 상).
-    # 하지만 AiGeneratedNews join해서 카운트 가능
-    # 여기서는 간단히 user.views -> news -> category로 접근하거나
-    # NewsView에 category_id가 있다면 그것을 씀 (models.py에 category_id 있음)
-    from sqlalchemy import func
-    from database.models import NewsView
-
-    # 카테고리별 읽은 횟수 집계
-    cat_counts = (
-        db.query(NewsView.category_id, func.count(NewsView.news_view_id))
-        .filter(NewsView.user_id == user.user_id)
-        .group_by(NewsView.category_id)
-        .all()
-    )
-
-    read_categories_map = {}
-    for cat_id, count in cat_counts:
-        if cat_id:
-            c_name = get_category_name(db, cat_id)
-            if c_name:
-                read_categories_map[c_name] = count
-        else:
-            # 카테고리가 없는 경우 (미분류 등)
-            pass
-
-    # 3. Subscribed Keywords
-    sub_kws = [k.keyword for k in user.keyword_subscriptions]
-
-    return UserDashboardResponse(
-        user_real_name=user.user_real_name,
-        email=user.email,
-        read_categories=read_categories_map,
-        read_keywords=read_keywords_map,
-        subscribed_keywords=sub_kws,
-    )
