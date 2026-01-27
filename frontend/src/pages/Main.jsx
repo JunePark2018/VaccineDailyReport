@@ -18,7 +18,20 @@ export const Main = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [displayArticles, setDisplayArticles] = useState([]);
   const [imageMap, setImageMap] = useState({});
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userName, setUserName] = useState('');
   const itemsPerPage = 5;
+
+  // Check login status
+  useEffect(() => {
+    const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    const storedUserName = localStorage.getItem('user_real_name');
+
+    setIsLoggedIn(loggedIn);
+    if (storedUserName) {
+      setUserName(storedUserName);
+    }
+  }, []);
 
   useEffect(() => {
     setCurrentPage(1);

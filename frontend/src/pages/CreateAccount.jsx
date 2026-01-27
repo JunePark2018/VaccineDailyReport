@@ -155,25 +155,52 @@ export default function CreateAccount() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (validate()) {
-            // Prepare data for backend (matching your SQL structure mostly)
+            // Prepare data for backend (matching UserCreateRequest schema)
             const submitData = {
                 login_id: formData.loginId,
                 user_real_name: formData.name,
-                password: formData.password, // Ideally, hash this before sending or send over HTTPS
+                password_hash: formData.password, // Backend expects 'password_hash'
                 email: formData.email,
-                age_group: formData.ageGroup,
+                age_range: formData.ageGroup, // Backend expects 'age_range', not 'age_group'
                 gender: formData.gender,
                 subscribed_categories: selectedCategories,
+                subscribed_keywords: [], // Optional field in backend
                 marketing_agree: formData.marketingAgree
             };
 
-            console.log("Account Created successfully:", submitData);
-            alert("회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.");
-            navigate('/login'); // Assuming you have a route for /login
+            try {
+                console.log("Sending signup request:", submitData);
+
+                // POST request to backend
+                const response = await fetch('http://localhost:8000/users', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(submitData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Success
+                    console.log("Account created successfully:", data);
+                    alert("회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.");
+                    navigate('/login');
+                } else {
+                    // Backend returned an error
+                    console.error("Signup failed:", data);
+                    alert(`회원가입 실패: ${data.detail || '알 수 없는 오류가 발생했습니다.'}`);
+                }
+            } catch (error) {
+                // Network or other error
+                console.error("Network error:", error);
+                alert('서버와 연결할 수 없습니다. 나중에 다시 시도해주세요.');
+            }
         }
     };
 
