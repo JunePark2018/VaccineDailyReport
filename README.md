@@ -22,7 +22,7 @@ git clone https://github.com/JunePark2018/VaccineDailyReport.git
 1.  **Docker Desktop 설치**: Docker가 설치되어 있고 실행 중이어야 합니다.
     *   **링크**: https://www.docker.com/products/docker-desktop/
 2.  **.env 파일 수정**: 아래 코드를 .env에 붙여넣으세요.
-3.  ```bash
+    ```bash
     DATABASE_URL=postgresql://myuser:mypassword@localhost:5432/finalproject
     REDIS_URL=redis://localhost:6379/0
     ```
