@@ -8,15 +8,22 @@ const UserMenu = () => {
   const location = useLocation();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
+  const [loginId, setLoginId] = useState('');
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const storedUserName = localStorage.getItem('userName');
-    setIsLoggedIn(!!token);
+    // Check login status from localStorage
+    const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    const storedUserName = localStorage.getItem('user_real_name');
+    const storedLoginId = localStorage.getItem('login_id');
+
+    setIsLoggedIn(loggedIn);
     if (storedUserName) {
       setUserName(storedUserName);
+    }
+    if (storedLoginId) {
+      setLoginId(storedLoginId);
     }
 
     const handleClickOutside = (event) => {
@@ -29,7 +36,7 @@ const UserMenu = () => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [location]); // Re-check on location change
 
   const handleIconClick = () => {
     if (isLoggedIn) {
@@ -40,10 +47,15 @@ const UserMenu = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userName');
+    // Remove all login-related data
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('user_id');
+    localStorage.removeItem('login_id');
+    localStorage.removeItem('user_real_name');
+
     setIsLoggedIn(false);
     setUserName('');
+    setLoginId('');
     setShowMenu(false);
     navigate('/');
     window.location.reload(); // Refresh to update all components
@@ -51,7 +63,7 @@ const UserMenu = () => {
 
   const handleMyPage = () => {
     setShowMenu(false);
-    navigate('/mypage');
+    navigate(`/mypage/${loginId}`);
   };
 
   const handleEditAccount = () => {
@@ -75,7 +87,7 @@ const UserMenu = () => {
       </div>
       {isLoggedIn && showMenu && (
         <div className="dropdown-menu">
-          {location.pathname !== '/mypage' && (
+          {!location.pathname.startsWith('/mypage') && (
             <div className="menu-item" onClick={handleMyPage}>마이페이지</div>
           )}
           {location.pathname !== '/edit-account' && (

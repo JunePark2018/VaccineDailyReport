@@ -11,11 +11,12 @@ const Login = () => {
     const nav = useNavigate();
 
     const [loginData, setLoginData] = useState({
-        username: '',
+        login_id: '',
         password: ''
     });
 
     const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -23,17 +24,53 @@ const Login = () => {
             ...prevData,
             [name]: value,
         }));
+        // Clear error when user types
+        if (error) {
+            setError('');
+        }
     }
-    const handleLogin = (e) => {
+
+    const handleLogin = async (e) => {
         e.preventDefault();
         setError('');
+        setIsLoading(true);
 
-        // Test login logic: if username and password are 'test'
-        if (loginData.username === 'test' && loginData.password === 'test') {
-            localStorage.setItem('token', 'fake-token');
-            nav('/mypage');
-        } else {
-            setError('아이디 또는 비밀번호가 일치하지 않습니다. (테스트 계정: test / test)');
+        try {
+            // POST request to backend login API
+            const response = await fetch('http://localhost:8000/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    login_id: loginData.login_id,
+                    password: loginData.password
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                // Success - Save user info to localStorage
+                localStorage.setItem('isLoggedIn', 'true');
+                localStorage.setItem('user_id', data.user_id);
+                localStorage.setItem('login_id', data.login_id);
+                localStorage.setItem('user_real_name', data.user_real_name);
+
+                console.log('Login successful:', data);
+
+                // Navigate to home page
+                nav('/');
+            } else {
+                // Backend returned an error
+                setError(data.detail || '로그인에 실패했습니다.');
+            }
+        } catch (error) {
+            // Network or other error
+            console.error('Login error:', error);
+            setError('서버와 연결할 수 없습니다. 나중에 다시 시도해주세요.');
+        } finally {
+            setIsLoading(false);
         }
     }
 
@@ -49,9 +86,10 @@ const Login = () => {
                         <input
                             className="id_box"
                             placeholder="아이디"
-                            name="username"
-                            value={loginData.username}
+                            name="login_id"
+                            value={loginData.login_id}
                             onChange={handleChange}
+                            disabled={isLoading}
                         />
                     </div>
                     <div className="input_containter">
@@ -62,6 +100,7 @@ const Login = () => {
                             type="password"
                             value={loginData.password}
                             onChange={handleChange}
+                            disabled={isLoading}
                         />
                         {error && (
                             <p className="error_login">
@@ -76,12 +115,14 @@ const Login = () => {
                         <div className="button_container">
                             <Button
                                 type='submit'
-                                text='로그인'
+                                text={isLoading ? '로그인 중...' : '로그인'}
                                 textColor='black'
                                 borderRadius="3px"
                                 color='rgba(186, 214, 205, 1)'
                                 width="100%"
                                 height="55px"
+                                onClick={handleLogin}
+                                disabled={isLoading}
                             />
                         </div>
                     </div>
