@@ -39,7 +39,7 @@ function App() {
           <Route path="/category/:name" element={<CategoryPage />} />
           <Route path='/login' element={<Login />} />
           <Route path='/CreateAccount' element={<CreateAccount />} />
-          <Route path='/mypage' element={<MyPage />} />
+          <Route path='/mypage/:login_id' element={<MyPage />} />
           <Route path='/edit-account' element={<EditAccount />} />
           <Route path='/search' element={<SearchResult />} />
         </Routes>

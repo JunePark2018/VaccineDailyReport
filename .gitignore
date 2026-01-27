@@ -15,3 +15,9 @@ backend/.venv/
 backend/.env
 backend/chroma_db
 backend/sql.db*
+
+# Database Data (Docker)
+postgres_data/
+
+# DB
+postgres_data

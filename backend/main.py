@@ -44,8 +44,8 @@ def run_background_worker():
         try:
             # --- [Step 1] 국내 뉴스 수집 ---
             print("🇰🇷 국내 뉴스 수집 중...")
-            target_list = ["조선", "KBS", "MBC", "SBS", "연합", "한겨레", "중앙", "경향", "한국", "JTBC"]
-            # target_list = [] # 테스트용 빈 리스트
+            # target_list = ["조선", "KBS", "MBC", "SBS", "연합", "한겨레", "중앙", "경향", "한국", "JTBC"]
+            target_list = []  # 테스트용 빈 리스트
 
             # [연동] 수정된 scraper.py의 함수 호출 (db 세션 전달)
             news_list = run_article_crawler(db, target_companies=target_list)
@@ -143,8 +143,8 @@ def run_background_worker():
         finally:
             db.close()
 
-        print("💤 [Sleep] 10분 대기 중...")
-        time.sleep(600)
+        print("💤 [Sleep] 1분 대기 중...")
+        time.sleep(60)
 
 
 # --- [FastAPI 앱 설정] ---

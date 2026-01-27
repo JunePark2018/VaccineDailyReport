@@ -364,6 +364,7 @@
     border: 1px dashed #ccc;
     margin: 20px 0;
 }
+
 /* Hover Effects for Titles */
 .politics-title-side:hover h2,
 .main-article-section:hover h2 {
@@ -376,3 +377,144 @@
     text-decoration: underline;
 }
 
+
+/* =========================================
+   Mobile World Page Design (Max 768px)
+   ========================================= */
+@media screen and (max-width: 768px) {
+
+    /* 1. Reset Global Padding */
+    .category-page .category-content {
+        padding: 20px 15px !important;
+    }
+
+    .category-page .category-header {
+        margin-bottom: 30px !important;
+        border-bottom: 1px solid #333 !important;
+    }
+
+    .category-page .category-header h1 {
+        font-size: 24px !important;
+    }
+
+    /* 2. Main Article Section (Stack Vertically) */
+    .category-page .main-article-section {
+        flex-direction: column-reverse !important;
+        /* Image Top, Text Bottom */
+        gap: 15px !important;
+        min-height: auto !important;
+        margin-bottom: 40px !important;
+    }
+
+    .category-page .politics-title-side {
+        flex: auto !important;
+        width: 100% !important;
+    }
+
+    .category-page .politics-title-side h2 {
+        font-size: 24px !important;
+        /* Smaller headline */
+        line-height: 1.3 !important;
+    }
+
+    .category-page .politics-title-side p {
+        font-size: 15px !important;
+        color: #555 !important;
+        margin-top: 10px !important;
+        -webkit-line-clamp: 3 !important;
+    }
+
+    .category-page .politics-image-side {
+        flex: auto !important;
+        width: 100% !important;
+    }
+
+    .category-page .article-image-center {
+        width: 100% !important;
+        aspect-ratio: 16 / 9 !important;
+        /* Standard mobile ratio */
+        height: auto !important;
+    }
+
+    /* 3. Grid Section (Single Column) */
+    .category-page .bottom-grid-section {
+        grid-template-columns: 1fr !important;
+        gap: 40px !important;
+    }
+
+    .category-page .grid-item {
+        gap: 15px !important;
+    }
+
+    .category-page .grid-image {
+        width: 100% !important;
+        aspect-ratio: 16/9 !important;
+    }
+
+    /* 4. List Section (Single Column) */
+    .category-page .bottom-list-section {
+        grid-template-columns: 1fr !important;
+        gap: 20px !important;
+    }
+
+    .category-page .list-item {
+        gap: 15px !important;
+        align-items: flex-start !important;
+    }
+
+    .category-page .list-image {
+        width: 100px !important;
+        /* Fixed small thumbnail */
+        height: 75px !important;
+    }
+
+    .category-page .list-info h3 {
+        font-size: 16px !important;
+        line-height: 1.4 !important;
+    }
+
+    /* 5. Feed Section (Clean Stack) */
+    .category-page .bottom-feed-section {
+        padding: 0 !important;
+        /* Remove huge padding */
+        gap: 30px !important;
+    }
+
+    .category-page .feed-item {
+        flex-direction: column-reverse !important;
+        /* Image Top */
+        gap: 15px !important;
+        border-bottom: 1px solid #eee !important;
+        padding-bottom: 30px !important;
+    }
+
+    /* Hide the Like/Index number on mobile for cleaner look? 
+       Or move it? Let's hide the index number icon to match typical news sites */
+    .category-page .like-icon {
+        display: none !important;
+    }
+
+    .category-page .feed-image {
+        width: 100% !important;
+        margin-left: 0 !important;
+        aspect-ratio: 16/9 !important;
+        border-radius: 4px !important;
+    }
+
+    /* Container for text info in feed */
+    .category-page .feed-item>div:first-child {
+        width: 100% !important;
+        padding-right: 0 !important;
+    }
+
+    .category-page .feed-info h3 {
+        font-size: 20px !important;
+        margin-bottom: 8px !important;
+    }
+
+    .category-page .feed-info p {
+        font-size: 15px !important;
+        line-height: 1.5 !important;
+        color: #666 !important;
+    }
+}
