@@ -51,7 +51,7 @@ function Searchbar({ maxWidth, fontSize, className, onSearch }) {
             <div className="search-box" style={boxStyle}>
                 <input
                     type="text"
-                    placeholder="검색어를 입력하세요"
+                    placeholder=""
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     onKeyDown={onKeyPress}

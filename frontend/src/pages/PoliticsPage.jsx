@@ -30,6 +30,7 @@ const PoliticsPage = () => {
                 // 2. Map Backend Data to Frontend Structure
                 const formattedArticles = realArticles.map(art => ({
                     ...art,
+                    id: art.ai_generated_news_id,
                     category: art.category_name, // Map category_name to category
                     image: `cluster_${art.cluster_id}`, // Placeholder ID for image map
                     short_text: art.contents ? (art.contents.substring(0, 100) + "...") : "내용 없음"
@@ -43,13 +44,8 @@ const PoliticsPage = () => {
 
                 if (filtered.length > 0) {
                     let expanded = [...filtered];
-                    // Ensure at least 33 items (1 Main + 4 Grid + 8 List + 20 Feed) for testing layout
-                    // If real data is too small, duplicate it to fill the layout
-                    while (expanded.length < 33) {
-                        expanded = [...expanded, ...filtered];
-                    }
-                    // Shuffle and slice to exactly 33
-                    const shuffled = expanded.sort(() => Math.random() - 0.5).slice(0, 33);
+                    // Remove duplication logic - use filtered results directly
+                    const shuffled = filtered.slice(0, 33);
                     setDisplayArticles(shuffled);
 
                     // 4. Fetch Images for the filtered set (N+1 pattern)
@@ -97,10 +93,11 @@ const PoliticsPage = () => {
 
         const slideArticles = blockArticles.slice(0, 4); // Top 4 for Slideshow
         // const gridArticles = blockArticles.slice(4, 6); // Grid Removed
-        const listArticles = blockArticles.slice(4, 12); // Next 8 for List (shifted up)
+        // List Section Removed to prioritize Feed
+        // const listArticles = blockArticles.slice(4, 12);
 
         // Feed Logic
-        const allFeedArticles = blockArticles.slice(13); // 20 items (13 to 32)
+        const allFeedArticles = blockArticles;
         const feedPageSize = 5;
         const totalFeedPages = Math.ceil(allFeedArticles.length / feedPageSize);
         const currentFeedArticles = allFeedArticles.slice((feedPage - 1) * feedPageSize, feedPage * feedPageSize);
@@ -117,12 +114,7 @@ const PoliticsPage = () => {
 
 
 
-        const list = listArticles.map((art, i) => ({
-            id: art?.id,
-            title: art?.title || "제목 예시",
-            content: art?.short_text || "내용 예시...",
-            image: art ? (imageMap[art.image] || art.image) : null
-        }));
+        // list variable removed
 
         const feed = currentFeedArticles.map((art, i) => ({
             id: art?.id,
@@ -231,7 +223,8 @@ const PoliticsPage = () => {
                                     </div>
 
                                     {/* Image Right (Reduced Height: aspect-ratio 1.8/1) */}
-                                    <div className="feed-image" style={{ width: '312px', aspectRatio: '1.8/1', flexShrink: 0, overflow: 'hidden', borderRadius: '4px', marginLeft: '-20px' }}>
+                                    {/* Image Right (Side-by-side, no overlap) */}
+                                    <div className="feed-image" style={{ width: '312px', aspectRatio: '1.8/1', flexShrink: 0, overflow: 'hidden', borderRadius: '4px', marginLeft: '8px' }}>
                                         <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                                     </div>
                                 </div>
@@ -287,12 +280,12 @@ const PoliticsPage = () => {
     return (
         <div className="category-page">
             <Header
-                leftChild={<div />}
-                midChild={<Logo />}
+                leftChild={<Logo />}
+                midChild={null}
                 rightChild={
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
                         <div style={{ position: 'relative' }}>
-                            <Searchbar />
+                            <Searchbar className="always-open" />
                         </div>
                         <UserMenu />
                     </div>

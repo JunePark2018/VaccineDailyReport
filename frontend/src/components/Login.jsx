@@ -4,6 +4,7 @@ import Button from "./Button";
 import Header from "./Header";
 import Logo from "./Logo";
 import UserMenu from "./UserMenu";
+import Searchbar from "./Searchbar";
 import "./Login.css";
 
 const Login = () => {
@@ -77,72 +78,77 @@ const Login = () => {
 
     return (
         <div className="Login">
-            <div className="Login_Logo">
-                <Logo />
-            </div>
-            <div className="Login_main_box">
-                <form className="Login_total" onSubmit={handleLogin}>
-                    <div className="input_containter">
-                        <input
-                            className="id_box"
-                            placeholder="아이디"
-                            name="login_id"
-                            value={loginData.login_id}
-                            onChange={handleChange}
-                            disabled={isLoading}
-                        />
+            <Header
+                leftChild={<Logo />}
+                midChild={null}
+                rightChild={
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
+                        <div style={{ position: 'relative' }}>
+                            <Searchbar className="always-open" />
+                        </div>
+                        <UserMenu />
                     </div>
-                    <div className="input_containter">
-                        <input
-                            className="pw_box"
-                            placeholder="비밀번호"
-                            name="password"
-                            type="password"
-                            value={loginData.password}
-                            onChange={handleChange}
-                            disabled={isLoading}
-                        />
+                }
+                headerTop="on"
+                headerMain="on"
+                headerBottom="on"
+            />
+
+            <div className="Login_container_wrapper">
+                <div className="Login_main_box">
+                    <h2 className="login-title">로그인</h2>
+                    <form className="Login_total" onSubmit={handleLogin}>
+                        <div className="naver_input_group">
+                            <input
+                                className="naver_input top"
+                                placeholder="아이디"
+                                name="login_id"
+                                value={loginData.login_id}
+                                onChange={handleChange}
+                                disabled={isLoading}
+                                autoComplete="off"
+                            />
+                            <input
+                                className="naver_input bottom"
+                                placeholder="비밀번호"
+                                name="password"
+                                type="password"
+                                value={loginData.password}
+                                onChange={handleChange}
+                                disabled={isLoading}
+                                autoComplete="off"
+                            />
+                        </div>
+
                         {error && (
                             <p className="error_login">
                                 {error}
                             </p>
                         )}
-                    </div>
-                </form>
-                <div>
-                    {/*로그인 버튼 */}
-                    <div className="button_wrapper">
-                        <div className="button_container">
+
+                        <div className="button_wrapper">
                             <Button
                                 type='submit'
                                 text={isLoading ? '로그인 중...' : '로그인'}
-                                textColor='black'
-                                borderRadius="3px"
-                                color='rgba(186, 214, 205, 1)'
+                                textColor='white'
+                                borderRadius="0px" // CSS will handle rounded corners if needed, or keep square as per theme, but standard Naver is generic. I'll stick to the requested "Naver" style which often has rounded buttons, but the user's existing theme is square. I'll keep the specialized Button component usage but maybe styling needs check. actually, the prompt implies visual style. I will update CSS to style this button to be wide and maybe slightly rounded if needed, but for now sticking to the existing Button component is safest for functionality.
+                                color='#333333' // Reverted to project theme color
                                 width="100%"
-                                height="55px"
+                                height="50px"
                                 onClick={handleLogin}
                                 disabled={isLoading}
+                                fontWeight="bold"
+                                title="로그인"
                             />
                         </div>
-                    </div>
-                    {/* 구분선 */}
-                    <div className="line">
-                        <span className="line_01"></span>
-                        <span className="line_text">또는</span>
-                        <span className="line_01"></span>
-                    </div>
-                    {/*회원가입 버튼 */}
-                    <div className="signup_text">
-                        <Button onClick={() => nav('/CreateAccount')}
-                            text='회원가입'
-                            textColor='black'
-                            borderRadius="3px"
-                            color='rgba(220, 220, 220, 1)'
-                            width="100%"
-                            height="55px"
+                    </form>
 
-                        />
+                    <div className="login_links">
+                        <span>비밀번호 찾기</span>
+                        <span className="bar">|</span>
+                        <span>아이디 찾기</span>
+                        <span className="bar">|</span>
+                        <span className="link_text" onClick={() => nav('/CreateAccount')}>회원가입</span>
                     </div>
                 </div>
             </div>

@@ -30,6 +30,7 @@ const SciencePage = () => {
                 // 2. Map Backend Data to Frontend Structure
                 const formattedArticles = realArticles.map(art => ({
                     ...art,
+                    id: art.ai_generated_news_id,
                     category: art.category_name,
                     image: `cluster_${art.cluster_id}`,
                     short_text: art.contents ? (art.contents.substring(0, 100) + "...") : "내용 없음"
@@ -44,10 +45,8 @@ const SciencePage = () => {
                 if (filtered.length > 0) {
                     let expanded = [...filtered];
                     // Ensure at least 31 items for SciencePage layout
-                    while (expanded.length < 31) {
-                        expanded = [...expanded, ...filtered];
-                    }
-                    const shuffled = expanded.sort(() => Math.random() - 0.5).slice(0, 31);
+                    // Remove duplication logic - use filtered results directly
+                    const shuffled = filtered.slice(0, 31);
                     setDisplayArticles(shuffled);
 
                     // 4. Fetch Images
@@ -93,10 +92,11 @@ const SciencePage = () => {
 
         const mainArticle = blockArticles[0];
         const gridArticles = blockArticles.slice(1, 3);
-        const listArticles = blockArticles.slice(3, 11);
+        // List Section removed
+        // const listArticles = blockArticles.slice(3, 11);
 
         // Feed Logic
-        const allFeedArticles = blockArticles.slice(11);
+        const allFeedArticles = blockArticles;
         const feedPageSize = 5;
         const totalFeedPages = Math.ceil(allFeedArticles.length / feedPageSize);
         const currentFeedArticles = allFeedArticles.slice((feedPage - 1) * feedPageSize, feedPage * feedPageSize);
@@ -115,12 +115,7 @@ const SciencePage = () => {
             image: art ? (imageMap[art.image] || art.image) : null
         }));
 
-        const list = listArticles.map((art, i) => ({
-            id: art?.id,
-            title: art?.title || "Title Sample Text",
-            content: art?.short_text || "text sample...",
-            image: art ? (imageMap[art.image] || art.image) : null
-        }));
+        // list variable removed
 
         const feed = currentFeedArticles.map((art, i) => ({
             id: art?.id,
@@ -173,27 +168,7 @@ const SciencePage = () => {
                     </>
                 )}
 
-                {/* List Section (8 items, 2 cols x 4 rows) */}
-                {list.length > 0 && (
-                    <>
-                        <div className="section-divider"></div>
-                        <section className="bottom-list-section" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', columnGap: '40px', rowGap: '30px', textAlign: 'left' }}>
-                            {list.map((news) => (
-                                <div key={news.id} className="list-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
-                                    <div className="list-image" style={{ width: '120px', height: '76px', flexShrink: 0, border: '1px solid #eee', overflow: 'hidden' }}>
-                                        <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
-                                    </div>
-                                    <div className="list-info" style={{ flex: 1 }}>
-                                        <h3 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 8px 0', lineHeight: '1.3' }}>{news.title}</h3>
-                                        <p style={{ fontSize: '13px', color: '#666', margin: 0, lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                                            {news.content}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
-                        </section>
-                    </>
-                )}
+                {/* List Section Removed */}
 
                 {/* Feed Section (Pagination) */}
                 {feed.length > 0 && (
@@ -235,7 +210,8 @@ const SciencePage = () => {
                                     </div>
 
                                     {/* Image Right (Reduced Height: aspect-ratio 1.8/1) */}
-                                    <div className="feed-image" style={{ width: '312px', aspectRatio: '1.8/1', flexShrink: 0, overflow: 'hidden', borderRadius: '4px', marginLeft: '-20px' }}>
+                                    {/* Image Right (Side-by-side, no overlap) */}
+                                    <div className="feed-image" style={{ width: '312px', aspectRatio: '1.8/1', flexShrink: 0, overflow: 'hidden', borderRadius: '4px', marginLeft: '8px' }}>
                                         <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                                     </div>
                                 </div>
@@ -291,12 +267,12 @@ const SciencePage = () => {
     return (
         <div className="category-page">
             <Header
-                leftChild={<div />}
-                midChild={<Logo />}
+                leftChild={<Logo />}
+                midChild={null}
                 rightChild={
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
                         <div style={{ position: 'relative' }}>
-                            <Searchbar />
+                            <Searchbar className="always-open" />
                         </div>
                         <UserMenu />
                     </div>

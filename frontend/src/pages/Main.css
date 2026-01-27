@@ -84,7 +84,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border-radius: 5px;
+  border-radius: 0;
 }
 
 .main-page .article-image-center::before,
@@ -322,7 +322,7 @@
   right: 50%;
   margin-left: -50vw;
   margin-right: -50vw;
-  background-color: #1a1a1a;
+  background-color: #333333;
   /* 10% Lighter */
   color: #fff;
   padding: 54px 0;
@@ -399,11 +399,11 @@
 }
 
 .main-page .ai-main-image-container::before {
-  background: linear-gradient(to right, #1a1a1a, transparent 15%, transparent 85%, #1a1a1a);
+  background: linear-gradient(to right, #333333, transparent 15%, transparent 85%, #333333);
 }
 
 .main-page .ai-main-image-container::after {
-  background: linear-gradient(to bottom, #1a1a1a, transparent 15%, transparent 85%, #1a1a1a);
+  background: linear-gradient(to bottom, #333333, transparent 15%, transparent 85%, #333333);
 }
 
 .main-page .ai-main-image-container img {
@@ -603,7 +603,7 @@
   height: 100px;
   /* Aspect */
   position: relative;
-  border-radius: 5px;
+  border-radius: 0;
   overflow: hidden;
 }
 
@@ -693,7 +693,7 @@
   /* Increased size */
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  border-radius: 5px;
+  border-radius: 0;
   flex: none;
   /* Prevent shrinking */
 }
@@ -767,7 +767,7 @@
   aspect-ratio: 16 / 9;
   /* border: 1px solid #000; Removed */
   overflow: hidden;
-  border-radius: 5px;
+  border-radius: 0;
   /* Added roundness */
 }
 
@@ -782,192 +782,62 @@
   font-weight: 800;
   margin: 0;
   line-height: 1.4;
+  text-align: center;
 }
 
-/* =========================================
-   Mobile Responsive Adjustments (Max 768px)
-   ========================================= */
-@media screen and (max-width: 768px) {
+/* Slideshow Animation Removed */
 
-  /* --- Global Container --- */
-  .main-page .category-content {
-    padding: 20px 15px;
-  }
+/* Active Slide Item Style */
+.analysis-block {
+  padding: 15px;
+  border-radius: 0;
+  border: 2px solid transparent;
+  /* Reserve space for border to prevent layout shift */
+  transition: all 0.3s;
+}
 
-  /* --- Main Article Section (Top 3 Columns) --- */
-  .main-page .main-article-section {
-    flex-direction: column;
-    gap: 30px;
-  }
+.analysis-block.active {
+  background-color: #333333;
+  border: 2px solid transparent;
+}
 
-  /* 1. Article Info (Left) */
-  .main-page .article-info-side {
-    order: 2;
-    /* Move text below image */
-  }
+.analysis-block.active h2 {
+  color: #fff !important;
+  font-weight: bold;
+  text-decoration: none;
+}
 
-  .main-page .article-info-side h2 {
-    font-size: 18px;
-    /* Slightly smaller */
-  }
+.analysis-block.active p {
+  color: #fff !important;
+  font-weight: 500;
+}
 
-  .main-page .article-info-side h3 {
-    font-size: 20px;
-  }
+/* Hover Effects for Article Titles (Underline) */
+.analysis-block:hover h2 {
+  text-decoration: underline;
+}
 
-  /* 2. Main Image (Center) */
-  .main-page .main-image-column {
-    flex: auto;
-    width: 100%;
-    order: 1;
-    /* Image first */
-  }
+.article-image-center:hover .main-image-text h3 {
+  text-decoration: underline;
+}
 
-  .main-page .article-image-center {
-    width: 100%;
-    /* Full width */
-    aspect-ratio: 16 / 9;
-    /* More standard video ratio for mobile */
-  }
+/* Politics & Economy: Hover IMAGE or TEXT-BLOCK to underline title */
+.cat-box-img:hover+.cat-box-info .cat-box-title {
+  text-decoration: underline;
+}
 
-  .main-page .main-image-text h3 {
-    font-size: 18px;
-  }
+.cat-box-featured-text:hover .cat-box-title {
+  text-decoration: underline;
+}
 
-  .main-page .ai-news-badge {
-    margin-left: 0;
-    font-size: 18px;
-  }
+.cat-box-title:hover {
+  text-decoration: underline;
+}
 
-  /* 3. Highlights (Right - originally part of left/right flow or separate?) 
-     Wait, .article-info-side was the left column. 
-     .highlights-container is inside .article-info-side? No, let's check structure.
-     Structure seems to be: info-side | image-column | (maybe another side? No, it's 3-column usually but CSS showed 2 main flex items: info-side, main-image-column)
-     Wait, lines 14-19: .main-article-section { display: flex; gap: 16px; align-items: stretch; }
-     .article-info-side { flex: 1; }
-     .main-image-column { flex: 2.7; }
-     So it's 2 columns. 
-  */
+.cat-box-list-item:hover h3 {
+  text-decoration: underline;
+}
 
-  /* --- Highlights Container --- */
-  .main-page .highlights-container {
-    flex-direction: column;
-    /* Stack highlights */
-    align-items: stretch;
-    gap: 15px;
-  }
-
-  .main-page .highlight-divider {
-    display: none;
-    /* Hide vertical dividers */
-  }
-
-  .main-page .highlight-item {
-    border-bottom: 1px solid #eee;
-    padding-bottom: 15px;
-  }
-
-  .main-page .highlight-item:last-child {
-    border-bottom: none;
-  }
-
-  /* --- Bottom Grid Section (2 items) --- */
-  .main-page .bottom-grid-section {
-    grid-template-columns: 1fr;
-    /* Stack vertically */
-    gap: 40px;
-    margin-top: 40px;
-  }
-
-  .main-page .grid-item {
-    flex-direction: column;
-    /* Stack image and text */
-    gap: 15px;
-  }
-
-  .main-page .grid-image {
-    width: 100%;
-    /* Full width */
-  }
-
-  .main-page .grid-info {
-    width: 100%;
-  }
-
-  /* --- AI Recommended Section --- */
-  .main-page .ai-recommended-section {
-    padding: 40px 0;
-    margin-bottom: 60px;
-  }
-
-  .main-page .ai-layout-split {
-    flex-direction: column;
-    gap: 30px;
-  }
-
-  .main-page .ai-main-content-right {
-    flex: auto;
-  }
-
-  .main-page .ai-main-image-container {
-    width: 100%;
-    aspect-ratio: 16 / 9;
-  }
-
-  .main-page .ai-related-list {
-    gap: 20px;
-  }
-
-  /* --- Category Sections (Politics/Economy Split) --- */
-  .main-page .main-content-split {
-    flex-direction: column;
-    gap: 50px;
-  }
-
-  .main-page .main-left-col {
-    width: 100%;
-    flex: auto;
-  }
-
-  .main-page .vertical-divider {
-    display: none;
-    /* Hide vertical line */
-  }
-
-  .main-page .main-right-col {
-    width: 100%;
-    flex: auto;
-  }
-
-  /* Inside Left Column: Cat Split Row */
-  .main-page .cat-split-row {
-    flex-direction: column;
-    gap: 40px;
-  }
-
-  .main-page .cat-box-img {
-    width: 100%;
-  }
-
-  /* --- Top 10 Section (Sidebar -> Stacked) --- */
-  .main-page .top10-section {
-    height: auto;
-    /* Allow full height */
-    overflow: visible;
-  }
-
-  .main-page .top10-grid {
-    grid-template-columns: 1fr;
-    /* Add simple list view */
-  }
-
-  /* --- Global News Grid --- */
-  .main-page .global-grid {
-    grid-template-columns: 1fr;
-    /* 1 column */
-  }
-
-  .main-page .global-img {
-    width: 100%;
-  }
+.global-card:hover h4 {
+  text-decoration: underline;
 }
