@@ -13,13 +13,7 @@ import KeywordBarChart from '../components/KeywordBarChart';
 import SubscribedKeywords from '../components/SubscribedKeywords';
 import './MyPage.css';
 
-const MOCK_USER_DATA = {
-  user_real_name: "홍길동",
-  email: "gildong@example.com",
-  read_categories: { '정치': 85, '경제': 85, '사회': 95, '생활/문화': 75, 'IT/과학': 85, '세계': 70 },
-  read_keywords: { '반도체': 15, '금리': 10, '인공지능': 25, '나스닥': 8, '재건축': 12, '우크라이나': 5, '이재명': 100, '윤석열': 300, 'AI': 55, '박나래': 44 },
-  subscribed_keywords: ['AI', '재테크', '건강']
-};
+// MOCK_USER_DATA 제거
 
 const MyPage = () => {
   const { login_id } = useParams();
@@ -33,12 +27,16 @@ const MyPage = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const id = login_id || 'test_user';
-        // const response = await axios.get(`http://localhost:8000/users/${id}`);
-        // setUserData(response.data);
-        setUserData(MOCK_USER_DATA);
+        if (!login_id) {
+          setLoading(false);
+          return;
+        }
+        const response = await axios.get(`http://localhost:8000/users/${login_id}/dashboard`);
+        setUserData(response.data);
       } catch (error) {
-        setUserData(MOCK_USER_DATA);
+        console.error("데이터 로딩 실패:", error);
+        // Fallback for demo if needed, or just let it render empty
+        setUserData(null);
       } finally {
         setLoading(false);
       }
@@ -63,7 +61,7 @@ const MyPage = () => {
   // 서버 업데이트 로직
   const updateKeywordsOnServer = async (newList) => {
     try {
-      await axios.patch(`http://localhost:8000/users/${login_id}`, { subscribed_keywords: newList });
+      await axios.put(`http://localhost:8000/users/${login_id}`, { subscribed_keywords: newList });
     } catch (error) {
       console.error("서버 업데이트 실패:", error);
     }
