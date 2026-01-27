@@ -29,7 +29,7 @@ export default function CreateAccount() {
 
     // --- Static Data ---
     const categoryOptions = categoryData
-        .filter(cat => cat.label !== '전체메뉴' && cat.label !== '이슈')
+        .filter(cat => cat.label !== '전체메뉴' && cat.label !== '이슈' && cat.label !== '홈')
         .map(cat => cat.label);
 
     const ageGroups = ['10세 미만', '10~19세', '20~29세', '30~39세', '40~49세', '50~59세', '60~69세', '70세 이상', '비공개'];

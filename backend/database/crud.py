@@ -495,8 +495,12 @@ def add_view(
     unique_per_user=True: (user_id, ai_news_id) 이미 있으면 업데이트만(또는 무시)
     unique_per_user=False: 볼 때마다 이벤트 row 추가
     """
+    # [Fix] 카테고리 ID 조회
+    ai_news = db.get(AiGeneratedNews, ai_news_id)
+    cat_id = ai_news.category_id if ai_news else None
+
     if not unique_per_user:
-        db.add(NewsView(user_id=user_id, news_id=ai_news_id, viewed_at=datetime.utcnow()))
+        db.add(NewsView(user_id=user_id, news_id=ai_news_id, category_id=cat_id, viewed_at=datetime.utcnow()))
         db.flush()
         return
 
@@ -507,10 +511,13 @@ def add_view(
 
     if existing:
         existing.viewed_at = datetime.utcnow()
+        # 카테고리가 누락된 경우 업데이트
+        if existing.category_id is None and cat_id is not None:
+            existing.category_id = cat_id
         db.flush()
         return
 
-    db.add(NewsView(user_id=user_id, news_id=ai_news_id, viewed_at=datetime.utcnow()))
+    db.add(NewsView(user_id=user_id, news_id=ai_news_id, category_id=cat_id, viewed_at=datetime.utcnow()))
     db.flush()
 
 
@@ -715,9 +722,17 @@ def bump_user_keyword_stats_from_ai_news(
 
     updated = 0
     for raw_kw in kws[:keyword_limit]:
-        if not isinstance(raw_kw, str):
+        # [Fix] 문자열 또는 딕셔너리({"text": "...", "value": ...}) 처리
+        kw_str = None
+        if isinstance(raw_kw, str):
+            kw_str = raw_kw
+        elif isinstance(raw_kw, dict) and "text" in raw_kw:
+            kw_str = raw_kw["text"]
+
+        if not kw_str:
             continue
-        kw = normalize_keyword(raw_kw)
+
+        kw = normalize_keyword(kw_str)
         if not kw:
             continue
 
@@ -733,7 +748,7 @@ def bump_user_keyword_stats_from_ai_news(
     return updated
 
 
-def list_user_top_keywords(db: Session, *, user_id: int, limit: int = 30) -> List[Tuple[str, int]]:
+def list_user_top_keywords(db: Session, *, user_id: int, limit: int = 1000) -> List[Tuple[str, int]]:
     rows = db.execute(
         select(UserKeywordReadStat.keyword, UserKeywordReadStat.count)
         .where(UserKeywordReadStat.user_id == user_id)

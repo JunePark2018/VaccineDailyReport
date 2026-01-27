@@ -156,4 +156,73 @@
 
 .Header-Container .Header-Bottom .category-item:hover span {
     color: #000;
+    font-weight: 800;
+}
+
+/* =========================================
+   Mobile Responsive Adjustments (Max 768px)
+   ========================================= */
+@media screen and (max-width: 768px) {
+
+    /* Stack Header Main Content */
+    .Header-Container .Header-Main {
+        height: auto;
+        padding: 10px 15px;
+    }
+
+    .Header-Container .Header-Main .header-main-content {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    /* Logo - Top Left */
+    .Header-Container .Header-Main .left-child {
+        flex: 1 1 auto;
+        justify-content: center;
+        /* Center logo on mobile usually looks better, or keep left? Let's keep flex behavior */
+        order: 1;
+    }
+
+    /* Login/User - Top Right */
+    .Header-Container .Header-Main .right-child {
+        flex: 1 1 auto;
+        order: 2;
+    }
+
+    /* Search - Second Row, Full Width */
+    .Header-Container .Header-Main .mid-child {
+        flex: 1 1 100%;
+        order: 3;
+        margin-top: 5px;
+    }
+
+    /* Adjust Bottom Navigation for nice scrolling */
+    .Header-Container .Header-Bottom {
+        height: 50px;
+        /* Slightly taller for touch targets */
+        overflow-y: hidden;
+    }
+
+    .Header-Container .Header-Bottom .category-list {
+        justify-content: flex-start;
+        /* Align left to allow scrolling start */
+        padding-left: 10px;
+        padding-right: 10px;
+        gap: 15px;
+        /* Hide scrollbar aesthetics if possible */
+        -ms-overflow-style: none;
+        /* IE and Edge */
+        scrollbar-width: none;
+        /* Firefox */
+    }
+
+    .Header-Container .Header-Bottom .category-list::-webkit-scrollbar {
+        display: none;
+    }
+
+    .Header-Container .Header-Bottom .category-item {
+        flex: 0 0 auto;
+        /* Don't shrink */
+        min-width: 60px;
+    }
 }

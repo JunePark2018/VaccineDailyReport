@@ -83,6 +83,14 @@ function ArticlePage() {
       }
     };
 
+    // [추가] 읽음 처리 (로그인 시)
+    const login_id = localStorage.getItem('login_id');
+    if (login_id) {
+      axios.post(`http://localhost:8000/users/${login_id}/read/${id}`)
+        .then(() => console.log("Read recorded"))
+        .catch(err => console.error("Failed to record read:", err));
+    }
+
     fetchInfo();
   }, [id]); // id가 바뀔 때마다 다시 불러오도록 의존성 배열 추가
 
@@ -118,6 +126,7 @@ function ArticlePage() {
           headerBottom="on"
         />
 
+        {/* [추가] 생성일자 표시 */}
         <div style={{ textAlign: 'center', marginTop: '20px', color: '#000000ff', fontSize: '1.5rem', fontWeight: 'bold' }}>
           {article.created_at ? (
             `${new Date(article.created_at).getFullYear()}년 ${new Date(article.created_at).getMonth() + 1}월 ${new Date(article.created_at).getDate()}일에 생성된 AI 뉴스 기사 입니다.`

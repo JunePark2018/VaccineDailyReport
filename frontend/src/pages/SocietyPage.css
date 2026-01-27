@@ -17,7 +17,7 @@
 }
 
 .category-page .category-header h1 {
-    font-size: px;
+    font-size: 32px;
     font-weight: bold;
     margin: 0;
 }
@@ -375,4 +375,252 @@
 .list-item:hover h3,
 .feed-item:hover h3 {
     text-decoration: underline;
+}
+
+/* ========================================
+   📱 MOBILE RESPONSIVE STYLES
+   ======================================== */
+
+/* 태블릿 (1024px 이하) */
+@media (max-width: 1024px) {
+    .category-page .category-content {
+        padding: 30px 15px;
+    }
+
+    .category-page .category-header {
+        margin-bottom: 40px;
+    }
+
+    .category-page .category-header h1 {
+        font-size: 28px;
+    }
+
+    .category-page .politics-main-section {
+        gap: 20px;
+    }
+
+    .category-page .bottom-feed-section {
+        padding: 0 40px !important;
+    }
+}
+
+/* 모바일 (768px 이하) */
+@media (max-width: 768px) {
+    .category-page .category-content {
+        padding: 20px 12px;
+    }
+
+    .category-page .category-header {
+        margin-bottom: 25px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #333;
+    }
+
+    .category-page .category-header h1 {
+        font-size: 22px;
+    }
+
+    .category-page .politics-main-section {
+        flex-direction: column !important;
+        gap: 20px !important;
+    }
+
+    .category-page .politics-content-side {
+        width: 100% !important;
+        flex: none !important;
+    }
+
+    .category-page .politics-slide-item {
+        padding: 12px 0 !important;
+        border-bottom: 1px solid #eee !important;
+    }
+
+    .category-page .politics-slide-item h2 {
+        font-size: 16px !important;
+        margin-bottom: 5px !important;
+    }
+
+    .category-page .politics-slide-item.active h2 {
+        font-size: 18px !important;
+    }
+
+    .category-page .politics-slide-item.active {
+        background-color: #f0f7ff !important;
+        padding-left: 12px !important;
+    }
+
+    .category-page .politics-slide-item p {
+        font-size: 13px !important;
+    }
+
+    .category-page .politics-image-side {
+        width: 100% !important;
+        flex: none !important;
+    }
+
+    .category-page .article-image-center {
+        aspect-ratio: 16/9 !important;
+    }
+
+    .category-page .bottom-feed-section {
+        padding: 0 12px !important;
+        gap: 20px !important;
+    }
+
+    .category-page .feed-item {
+        flex-direction: column !important;
+        gap: 12px !important;
+        padding-bottom: 15px !important;
+    }
+
+    .category-page .feed-item .like-icon {
+        margin-right: 0 !important;
+        padding-right: 0 !important;
+        border-right: none !important;
+        border-bottom: 1px solid #e0e0e0 !important;
+        padding-bottom: 8px !important;
+        min-width: auto !important;
+        justify-content: flex-start !important;
+    }
+
+    .category-page .feed-item .feed-info h3 {
+        font-size: 17px !important;
+    }
+
+    .category-page .feed-item .feed-info p {
+        font-size: 14px !important;
+    }
+
+    .category-page .feed-image {
+        width: 100% !important;
+        aspect-ratio: 16/9 !important;
+        margin-left: 0 !important;
+        margin-top: 8px !important;
+    }
+
+    .category-page .section-divider {
+        margin: 30px 0;
+        border-top: 1px solid #e0e0e0;
+    }
+
+    .category-page .pagination button {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 13px !important;
+    }
+}
+
+/* 작은 모바일 (480px 이하) */
+@media (max-width: 480px) {
+    .category-page .category-content {
+        padding: 15px 10px;
+    }
+
+    .category-page .category-header {
+        margin-bottom: 20px;
+        padding-bottom: 8px;
+    }
+
+    .category-page .category-header h1 {
+        font-size: 20px;
+    }
+
+    .category-page .politics-slide-item {
+        padding: 10px 0 !important;
+    }
+
+    .category-page .politics-slide-item h2 {
+        font-size: 15px !important;
+        line-height: 1.4 !important;
+    }
+
+    .category-page .politics-slide-item.active h2 {
+        font-size: 17px !important;
+    }
+
+    .category-page .politics-slide-item p {
+        font-size: 13px !important;
+        -webkit-line-clamp: 2 !important;
+    }
+
+    .category-page .bottom-feed-section {
+        padding: 0 10px !important;
+        gap: 15px !important;
+    }
+
+    .category-page .feed-item {
+        padding-bottom: 12px !important;
+    }
+
+    .category-page .feed-item .feed-info h3 {
+        font-size: 16px !important;
+        line-height: 1.4 !important;
+    }
+
+    .category-page .feed-item .feed-info p {
+        font-size: 13px !important;
+        -webkit-line-clamp: 2 !important;
+    }
+
+    .category-page .feed-item .like-icon svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .category-page .feed-item .like-icon span {
+        font-size: 13px !important;
+    }
+
+    .category-page .section-divider {
+        margin: 25px 0;
+    }
+
+    .category-page .pagination {
+        margin: 25px 0;
+        gap: 6px;
+    }
+
+    .category-page .pagination button {
+        width: 30px !important;
+        height: 30px !important;
+        font-size: 12px !important;
+    }
+
+    .category-page .empty-category {
+        padding: 60px 15px;
+        font-size: 16px;
+    }
+}
+
+/* 매우 작은 모바일 (360px 이하) */
+@media (max-width: 360px) {
+    .category-page .category-content {
+        padding: 12px 8px;
+    }
+
+    .category-page .category-header h1 {
+        font-size: 18px;
+    }
+
+    .category-page .politics-slide-item h2 {
+        font-size: 14px !important;
+    }
+
+    .category-page .politics-slide-item.active h2 {
+        font-size: 16px !important;
+    }
+
+    .category-page .feed-item .feed-info h3 {
+        font-size: 15px !important;
+    }
+
+    .category-page .feed-item .feed-info p {
+        font-size: 12px !important;
+    }
+
+    .category-page .pagination button {
+        width: 28px !important;
+        height: 28px !important;
+        font-size: 11px !important;
+    }
 }

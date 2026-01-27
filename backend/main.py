@@ -143,8 +143,8 @@ def run_background_worker():
         finally:
             db.close()
 
-        print("💤 [Sleep] 10분 대기 중...")
-        time.sleep(600)
+        print("💤 [Sleep] 1분 대기 중...")
+        time.sleep(60)
 
 
 # --- [FastAPI 앱 설정] ---

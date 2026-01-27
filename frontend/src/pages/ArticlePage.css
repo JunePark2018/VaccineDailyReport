@@ -109,3 +109,41 @@
   border-bottom: 1px solid #eee;
   padding-bottom: 20px;
 }
+
+/* =========================================
+   Mobile Responsive Adjustments (Max 768px)
+   ========================================= */
+@media screen and (max-width: 768px) {
+
+  /* Remove fixed constraints */
+  .ArticlePage .main-content {
+    padding: 20px 15px;
+    width: 100%;
+  }
+
+  /* Stack main article and sidebar */
+  .ArticlePage .main-content .article-content-wrapper {
+    flex-direction: column;
+  }
+
+  /* Reset separate section (Keywords/WordCloud) positioning */
+  .ArticlePage .main-content .additional-section {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+  }
+
+  /* Adjust image height for mobile */
+  .ArticlePage .main-content .article-section .article-img {
+    height: auto;
+    max-height: 300px;
+  }
+
+  .ArticlePage .main-content .article-section .article-img img {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+  }
+}

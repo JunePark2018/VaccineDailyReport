@@ -45,7 +45,7 @@ export const Main = () => {
         // 2. Map Backend Data to Frontend Structure
         const formattedArticles = realArticles.map(art => ({
           ...art,
-          id: art.ai_generated_news_id,
+          id: art.ai_generated_news_id, // [Fix] Map native ID to 'id' for widespread usage
           category: art.category_name, // Map category_name ('정치', '경제'...) to category
           image: `cluster_${art.cluster_id}`, // Placeholder ID for image map
           short_text: art.contents ? (art.contents.substring(0, 100) + "...") : "내용 없음"
@@ -53,12 +53,49 @@ export const Main = () => {
 
         // 3. Filter by category (if name param exists)
         const decodedName = decodeURIComponent(name || '');
-        const filtered = (decodedName === '전체메뉴' || !decodedName)
+        let filtered = (decodedName === '전체메뉴' || !decodedName)
           ? formattedArticles
           : formattedArticles.filter(a => {
             if (!a.category) return false;
             return a.category === decodedName;
           });
+
+        // [추가] 구독 키워드 우선 정렬 (로그인 시)
+        const loginId = localStorage.getItem('login_id');
+        if (loginId) {
+          try {
+            const userRes = await axios.get(`http://localhost:8000/users/${loginId}/dashboard`);
+            const subKeywords = userRes.data.subscribed_keywords || [];
+
+            if (subKeywords.length > 0) {
+              // 겹치는 키워드가 있는지 확인하는 함수
+              const hasKeyword = (article) => {
+                if (!article.keywords) return false;
+                // article.keywords가 JSON string일 수도 있고 list일 수도 있음 (backend settings)
+                // schema상 List[str]로 올 것으로 예상되나, DB에 문자열로 저장된 경우 파싱 필요할 수 있음
+                let kws = article.keywords;
+                if (typeof kws === 'string') {
+                  try { kws = JSON.parse(kws); } catch (e) { kws = []; }
+                }
+                if (!Array.isArray(kws)) return false;
+
+                // 단순 포함 여부 체크 (부분 일치 등 더 복잡하게 할 수도 있음)
+                return subKeywords.some(sk => kws.some(ak => ak.includes(sk) || sk.includes(ak)));
+              };
+
+              // 정렬: 키워드 있는 것이 먼저
+              filtered.sort((a, b) => {
+                const aHas = hasKeyword(a);
+                const bHas = hasKeyword(b);
+                if (aHas && !bHas) return -1;
+                if (!aHas && bHas) return 1;
+                return 0; // 원래 순서 유지 (최신순)
+              });
+            }
+          } catch (e) {
+            console.warn("구독 키워드 로딩 실패", e);
+          }
+        }
 
         setDisplayArticles(filtered);
 
@@ -179,7 +216,7 @@ export const Main = () => {
       }));
     }
 
-
+    console.log(activeArticle);
 
     return (
       <React.Fragment>
@@ -210,7 +247,7 @@ export const Main = () => {
 
           {/* Center Column (Image) - Synced with Active Item */}
           <div className="main-image-column" style={{ flex: 1.6, display: 'flex', flexDirection: 'column' }}>
-            <div className="article-image-center" onClick={() => activeArticle && navigate(`/article/${activeArticle.id}`)} style={{ cursor: 'pointer', width: '100%', aspectRatio: '1.5/1' }}>
+            <div className="article-image-center" onClick={() => activeArticle && navigate(`/article/${activeArticle.ai_generated_news_id}`)} style={{ cursor: 'pointer', width: '100%', aspectRatio: '1.5/1' }}>
               <img src={activeImage} alt="Main" onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
               <div className="main-image-text">
                 {/* Title Overlay matches Active Item */}
