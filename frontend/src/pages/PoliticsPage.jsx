@@ -15,6 +15,7 @@ const PoliticsPage = () => {
     const [displayArticles, setDisplayArticles] = useState([]);
     const [imageMap, setImageMap] = useState({});
     const [feedPage, setFeedPage] = useState(1);
+    const [topFocusIndex, setTopFocusIndex] = useState(0); // State for slideshow focus
 
     useEffect(() => {
         setCurrentPage(1);
@@ -94,9 +95,9 @@ const PoliticsPage = () => {
     const renderMainContent = (blockArticles, blockIndex) => {
         if (!blockArticles || blockArticles.length === 0) return null;
 
-        const mainArticle = blockArticles[0];
-        const gridArticles = blockArticles.slice(1, 5); // 4 items (1 to 4)
-        const listArticles = blockArticles.slice(5, 13); // 8 items (5 to 12)
+        const slideArticles = blockArticles.slice(0, 4); // Top 4 for Slideshow
+        // const gridArticles = blockArticles.slice(4, 6); // Grid Removed
+        const listArticles = blockArticles.slice(4, 12); // Next 8 for List (shifted up)
 
         // Feed Logic
         const allFeedArticles = blockArticles.slice(13); // 20 items (13 to 32)
@@ -104,96 +105,91 @@ const PoliticsPage = () => {
         const totalFeedPages = Math.ceil(allFeedArticles.length / feedPageSize);
         const currentFeedArticles = allFeedArticles.slice((feedPage - 1) * feedPageSize, feedPage * feedPageSize);
 
-        const mainData = {
-            id: mainArticle?.id,
-            title: mainArticle?.title || "News Title Text Sample",
-            description: mainArticle?.short_text || "text sample...",
-            image: mainArticle ? (imageMap[mainArticle.image] || mainArticle.image) : null
-        };
-
-        const grid = gridArticles.map((art, i) => ({
+        // Slideshow Data Preparation
+        const slideData = slideArticles.map((art, i) => ({
             id: art?.id,
-            title: art?.title || "Title Sample Text",
-            content: art?.short_text || "text sample...",
+            title: art?.title || "뉴스 제목 예시",
+            description: art?.short_text || "내용 예시...",
             image: art ? (imageMap[art.image] || art.image) : null
         }));
 
+        const activeSlide = slideData[topFocusIndex] || slideData[0];
+
+
+
         const list = listArticles.map((art, i) => ({
             id: art?.id,
-            title: art?.title || "Title Sample Text",
-            content: art?.short_text || "text sample...",
+            title: art?.title || "제목 예시",
+            content: art?.short_text || "내용 예시...",
             image: art ? (imageMap[art.image] || art.image) : null
         }));
 
         const feed = currentFeedArticles.map((art, i) => ({
             id: art?.id,
-            title: art?.title || "Title Sample Text",
-            content: art?.short_text || "text sample...",
+            title: art?.title || "제목 예시",
+            content: art?.short_text || "내용 예시...",
             image: art ? (imageMap[art.image] || art.image) : null
         }));
 
         return (
             <React.Fragment key={blockIndex}>
-                <section className="main-article-section" style={{ display: 'flex', alignItems: 'center', gap: '40px', marginBottom: '30px', minHeight: '300px', textAlign: 'left' }}>
+                <section className="politics-main-section" style={{ display: 'flex', gap: '40px', marginBottom: '30px', alignItems: 'flex-start', textAlign: 'left', minHeight: '350px' }}>
 
-                    {/* Left: Article Photo (Now Left) */}
-                    <div className="politics-image-side" onClick={() => navigate(`/article/${mainData.id}`)} style={{ flex: 1.53, cursor: 'pointer' }}>
-                        <div className="article-image-center" style={{ width: '100%', aspectRatio: '2.4 / 1', borderRadius: '1px' }}>
-                            <img src={mainData.image} alt="Main" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
+                    {/* Left Column: Interactive List (4 Items) */}
+                    <div className="politics-content-side" style={{ flex: 1.4, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                        {slideData.map((item, idx) => {
+                            const isActive = idx === topFocusIndex;
+                            return (
+                                <div
+                                    key={item.id || idx}
+                                    className={`politics-slide-item ${isActive ? 'active' : ''}`}
+                                    onClick={() => setTopFocusIndex(idx)}
+                                    style={{
+                                        cursor: 'pointer',
+                                        padding: '15px 0',
+                                        borderBottom: idx < 3 ? '1px solid #eee' : 'none',
+                                        backgroundColor: isActive ? '#f9f9f9' : 'transparent', // Highlight active
+                                        paddingLeft: isActive ? '10px' : '0', // Indent active
+                                        transition: 'all 0.2s ease'
+                                    }}
+                                >
+                                    <h2 style={{
+                                        fontSize: isActive ? '20px' : '18px',
+                                        fontWeight: isActive ? 'bold' : 'normal',
+                                        lineHeight: '1.3',
+                                        color: isActive ? '#000' : '#444',
+                                        margin: '0 0 5px 0'
+                                    }}>
+                                        {item.title}
+                                    </h2>
+                                    {isActive && (
+                                        <p style={{ fontSize: '14px', color: '#666', lineHeight: '1.5', margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                            {item.description}
+                                        </p>
+                                    )}
+                                </div>
+                            );
+                        })}
+
+                        {/* Divider */}
+                        <div style={{ width: '100%', height: '1px', backgroundColor: '#333', marginTop: '10px' }}></div>
+                    </div>
+
+                    {/* Right Column: Active Image Display */}
+                    <div className="politics-image-side" onClick={() => activeSlide && navigate(`/article/${activeSlide.id}`)} style={{ flex: 1.6, cursor: 'pointer' }}>
+                        <div className="article-image-center" style={{ width: '100%', aspectRatio: '16/9', borderRadius: '1px', overflow: 'hidden', position: 'relative' }}>
+                            <img src={activeSlide?.image} alt="Main" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }}
+                                onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
+
+                            {/* Optional Overlay Title on Image if desired, but user just asked for interaction */}
                         </div>
                     </div>
 
-                    {/* Right: Article Title (Now Right) */}
-                    <div className="politics-title-side" onClick={() => navigate(`/article/${mainData.id}`)} style={{ flex: 1.47, cursor: 'pointer' }}>
-                        <h2 style={{ fontSize: '36px', fontWeight: 'bold', lineHeight: '1.3', color: '#000', margin: 0 }}>
-                            {mainData.title}
-                        </h2>
-                        <p style={{ fontSize: '16px', color: '#666', marginTop: '15px', lineHeight: '1.6' }}>
-                            {mainData.description}
-                        </p>
-                    </div>
                 </section>
 
-                {/* Grid Section (4 items) */}
-                {grid.length > 0 && (
-                    <>
-                        <section className="bottom-grid-section" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '40px', marginBottom: '50px', textAlign: 'left' }}>
-                            {grid.map((news) => (
-                                <div key={news.id} className="grid-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                    {/* Image Removed for Text-Only Layout */}
-                                    <div className="grid-info">
-                                        <h3 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 5px 0', lineHeight: '1.4' }}>{news.title}</h3>
-                                        <p style={{ fontSize: '13px', color: '#666', margin: 0, lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                                            {news.content}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
-                        </section>
-                    </>
-                )}
 
-                {/* List Section (8 items, 2 cols x 4 rows) */}
-                {list.length > 0 && (
-                    <>
-                        <div className="section-divider"></div>
-                        <section className="bottom-list-section" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', columnGap: '40px', rowGap: '30px', textAlign: 'left' }}>
-                            {list.map((news) => (
-                                <div key={news.id} className="list-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
-                                    <div className="list-image" style={{ width: '120px', height: '76px', flexShrink: 0, border: '1px solid #eee', overflow: 'hidden' }}>
-                                        <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
-                                    </div>
-                                    <div className="list-info" style={{ flex: 1 }}>
-                                        <h3 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 8px 0', lineHeight: '1.3' }}>{news.title}</h3>
-                                        <p style={{ fontSize: '13px', color: '#666', margin: 0, lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                                            {news.content}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
-                        </section>
-                    </>
-                )}
+
 
                 {/* Feed Section (Pagination) */}
                 {feed.length > 0 && (

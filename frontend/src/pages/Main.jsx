@@ -48,17 +48,18 @@ export const Main = () => {
 
         setDisplayArticles(filtered);
 
-        // 4. Fetch Images for each article (N+1 pattern as requested)
-        // We only fetch images for articles that are actually displayed/loaded to save bandwidth, 
-        // but here we fetch for all 'filtered' to ensure smooth scrolling/rendering.
+        // 4. Fetch Images and Detail News for each article
         const newImageMap = {};
+        const newDetailsMap = {};
 
-        // Use Promise.allSettled to fetch images in parallel
-        // Limiting concurrency might be needed in production, but for <100 items localhost it's fine.
+        // Use Promise.allSettled to fetch images/details in parallel
         await Promise.allSettled(filtered.map(async (art) => {
           try {
             const imgRes = await axios.get(`http://localhost:8000/generated-news/clusters/${art.cluster_id}/news`);
             const newsList = imgRes.data;
+
+            // Store detailed news list for highlights
+            newDetailsMap[`cluster_${art.cluster_id}`] = newsList;
 
             // Extract all img_urls and pick one
             const allImgUrls = newsList
@@ -70,11 +71,12 @@ export const Main = () => {
               newImageMap[`cluster_${art.cluster_id}`] = randomImg;
             }
           } catch (err) {
-            console.warn(`Failed to fetch image for cluster ${art.cluster_id}`, err);
+            console.warn(`Failed to fetch image/details for cluster ${art.cluster_id}`, err);
           }
         }));
 
         setImageMap(prev => ({ ...prev, ...newImageMap }));
+        setArticleDetailsMap(prev => ({ ...prev, ...newDetailsMap }));
 
       } catch (error) {
         console.error('Failed to load real data:', error);
@@ -88,87 +90,130 @@ export const Main = () => {
 
 
 
-  // Function to render the main content block (Featured, Highlights, Grid)
-  const renderMainContent = (index) => {
+  // Slideshow State
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [articleDetailsMap, setArticleDetailsMap] = useState({});
+
+  // Auto-rotate slideshow
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlideIndex(prev => (prev + 1) % 3);
+    }, 10000); // 10 seconds per slide
+    return () => clearInterval(interval);
+  }, []);
+
+  // Function to render the main content block (Slideshow)
+  const renderMainContent = () => {
     if (!displayArticles || displayArticles.length === 0) return null;
 
-    // Use 5 articles per loop to match the layout (1 main + 4 grid)
-    const baseIndex = (index * 5) % displayArticles.length;
-    const mainArticle = displayArticles[baseIndex];
+    // Pick top 3 articles for the slideshow list
+    const slideArticles = displayArticles.slice(0, 3);
+    if (slideArticles.length === 0) return null;
 
-    const mainData = {
-      title: mainArticle?.title || "AI 생성 기사 제목",
-      description: mainArticle?.short_text || "AI 생성 기사 내용 (추후 데이터 연동 예정)",
-      image: mainArticle ? (imageMap[mainArticle.image] || mainArticle.image) : null
-    };
+    const activeArticle = slideArticles[currentSlideIndex];
+    const activeImage = activeArticle ? (imageMap[activeArticle.image] || activeArticle.image) : null;
+    const relatedNews = articleDetailsMap[activeArticle?.image] || [];
 
-    // Calculate Grid Articles for Right Side (Next 4 articles)
-    const gridArticles = [
-      displayArticles[(baseIndex + 1) % displayArticles.length],
-      displayArticles[(baseIndex + 2) % displayArticles.length],
-      displayArticles[(baseIndex + 3) % displayArticles.length],
-      displayArticles[(baseIndex + 4) % displayArticles.length],
-    ];
+    // Parse 'media_comparison_bullets' for highlights
+    // Format expected: "- [PressName] Content" or "[PressName] Content"
+    const bullets = activeArticle?.analysis_result?.media_comparison_bullets || [];
 
-    // Helper to format article data
-    const getArticleData = (article) => ({
-      id: article?.id, // Added ID
-      title: article?.title || "AI 생성 기사 제목",
-      description: article?.short_text || "AI 생성 기사 내용"
-    });
+    let highlights = [];
+    if (bullets.length > 0) {
+      highlights = bullets.slice(0, 4).map(text => {
+        // Remove leading "- " if present
+        const cleanText = text.replace(/^- /, '');
+        // Regex strategies to find Press Name
+        // 1. [PressName] Content
+        let match = cleanText.match(/^\[(.*?)\]\s*(.*)/);
+        if (!match) {
+          // 2. PressName: Content
+          match = cleanText.match(/^([^:]+):\s*(.*)/);
+        }
+        if (!match) {
+          // 3. PressName - Content
+          match = cleanText.match(/^([^-]+)\s-\s*(.*)/);
+        }
 
-    const rightArticles = [
-      getArticleData(gridArticles[0]),
-      getArticleData(gridArticles[1]),
-      getArticleData(gridArticles[2]),
-      getArticleData(gridArticles[3])
-    ];
+        if (match) {
+          let kw = match[1].trim();
+          // Remove '은' or '는' from the end of the keyword if present
+          kw = kw.replace(/(은|는)$/, '');
+          return { keyword: `"${kw}"`, content: match[2].trim() };
+        } else {
+          // Fallback: Use first word as keyword if reasonable length
+          const firstSpace = cleanText.indexOf(' ');
+          if (firstSpace > 0 && firstSpace < 15) {
+            let kw = cleanText.substring(0, firstSpace);
+            // Remove '은' or '는' from range
+            kw = kw.replace(/(은|는)$/, '');
+            return {
+              keyword: `"${kw}"`,
+              content: cleanText.substring(firstSpace + 1)
+            };
+          }
+          return { keyword: '분석', content: cleanText };
+        }
+      });
+    }
 
-    const highlights = [
-      { keyword: 'TEST KEYWORD', content: 'ANALYSIS CONTENT SAMPLE TEXT FOR TESTING ANALYSIS CONTENT SAMPLE TEXT FOR TESTING' },
-      { keyword: 'TEST KEYWORD', content: 'ANALYSIS CONTENT SAMPLE TEXT FOR TESTING ANALYSIS CONTENT SAMPLE TEXT FOR TESTING' },
-      { keyword: 'TEST KEYWORD', content: 'ANALYSIS CONTENT SAMPLE TEXT FOR TESTING ANALYSIS CONTENT SAMPLE TEXT FOR TESTING' },
-      { keyword: 'TEST KEYWORD', content: 'ANALYSIS CONTENT SAMPLE TEXT FOR TESTING ANALYSIS CONTENT SAMPLE TEXT FOR TESTING' }
-    ];
+    // If no bullets, fall back to relatedNews
+    if (highlights.length === 0 && relatedNews.length > 0) {
+      highlights = relatedNews.slice(0, 4).map(news => ({
+        keyword: news.company_name || '언론사',
+        content: news.contents ? (news.contents.substring(0, 80) + '...') : '내용 없음'
+      }));
+    }
+
+
 
     return (
-      <React.Fragment key={index}>
+      <React.Fragment>
         <section className="main-article-section" style={{ display: 'flex', gap: '40px', marginBottom: '30px' }}>
 
-          {/* Left: 4 Articles (Restored to Left) */}
+          {/* Left: List of 4 Articles */}
           <div className="article-info-side" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            {rightArticles.map((art, artIdx) => (
-              <React.Fragment key={artIdx}>
-                <div className="analysis-block" onClick={() => art.id && navigate(`/article/${art.id}`)} style={{ cursor: 'pointer' }}>
-                  <h2>{art.title}</h2>
-                  <p>{art.description}</p>
-                </div>
-                {artIdx < rightArticles.length - 1 && <div className="info-divider"></div>}
-              </React.Fragment>
-            ))}
+            {slideArticles.map((art, idx) => {
+              const isActive = idx === currentSlideIndex;
+              return (
+                <React.Fragment key={art.id || idx}>
+                  <div
+                    className={`analysis-block ${isActive ? 'active' : ''}`}
+                    onClick={() => setCurrentSlideIndex(idx)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <h2 style={{ fontSize: '18px', marginBottom: '5px' }}>
+                      {art.title}
+                    </h2>
+                    <p style={{ fontSize: '12px', lineHeight: '1.4' }}>
+                      {art.short_text || "AI 생성 기사 내용"}
+                    </p>
+                  </div>
+                </React.Fragment>
+              );
+            })}
           </div>
 
-          {/* Center Column (Image) */}
+          {/* Center Column (Image) - Synced with Active Item */}
           <div className="main-image-column" style={{ flex: 1.6, display: 'flex', flexDirection: 'column' }}>
-            <div className="ai-news-badge" style={{ borderBottom: 'none', borderLeft: '5px solid #000', paddingLeft: '10px', paddingBottom: '2px', lineHeight: '1', marginLeft: '0', marginBottom: '10px' }}>AI 뉴스</div>
-            <div className="article-image-center" onClick={() => navigate(`/article/${displayArticles[(index * 5) % displayArticles.length]?.id}`)} style={{ cursor: 'pointer', width: '100%', aspectRatio: '1.5/1' }}>
-              <img src={mainData.image} alt="Main" onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
+            <div className="article-image-center" onClick={() => activeArticle && navigate(`/article/${activeArticle.id}`)} style={{ cursor: 'pointer', width: '100%', aspectRatio: '1.5/1' }}>
+              <img src={activeImage} alt="Main" onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
               <div className="main-image-text">
-                <h3>{mainData.title || "AI 생성 기사 제목"}</h3>
+                {/* Title Overlay matches Active Item */}
+                <h3>{activeArticle?.title}</h3>
               </div>
             </div>
           </div>
 
-          {/* Right: Highlights (Restored to Right) */}
+          {/* Right: Highlights (Real Analysis Data) */}
           <div className="highlights-side" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <div className="highlight-list" style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
               {highlights.map((item, hIndex) => (
                 <React.Fragment key={hIndex}>
                   <div className="highlight-item" style={{ alignItems: 'flex-start', textAlign: 'left' }}>
                     <span className="highlight-keyword" style={{ color: '#ff4d4d', fontWeight: 'bold', fontSize: '16px', marginBottom: '5px' }}>{item.keyword}</span>
-                    <span className="highlight-content" style={{ fontSize: '13px', lineHeight: '1.5', color: '#444', display: '-webkit-box', overflow: 'hidden', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2 }}>"{item.content}"</span>
+                    <span className="highlight-content" style={{ fontSize: '13px', lineHeight: '1.5', color: '#444', display: '-webkit-box', overflow: 'hidden', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2 }}>{item.content}</span>
                   </div>
-                  {hIndex < highlights.length - 1 && <div className="info-divider" style={{ margin: '30px 0' }}></div>}
                 </React.Fragment>
               ))}
             </div>
@@ -225,7 +270,7 @@ export const Main = () => {
 
     return (
       <div className="top10-section" style={{ height: 'auto', padding: '37px 0 0 0', border: 'none', background: 'transparent' }}>
-        <h3 style={{ fontSize: '18px', fontWeight: '800', borderLeft: '5px solid #000', borderBottom: 'none', paddingLeft: '10px', paddingBottom: '3px', marginBottom: '20px', textAlign: 'left', width: 'fit-content', lineHeight: '1' }}>TOP 5 뉴스</h3>
+
         <div className="top10-grid" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
           {top5Articles.map((article, index) => {
             const imgPath = imageMap[article.image] || article.image;
@@ -258,26 +303,28 @@ export const Main = () => {
 
     const renderBox = (title, articles, link) => (
       <div className="cat-box-column">
-        <h3 className="cat-box-header" onClick={() => navigate(link)} style={{ cursor: 'pointer' }}>{title}</h3>
+        <h2 className="cat-box-header" onClick={() => navigate(link)} style={{ cursor: 'pointer' }}>{title}</h2>
         {articles.length > 0 && (
           <div className="cat-box-content">
-            <div className="cat-box-main" onClick={() => navigate(`/article/${articles[0].id}`)} style={{ cursor: 'pointer' }}>
-              <div className="cat-box-img" style={{ aspectRatio: '16/9', width: '100%' }}>
+            <div className="cat-box-main">
+              <div className="cat-box-img" onClick={() => navigate(`/article/${articles[0].id}`)} style={{ cursor: 'pointer', aspectRatio: '16/9' }}>
                 <img src={imageMap[articles[0].image] || articles[0].image} alt={articles[0].title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
               </div>
-              <h4 className="cat-box-title" style={{ fontSize: '16px', margin: '10px 0 5px 0' }}>{articles[0].title}</h4>
-              <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>{articles[0].short_text}</p>
-            </div>
-            {articles.length > 1 && (
-              <div className="cat-box-list">
-                {articles.slice(1).map((art, i) => (
-                  <div key={i} className="cat-box-list-item" onClick={() => navigate(`/article/${art.id}`)} style={{ cursor: 'pointer' }}>
-                    <h5>{art.title}</h5>
-                    <p>{art.short_text}</p>
+              <div className="cat-box-info">
+                <h3 className="cat-box-title" onClick={() => navigate(`/article/${articles[0].id}`)} style={{ fontSize: '15px', cursor: 'pointer' }}>{articles[0].title}</h3>
+                <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>{articles[0].short_text}</p>
+
+                {articles.length > 1 && (
+                  <div className="cat-box-list">
+                    {articles.slice(1).map((art, i) => (
+                      <div key={i} className="cat-box-list-item" onClick={(e) => { e.stopPropagation(); navigate(`/article/${art.id}`); }} style={{ cursor: 'pointer' }}>
+                        <h3>"{art.title}"</h3>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
-            )}
+            </div>
           </div>
         )}
       </div>
@@ -299,7 +346,7 @@ export const Main = () => {
     return (
       <section className="category-detailed-section" style={{ borderTop: 'none', marginTop: '25px' }}>
         <div className="cat-global-row">
-          <h3 className="cat-box-header" onClick={() => navigate('/society')} style={{ cursor: 'pointer', borderLeft: '5px solid #000', paddingLeft: '10px', paddingBottom: '2px', lineHeight: '1' }}>사회</h3>
+          <h2 className="cat-box-header" onClick={() => navigate('/society')} style={{ cursor: 'pointer', borderLeft: '5px solid #000', paddingLeft: '10px', paddingBottom: '2px', lineHeight: '1' }}>사회</h2>
           <div className="global-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
             {society.map((art, i) => (
               <div key={i} className="global-card" onClick={() => navigate(`/article/${art.id}`)} style={{ cursor: 'pointer' }}>
@@ -321,7 +368,7 @@ export const Main = () => {
     return (
       <section className="category-detailed-section" style={{ borderTop: 'none' }}>
         <div className="cat-global-row">
-          <h3 className="cat-box-header" onClick={() => navigate('/culture')} style={{ cursor: 'pointer', borderLeft: '5px solid #000', paddingLeft: '10px', paddingBottom: '2px', lineHeight: '1' }}>생활/문화</h3>
+          <h2 className="cat-box-header" onClick={() => navigate('/culture')} style={{ cursor: 'pointer', borderLeft: '5px solid #000', paddingLeft: '10px', paddingBottom: '2px', lineHeight: '1' }}>생활/문화</h2>
           <div className="global-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
             {culture.map((art, i) => (
               <div key={i} className="global-card" onClick={() => navigate(`/article/${art.id}`)} style={{ cursor: 'pointer' }}>
@@ -343,7 +390,7 @@ export const Main = () => {
     return (
       <section className="category-detailed-section" style={{ borderTop: 'none' }}>
         <div className="cat-global-row">
-          <h3 className="cat-box-header" onClick={() => navigate('/science')} style={{ cursor: 'pointer' }}>IT/과학</h3>
+          <h2 className="cat-box-header" onClick={() => navigate('/science')} style={{ cursor: 'pointer' }}>IT/과학</h2>
           <div className="global-grid" style={{ gridTemplateColumns: '1fr' }}>
             {science.map((art, i) => (
               <div key={i} className="global-card" onClick={() => navigate(`/article/${art.id}`)} style={{ cursor: 'pointer', flexDirection: 'row', alignItems: 'center', gap: '30px' }}>
@@ -366,12 +413,12 @@ export const Main = () => {
   return (
     <div className="main-page">
       <Header
-        leftChild={<div />}
-        midChild={<Logo />}
+        leftChild={<Logo />}
+        midChild={null}
         rightChild={
           <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
             <div style={{ position: 'relative' }}>
-              <Searchbar />
+              <Searchbar className="always-open" />
             </div>
             <UserMenu />
           </div>
@@ -391,11 +438,8 @@ export const Main = () => {
                 <div className="full-width-divider"></div>
 
                 <div className="pol-eco-top5-row" style={{ display: 'flex', gap: '0', marginTop: '40px' }}>
-                  <div style={{ flex: 6, borderRight: 'none', paddingRight: '60px' }}>
+                  <div style={{ flex: 1, borderRight: 'none', paddingRight: '0' }}>
                     {renderPoliticsEconomy(false, true)}
-                  </div>
-                  <div style={{ flex: 4, borderLeft: 'none', paddingLeft: '60px' }}>
-                    {renderTop10News()}
                   </div>
                 </div>
               </React.Fragment>
