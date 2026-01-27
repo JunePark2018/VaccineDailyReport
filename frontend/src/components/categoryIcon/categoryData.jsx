@@ -7,6 +7,7 @@ import scienceIcon from './science.png';
 import worldIcon from './world.png';
 
 export const categories = [
+    { id: 'sub1', label: '홈', icon: totalmenuIcon },
     { id: 'sub3', label: '정치', icon: governmentIcon },
     { id: 'sub4', label: '경제', icon: economicsIcon },
     { id: 'sub5', label: '사회', icon: societyIcon },

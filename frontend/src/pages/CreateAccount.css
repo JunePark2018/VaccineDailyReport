@@ -2,9 +2,9 @@
 .create-account-container {
     display: flex;
     flex-direction: column;
-    align-items: stretch;
+    align-items: center;
     min-height: 100vh;
-    background-color: #f9f9f9;
+    background-color: #f4f6f8;
     /* Light grey background */
     font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
 }
@@ -14,27 +14,23 @@
     background-color: white;
     width: 100%;
     max-width: 500px;
-    padding: 50px 40px;
-    border: 1px solid #ddd;
-    /* Square corners */
-    border-radius: 0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    margin: 40px auto;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin: 40px 20px;
 }
 
 .create-account-container h2 {
     text-align: center;
     color: #333;
     margin-bottom: 10px;
-    font-weight: 800;
-    font-size: 28px;
 }
 
 .create-account-container .description {
     text-align: center;
     color: #666;
     font-size: 14px;
-    margin-bottom: 40px;
+    margin-bottom: 30px;
 }
 
 /* Form Layout */
@@ -56,12 +52,12 @@
     width: 48%;
 }
 
-.create-account-container .create-account-box label {
-    font-size: 15px;
-    font-weight: 700;
-    color: #333;
-    margin-bottom: 8px;
-    margin-left: 2px;
+.create-account-container label {
+    font-size: 16px;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 6px;
+    margin-left: 10px;
     display: block;
     text-align: left;
 }
@@ -73,39 +69,34 @@
 }
 
 /* Input Fields */
-/* Input Fields */
-.create-account-container .create-account-box input[type="text"],
-.create-account-container .create-account-box input[type="password"],
-.create-account-container .create-account-box input[type="email"],
-.create-account-container .create-account-box select {
+.create-account-container input[type="text"],
+.create-account-container input[type="password"],
+.create-account-container input[type="email"],
+.create-account-container select {
     width: 100%;
-    padding: 0 15px;
-    height: 50px;
-    border: 1px solid #ccc;
-    border-radius: 0;
-    /* Square corners */
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
     font-size: 15px;
     box-sizing: border-box;
-    transition: border 0.2s;
+    /* Ensures padding doesn't affect width */
+    transition: border 0.3s;
     background-color: white;
+}
+
+.create-account-container input:focus {
+    border-color: #4a90e2;
     outline: none;
 }
 
-.create-account-container .create-account-box input:focus,
-.create-account-container .create-account-box select:focus {
-    border-color: #333;
-    /* Dark focus color */
-    border-width: 1px;
-}
-
 .create-account-container .input-error {
-    border-color: #cc0000 !important;
+    border-color: #ff4d4d !important;
     background-color: #fff8f8;
 }
 
 /* Error Message Text */
 .create-account-container .error-msg {
-    color: #cc0000;
+    color: #ff4d4d;
     font-size: 12px;
     margin-top: 5px;
 }
@@ -118,15 +109,14 @@
 
 .create-account-container .toggle-btn {
     position: absolute;
-    right: 15px;
+    right: 10px;
     top: 50%;
     transform: translateY(-50%);
     background: none;
     border: none;
     color: #666;
-    font-size: 13px;
+    font-size: 12px;
     cursor: pointer;
-    font-weight: 600;
 }
 
 .create-account-container .strength-meter-container {
@@ -140,15 +130,13 @@
 
 .create-account-container .strength-bar {
     height: 4px;
-    border-radius: 0;
-    /* Square */
+    border-radius: 2px;
     transition: width 0.3s ease, background-color 0.3s ease;
 }
 
 /* Category Grid */
 .create-account-container .category-section {
-    margin-bottom: 30px;
-    margin-top: 30px;
+    margin-bottom: 25px;
 }
 
 .create-account-container .category-grid {
@@ -163,28 +151,23 @@
     position: relative;
     padding: 12px;
     border: 1px solid #ddd;
-    border-radius: 0;
-    /* Square */
+    border-radius: 8px;
     text-align: center;
     font-size: 14px;
     cursor: pointer;
     background-color: #fafafa;
     transition: all 0.2s;
     user-select: none;
-    color: #555;
-    font-weight: 500;
 }
 
 .create-account-container .category-box:hover {
     background-color: #f0f0f0;
-    border-color: #bbb;
-    color: #000;
 }
 
 .create-account-container .category-box.selected {
-    border-color: #333;
-    background-color: #333;
-    color: white;
+    border-color: #4a90e2;
+    background-color: #eef6ff;
+    color: #4a90e2;
     font-weight: bold;
 }
 
@@ -192,7 +175,7 @@
     position: absolute;
     top: -6px;
     right: -6px;
-    background-color: #000;
+    background-color: #4a90e2;
     color: white;
     width: 20px;
     height: 20px;
@@ -201,7 +184,6 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    border: 2px solid white;
 }
 
 /* Agreement Checkbox */
@@ -209,8 +191,7 @@
     margin-bottom: 30px;
     padding: 15px;
     background-color: #f9f9f9;
-    border-radius: 0;
-    border: 1px solid #eee;
+    border-radius: 6px;
 }
 
 .create-account-container .checkbox-container {
@@ -225,23 +206,19 @@
 
 .create-account-container .checkbox-container input {
     margin-right: 10px;
-    margin-top: 3px;
-    width: auto;
-    height: auto;
+    margin-top: 2px;
     cursor: pointer;
 }
 
 /* Submit Button */
 .create-account-container .submit-btn {
     width: 100%;
-    height: 55px;
-    /* Taller button */
-    background-color: #333;
-    /* Dark Theme */
+    padding: 15px;
+    background-color: #4a90e2;
+    /* Nice blue */
     color: white;
     border: none;
-    border-radius: 0;
-    /* Square */
+    border-radius: 6px;
     font-size: 16px;
     font-weight: bold;
     cursor: pointer;
@@ -249,19 +226,19 @@
 }
 
 .create-account-container .submit-btn:hover {
-    background-color: #000;
+    background-color: #357abd;
 }
 
 /* Login Link */
 .create-account-container .login-redirect {
-    margin-top: 25px;
+    margin-top: 20px;
     text-align: center;
-    font-size: 14px;
+    font-size: 13px;
     color: #666;
 }
 
 .create-account-container .login-redirect span {
-    color: #333;
+    color: #4a90e2;
     font-weight: bold;
     cursor: pointer;
     margin-left: 5px;
