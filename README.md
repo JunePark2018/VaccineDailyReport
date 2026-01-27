@@ -20,7 +20,7 @@ git clone https://github.com/JunePark2018/VaccineDailyReport.git
 이 프로젝트는 **PostgreSQL**과 **Redis**를 Docker 컨테이너로 실행합니다. 팀원 모두가 동일한 DB 환경에서 작업하기 위해 사용합니다.
 
 1.  **Docker Desktop 설치**: Docker가 설치되어 있고 실행 중이어야 합니다.
-    *   **링크**: https://www.docker.com/products/docker-desktop/
+    *   https://hub.docker.com/에 접속하여 로그인하신 후, 프로그램을 다운받아 주세요.
 2.  **.env 파일 수정**: 아래 코드를 .env에 붙여넣으세요.
     ```bash
     DATABASE_URL=postgresql://myuser:mypassword@localhost:5432/finalproject
