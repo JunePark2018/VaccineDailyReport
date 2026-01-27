@@ -59,7 +59,7 @@ def get_generated_news(
             keywords_value = json.dumps(keywords_value, ensure_ascii=False)
 
         item_dict = {
-            "id": item.id,
+            "ai_generated_news_id": item.ai_generated_news_id,
             "cluster_id": item.cluster_id,
             "category_id": item.category_id,
             "category_name": item.category.name if item.category else None,
@@ -117,7 +117,7 @@ def search_generated_news(
                 keywords_value = json.dumps(keywords_value, ensure_ascii=False)
 
             item_dict = {
-                "id": item.id,
+                "ai_generated_news_id": item.ai_generated_news_id,
                 "cluster_id": item.cluster_id,
                 "category_id": item.category_id,
                 "category_name": item.category.name if item.category else None,
@@ -146,7 +146,7 @@ def get_generated_news_detail(generated_news_id: int, db: Session = Depends(get_
     generated_news = (
         db.query(AiGeneratedNews)
         .options(joinedload(AiGeneratedNews.cluster).joinedload(Cluster.news), joinedload(AiGeneratedNews.category))
-        .filter(AiGeneratedNews.id == generated_news_id)
+        .filter(AiGeneratedNews.ai_generated_news_id == generated_news_id)
         .first()
     )
 
@@ -161,7 +161,7 @@ def get_generated_news_detail(generated_news_id: int, db: Session = Depends(get_
         keywords_value = json.dumps(keywords_value, ensure_ascii=False)
 
     return {
-        "id": generated_news.id,
+        "ai_generated_news_id": generated_news.ai_generated_news_id,
         "cluster_id": generated_news.cluster_id,
         "category_id": generated_news.category_id,
         "category_name": generated_news.category.name if generated_news.category else None,
@@ -172,7 +172,7 @@ def get_generated_news_detail(generated_news_id: int, db: Session = Depends(get_
         "keywords": keywords_value,
         "like_count": generated_news.like_count,
         "dislike_count": generated_news.dislike_count,
-        "cluster": generated_news.cluster,
+        # "cluster": generated_news.cluster, # 순환 참조 주의, 필요한 경우 serialize
     }
 
 

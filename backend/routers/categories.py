@@ -15,4 +15,4 @@ router = APIRouter(prefix="/categories", tags=["Categories"])
 def list_categories(db: Session = Depends(get_db)):
     """모든 카테고리 목록 조회"""
     categories = db.query(Category).all()
-    return [{"id": cat.id, "name": cat.name} for cat in categories]
+    return [{"category_id": cat.category_id, "name": cat.name} for cat in categories]
