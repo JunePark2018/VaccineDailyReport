@@ -45,6 +45,7 @@ export const Main = () => {
         // 2. Map Backend Data to Frontend Structure
         const formattedArticles = realArticles.map(art => ({
           ...art,
+          id: art.ai_generated_news_id,
           category: art.category_name, // Map category_name ('정치', '경제'...) to category
           image: `cluster_${art.cluster_id}`, // Placeholder ID for image map
           short_text: art.contents ? (art.contents.substring(0, 100) + "...") : "내용 없음"
@@ -324,8 +325,10 @@ export const Main = () => {
                 <img src={imageMap[articles[0].image] || articles[0].image} alt={articles[0].title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
               </div>
               <div className="cat-box-info">
-                <h3 className="cat-box-title" onClick={() => navigate(`/article/${articles[0].id}`)} style={{ fontSize: '15px', cursor: 'pointer' }}>{articles[0].title}</h3>
-                <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>{articles[0].short_text}</p>
+                <div className="cat-box-featured-text" onClick={() => navigate(`/article/${articles[0].id}`)} style={{ cursor: 'pointer' }}>
+                  <h3 className="cat-box-title" style={{ fontSize: '15px' }}>{articles[0].title}</h3>
+                  <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>{articles[0].short_text}</p>
+                </div>
 
                 {articles.length > 1 && (
                   <div className="cat-box-list">

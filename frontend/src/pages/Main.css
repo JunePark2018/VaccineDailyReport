@@ -84,7 +84,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border-radius: 5px;
+  border-radius: 0;
 }
 
 .main-page .article-image-center::before,
@@ -322,7 +322,7 @@
   right: 50%;
   margin-left: -50vw;
   margin-right: -50vw;
-  background-color: #1a1a1a;
+  background-color: #333333;
   /* 10% Lighter */
   color: #fff;
   padding: 54px 0;
@@ -399,11 +399,11 @@
 }
 
 .main-page .ai-main-image-container::before {
-  background: linear-gradient(to right, #1a1a1a, transparent 15%, transparent 85%, #1a1a1a);
+  background: linear-gradient(to right, #333333, transparent 15%, transparent 85%, #333333);
 }
 
 .main-page .ai-main-image-container::after {
-  background: linear-gradient(to bottom, #1a1a1a, transparent 15%, transparent 85%, #1a1a1a);
+  background: linear-gradient(to bottom, #333333, transparent 15%, transparent 85%, #333333);
 }
 
 .main-page .ai-main-image-container img {
@@ -603,7 +603,7 @@
   height: 100px;
   /* Aspect */
   position: relative;
-  border-radius: 5px;
+  border-radius: 0;
   overflow: hidden;
 }
 
@@ -693,7 +693,7 @@
   /* Increased size */
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  border-radius: 5px;
+  border-radius: 0;
   flex: none;
   /* Prevent shrinking */
 }
@@ -767,7 +767,7 @@
   aspect-ratio: 16 / 9;
   /* border: 1px solid #000; Removed */
   overflow: hidden;
-  border-radius: 5px;
+  border-radius: 0;
   /* Added roundness */
 }
 
@@ -790,14 +790,14 @@
 /* Active Slide Item Style */
 .analysis-block {
   padding: 15px;
-  border-radius: 5px;
+  border-radius: 0;
   border: 2px solid transparent;
   /* Reserve space for border to prevent layout shift */
   transition: all 0.3s;
 }
 
 .analysis-block.active {
-  background-color: #000;
+  background-color: #333333;
   border: 2px solid transparent;
 }
 
@@ -813,11 +813,31 @@
 }
 
 /* Hover Effects for Article Titles (Underline) */
-.analysis-block:hover h2,
-.article-image-center:hover .main-image-text h3,
-.cat-box-img:hover~.cat-box-info .cat-box-title,
-.cat-box-title:hover,
-.cat-box-list-item:hover h3,
+.analysis-block:hover h2 {
+  text-decoration: underline;
+}
+
+.article-image-center:hover .main-image-text h3 {
+  text-decoration: underline;
+}
+
+/* Politics & Economy: Hover IMAGE or TEXT-BLOCK to underline title */
+.cat-box-img:hover+.cat-box-info .cat-box-title {
+  text-decoration: underline;
+}
+
+.cat-box-featured-text:hover .cat-box-title {
+  text-decoration: underline;
+}
+
+.cat-box-title:hover {
+  text-decoration: underline;
+}
+
+.cat-box-list-item:hover h3 {
+  text-decoration: underline;
+}
+
 .global-card:hover h4 {
   text-decoration: underline;
 }

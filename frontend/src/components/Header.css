@@ -146,8 +146,8 @@
 
 /* Text Label */
 .Header-Container .Header-Bottom .category-item span {
-    font-size: 13px;
-    font-weight: 500;
+    font-size: 15px;
+    font-weight: 700;
     text-align: center;
     word-break: keep-all;
     color: #333;
@@ -156,5 +156,4 @@
 
 .Header-Container .Header-Bottom .category-item:hover span {
     color: #000;
-    font-weight: 800;
 }
