@@ -16,7 +16,7 @@ import './MyPage.css';
 const MOCK_USER_DATA = {
   user_real_name: "홍길동",
   email: "gildong@example.com",
-  read_categories: { '정치': 85, '경제': 45, '사회': 95, '생활/문화': 60, 'IT/과학': 100, '세계': 30 },
+  read_categories: { '정치': 85, '경제': 85, '사회': 95, '생활/문화': 75, 'IT/과학': 85, '세계': 70 },
   read_keywords: { '반도체': 15, '금리': 10, '인공지능': 25, '나스닥': 8, '재건축': 12, '우크라이나': 5, '이재명': 100, '윤석열': 300, 'AI': 55, '박나래': 44 },
   subscribed_keywords: ['AI', '재테크', '건강']
 };
@@ -27,6 +27,7 @@ const MyPage = () => {
   const [userData, setUserData] = useState(null);
   const [isActive, setIsActive] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const MY_CATEGORIES = ['정치', '경제', '사회', 'IT/과학', '세계'];
 
   // 데이터 로딩
   useEffect(() => {
@@ -111,7 +112,9 @@ const MyPage = () => {
         <div className="content-wrapper">
           {/* 1. 레이더 차트 컴포넌트 */}
           <CategoryRadarChart
-            targetScores={userData?.read_categories}
+            title="나의 관심 카테고리"
+            labels={MY_CATEGORIES}
+            targetScores={userData?.read_categories} // { '정치': 7, '경제': 4 ... }
             dynamicLimit={dynamicLimit}
             isActive={isActive}
           />
