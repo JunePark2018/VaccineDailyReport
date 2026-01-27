@@ -5,7 +5,17 @@ AI 생성 뉴스 관련 라우터
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
+
+# ... (other imports are fine, but I need to make sure I match the file content structure.
+# The previous `from sqlalchemy import or_` was on line 8.
+# I will edit the import line separately or include it in the replace if I can span that far, but the file is large. 
+# Better to do two edits or use multi_replace.
+# I will use multi_replace to handle both the import and the function body safely.
+
+# actually I will just use replace_file_content for the import first, then the function.
+# Wait, I can do it in one multi_replace.
+
 
 from routers import get_db
 from database.models import AiGeneratedNews, Cluster
@@ -49,7 +59,7 @@ def get_generated_news(
             keywords_value = json.dumps(keywords_value, ensure_ascii=False)
 
         item_dict = {
-            "id": item.id,
+            "ai_generated_news_id": item.ai_generated_news_id,
             "cluster_id": item.cluster_id,
             "category_id": item.category_id,
             "category_name": item.category.name if item.category else None,
@@ -107,7 +117,7 @@ def search_generated_news(
                 keywords_value = json.dumps(keywords_value, ensure_ascii=False)
 
             item_dict = {
-                "id": item.id,
+                "ai_generated_news_id": item.ai_generated_news_id,
                 "cluster_id": item.cluster_id,
                 "category_id": item.category_id,
                 "category_name": item.category.name if item.category else None,
@@ -136,7 +146,7 @@ def get_generated_news_detail(generated_news_id: int, db: Session = Depends(get_
     generated_news = (
         db.query(AiGeneratedNews)
         .options(joinedload(AiGeneratedNews.cluster).joinedload(Cluster.news), joinedload(AiGeneratedNews.category))
-        .filter(AiGeneratedNews.id == generated_news_id)
+        .filter(AiGeneratedNews.ai_generated_news_id == generated_news_id)
         .first()
     )
 
@@ -151,7 +161,7 @@ def get_generated_news_detail(generated_news_id: int, db: Session = Depends(get_
         keywords_value = json.dumps(keywords_value, ensure_ascii=False)
 
     return {
-        "id": generated_news.id,
+        "ai_generated_news_id": generated_news.ai_generated_news_id,
         "cluster_id": generated_news.cluster_id,
         "category_id": generated_news.category_id,
         "category_name": generated_news.category.name if generated_news.category else None,
@@ -162,7 +172,7 @@ def get_generated_news_detail(generated_news_id: int, db: Session = Depends(get_
         "keywords": keywords_value,
         "like_count": generated_news.like_count,
         "dislike_count": generated_news.dislike_count,
-        "cluster": generated_news.cluster,
+        # "cluster": generated_news.cluster, # 순환 참조 주의, 필요한 경우 serialize
     }
 
 
@@ -174,3 +184,107 @@ def read_cluster_news(cluster_id: int, db: Session = Depends(get_db)):
     original_news_list = crud.get_original_news_details_by_cluster(db, cluster_id)
 
     return original_news_list
+
+
+@router.get("/{generated_news_id}/related")
+def get_related_news(generated_news_id: int, limit: int = 3, db: Session = Depends(get_db)):
+    """
+    특정 AI 뉴스와 연관된(키워드가 유사한) 다른 AI 뉴스들을 추천합니다.
+    [Fallback Logic]
+    1. Top 3 키워드를 모두 포함하는 기사 검색
+    2. 부족하면 Top 2 키워드를 모두 포함하는 기사 검색
+    3. 부족하면 Top 1 키워드를 포함하는 기사 검색
+    """
+    # 1. 현재 뉴스 조회
+    current_news = db.get(AiGeneratedNews, generated_news_id)
+    if not current_news:
+        raise HTTPException(status_code=404, detail="News not found")
+
+    # 2. 키워드 추출
+    if not current_news.keywords:
+        return []
+
+    current_kws = current_news.keywords
+    if isinstance(current_kws, str):
+        import json
+        try:
+            current_kws = json.loads(current_kws)
+        except:
+            current_kws = []
+
+    try:
+        sorted_kws = sorted(current_kws, key=lambda x: x.get("value", 0), reverse=True)
+        # 상위 3개 단어 텍스트 추출
+        all_top_keywords = [k.get("text") for k in sorted_kws if k.get("text")]
+    except Exception as e:
+        print(f"Error parsing keywords: {e}")
+        return []
+
+    if not all_top_keywords:
+        return []
+
+    final_results = []
+    excluded_ids = {generated_news_id}  # 자기 자신 제외
+
+    # 3. Tiered Search Strategy (3 keywords -> 2 keywords -> 1 keyword)
+    # 최대 3개까지만 시도 (키워드가 적으면 그만큼만)
+    max_k = min(len(all_top_keywords), 3)
+    
+    # 3부터 1까지 역순으로 시도 (예: 3, 2, 1)
+    for k_count in range(max_k, 0, -1):
+        if len(final_results) >= limit:
+            break
+
+        needed = limit - len(final_results)
+        target_keywords = all_top_keywords[:k_count]
+        
+        # 쿼리 생성: (제목이나 내용에 k1 포함) AND (제목이나 내용에 k2 포함) ...
+        # excluded_ids에 없는 것만
+        query = db.query(AiGeneratedNews).filter(AiGeneratedNews.id.notin_(excluded_ids))
+        
+        # AND 조건 추가
+        conditions = []
+        for kw in target_keywords:
+            pattern = f"%{kw}%"
+            conditions.append(or_(AiGeneratedNews.title.ilike(pattern), AiGeneratedNews.contents.ilike(pattern)))
+        
+        if conditions:
+            query = query.filter(and_(*conditions))
+        
+        # 최신순 정렬하여 필요한 만큼 가져오기
+        tier_results = query.order_by(AiGeneratedNews.created_at.desc()).limit(needed).all()
+
+        for item in tier_results:
+            final_results.append(item)
+            excluded_ids.add(item.id)
+
+    # 4. 결과 포맷팅
+    response_data = []
+    for item in final_results:
+        # 이미지 URL 로드 logic (Lazy load)
+        img_url = None
+        if item.cluster and item.cluster.news:
+            for origin_news in item.cluster.news:
+                if origin_news.img_urls:
+                    urls = origin_news.img_urls
+                    if isinstance(urls, str):
+                        import json
+                        try:
+                            urls = json.loads(urls)
+                        except:
+                            urls = []
+                    
+                    if isinstance(urls, list) and len(urls) > 0:
+                        img_url = urls[0]
+                        break
+        
+        summary = item.contents[:40] + "..." if item.contents and len(item.contents) > 40 else item.contents
+        
+        response_data.append({
+            "id": item.id,
+            "title": item.title,
+            "image_url": img_url,
+            "contents_short": summary
+        })
+
+    return response_data
