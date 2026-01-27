@@ -43,11 +43,11 @@ const SocietyPage = () => {
 
                 if (filtered.length > 0) {
                     let expanded = [...filtered];
-                    // Ensure at least 34 items for SocietyPage layout
-                    while (expanded.length < 34) {
+                    // Ensure at least 33 items for SocietyPage layout
+                    while (expanded.length < 33) {
                         expanded = [...expanded, ...filtered];
                     }
-                    const shuffled = expanded.sort(() => Math.random() - 0.5).slice(0, 34);
+                    const shuffled = expanded.sort(() => Math.random() - 0.5).slice(0, 33);
                     setDisplayArticles(shuffled);
 
                     // 4. Fetch Images
@@ -83,8 +83,9 @@ const SocietyPage = () => {
         loadData();
     }, []);
 
-    // 14 fixed + 20 feed items = 34 items total
-    const articlesPerBlock = 34;
+    // 14 fixed + 19 feed items? No.
+    // 1 Main + 4 Grid + 8 List + 20 Feed = 33 items total
+    const articlesPerBlock = 33;
     const blocksPerPage = 1;
     const articlesPerPage = articlesPerBlock * blocksPerPage;
 
@@ -92,11 +93,11 @@ const SocietyPage = () => {
         if (!blockArticles || blockArticles.length === 0) return null;
 
         const mainArticle = blockArticles[0];
-        const gridArticles = blockArticles.slice(1, 6);
-        const listArticles = blockArticles.slice(6, 14);
+        const gridArticles = blockArticles.slice(1, 5);
+        const listArticles = blockArticles.slice(5, 13);
 
         // Feed Logic
-        const allFeedArticles = blockArticles.slice(14);
+        const allFeedArticles = blockArticles.slice(13);
         const feedPageSize = 5;
         const totalFeedPages = Math.ceil(allFeedArticles.length / feedPageSize);
         const currentFeedArticles = allFeedArticles.slice((feedPage - 1) * feedPageSize, feedPage * feedPageSize);
@@ -152,28 +153,17 @@ const SocietyPage = () => {
                 </section>
                 <div className="section-divider"></div>
 
-                {/* Grid Section (2 items) */}
+                {/* Grid Section (4 items) */}
                 {grid.length > 0 && (
                     <>
                         <section className="bottom-grid-section" style={{ display: 'flex', gap: '40px', marginBottom: '50px', textAlign: 'left' }}>
-                            {/* Left Large Item */}
-                            {grid[0] && (
-                                <div className="grid-item" onClick={() => navigate(`/article/${grid[0].id}`)} style={{ flex: 1, cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                    <div className="grid-image" style={{ width: '100%', aspectRatio: '1.5/1', border: '1px solid #eee', position: 'relative', overflow: 'hidden' }}>
-                                        <img src={grid[0].image} alt={grid[0].title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
-                                    </div>
-                                    <div className="grid-info">
-                                        <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 5px 0', lineHeight: '1.4' }}>{grid[0].title}</h3>
-                                        <p style={{ fontSize: '14px', color: '#666', margin: 0, lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                                            {grid[0].content}
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
+                            {/* Right 2x2 Grid - Now taking full width or specific style? User said "Only 4 right articles". 
+                                Typically this means removing the left one. If we leave flex:1 it will stretch. 
+                                Let's keep the grid structure but remove the left item. 
+                            */}
 
-                            {/* Right 2x2 Grid */}
                             <div className="right-grid-container" style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
-                                {grid.slice(1).map((news) => (
+                                {grid.map((news) => (
                                     <div key={news.id} className="grid-item-small" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                         <div className="grid-image" style={{ width: '100%', aspectRatio: '1.5/1', border: '1px solid #eee', position: 'relative', overflow: 'hidden' }}>
                                             <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />

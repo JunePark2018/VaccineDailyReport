@@ -33,6 +33,8 @@
   margin: 10px 0 10px 0;
 }
 
+
+
 .main-page .article-info-side h2 {
   font-size: 18px;
   margin-top: 0;
@@ -82,7 +84,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border-radius: 1px;
+  border-radius: 5px;
 }
 
 .main-page .article-image-center::before,
@@ -107,6 +109,8 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center 35%;
+  /* Move image focus down slightly */
   position: relative;
   z-index: 2;
 }
@@ -120,7 +124,6 @@
   pointer-events: none;
 }
 
-/* Styles for Top Main Image Text */
 /* Styles for Top Main Image Text */
 .main-page .main-image-text {
   position: absolute;
@@ -600,7 +603,7 @@
   height: 100px;
   /* Aspect */
   position: relative;
-  border-radius: 1px;
+  border-radius: 5px;
   overflow: hidden;
 }
 
@@ -656,7 +659,7 @@
 }
 
 .main-page .cat-box-header {
-  font-size: 18px;
+  font-size: 24px;
   /* Standardize */
   font-weight: 800;
   margin: 0 0 20px 0;
@@ -678,19 +681,29 @@
 
 .main-page .cat-box-main {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  /* Horizontal layout */
   gap: 15px;
   text-align: left;
-  /* Ensure main article is left aligned */
+  align-items: flex-start;
 }
 
 .main-page .cat-box-img {
-  width: 90%;
+  width: 45%;
+  /* Increased size */
   aspect-ratio: 16 / 9;
-  /* border: 1px solid #000; Removed */
   overflow: hidden;
-  border-radius: 1px;
-  /* Added roundness */
+  border-radius: 5px;
+  flex: none;
+  /* Prevent shrinking */
+}
+
+/* Wrapper for Title/Desc (will add in JSX) */
+.main-page .cat-box-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 .main-page .cat-box-img img {
@@ -699,30 +712,19 @@
   object-fit: cover;
 }
 
-.main-page .cat-box-title {
-  font-size: 18px;
-  /* Reduced from 20px */
+.main-page .cat-box-title,
+.main-page .cat-box-list-item h3 {
+  font-size: 16px;
   font-weight: 800;
-  margin: 0;
+  margin: 0 0 5px 0;
   line-height: 1.3;
 }
 
 .main-page .cat-box-list {
   display: flex;
   flex-direction: column;
-  gap: 45px;
-  /* Increased from 30px */
-  margin-top: 35px;
-  /* Increased from 25px */
-  text-align: left;
-  /* Ensure sub-articles are left aligned */
-}
-
-.main-page .cat-box-list-item h5 {
-  font-size: 14px;
-  /* Reduced from 16px */
-  font-weight: bold;
-  margin: 0 0 5px 0;
+  gap: 10px;
+  margin-top: 15px;
 }
 
 .main-page .cat-box-list-item p {
@@ -755,6 +757,8 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  text-align: center;
+  align-items: center;
 }
 
 .main-page .global-img {
@@ -763,7 +767,7 @@
   aspect-ratio: 16 / 9;
   /* border: 1px solid #000; Removed */
   overflow: hidden;
-  border-radius: 1px;
+  border-radius: 5px;
   /* Added roundness */
 }
 
@@ -778,4 +782,42 @@
   font-weight: 800;
   margin: 0;
   line-height: 1.4;
+  text-align: center;
+}
+
+/* Slideshow Animation Removed */
+
+/* Active Slide Item Style */
+.analysis-block {
+  padding: 15px;
+  border-radius: 5px;
+  border: 2px solid transparent;
+  /* Reserve space for border to prevent layout shift */
+  transition: all 0.3s;
+}
+
+.analysis-block.active {
+  background-color: #000;
+  border: 2px solid transparent;
+}
+
+.analysis-block.active h2 {
+  color: #fff !important;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.analysis-block.active p {
+  color: #fff !important;
+  font-weight: 500;
+}
+
+/* Hover Effects for Article Titles (Underline) */
+.analysis-block:hover h2,
+.article-image-center:hover .main-image-text h3,
+.cat-box-img:hover~.cat-box-info .cat-box-title,
+.cat-box-title:hover,
+.cat-box-list-item:hover h3,
+.global-card:hover h4 {
+  text-decoration: underline;
 }

@@ -137,3 +137,13 @@
     stroke: #333333;
     /* 선 색상을 어두운 회색으로 변경 */
 }
+
+/* Always Open Style (e.g. for Main Page) */
+.Searchbar.always-open .search-box {
+    width: 250px;
+}
+
+.Searchbar.always-open .search-box input {
+    opacity: 1;
+    pointer-events: auto;
+}
