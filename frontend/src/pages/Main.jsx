@@ -178,7 +178,7 @@ export const Main = () => {
       }));
     }
 
-
+    console.log(activeArticle);
 
     return (
       <React.Fragment>
@@ -209,7 +209,7 @@ export const Main = () => {
 
           {/* Center Column (Image) - Synced with Active Item */}
           <div className="main-image-column" style={{ flex: 1.6, display: 'flex', flexDirection: 'column' }}>
-            <div className="article-image-center" onClick={() => activeArticle && navigate(`/article/${activeArticle.id}`)} style={{ cursor: 'pointer', width: '100%', aspectRatio: '1.5/1' }}>
+            <div className="article-image-center" onClick={() => activeArticle && navigate(`/article/${activeArticle.ai_generated_news_id}`)} style={{ cursor: 'pointer', width: '100%', aspectRatio: '1.5/1' }}>
               <img src={activeImage} alt="Main" onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
               <div className="main-image-text">
                 {/* Title Overlay matches Active Item */}
