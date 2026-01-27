@@ -41,8 +41,10 @@ def setup_module(module):
     from database.engine import engine
     from database.models import Base
 
+    # Drop all first (for Postgres cleanup)
+    Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
-    print("Created database tables")
+    print("Reset database tables (Drop & Create)")
 
 
 def test_02_signup_and_login():
