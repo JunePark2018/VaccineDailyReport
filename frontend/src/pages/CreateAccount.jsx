@@ -210,12 +210,12 @@ export default function CreateAccount() {
                 headerTop="on"
                 headerMain="on"
                 headerBottom="on"
-                leftChild={<div />}
-                midChild={<Logo />}
+                leftChild={<Logo />}
+                midChild={null}
                 rightChild={
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
                         <div style={{ position: 'relative' }}>
-                            <Searchbar />
+                            <Searchbar className="always-open" />
                         </div>
                         <UserMenu />
                     </div>

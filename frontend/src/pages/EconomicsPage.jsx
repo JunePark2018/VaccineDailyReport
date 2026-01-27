@@ -44,10 +44,8 @@ const EconomicsPage = () => {
                 if (filtered.length > 0) {
                     let expanded = [...filtered];
                     // Ensure at least 31 items for EconomicsPage layout
-                    while (expanded.length < 31) {
-                        expanded = [...expanded, ...filtered];
-                    }
-                    const shuffled = expanded.sort(() => Math.random() - 0.5).slice(0, 31);
+                    // Remove duplication logic - use filtered results directly
+                    const shuffled = filtered.slice(0, 31);
                     setDisplayArticles(shuffled);
 
                     // 4. Fetch Images
@@ -95,10 +93,11 @@ const EconomicsPage = () => {
         const gridArticles = blockArticles.slice(1, 7); // Fetch 6 items for 3-col x 2-row grid
 
         // Mock Related Articles (2 per grid item)
-        const listArticles = blockArticles.slice(7, 15); // 8 items
+        // List Section content removed to prioritize Feed
+        // const listArticles = blockArticles.slice(7, 15);
 
         // Feed Logic
-        const allFeedArticles = blockArticles.slice(15);
+        const allFeedArticles = blockArticles;
         const feedPageSize = 5;
         const totalFeedPages = Math.ceil(allFeedArticles.length / feedPageSize);
         const currentFeedArticles = allFeedArticles.slice((feedPage - 1) * feedPageSize, feedPage * feedPageSize);
@@ -120,12 +119,7 @@ const EconomicsPage = () => {
             related: blockArticles.slice(15 + i * 2, 15 + i * 2 + 2).map(r => ({ ...r, id: r.id }))
         }));
 
-        const list = listArticles.map((art, i) => ({
-            id: art?.id,
-            title: art?.title || "Title Sample Text",
-            content: art?.short_text || "text sample...",
-            image: art ? (imageMap[art.image] || art.image) : null
-        }));
+        // list variable removed
 
         const feed = currentFeedArticles.map((art, i) => ({
             id: art?.id,
@@ -185,27 +179,7 @@ const EconomicsPage = () => {
                     ))}
                 </section>
 
-                {/* List Section (8 items, 2 cols x 4 rows) */}
-                {list.length > 0 && (
-                    <>
-                        <div className="section-divider"></div>
-                        <section className="bottom-list-section" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', columnGap: '40px', rowGap: '30px', textAlign: 'left' }}>
-                            {list.map((news) => (
-                                <div key={news.id} className="list-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
-                                    <div className="list-image" style={{ width: '120px', height: '76px', flexShrink: 0, border: '1px solid #eee', overflow: 'hidden' }}>
-                                        <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
-                                    </div>
-                                    <div className="list-info" style={{ flex: 1 }}>
-                                        <h3 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 8px 0', lineHeight: '1.3' }}>{news.title}</h3>
-                                        <p style={{ fontSize: '13px', color: '#666', margin: 0, lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                                            {news.content}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
-                        </section>
-                    </>
-                )}
+                {/* List Section Removed */}
 
                 {/* Feed Section (Pagination) */}
                 {feed.length > 0 && (
@@ -247,7 +221,8 @@ const EconomicsPage = () => {
                                     </div>
 
                                     {/* Image Right (Reduced Height: aspect-ratio 1.8/1) */}
-                                    <div className="feed-image" style={{ width: '312px', aspectRatio: '1.8/1', flexShrink: 0, overflow: 'hidden', borderRadius: '4px', marginLeft: '-20px' }}>
+                                    {/* Image Right (Side-by-side, no overlap) */}
+                                    <div className="feed-image" style={{ width: '312px', aspectRatio: '1.8/1', flexShrink: 0, overflow: 'hidden', borderRadius: '4px', marginLeft: '8px' }}>
                                         <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                                     </div>
                                 </div>
@@ -303,12 +278,12 @@ const EconomicsPage = () => {
     return (
         <div className="category-page">
             <Header
-                leftChild={<div />}
-                midChild={<Logo />}
+                leftChild={<Logo />}
+                midChild={null}
                 rightChild={
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
                         <div style={{ position: 'relative' }}>
-                            <Searchbar />
+                            <Searchbar className="always-open" />
                         </div>
                         <UserMenu />
                     </div>

@@ -54,10 +54,8 @@ const LivingCulturePage = () => {
                 if (filtered.length > 0) {
                     let expanded = [...filtered];
                     // Ensure at least 24 items for LivingCulturePage layout
-                    while (expanded.length < 24) {
-                        expanded = [...expanded, ...filtered];
-                    }
-                    const shuffled = expanded.sort(() => Math.random() - 0.5).slice(0, 24);
+                    // Remove duplication logic - use filtered results directly
+                    const shuffled = filtered.slice(0, 24);
                     setDisplayArticles(shuffled);
 
                     // 4. Fetch Images
@@ -106,7 +104,7 @@ const LivingCulturePage = () => {
         // List removed
 
         // Feed Logic
-        const allFeedArticles = blockArticles.slice(4); // 20 items (4 to 23)
+        const allFeedArticles = blockArticles; // 20 items (4 to 23)
         const feedPageSize = 5;
         const totalFeedPages = Math.ceil(allFeedArticles.length / feedPageSize);
         const currentFeedArticles = allFeedArticles.slice((feedPage - 1) * feedPageSize, feedPage * feedPageSize);
@@ -142,8 +140,8 @@ const LivingCulturePage = () => {
 
                 <div style={{ padding: isMobile ? '0 20px' : '0 40px' }}>
                     {/* Main Article Section */}
-                    <section className="main-article-section" style={{ marginBottom: isMobile ? '30px' : '50px', position: 'relative' }}>
-                        <div className="main-image" style={{ width: '100%', aspectRatio: isMobile ? '1.5/1' : '2.5/1', position: 'relative', overflow: 'hidden', borderRadius: '4px' }}>
+                    <section className="main-article-section" style={{ marginBottom: '50px', position: 'relative' }}>
+                        <div className="main-image" onClick={() => navigate(`/article/${mainData.id}`)} style={{ width: '100%', aspectRatio: '2.5/1', position: 'relative', overflow: 'hidden', borderRadius: '4px', cursor: 'pointer' }}>
                             <img src={mainData.image} alt={mainData.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                             <div style={{
                                 position: 'absolute',
@@ -310,12 +308,12 @@ const LivingCulturePage = () => {
     return (
         <div className="category-page">
             <Header
-                leftChild={<div />}
-                midChild={<Logo />}
+                leftChild={<Logo />}
+                midChild={null}
                 rightChild={
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
                         <div style={{ position: 'relative' }}>
-                            <Searchbar />
+                            <Searchbar className="always-open" />
                         </div>
                         <UserMenu />
                     </div>
