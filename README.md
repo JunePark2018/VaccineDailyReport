@@ -26,14 +26,25 @@ git clone https://github.com/JunePark2018/VaccineDailyReport.git
     DATABASE_URL=postgresql://myuser:mypassword@localhost:5432/finalproject
     REDIS_URL=redis://localhost:6379/0
     ```
-2.  **서비스 실행**: 프로젝트 루트 폴더에서 아래 명령어를 실행하세요.
+3.  **서비스 실행**: 프로젝트 루트 폴더에서 아래 명령어를 실행하세요.
     ```bash
     docker-compose up -d
     ```
     *   **Postgres**: 5432 포트
     *   **Redis**: 6379 포트
     *   **Adminer** (DB 관리 도구): http://localhost:8080
-3.  **데이터 보존**: DB 데이터는 프로젝트 폴더 내 `./postgres_data` 에 저장되므로, 컨테이너를 꺼도 데이터가 유지됩니다.
+4.  **DB 열람**: 도커 내 Adminer를 활용하시면 됩니다.
+    🌐 Adminer 접속 방법
+    1. 웹 브라우저를 켭니다.
+    2. 주소창에 http://localhost:8080 을 입력합니다.
+    3. 로그인 화면에서 아래 정보를 입력하세요:
+       * System: PostgreSQL (셀렉트 박스에서 선택)
+       * Server: postgres
+       * Username: myuser
+       * Password: mypassword
+       * Database: finalproject
+    로그인하시면 테이블 목록과 저장된 데이터를 엑셀처럼 보거나 SQL 쿼리를 직접 날리실 수 있습니다.
+5.  **데이터 보존**: DB 데이터는 프로젝트 폴더 내 `./postgres_data` 에 저장되므로, 컨테이너를 꺼도 데이터가 유지됩니다.
 
 #### ⚠️ DB 초기화 (데이터 삭제)
 DB를 완전히 삭제하고 처음부터 다시 시작하려면 다음 과정을 따르세요.
