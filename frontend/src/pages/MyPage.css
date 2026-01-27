@@ -117,39 +117,3 @@
   border-style: solid;
   border-color: #1e293b transparent transparent transparent;
 }
-
-
-/* Mobile Responsiveness */
-@media (max-width: 768px) {
-  .mypage-container .mypage-main {
-    margin: 10px auto 0;
-    padding: 0 16px;
-  }
-
-  .mypage-container .content-wrapper {
-    flex-direction: column;
-    overflow-x: visible;
-    gap: 24px;
-  }
-
-  .mypage-container .info-section {
-    min-width: 0;
-    /* Reset min-width constraint */
-    width: 100%;
-    margin-bottom: 20px;
-    height: auto;
-    min-height: 400px;
-    /* Preserve some height for charts */
-  }
-
-  .mypage-container .profile-header {
-    padding: 20px 0;
-    text-align: center;
-  }
-
-  /* Adjust charts if needed */
-  .mypage-container .chart-container {
-    width: 100%;
-    overflow: hidden;
-  }
-}

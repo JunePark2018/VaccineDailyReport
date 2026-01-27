@@ -29,7 +29,6 @@ const EconomicsPage = () => {
                 // 2. Map Backend Data to Frontend Structure
                 const formattedArticles = realArticles.map(art => ({
                     ...art,
-                    id: art.ai_generated_news_id, // [Fix] Map native ID to 'id'
                     category: art.category_name,
                     image: `cluster_${art.cluster_id}`,
                     short_text: art.contents ? (art.contents.substring(0, 100) + "...") : "내용 없음"
