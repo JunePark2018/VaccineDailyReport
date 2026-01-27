@@ -118,6 +118,7 @@ function ArticlePage() {
           headerBottom="on"
         />
 
+        {/* [추가] 생성일자 표시 */}
         <div style={{ textAlign: 'center', marginTop: '20px', color: '#000000ff', fontSize: '1.5rem', fontWeight: 'bold' }}>
           {article.created_at ? (
             `${new Date(article.created_at).getFullYear()}년 ${new Date(article.created_at).getMonth() + 1}월 ${new Date(article.created_at).getDate()}일에 생성된 AI 뉴스 기사 입니다.`

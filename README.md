@@ -17,7 +17,10 @@ git clone https://github.com/JunePark2018/VaccineDailyReport.git
 ```
 
 ### 2. 데이터베이스 설정
-이 프로젝트는 **PostgreSQL**과 **Redis**를 Docker 컨테이너로 실행합니다. 팀원 모두가 동일한 DB 환경에서 작업하기 위해 사용합니다.
+이 프로젝트는 **SQLite**를 베이스로 하되, 원하시면 **PostgreSQL**과 **Redis**를 Docker 컨테이너로 실행할 수 있습니다.
+
+아무것도 하지 않으면 SQLite를 사용합니다. PostgreSQL과 Redis를 사용하시려면, 아래 단계들을 따라해 주세요.
+
 
 1.  **Docker Desktop 설치**: Docker가 설치되어 있고 실행 중이어야 합니다.
     *   https://hub.docker.com/에 접속하여 로그인하신 후, 프로그램을 다운받아 주세요.
