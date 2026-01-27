@@ -28,13 +28,16 @@ WATSONX_URL = os.getenv("WATSONX_URL")
 # -------------------------------------------------
 # 1. 초기화 및 ChromaDB 설정
 # -------------------------------------------------
+# -------------------------------------------------
+# 1. 초기화 및 ChromaDB 설정
+# -------------------------------------------------
 print("--- [AI] 모델 및 ChromaDB 로딩 중... ---")
-embed_model = SentenceTransformer("jhgan/ko-sroberta-multitask")
 
-CHROMA_PATH = "./chroma_db"
-chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
+# [Refactor] vector_store 모듈 사용
+from database.vector_store import get_collection, get_embed_model
 
-collection = chroma_client.get_or_create_collection(name="news_articles_ko", metadata={"hnsw:space": "cosine"})
+collection = get_collection()
+embed_model = get_embed_model()
 
 credentials = {"apikey": WATSONX_API_KEY, "url": WATSONX_URL}
 llm_model = ModelInference(

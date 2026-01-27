@@ -22,6 +22,28 @@ from database.models import AiGeneratedNews, Cluster
 from database import crud
 
 # schemas import 제거 - dict 반환으로 충분
+from pydantic import BaseModel
+
+class CitationRequest(BaseModel):
+    cluster_id: int
+    target_sentence: str
+
+# -----------------------------------------------------------
+# [Deep Citation Agent] Logic
+# -----------------------------------------------------------
+def split_sentences_positions(text: str):
+    """
+    텍스트를 문장 단위로 분리하고, 원본 텍스트 내의 위치(시작 인덱스 등)를 추적하거나
+    최소한 '어느 문장이냐'를 리스트로 반환.
+    여기서는 단순 split 후 strip 처리.
+    """
+    if not text:
+        return []
+    # 마침표, 물음표, 느낌표 뒤에 공백이 있는 경우 분리
+    import re
+    # 단순화된 정규식: 문장 종결 부호(.!?) 뒤에 공백 혹은 문자열 끝
+    sentences = re.split(r'(?<=[.!?])\s+', text)
+    return [s.strip() for s in sentences if s.strip()]
 
 router = APIRouter(prefix="/generated-news", tags=["AI Generated News"])
 
@@ -186,6 +208,78 @@ def read_cluster_news(cluster_id: int, db: Session = Depends(get_db)):
     return original_news_list
 
 
+@router.post("/citation")
+def check_citation(req: CitationRequest, db: Session = Depends(get_db)):
+    """
+    [Deep Citation Agent]
+    특정 문장이 주어졌을 때, 해당 클러스터에 연결된 원본 기사들 중에서
+    가장 유사한 문장(근거)을 찾아 반환합니다. (On-Demand Vector Search)
+    """
+    from database.vector_store import encode_texts
+    from sklearn.metrics.pairwise import cosine_similarity
+    import numpy as np
+
+    # 1. 원본 기사 가져오기
+    original_news_list = crud.get_original_news_details_by_cluster(db, req.cluster_id)
+    if not original_news_list:
+        return {"match_found": False, "message": "원본 기사가 없습니다."}
+
+    # 2. 모든 기사의 문장을 추출하여 후보군(Corpus) 생성
+    candidates = []
+    # candidates 구조: { "text": 문장, "doc_title": 기사제목, "company": 언론사, "url": 기사URL }
+
+    for news in original_news_list:
+        sentences = split_sentences_positions(str(news["contents"]))
+        for s in sentences:
+            if len(s) < 10: continue # 너무 짧은 문장은 제외
+            candidates.append({
+                "text": s,
+                "doc_title": news["title"],
+                "company": news["company_name"],
+                "url": news["url"]
+            })
+    
+    if not candidates:
+        return {"match_found": False, "message": "비교할 문장이 없습니다."}
+
+    # 3. 임베딩 생성 (Target 1개 + Candidates N개)
+    #    속도 최적화를 위해 한 번에 encoding
+    all_texts = [req.target_sentence] + [c["text"] for c in candidates]
+    
+    # vector_store의 encode_texts 사용
+    embeddings = encode_texts(all_texts)
+    
+    target_vec = embeddings[0].reshape(1, -1)
+    candidate_vecs = embeddings[1:]
+
+    # 4. 유사도 계산
+    sim_scores = cosine_similarity(target_vec, candidate_vecs)[0]
+
+    # 5. Top 3 추출
+    # argsort는 오름차순이므로 뒤집어야 함
+    top_indices = sim_scores.argsort()[::-1][:3]
+    
+    results = []
+    for idx in top_indices:
+        score = float(sim_scores[idx])
+        if score < 0.3: # 유사도 너무 낮으면 무시 (Threshold)
+            continue
+            
+        match_item = candidates[idx]
+        results.append({
+            "score": round(score * 100, 1),
+            "text": match_item["text"],
+            "company": match_item["company"],
+            "doc_title": match_item["doc_title"],
+            "url": match_item["url"]
+        })
+
+    return {
+        "match_found": len(results) > 0,
+        "matches": results
+    }
+
+
 @router.get("/{generated_news_id}/related")
 def get_related_news(generated_news_id: int, limit: int = 3, db: Session = Depends(get_db)):
     """
@@ -240,7 +334,7 @@ def get_related_news(generated_news_id: int, limit: int = 3, db: Session = Depen
         
         # 쿼리 생성: (제목이나 내용에 k1 포함) AND (제목이나 내용에 k2 포함) ...
         # excluded_ids에 없는 것만
-        query = db.query(AiGeneratedNews).filter(AiGeneratedNews.id.notin_(excluded_ids))
+        query = db.query(AiGeneratedNews).filter(AiGeneratedNews.ai_generated_news_id.notin_(excluded_ids))
         
         # AND 조건 추가
         conditions = []
@@ -256,7 +350,7 @@ def get_related_news(generated_news_id: int, limit: int = 3, db: Session = Depen
 
         for item in tier_results:
             final_results.append(item)
-            excluded_ids.add(item.id)
+            excluded_ids.add(item.ai_generated_news_id)
 
     # 4. 결과 포맷팅
     response_data = []
@@ -281,7 +375,7 @@ def get_related_news(generated_news_id: int, limit: int = 3, db: Session = Depen
         summary = item.contents[:40] + "..." if item.contents and len(item.contents) > 40 else item.contents
         
         response_data.append({
-            "id": item.id,
+            "id": item.ai_generated_news_id,
             "title": item.title,
             "image_url": img_url,
             "contents_short": summary
