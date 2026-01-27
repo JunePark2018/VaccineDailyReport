@@ -6,30 +6,68 @@ import Searchbar from '../components/Searchbar';
 import UserMenu from '../components/UserMenu';
 import { categories as categoryData } from '../components/categoryIcon/categoryData';
 import './EditAccount.css';
+import axios from 'axios';
 
 export default function EditAccount() {
     const navigate = useNavigate();
 
     // --- State Management ---
     const [formData, setFormData] = useState({
-        name: '홍길동', // Pre-filled mock data
-        loginId: 'test_user',
+        name: '',
+        loginId: '',
         password: '',
         confirmPassword: '',
-        email: 'gildong@example.com',
-        ageGroup: '20~29세', // Pre-filled mock data
-        gender: '남성', // Pre-filled mock data
-        marketingAgree: true,
+        email: '',
+        ageGroup: '',
+        gender: '',
+        marketingAgree: false,
     });
 
-    const [selectedCategories, setSelectedCategories] = useState(['정치', '사회', 'IT/과학']); // Pre-filled mock data
+    const [selectedCategories, setSelectedCategories] = useState([]);
     const [showPassword, setShowPassword] = useState(false);
     const [passwordStrength, setPasswordStrength] = useState({ score: 0, label: '', color: '#e0e0e0' });
     const [errors, setErrors] = useState({});
+    const [loading, setLoading] = useState(true);
+
+    // --- Fetch User Data ---
+    useEffect(() => {
+        const fetchUserData = async () => {
+            const login_id = localStorage.getItem('login_id');
+            if (!login_id) {
+                alert("로그인 정보가 없습니다.");
+                navigate('/login');
+                return;
+            }
+
+            try {
+                const response = await axios.get(`http://localhost:8000/users/${login_id}`);
+                const data = response.data;
+
+                setFormData({
+                    name: data.user_real_name || '',
+                    loginId: data.login_id,
+                    password: '', // 보안상 비밀번호는 비워둠
+                    confirmPassword: '',
+                    email: data.email || '',
+                    ageGroup: data.age_range || '',
+                    gender: data.gender || '',
+                    marketingAgree: data.marketing_agree || false,
+                });
+                setSelectedCategories(data.subscribed_categories || []);
+            } catch (error) {
+                console.error("사용자 정보 로딩 실패:", error);
+                alert("사용자 정보를 불러오는 데 실패했습니다.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchUserData();
+    }, [navigate]);
 
     // --- Static Data ---
     const categoryOptions = categoryData
-        .filter(cat => cat.label !== '전체메뉴' && cat.label !== '이슈')
+        .filter(cat => cat.label !== '전체메뉴' && cat.label !== '이슈' && cat.label !== '홈')
         .map(cat => cat.label);
 
     const ageGroups = ['10세 미만', '10~19세', '20~29세', '30~39세', '40~49세', '50~59세', '60~69세', '70세 이상', '비공개'];
@@ -134,26 +172,42 @@ export default function EditAccount() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (validate()) {
             const submitData = {
-                login_id: formData.loginId,
                 user_real_name: formData.name,
-                password: formData.password,
                 email: formData.email,
-                age_group: formData.ageGroup,
+                age_range: formData.ageGroup,
                 gender: formData.gender,
                 subscribed_categories: selectedCategories,
                 marketing_agree: formData.marketingAgree
             };
 
-            console.log("Account Updated successfully:", submitData);
-            alert("회원 정보가 수정되었습니다.");
-            navigate('/mypage');
+            // 비밀번호가 입력된 경우에만 포함
+            if (formData.password) {
+                submitData.password = formData.password;
+            }
+
+            try {
+                await axios.put(`http://localhost:8000/users/${formData.loginId}`, submitData);
+                alert("회원 정보가 수정되었습니다.");
+                navigate('/mypage'); // URL parameter 없이 이동하면, MyPage가 localStorage에서 ID를 읽어야 함.
+                // MyPage.jsx를 확인해보니 useParams를 씀 (<Route path='/mypage/:login_id' />)
+                // 따라서 navigate(`/mypage/${formData.loginId}`)로 수정 필요할 수 있음.
+                // App.js: <Route path='/mypage/:login_id' element={<MyPage />} />
+                navigate(`/mypage/${formData.loginId}`);
+            } catch (error) {
+                console.error("업데이트 실패:", error);
+                alert("회원 정보 수정 중 오류가 발생했습니다.");
+            }
         }
     };
+
+    if (loading) {
+        return <div className="edit-account-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>로딩 중...</div>;
+    }
 
     return (
         <div className="edit-account-container">
