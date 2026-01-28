@@ -179,7 +179,7 @@ function ArticlePage() {
 
 
   return (
-    <div className="ArticlePage">
+    <div className={`ArticlePage ${isSidebarOpen ? 'sidebar-open' : ''}`}>
       <div className="page-content">
 
         {/* 상단 */}
@@ -207,31 +207,15 @@ function ArticlePage() {
                 <img src={imgURL} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
               </div>
 
-              {/* [수정] 제목과 구분선을 NewsText에서 분리하여 상위에 배치 */}
-              {/* [수정] 제목과 구분선을 NewsText에서 분리하여 상위에 배치 */}
               <div style={{ padding: '0 20px' }}>
                 <h1 className="article-head-title">{article.title}</h1>
 
-                {/* [추가] 생성일자 표시 - 자연스럽게 */}
+                {/* [추가] 생성일자 표시 */}
                 {article.created_at && (
                   <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    marginTop: '12px',
-                    marginBottom: '8px',
-                    fontSize: '0.9rem',
-                    color: '#999',
-                    fontWeight: 'normal'
+                    display: 'flex', alignItems: 'center', gap: '10px', marginTop: '12px', marginBottom: '8px', fontSize: '0.9rem', color: '#999', fontWeight: 'normal'
                   }}>
-                    <span style={{
-                      padding: '4px 10px',
-                      backgroundColor: '#f0f0f0',
-                      borderRadius: '4px',
-                      fontSize: '0.85rem',
-                      color: '#666',
-                      fontWeight: '500'
-                    }}>
+                    <span style={{ padding: '4px 10px', backgroundColor: '#f0f0f0', borderRadius: '4px', fontSize: '0.85rem', color: '#666', fontWeight: '500' }}>
                       AI 생성
                     </span>
                     <span>
@@ -244,7 +228,6 @@ function ArticlePage() {
 
                 <hr className="article-head-divider" />
 
-                {/* [이동] 비교분석 섹션을 이곳으로 이동 */}
                 <div className="article-comparer" style={{ marginTop: '10px', marginBottom: '40px', borderTop: 'none' }}>
                   <h3 className="section-title">비교분석</h3>
                   <div className={`comparison-container ${isExpanded ? 'expanded' : 'collapsed'}`}>
@@ -252,26 +235,15 @@ function ArticlePage() {
                       {article?.analysis_result?.media_comparison_bullets?.map((text, idx) => (
                         <li key={idx} className="comparison-item">
                           {highlightMediaText(text.replace(/^- /, ''))}
-
-                          {/* [근거 자료 표시 영역] */}
                           {isExpanded && (
                             <div className="evidence-container" style={{ marginTop: '10px', fontSize: '0.9rem' }}>
-                              {/* 1. 로딩 상태 */}
-                              {evidenceMap[idx]?.loading && (
-                                <div style={{ color: '#888', fontStyle: 'italic' }}>
-                                  🔍 관련 기사에서 근거를 찾는 중...
-                                </div>
-                              )}
-
-                              {/* 2. 결과 표시 */}
+                              {evidenceMap[idx]?.loading && <div style={{ color: '#888' }}>🔍 관련 기사에서 근거를 찾는 중...</div>}
                               {evidenceMap[idx]?.data && (
                                 <div className="evidence-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
                                   {evidenceMap[idx].data.map((ev, i) => (
                                     <div key={i} className="evidence-item" style={{ background: '#f1f3f4', padding: '8px 12px', borderRadius: '6px', borderLeft: '4px solid #007bff' }}>
                                       <span style={{ fontWeight: 'bold', marginRight: '6px', color: '#333' }}>[{ev.company}]</span>
-                                      <a href={ev.url} target="_blank" rel="noopener noreferrer" style={{ color: '#555', textDecoration: 'none' }}>
-                                        "{ev.text}"
-                                      </a>
+                                      <a href={ev.url} target="_blank" rel="noopener noreferrer" style={{ color: '#555', textDecoration: 'none' }}>"{ev.text}"</a>
                                     </div>
                                   ))}
                                 </div>
@@ -285,65 +257,35 @@ function ArticlePage() {
                   {article?.analysis_result?.media_comparison_bullets?.length > 0 && (
                     <div className="show-more-button-wrapper">
                       <button className="show-more-button link-style" onClick={() => setIsExpanded(!isExpanded)}>
-                        {isExpanded ? (
-                          <>
-                            접기
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '6px' }}>
-                              <polyline points="18 15 12 9 6 15"></polyline>
-                            </svg>
-                          </>
-                        ) : (
-                          <>
-                            펼쳐보기
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '6px' }}>
-                              <polyline points="6 9 12 15 18 9"></polyline>
-                            </svg>
-                          </>
-                        )}
+                        {isExpanded ? '접기' : '펼쳐보기'}
                       </button>
                     </div>
                   )}
                 </div>
               </div>
 
-              <NewsText
-                contents={article.contents}
-                onSentenceClick={handleSentenceClick}
-              />
-              {/* 기존 비교분석 섹션 위치 제거됨 */}
-              <div className="article-comparer" style={{ display: 'none' }}></div>
-              <Sources clusterId={article.cluster_id} />
+              <NewsText contents={article.contents} onSentenceClick={handleSentenceClick} />
 
-              {/* [이동] 워드 클라우드 섹션 (하단으로 이동) */}
               <div className="wordcloud-section" style={{ marginTop: '60px', padding: '20px', backgroundColor: '#f9f9f9', borderRadius: '12px' }}>
                 <h3 className="section-title" style={{ textAlign: 'center', marginBottom: '30px' }}>기사 핵심 키워드</h3>
-                <div style={{ display: 'flex', justifyContent: 'center' }}>
-                  <WordCloudComponent
-                    keywords={keywords}
-                    width={800} // 가로 폭을 늘림
-                    height={400}
-                  />
+                <div style={{ display: 'flex', justifyContent: 'center', width: '400px', maxWidth: '100%', margin: '0 auto', aspectRatio: '1/1' }}>
+                  <WordCloudComponent keywords={keywords} width={400} height={400} />
                 </div>
               </div>
             </div>
 
-            {/* 기존 사이드바 키워드 영역 제거됨 */}
-            {/* <div className="additional-section"> ... </div> */}
-
-            {/* [수정 4] RightSideBar에 '선택된 문장' 전달 */}
-
-            {/* [수정 4] RightSideBar에 '선택된 문장' 전달 */}
-            <RightSideBar
-              isOpen={isSidebarOpen}
-              onClose={closeSidebar}
-              searchKeyword={selectedSentence} // 사이드바가 검색할 키워드(문장)
-              clusterId={article.cluster_id}   // [추가] 리얼 데이터 조회를 위한 clusterId 전달
-            />
+            {/* No sidebar inside here */}
           </div>
 
-          {/* [추가] AI 뉴스 추천 컴포넌트 */}
           <AI_News_Recommendation articleId={id} number_of_article={3} />
         </main>
+
+        <RightSideBar
+          isOpen={isSidebarOpen}
+          onClose={closeSidebar}
+          searchKeyword={selectedSentence}
+          clusterId={article.cluster_id}
+        />
       </div>
     </div>
   );

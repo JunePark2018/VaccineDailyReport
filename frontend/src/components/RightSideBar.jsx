@@ -69,83 +69,98 @@ export default function RightSideBar({ isOpen, onClose, searchKeyword, clusterId
   }, [isOpen, clusterId, searchKeyword]); // searchKeyword 변경 시에도 재호출
 
   return (
-    <aside className={`right-sidebar ${isOpen ? 'open' : ''}`}>
+    <>
+      {/* Mobile Backdrop */}
+      <div
+        className={`sidebar-backdrop ${isOpen ? 'open' : ''}`}
+        onClick={onClose}
+      />
 
-      <div className="sidebar-header">
-        <div className="header-text">
-          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>
-            {searchKeyword ? "관련 기사 (유사도순)" : "참조된 원본 기사"}
-          </h3>
-          <p style={{ margin: '5px 0 0', fontSize: '12px', color: '#666' }}>
-            {searchKeyword
-              ? "선택한 문장과 가장 내용이 유사한 기사를 찾았습니다."
-              : "이 AI 뉴스를 생성하는 데 사용된 원본 기사들입니다."}
-          </p>
+      <aside className={`right-sidebar ${isOpen ? 'open' : ''}`}>
+        <div className="sidebar-header">
+          <div className="header-text">
+            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>
+              {searchKeyword ? "관련 기사 (유사도순)" : "참조된 원본 기사"}
+            </h3>
+            <p style={{ margin: '5px 0 0', fontSize: '12px', color: '#666' }}>
+              {searchKeyword
+                ? "선택한 문장과 가장 내용이 유사한 기사를 찾았습니다."
+                : "이 AI 뉴스를 생성하는 데 사용된 원본 기사들입니다."}
+            </p>
+          </div>
+          <button onClick={onClose} className="close-btn" title="닫기">✕</button>
         </div>
-        <button onClick={onClose} className="close-btn" title="닫기">✕</button>
-      </div>
 
-      <div className="sidebar-content">
-        {isLoading && (
-          <div className="loading-container">
-            <div className="loader"></div>
-            <p>관련 기사를 분석하고 있습니다...</p>
-          </div>
-        )}
-
-        {!isLoading && sourceList && (
-          <div className="fade-in">
-            {searchKeyword && (
-              <div className="selected-sentence-box">
-                <span className="label">선택된 문장</span>
-                <p>"{searchKeyword}"</p>
-              </div>
-            )}
-
-            <div className="article-list">
-              {sourceList.map((article) => (
-                <a
-                  key={article.id}
-                  href={article.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="article-card"
-                >
-                  <div className="card-header">
-                    <span className="company-badge">{article.company}</span>
-                    <span className="article-date">{article.date}</span>
-                    {article.score && (
-                      <span className="similarity-badge" style={{ marginLeft: 'auto', color: '#2563eb', fontWeight: 'bold', fontSize: '0.8rem' }}>
-                        {article.score}% 일치
-                      </span>
-                    )}
-                  </div>
-                  <h4 className="article-title">{article.title}</h4>
-
-                  {/* 유사도 모드일 땐 'match_text'를 강조해서 보여주고, 아니면 content 요약 */}
-                  {article.match_text ? (
-                    <div className="match-highlight" style={{ fontSize: '0.9rem', color: '#555', background: '#f9f9f9', padding: '10px', borderRadius: '4px', marginTop: '8px', lineHeight: '1.5' }}>
-                      "... {article.match_text} ..."
-                    </div>
-                  ) : (
-                    <p className="article-summary">{article.content}</p>
-                  )}
-
-                  <div className="card-footer">
-                    원문 보러가기 &rarr;
-                  </div>
-                </a>
-              ))}
+        <div className="sidebar-content">
+          {isLoading && (
+            <div className="loading-container">
+              <div className="loader"></div>
+              <p>관련 기사를 분석하고 있습니다...</p>
             </div>
-          </div>
-        )}
+          )}
 
-        {!isLoading && !sourceList && (
-          <div className="empty-state">
-            <p>왼쪽 본문에서 문장을 클릭해주세요.</p>
-          </div>
-        )}
-      </div>
-    </aside>
+          {!isLoading && sourceList && (
+            <div className="fade-in">
+              {searchKeyword && (
+                <div className="selected-sentence-box">
+                  <span className="label">선택된 문장</span>
+                  <p>"{searchKeyword}"</p>
+                </div>
+              )}
+
+              <div className="article-list">
+                {sourceList.map((article) => (
+                  <a
+                    key={article.id}
+                    href={article.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="article-card"
+                  >
+                    <div className="card-header">
+                      <span className="company-badge">{article.company}</span>
+                      <span className="article-date">{article.date}</span>
+                      {article.score && (
+                        <span
+                          className="similarity-badge"
+                          style={{
+                            marginLeft: 'auto',
+                            fontWeight: 'bold',
+                            fontSize: '0.8rem',
+                            color: article.score >= 70 ? '#16a34a' : (article.score >= 40 ? '#ea580c' : '#dc2626')
+                          }}
+                        >
+                          {article.score}% 일치
+                        </span>
+                      )}
+                    </div>
+                    <h4 className="article-title">{article.title}</h4>
+
+                    {/* 유사도 모드일 땐 'match_text'를 강조해서 보여주고, 아니면 content 요약 */}
+                    {article.match_text ? (
+                      <div className="match-highlight" style={{ fontSize: '0.9rem', color: '#555', background: '#f9f9f9', padding: '10px', borderRadius: '4px', marginTop: '8px', lineHeight: '1.5' }}>
+                        "... {article.match_text} ..."
+                      </div>
+                    ) : (
+                      <p className="article-summary">{article.content}</p>
+                    )}
+
+                    <div className="card-footer">
+                      원문 보러가기 &rarr;
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {!isLoading && !sourceList && (
+            <div className="empty-state">
+              <p>왼쪽 본문에서 문장을 클릭해주세요.</p>
+            </div>
+          )}
+        </div>
+      </aside>
+    </>
   );
 }

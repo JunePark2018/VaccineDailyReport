@@ -16,7 +16,7 @@ const WordCloudComponent = ({ keywords, width = 800, height = 300, font = "Times
         value: item.value // 원래 가중치 사용
     }));
 
-    const fontSizeMapper = (word) => Math.sqrt(word.value) * 3.2;
+    const fontSizeMapper = (word) => Math.sqrt(word.value) * 3;
     const rotate = (word) => word.value % 2 === 0 ? 0 : 90;
 
     return (

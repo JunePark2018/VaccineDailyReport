@@ -12,11 +12,58 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  max-width: 1320px;
+  max-width: 1000px;
+  /* [Refine] Reduced from 1320px for better readability */
   margin: 0 auto;
   padding: 40px 20px;
   background-color: #ffffff;
   box-sizing: border-box;
+  width: 100%;
+  /* [Refine] Removed margin-right transition because animating 'auto' margins causes snapping */
+  transition: transform 0.3s ease-out;
+  /* Pure transform is smoother */
+}
+
+/* [Refine] Sidebar Push Effect */
+.ArticlePage.sidebar-open .main-content {
+  /* margin-right: 400px;  <-- REMOVED: Cannot animate from 'auto' */
+
+  /* 
+     Logic: The sidebar covers 400px on the right.
+     To visually "center" the content in the remaining space:
+     We need to shift left by half the sidebar width. (400px / 2 = 200px)
+  */
+  transform: translateX(-200px);
+
+  /* [Refine] Prevent Overlap:
+     If 100vw is narrow, ensure the article body shrinks so it doesn't overlap with the sidebar.
+     Sidebar is 400px. We leave ~40px buffer. 
+     So max available width is 100vw - 440px.
+  */
+  max-width: calc(100vw - 440px);
+}
+
+/* 대화면 대응: 사이드바가 500px로 커지므로, 이동 거리도 그 절반인 250px로 조정 */
+@media screen and (min-width: 1600px) {
+  .ArticlePage.sidebar-open .main-content {
+    transform: translateX(-250px);
+
+    /* 
+       Sidebar 500px. Buffer 50px.
+       Max Width = 100vw - 550px 
+    */
+    max-width: calc(100vw - 550px);
+  }
+}
+
+/* On mobile (max-width: 768px), we use the Modal view, so we disable the push effect. */
+@media screen and (max-width: 768px) {
+  .ArticlePage.sidebar-open .main-content {
+    margin-right: 0;
+    transform: none;
+    /* [BF] Reset max-width so content doesn't shrink on mobile */
+    max-width: 100%;
+  }
 }
 
 .ArticlePage .main-content .article-content-wrapper {
@@ -211,6 +258,11 @@
   position: relative;
   z-index: 10;
   margin-bottom: 20px;
+}
+
+/* [Fix] When expanded, push the button down so it doesn't overlap text */
+.ArticlePage .comparison-container.expanded+.show-more-button-wrapper {
+  margin-top: 20px;
 }
 
 .ArticlePage .show-more-button.link-style {

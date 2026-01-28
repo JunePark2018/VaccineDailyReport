@@ -6,22 +6,13 @@
     top: 0;
     right: 0;
     bottom: 0;
-    
-    /* [핵심 공식] 
-       1. (min(100vw, 1320px) * 0.26): 
-          - 중앙 컨텐츠(최대 1320px) 중 약 26%를 사이드바 기본 영역으로 잡습니다.
-          - 화면이 1320px보다 작으면 화면의 26%가 되고, 크면 1320px의 26%로 고정됩니다.
-       
-       2. max(0px, (100vw - 1320px) / 2):
-          - 화면이 1320px을 넘을 때 생기는 '오른쪽 남는 여백'을 계산합니다.
-       
-       => 이 둘을 더하면 사이드바가 "본문 옆"부터 "화면 끝"까지 꽉 차게 됩니다.
-    */
-    width: calc( (min(100vw, 1320px) * 0.26) + max(0px, (100vw - 1320px) / 2) ) !important;
-    
+
+    /* [Change] Fixed width for simpler 'Push' layout */
+    width: 400px !important;
+
     /* 최소 너비 안전장치 (글자 깨짐 방지) */
     min-width: 320px !important;
-    max-width: none !important;
+    max-width: 100vw !important;
 
     height: 100vh;
     background-color: #fff;
@@ -33,7 +24,8 @@
 
     /* 애니메이션: 닫혀있을 때 오른쪽으로 숨김 */
     transform: translateX(100%);
-    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), visibility 0.4s;
+    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1),
+        visibility 0.4s;
     visibility: hidden;
     border-left: 1px solid #eee;
 }
@@ -221,15 +213,103 @@
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
+    0% {
+        transform: rotate(0deg);
+    }
 
-.fade-in {
-    animation: fadeIn 0.5s;
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 대화면 (1600px 이상)에서는 사이드바를 좀 더 넓게 */
+@media screen and (min-width: 1600px) {
+    .right-sidebar {
+        width: 500px !important;
+    }
+}
+
+/* ==============================
+   6. 모바일 대응 (Modal View)
+   ============================== */
+
+/* [Change] 배경 오버레이는 모바일에서만 표시 */
+.sidebar-backdrop {
+    display: none;
+}
+
+/* 모바일 화면 (768px 이하) */
+@media screen and (max-width: 768px) {
+
+    /* 모바일에서만 백드롭 활성화 */
+    .sidebar-backdrop {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.6);
+        z-index: 1999;
+        /* 사이드바(2000) 바로 아래 */
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .sidebar-backdrop.open {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .right-sidebar {
+        /* 위치 및 크기 초기화 */
+        top: 50%;
+        left: 50%;
+        right: auto;
+        bottom: auto;
+
+        width: 90% !important;
+        max-width: 450px !important;
+        height: auto;
+        max-height: 80vh;
+
+        /* 모달 스타일링 */
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+
+        /* 애니메이션 변경 (슬라이드 -> 팝업) */
+        transform: translate(-50%, -40%) scale(0.95);
+        transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), visibility 0.3s;
+        opacity: 0;
+    }
+
+    .right-sidebar.open {
+        /* 중앙 정렬 & 스케일 복구 */
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+        visibility: visible;
+    }
+
+    /* 헤더 둥글게 */
+    .right-sidebar .sidebar-header {
+        border-radius: 12px 12px 0 0;
+    }
+
+    /* 컨텐츠 영역 둥글게 */
+    .right-sidebar .sidebar-content {
+        border-radius: 0 0 12px 12px;
+    }
 }
