@@ -31,6 +31,60 @@ function ArticlePage() {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [selectedSentence, setSelectedSentence] = useState(null);
 
+  // [수정 3] 언론사 이름 목록 상태 추가 (비교분석 하이라이팅용)
+  const [mediaNames, setMediaNames] = useState([]);
+
+  // [추가] 비교분석 섹션 더보기 상태
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // [추가] 근거 자료(Evidence) 상태 관리 { [index]: { loading: bool, data: [] } }
+  const [evidenceMap, setEvidenceMap] = useState({});
+
+  // [추가] 근거 자료 가져오기 함수
+  const fetchEvidence = async (index, text) => {
+    // 1. 텍스트에서 언급된 언론사 찾기
+    // mediaNames state를 활용
+    const targetMedia = mediaNames.filter(name => text.includes(name));
+
+    if (targetMedia.length === 0) {
+      // 언급된 언론사가 없으면 스킵 (혹은 전체 검색?) -> 일단 스킵
+      setEvidenceMap(prev => ({ ...prev, [index]: { loading: false, data: null, noTarget: true } }));
+      return;
+    }
+
+    // 2. 로딩 시작
+    setEvidenceMap(prev => ({ ...prev, [index]: { loading: true, data: null } }));
+
+    try {
+      const response = await axios.post('http://localhost:8000/generated-news/claim-evidence', {
+        cluster_id: article.cluster_id,
+        claim_text: text,
+        target_media: targetMedia
+      });
+
+      if (response.data.match_found) {
+        setEvidenceMap(prev => ({ ...prev, [index]: { loading: false, data: response.data.evidence } }));
+      } else {
+        setEvidenceMap(prev => ({ ...prev, [index]: { loading: false, data: null } }));
+      }
+    } catch (error) {
+      console.error("근거 찾기 실패:", error);
+      setEvidenceMap(prev => ({ ...prev, [index]: { loading: false, error: true } }));
+    }
+  };
+
+  // [Effect] 펼쳐졌을 때 자동으로 근거 찾기 시작
+  useEffect(() => {
+    if (isExpanded && article?.analysis_result?.media_comparison_bullets) {
+      article.analysis_result.media_comparison_bullets.forEach((text, idx) => {
+        // 아직 데이터가 없고, 로딩중도 아닐 때만 요청
+        if (!evidenceMap[idx]) {
+          fetchEvidence(idx, text);
+        }
+      });
+    }
+  }, [isExpanded, article]);
+
   // [수정 2] 문장 클릭 시 실행될 함수 (NewsText에서 호출됨)
   const handleSentenceClick = (sentence) => {
     console.log("부모(ArticlePage)가 받은 문장:", sentence);
@@ -41,6 +95,29 @@ function ArticlePage() {
   // 사이드바 닫기 함수
   const closeSidebar = () => {
     setSidebarOpen(false);
+  };
+
+  // [추가] 텍스트에서 언론사 이름을 찾아 하이라이트하는 함수
+  const highlightMediaText = (text) => {
+    if (!text || mediaNames.length === 0) return text;
+
+    // 언론사 이름들을 이용해 정규식 생성 (긴 이름부터 매칭되도록 정렬)
+    const sortedNames = [...mediaNames].sort((a, b) => b.length - a.length);
+    const regex = new RegExp(`(${sortedNames.join('|')})`, 'g');
+
+    // split하여 매칭된 부분만 스타일링
+    const parts = text.split(regex);
+
+    return parts.map((part, index) => {
+      if (mediaNames.includes(part)) {
+        return (
+          <span key={index} style={{ color: '#d32f2f', fontWeight: 'bold' }}>
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
   };
 
   useEffect(() => {
@@ -64,6 +141,10 @@ function ArticlePage() {
         // 사용된 기사들 가져와서 랜덤하게 사진 고르기
         const img_url_response = await axios.get(`${API_BASE_URL}/generated-news/clusters/${article.cluster_id}/news`);
         const newsList = img_url_response.data;
+
+        // 언론사 이름 추출 (중복 제거)
+        const companies = [...new Set(newsList.map(n => n.company_name).filter(Boolean))];
+        setMediaNames(companies);
 
         // 1모든 기사에서 img_urls만 모아서 평탄화
         const allImgUrls = newsList
@@ -95,16 +176,7 @@ function ArticlePage() {
     fetchInfo();
   }, [id]); // id가 바뀔 때마다 다시 불러오도록 의존성 배열 추가
 
-  // 워드 클라우드 (재렌더링 방지)
-  const wordCloud = useMemo(() => {
-    return (
-      <WordCloudComponent
-        keywords={keywords}
-        width={400}
-        height={400}
-      />
-    );
-  }, [keywords]);
+
 
   return (
     <div className="ArticlePage">
@@ -141,25 +213,100 @@ function ArticlePage() {
               <div className='article-img'>
                 <img src={imgURL} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
               </div>
+
+              {/* [수정] 제목과 구분선을 NewsText에서 분리하여 상위에 배치 */}
+              {/* [수정] 제목과 구분선을 NewsText에서 분리하여 상위에 배치 */}
+              <div style={{ padding: '0 20px' }}>
+                <h1 className="article-head-title">{article.title}</h1>
+                <hr className="article-head-divider" />
+
+                {/* [이동] 비교분석 섹션을 이곳으로 이동 */}
+                <div className="article-comparer" style={{ marginTop: '10px', marginBottom: '40px', borderTop: 'none' }}>
+                  <h3 className="section-title">비교분석</h3>
+                  <div className={`comparison-container ${isExpanded ? 'expanded' : 'collapsed'}`}>
+                    <ul className="comparison-list">
+                      {article?.analysis_result?.media_comparison_bullets?.map((text, idx) => (
+                        <li key={idx} className="comparison-item">
+                          {highlightMediaText(text.replace(/^- /, ''))}
+
+                          {/* [근거 자료 표시 영역] */}
+                          {isExpanded && (
+                            <div className="evidence-container" style={{ marginTop: '10px', fontSize: '0.9rem' }}>
+                              {/* 1. 로딩 상태 */}
+                              {evidenceMap[idx]?.loading && (
+                                <div style={{ color: '#888', fontStyle: 'italic' }}>
+                                  🔍 관련 기사에서 근거를 찾는 중...
+                                </div>
+                              )}
+
+                              {/* 2. 결과 표시 */}
+                              {evidenceMap[idx]?.data && (
+                                <div className="evidence-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+                                  {evidenceMap[idx].data.map((ev, i) => (
+                                    <div key={i} className="evidence-item" style={{ background: '#f1f3f4', padding: '8px 12px', borderRadius: '6px', borderLeft: '4px solid #007bff' }}>
+                                      <span style={{ fontWeight: 'bold', marginRight: '6px', color: '#333' }}>[{ev.company}]</span>
+                                      <a href={ev.url} target="_blank" rel="noopener noreferrer" style={{ color: '#555', textDecoration: 'none' }}>
+                                        "{ev.text}"
+                                      </a>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  {article?.analysis_result?.media_comparison_bullets?.length > 0 && (
+                    <div className="show-more-button-wrapper">
+                      <button className="show-more-button link-style" onClick={() => setIsExpanded(!isExpanded)}>
+                        {isExpanded ? (
+                          <>
+                            접기
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '6px' }}>
+                              <polyline points="18 15 12 9 6 15"></polyline>
+                            </svg>
+                          </>
+                        ) : (
+                          <>
+                            펼쳐보기
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '6px' }}>
+                              <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <NewsText
-                title={article.title}
                 contents={article.contents}
                 onSentenceClick={handleSentenceClick}
               />
-              <div className="article-comparer">
-                <h3 className="section-title">비교분석</h3>
-                <ul className="comparison-list">
-                  {article?.analysis_result?.media_comparison_bullets?.map((text, idx) => (
-                    <li key={idx} className="comparison-item">{text.replace(/^- /, '')}</li>
-                  ))}
-                </ul>
-              </div>
+              {/* 기존 비교분석 섹션 위치 제거됨 */}
+              <div className="article-comparer" style={{ display: 'none' }}></div>
               <Sources clusterId={article.cluster_id} />
+
+              {/* [이동] 워드 클라우드 섹션 (하단으로 이동) */}
+              <div className="wordcloud-section" style={{ marginTop: '60px', padding: '20px', backgroundColor: '#f9f9f9', borderRadius: '12px' }}>
+                <h3 className="section-title" style={{ textAlign: 'center', marginBottom: '30px' }}>기사 핵심 키워드</h3>
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  <WordCloudComponent
+                    keywords={keywords}
+                    width={800} // 가로 폭을 늘림
+                    height={400}
+                  />
+                </div>
+              </div>
             </div>
-            <div className="additional-section">
-              <h3 className="section-title">키워드</h3>
-              {wordCloud}
-            </div>
+
+            {/* 기존 사이드바 키워드 영역 제거됨 */}
+            {/* <div className="additional-section"> ... </div> */}
+
+            {/* [수정 4] RightSideBar에 '선택된 문장' 전달 */}
 
             {/* [수정 4] RightSideBar에 '선택된 문장' 전달 */}
             <RightSideBar

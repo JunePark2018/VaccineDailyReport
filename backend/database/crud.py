@@ -219,7 +219,15 @@ def get_original_news_details_by_cluster(db: Session, cluster_id: int) -> List[d
     """
     # 1. News, Company, cluster_news_link 3개를 조인(Join)합니다.
     results = (
-        db.query(News.title, News.url, Company.name.label("company_name"), News.img_urls, News.contents)
+        db.query(
+            News.news_id,
+            News.title,
+            News.url,
+            Company.name.label("company_name"),
+            News.img_urls,
+            News.contents,
+            News.created_at,
+        )
         .join(cluster_news_link, News.news_id == cluster_news_link.c.news_id)
         .join(Company, News.company_id == Company.company_id)
         .filter(cluster_news_link.c.cluster_id == cluster_id)
@@ -229,11 +237,13 @@ def get_original_news_details_by_cluster(db: Session, cluster_id: int) -> List[d
     # 2. 프론트엔드가 쓰기 편한 리스트 형태로 변환
     return [
         {
+            "news_id": row.news_id,
             "title": row.title,
-            "url": row.url,
             "company_name": row.company_name,
+            "url": row.url,
             "img_urls": row.img_urls,
             "contents": row.contents,
+            "created_at": row.created_at,
         }
         for row in results
     ]

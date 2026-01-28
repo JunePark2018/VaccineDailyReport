@@ -9,7 +9,7 @@ from sqlalchemy import or_, and_
 
 # ... (other imports are fine, but I need to make sure I match the file content structure.
 # The previous `from sqlalchemy import or_` was on line 8.
-# I will edit the import line separately or include it in the replace if I can span that far, but the file is large. 
+# I will edit the import line separately or include it in the replace if I can span that far, but the file is large.
 # Better to do two edits or use multi_replace.
 # I will use multi_replace to handle both the import and the function body safely.
 
@@ -22,6 +22,32 @@ from database.models import AiGeneratedNews, Cluster
 from database import crud
 
 # schemas import 제거 - dict 반환으로 충분
+from pydantic import BaseModel
+
+
+class CitationRequest(BaseModel):
+    cluster_id: int
+    target_sentence: str
+
+
+# -----------------------------------------------------------
+# [Deep Citation Agent] Logic
+# -----------------------------------------------------------
+def split_sentences_positions(text: str):
+    """
+    텍스트를 문장 단위로 분리하고, 원본 텍스트 내의 위치(시작 인덱스 등)를 추적하거나
+    최소한 '어느 문장이냐'를 리스트로 반환.
+    여기서는 단순 split 후 strip 처리.
+    """
+    if not text:
+        return []
+    # 마침표, 물음표, 느낌표 뒤에 공백이 있는 경우 분리
+    import re
+
+    # 단순화된 정규식: 문장 종결 부호(.!?) 뒤에 공백 혹은 문자열 끝
+    sentences = re.split(r"(?<=[.!?])\s+", text)
+    return [s.strip() for s in sentences if s.strip()]
+
 
 router = APIRouter(prefix="/generated-news", tags=["AI Generated News"])
 
@@ -186,6 +212,112 @@ def read_cluster_news(cluster_id: int, db: Session = Depends(get_db)):
     return original_news_list
 
 
+@router.post("/citation")
+def check_citation(req: CitationRequest, db: Session = Depends(get_db)):
+    """
+    [Deep Citation Agent]
+    특정 문장이 주어졌을 때, 해당 클러스터에 연결된 원본 기사들 중에서
+    가장 유사한 문장(근거)을 찾아 반환합니다. (On-Demand Vector Search)
+    반환값: 관련도(score)가 높은 순서대로 정렬된 '기사 목록'
+    """
+    from database.vector_store import encode_texts
+    from sklearn.metrics.pairwise import cosine_similarity
+    import numpy as np
+
+    # 1. 원본 기사 가져오기 (news_id, created_at 포함)
+    original_news_list = crud.get_original_news_details_by_cluster(db, req.cluster_id)
+    if not original_news_list:
+        return {"match_found": False, "message": "원본 기사가 없습니다."}
+
+    # 2. 모든 기사의 문장을 추출하여 후보군(Corpus) 생성
+    candidates = []
+    # candidates 구조: { "text": 문장, "doc_title": 기사제목, "company": 언론사, "url": 기사URL, "news_id": ID, ... }
+
+    for news in original_news_list:
+        sentences = split_sentences_positions(str(news["contents"]))
+        for s in sentences:
+            if len(s) < 10:
+                continue  # 너무 짧은 문장은 제외
+            candidates.append(
+                {
+                    "text": s,
+                    "doc_title": news["title"],
+                    "company": news["company_name"],
+                    "url": news["url"],
+                    "news_id": news.get("news_id"),  # crud 업데이트 필요
+                    "created_at": news.get("created_at"),  # crud 업데이트 필요
+                    "full_contents": news["contents"],
+                }
+            )
+
+    if not candidates:
+        return {"match_found": False, "message": "비교할 문장이 없습니다."}
+
+    # 3. 임베딩 생성 (Target 1개 + Candidates N개)
+    #    속도 최적화를 위해 한 번에 encoding
+    all_texts = [req.target_sentence] + [c["text"] for c in candidates]
+
+    # vector_store의 encode_texts 사용
+    embeddings = encode_texts(all_texts)
+
+    target_vec = embeddings[0].reshape(1, -1)
+    candidate_vecs = embeddings[1:]
+
+    # 4. 유사도 계산
+    sim_scores = cosine_similarity(target_vec, candidate_vecs)[0]
+
+    # 5. 기사별 최고 점수 집계 (Article-based Aggregation)
+    article_scores = {}  # news_id -> { score, match_sentence, ... }
+
+    for idx, score in enumerate(sim_scores):
+        if score < 0.2:  # 노이즈 제거 (Threshold)
+            continue
+
+        cand = candidates[idx]
+        nid = cand["news_id"]
+
+        # 이미 저장된 기사보다 점수가 높으면 갱신
+        if nid not in article_scores or score > article_scores[nid]["score"]:
+            article_scores[nid] = {
+                "score": score,
+                "match_sentence": cand["text"],
+                "news_id": nid,
+                "title": cand["doc_title"],
+                "company": cand["company"],
+                "url": cand["url"],
+                "created_at": cand["created_at"],
+                "contents": cand["full_contents"],
+            }
+
+    # 6. 정렬 (점수 내림차순)
+    sorted_articles = sorted(article_scores.values(), key=lambda x: x["score"], reverse=True)
+
+    # 상위 5개만
+    top_articles = sorted_articles[:5]
+
+    results = []
+    for art in top_articles:
+        # 날짜 포맷
+        date_str = ""
+        if art["created_at"]:
+            date_str = str(art["created_at"])
+
+        results.append(
+            {
+                "id": art["news_id"],
+                "score": round(float(art["score"]) * 100, 1),
+                "match_text": art["match_sentence"],  # 가장 유사한 문장
+                "company": art["company"],
+                "title": art["title"],
+                "url": art["url"],
+                "date": date_str,
+                "content": art["contents"],  # 전체 본문 (or 요약)
+            }
+        )
+
+    return {"match_found": len(results) > 0, "matches": results}
+
+
 @router.get("/{generated_news_id}/related")
 def get_related_news(generated_news_id: int, limit: int = 3, db: Session = Depends(get_db)):
     """
@@ -207,6 +339,7 @@ def get_related_news(generated_news_id: int, limit: int = 3, db: Session = Depen
     current_kws = current_news.keywords
     if isinstance(current_kws, str):
         import json
+
         try:
             current_kws = json.loads(current_kws)
         except:
@@ -229,7 +362,7 @@ def get_related_news(generated_news_id: int, limit: int = 3, db: Session = Depen
     # 3. Tiered Search Strategy (3 keywords -> 2 keywords -> 1 keyword)
     # 최대 3개까지만 시도 (키워드가 적으면 그만큼만)
     max_k = min(len(all_top_keywords), 3)
-    
+
     # 3부터 1까지 역순으로 시도 (예: 3, 2, 1)
     for k_count in range(max_k, 0, -1):
         if len(final_results) >= limit:
@@ -237,26 +370,26 @@ def get_related_news(generated_news_id: int, limit: int = 3, db: Session = Depen
 
         needed = limit - len(final_results)
         target_keywords = all_top_keywords[:k_count]
-        
+
         # 쿼리 생성: (제목이나 내용에 k1 포함) AND (제목이나 내용에 k2 포함) ...
         # excluded_ids에 없는 것만
-        query = db.query(AiGeneratedNews).filter(AiGeneratedNews.id.notin_(excluded_ids))
-        
+        query = db.query(AiGeneratedNews).filter(AiGeneratedNews.ai_generated_news_id.notin_(excluded_ids))
+
         # AND 조건 추가
         conditions = []
         for kw in target_keywords:
             pattern = f"%{kw}%"
             conditions.append(or_(AiGeneratedNews.title.ilike(pattern), AiGeneratedNews.contents.ilike(pattern)))
-        
+
         if conditions:
             query = query.filter(and_(*conditions))
-        
+
         # 최신순 정렬하여 필요한 만큼 가져오기
         tier_results = query.order_by(AiGeneratedNews.created_at.desc()).limit(needed).all()
 
         for item in tier_results:
             final_results.append(item)
-            excluded_ids.add(item.id)
+            excluded_ids.add(item.ai_generated_news_id)
 
     # 4. 결과 포맷팅
     response_data = []
@@ -269,22 +402,152 @@ def get_related_news(generated_news_id: int, limit: int = 3, db: Session = Depen
                     urls = origin_news.img_urls
                     if isinstance(urls, str):
                         import json
+
                         try:
                             urls = json.loads(urls)
                         except:
                             urls = []
-                    
+
                     if isinstance(urls, list) and len(urls) > 0:
                         img_url = urls[0]
                         break
-        
+
         summary = item.contents[:40] + "..." if item.contents and len(item.contents) > 40 else item.contents
-        
-        response_data.append({
-            "id": item.id,
-            "title": item.title,
-            "image_url": img_url,
-            "contents_short": summary
-        })
+
+        response_data.append(
+            {"id": item.ai_generated_news_id, "title": item.title, "image_url": img_url, "contents_short": summary}
+        )
 
     return response_data
+
+
+class ClaimEvidenceRequest(BaseModel):
+    cluster_id: int
+    claim_text: str
+    target_media: List[str]  # e.g., ["조선일보", "한겨레"]
+
+
+@router.post("/claim-evidence")
+def check_claim_evidence(req: ClaimEvidenceRequest, db: Session = Depends(get_db)):
+    """
+    [Fact-Check Agent]
+    비교분석 문장(Claim)과 대상 언론사들이 주어졌을 때,
+    각 언론사의 실제 기사에서 해당 주장을 뒷받침하는 가장 유사한 '문단(Paragraph)'을 찾습니다.
+    (사용자 요청: 문장보다는 문맥이 있는 문단 단위가 낫다)
+    """
+    from database.vector_store import encode_texts
+    from sklearn.metrics.pairwise import cosine_similarity
+    import numpy as np
+
+    # 1. 원본 기사 가져오기
+    original_news_list = crud.get_original_news_details_by_cluster(db, req.cluster_id)
+    if not original_news_list:
+        return {"match_found": False, "message": "원본 기사가 없습니다."}
+
+    # 2. 대상 언론사 필터링 & 후보군(문장) 생성
+    candidates = []
+    target_media_set = set(req.target_media)
+
+    def is_target_media(company_name):
+        if not target_media_set:
+            return True
+        for target in target_media_set:
+            if target in company_name:
+                return True
+        return False
+
+    for news in original_news_list:
+        company = news["company_name"]
+        if not is_target_media(company):
+            continue
+
+        raw_contents = str(news["contents"] or "")
+        # [변경] 다시 문장 단위로 변경 (사용자 요청: 문단은 너무 길다)
+        sentences_raw = split_sentences_positions(raw_contents)
+
+        # 인덱스 추적을 위해 리스트업
+        for i, s in enumerate(sentences_raw):
+            if len(s) < 10:  # 너무 짧은 문장 제외
+                continue
+
+            candidates.append(
+                {
+                    "text": s,
+                    "doc_title": news["title"],
+                    "company": company,
+                    "url": news["url"],
+                    "news_id": news.get("news_id"),
+                    "index": i,
+                    "total_len": len(sentences_raw),
+                    "context_prev": sentences_raw[i - 1] if i > 0 else None,
+                    "context_next": sentences_raw[i + 1] if i < len(sentences_raw) - 1 else None,
+                }
+            )
+
+    if not candidates:
+        return {"match_found": False, "message": "해당 언론사의 기사 내용을 찾을 수 없습니다."}
+
+    # 3. 임베딩 & 유사도 계산
+    all_texts = [req.claim_text] + [c["text"] for c in candidates]
+    embeddings = encode_texts(all_texts)
+
+    target_vec = embeddings[0].reshape(1, -1)
+    candidate_vecs = embeddings[1:]
+
+    sim_scores = cosine_similarity(target_vec, candidate_vecs)[0]
+
+    # 임시 저장소: (score, candidate)
+    scored_candidates = []
+    for idx, score in enumerate(sim_scores):
+        if score < 0.35:
+            continue
+        scored_candidates.append((score, candidates[idx]))
+
+    # 언론사별 최고 점수 찾기
+    best_per_company = {}
+
+    for score, cand in scored_candidates:
+        company = cand["company"]
+        if company not in best_per_company or score > best_per_company[company]["score"]:
+            best_per_company[company] = {"score": score, "cand": cand}
+
+    # 4. 문맥 병합 (Context Merging)
+    results = []
+    for company, item in best_per_company.items():
+        score = item["score"]
+        cand = item["cand"]
+
+        final_text = cand["text"]
+
+        # 앞/뒤 문장 단순 병합 (문맥상 중요할 확률 높음)
+        # 로직: 단순히 앞뒤 문장을 붙여서 보여줌으로서 '흐름'을 제공
+        # 단, 너무 길어지지 않게 체크
+
+        prev_text = cand["context_prev"] or ""
+        next_text = cand["context_next"] or ""
+
+        # 앞 문장이 있고, 너무 길지 않으면 추가 (문맥 연결)
+        if prev_text and len(prev_text) < 100:
+            final_text = prev_text + " " + final_text
+
+        # 뒷 문장이 있고, 너무 길지 않으면 추가
+        if next_text and len(next_text) < 100:
+            final_text = final_text + " " + next_text
+
+        # ... 처리
+        if cand["index"] > 1:  # prev를 썼더라도 그 앞이 더 있으면
+            final_text = "... " + final_text
+        if cand["index"] < cand["total_len"] - 2:
+            final_text = final_text + " ..."
+
+        results.append(
+            {
+                "score": round(float(score) * 100, 1),
+                "text": final_text,
+                "title": cand["doc_title"],
+                "url": cand["url"],
+                "company": company,
+            }
+        )
+
+    return {"match_found": len(results) > 0, "evidence": results}

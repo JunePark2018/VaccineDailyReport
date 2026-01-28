@@ -24,12 +24,14 @@ MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 # -------------------------------------------------------------------
 # [비동기 처리] 실제 뉴스 분석 로직
 # -------------------------------------------------------------------
-from ai_issue_generator import generate_balanced_article
-from article_comparer import (
-    get_synthesized_content_by_company,
-    process_all_companies_async,
-    generate_final_comparison_report,
-)
+# from ai_issue_generator import generate_balanced_article
+from ai_agentic_generator import generate_agentic_article as generate_balanced_article
+# from article_comparer import (
+#     get_synthesized_content_by_company,
+#     process_all_companies_async,
+#     generate_final_comparison_report,
+# )
+from ai_graph_comparer import compare_articles_with_graph
 
 
 from keyword_extractor import KeywordExtractor
@@ -77,14 +79,10 @@ async def process_single_issue(issue: AiGeneratedNews, kw_extractor: KeywordExtr
                 print(f"      🌍 외신 검색어 추출: {issue.search_keyword}")
 
             # -------------------------------------------------
-            # 3-2. 비교 분석 (Async Pipeline)
+            # 3-2. 비교 분석 (GraphRAG-Lite)
             # -------------------------------------------------
-            # (1) 전처리
-            synthesized = get_synthesized_content_by_company(articles_data, top_n=3)
-            # (2) 개별 분석
-            company_analyses = await process_all_companies_async(synthesized)
-            # (3) 최종 리포트
-            final_report = await generate_final_comparison_report(company_analyses)
+            # (1) Graph Extraction & Analysis (All-in-one)
+            final_report = await compare_articles_with_graph(articles_data)
 
             issue.analysis_result = final_report
 
