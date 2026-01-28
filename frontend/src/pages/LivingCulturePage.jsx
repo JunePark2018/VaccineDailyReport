@@ -57,6 +57,7 @@ const LivingCulturePage = () => {
                     while (expanded.length < 24) {
                         expanded = [...expanded, ...filtered];
                     }
+                    // Shuffle and slice to exactly 24
                     const shuffled = expanded.sort(() => Math.random() - 0.5).slice(0, 24);
                     setDisplayArticles(shuffled);
 
@@ -106,7 +107,7 @@ const LivingCulturePage = () => {
         // List removed
 
         // Feed Logic
-        const allFeedArticles = blockArticles.slice(4); // 20 items (4 to 23)
+        const allFeedArticles = blockArticles; // Show ALL articles in Feed // 20 items (4 to 23)
         const feedPageSize = 5;
         const totalFeedPages = Math.ceil(allFeedArticles.length / feedPageSize);
         const currentFeedArticles = allFeedArticles.slice((feedPage - 1) * feedPageSize, feedPage * feedPageSize);
@@ -218,7 +219,7 @@ const LivingCulturePage = () => {
                         <div className="section-divider"></div>
                         <section className="bottom-feed-section" style={{ display: 'flex', flexDirection: 'column', gap: '30px', textAlign: 'left', marginTop: '30px', padding: isMobile ? '0 20px' : '0 120px' }}>
                             {feed.map((news) => (
-                                <div key={news.id} className="feed-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', flexDirection: isMobile ? 'column-reverse' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px', gap: isMobile ? '15px' : '0' }}>
+                                <div key={news.id} className="feed-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', flexDirection: isMobile ? 'column-reverse' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px', gap: '20px' }}>
 
                                     {/* Left Container: Like + Text */}
                                     <div style={{ display: 'flex', flex: 1, paddingRight: isMobile ? '0' : '0px', width: '100%' }}>
@@ -254,7 +255,7 @@ const LivingCulturePage = () => {
                                     </div>
 
                                     {/* Image Right (Reduced Height: aspect-ratio 1.8/1) */}
-                                    <div className="feed-image" style={{ width: isMobile ? '100%' : '312px', aspectRatio: isMobile ? '1.8/1' : '1.8/1', flexShrink: 0, overflow: 'hidden', borderRadius: '4px', marginLeft: isMobile ? '0' : '-20px' }}>
+                                    <div className="feed-image" style={{ width: isMobile ? '100%' : '312px', aspectRatio: isMobile ? '1.8/1' : '1.8/1', flexShrink: 0, overflow: 'hidden', borderRadius: '4px' }}>
                                         <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                                     </div>
                                 </div>
@@ -310,12 +311,12 @@ const LivingCulturePage = () => {
     return (
         <div className="category-page">
             <Header
-                leftChild={<div />}
-                midChild={<Logo />}
+                leftChild={<Logo />}
+                midChild={null}
                 rightChild={
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
                         <div style={{ position: 'relative' }}>
-                            <Searchbar />
+                            <Searchbar className="always-open" />
                         </div>
                         <UserMenu />
                     </div>

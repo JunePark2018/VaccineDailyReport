@@ -209,13 +209,13 @@ export default function CreateAccount() {
             <Header
                 headerTop="on"
                 headerMain="on"
-                headerBottom="on"
-                leftChild={<div />}
-                midChild={<Logo />}
+                headerBottom="off"
+                leftChild={<Logo />}
+                midChild={<div />}
                 rightChild={
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
                         <div style={{ position: 'relative' }}>
-                            <Searchbar />
+                            <Searchbar className="always-open" />
                         </div>
                         <UserMenu />
                     </div>
@@ -235,7 +235,7 @@ export default function CreateAccount() {
                         <input
                             type="text"
                             name="name"
-                            placeholder="홍길동"
+                            placeholder="이름을 입력하세요"
                             value={formData.name}
                             onChange={handleChange}
                             className={errors.name ? "input-error" : ""}
@@ -249,7 +249,7 @@ export default function CreateAccount() {
                         <input
                             type="text"
                             name="loginId"
-                            placeholder="영문+숫자 포함 6자 이상 (숫자 2개 필수)"
+                            placeholder="영문+숫자 6자 이상 (숫자 2개 필수)"
                             value={formData.loginId}
                             onChange={handleChange}
                             className={errors.loginId ? "input-error" : ""}
@@ -257,70 +257,65 @@ export default function CreateAccount() {
                         {errors.loginId && <span className="error-msg">{errors.loginId}</span>}
                     </div>
 
-                    {/* 3. Password Section */}
+                    {/* 3. Password Group (Joined) */}
                     <div className="input-group">
                         <label>비밀번호</label>
-                        <div className="password-wrapper">
-                            <input
-                                type={showPassword ? "text" : "password"}
-                                name="password"
-                                placeholder="8자 이상, 대문자/특수문자 포함 권장"
-                                value={formData.password}
-                                onChange={handleChange}
-                                className={errors.password ? "input-error" : ""}
-                            />
-                            <button
-                                type="button"
-                                className="toggle-btn"
-                                onClick={() => setShowPassword(!showPassword)}
-                            >
-                                {showPassword ? "숨기기" : "보기"}
-                            </button>
-                        </div>
-                        {/* Strength Meter */}
-                        {formData.password && (
-                            <div className="strength-meter-container">
-                                <div
-                                    className="strength-bar"
-                                    style={{
-                                        width: `${(passwordStrength.score + 1) * 20}%`,
-                                        backgroundColor: passwordStrength.color
-                                    }}
-                                ></div>
-                                <span style={{ color: passwordStrength.color }}>
-                                    {passwordStrength.label}
-                                </span>
+                        <div className="input-group-joined">
+                            <div className="input-row-joined top">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    name="password"
+                                    placeholder="비밀번호 (8자 이상)"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    className={errors.password ? "input-error" : ""}
+                                />
+                                <button
+                                    type="button"
+                                    className="toggle-btn-joined"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                >
+                                    {showPassword ? "숨기기" : "보기"}
+                                </button>
                             </div>
-                        )}
-                        {errors.password && <span className="error-msg">{errors.password}</span>}
-                    </div>
-
-                    {/* 3-1. Confirm Password Section */}
-                    <div className="input-group">
-                        <label>비밀번호 확인</label>
-                        <div className="password-wrapper">
-                            <input
-                                type={showPassword ? "text" : "password"}
-                                name="confirmPassword"
-                                placeholder="비밀번호를 다시 입력해주세요"
-                                value={formData.confirmPassword}
-                                onChange={handleChange}
-                                className={errors.confirmPassword ? "input-error" : ""}
-                            />
-                            <button
-                                type="button"
-                                className="toggle-btn"
-                                onClick={() => setShowPassword(!showPassword)}
-                            >
-                                {showPassword ? "숨기기" : "보기"}
-                            </button>
+                            <div className="input-row-joined bottom">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    name="confirmPassword"
+                                    placeholder="비밀번호 재확인"
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
+                                    className={errors.confirmPassword ? "input-error" : ""}
+                                />
+                            </div>
                         </div>
-                        {formData.password && formData.confirmPassword && formData.password === formData.confirmPassword && (
-                            <span className="success-msg" style={{ color: '#2ecc71', fontSize: '0.85rem', marginTop: '4px', display: 'block' }}>
-                                비밀번호 일치
-                            </span>
-                        )}
-                        {errors.confirmPassword && <span className="error-msg">{errors.confirmPassword}</span>}
+
+                        {/* Password Feedback (Strength & Match) */}
+                        <div className="password-feedback">
+                            {formData.password && (
+                                <div className="strength-meter-container">
+                                    <div
+                                        className="strength-bar"
+                                        style={{
+                                            width: `${(passwordStrength.score + 1) * 20}%`,
+                                            backgroundColor: passwordStrength.color
+                                        }}
+                                    ></div>
+                                    <span style={{ color: passwordStrength.color }}>
+                                        {passwordStrength.label}
+                                    </span>
+                                </div>
+                            )}
+
+                            {formData.password && formData.confirmPassword && formData.password === formData.confirmPassword && (
+                                <span className="success-msg" style={{ color: '#2ecc71', fontSize: '13px', marginTop: '5px', display: 'block' }}>
+                                    비밀번호가 일치합니다.
+                                </span>
+                            )}
+
+                            {errors.password && <span className="error-msg">{errors.password}</span>}
+                            {errors.confirmPassword && <span className="error-msg">{errors.confirmPassword}</span>}
+                        </div>
                     </div>
 
                     {/* 4. Email Section */}
@@ -337,8 +332,8 @@ export default function CreateAccount() {
                         {errors.email && <span className="error-msg">{errors.email}</span>}
                     </div>
 
-                    {/* New Sections: Age Group and Gender */}
-                    <div className="input-row">
+                    {/* 5. Age & Gender */}
+                    <div className="input-row-flex">
                         <div className="input-group half">
                             <label>연령대</label>
                             <select
@@ -347,7 +342,7 @@ export default function CreateAccount() {
                                 onChange={handleChange}
                                 className={errors.ageGroup ? "input-error" : ""}
                             >
-                                <option value="">선택하세요</option>
+                                <option value="">선택</option>
                                 {ageGroups.map(age => <option key={age} value={age}>{age}</option>)}
                             </select>
                             {errors.ageGroup && <span className="error-msg">{errors.ageGroup}</span>}
@@ -360,16 +355,16 @@ export default function CreateAccount() {
                                 onChange={handleChange}
                                 className={errors.gender ? "input-error" : ""}
                             >
-                                <option value="">선택하세요</option>
+                                <option value="">선택</option>
                                 {genders.map(g => <option key={g} value={g}>{g}</option>)}
                             </select>
                             {errors.gender && <span className="error-msg">{errors.gender}</span>}
                         </div>
                     </div>
 
-                    {/* 5. Category Selection (Interactive) */}
+                    {/* 6. Categories */}
                     <div className="category-section">
-                        <label>관심 분야 선택 <span className="sub-label">(우선순위대로 번호가 지정됩니다, 최소 3개)</span></label>
+                        <label>관심 분야 <span className="sub-label">(3개 이상 선택)</span></label>
                         <div className="category-grid">
                             {categoryOptions.map((cat) => {
                                 const index = selectedCategories.indexOf(cat);
@@ -389,7 +384,7 @@ export default function CreateAccount() {
                         {errors.categories && <span className="error-msg">{errors.categories}</span>}
                     </div>
 
-                    {/* 6. Agreement Section */}
+                    {/* 7. Agreement */}
                     <div className="agreement-section">
                         <label className="checkbox-container">
                             <input
@@ -398,21 +393,21 @@ export default function CreateAccount() {
                                 checked={formData.marketingAgree}
                                 onChange={handleChange}
                             />
-                            <span className="checkmark"></span>
+                            <span className="checkmark-custom"></span>
                             <span className="text">
-                                (필수) 사용자 경험 향상 및 서비스 개선을 위한 활동 기록 수집에 동의합니다.
+                                [필수] 개인정보 수집 및 이용 동의
                             </span>
                         </label>
                         {errors.agreement && <span className="error-msg">{errors.agreement}</span>}
                     </div>
 
-                    <button type="submit" className="submit-btn">계정 생성하기</button>
+                    <button type="submit" className="submit-btn" disabled={false}>가입하기</button>
 
                     <div className="login-redirect">
-                        이미 계정이 있으신가요? <span onClick={() => navigate('/login')}>로그인 하기</span>
+                        <span onClick={() => navigate('/login')}>로그인으로 돌아가기</span>
                     </div>
                 </form>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }
