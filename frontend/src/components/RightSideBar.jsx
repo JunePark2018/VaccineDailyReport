@@ -68,6 +68,33 @@ export default function RightSideBar({ isOpen, onClose, searchKeyword, clusterId
     }
   }, [isOpen, clusterId, searchKeyword]); // searchKeyword 변경 시에도 재호출
 
+  // [Sticky Logic] 헤더 높이만큼 아래에서 시작했다가, 스크롤 시 위로 붙음
+  const HEADER_HEIGHT = 160; // Adjusted to 160px per user request
+  const [stickyTop, setStickyTop] = useState(HEADER_HEIGHT);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (isMobile) return; // 모바일에서는 스크롤 계산 불필요
+
+    const handleScroll = () => {
+      const newTop = Math.max(0, HEADER_HEIGHT - window.scrollY);
+      setStickyTop(newTop);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    handleScroll();
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isMobile]);
+
   return (
     <>
       {/* Mobile Backdrop */}
@@ -76,7 +103,13 @@ export default function RightSideBar({ isOpen, onClose, searchKeyword, clusterId
         onClick={onClose}
       />
 
-      <aside className={`right-sidebar ${isOpen ? 'open' : ''}`}>
+      <aside
+        className={`right-sidebar ${isOpen ? 'open' : ''}`}
+        style={!isMobile ? {
+          top: stickyTop,
+          height: `calc(100vh - ${stickyTop}px)`
+        } : {}}
+      >
         <div className="sidebar-header">
           <div className="header-text">
             <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>

@@ -37,6 +37,10 @@ function ArticlePage() {
   // [추가] 비교분석 섹션 더보기 상태
   const [isExpanded, setIsExpanded] = useState(false);
 
+  // 좋아요 관련 상태
+  const [likeCount, setLikeCount] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+
   // [추가] 근거 자료(Evidence) 상태 관리 { [index]: { loading: bool, data: [] } }
   const [evidenceMap, setEvidenceMap] = useState({});
 
@@ -131,6 +135,29 @@ function ArticlePage() {
         const article = ai_news_response.data;
         console.log(article);
         setArticle(article);
+
+        // 좋아요 수 설정
+        setLikeCount(article.like_count || 0);
+
+        // 사용자의 좋아요 상태 확인 (로그인 시)
+        const login_id = localStorage.getItem('login_id');
+        if (login_id) {
+          try {
+            const reactionResponse = await axios.get(
+              `${API_BASE_URL}/users/${login_id}/reactions/${id}`
+            );
+            console.log('좋아요 상태 응답:', reactionResponse.data);
+            const userLiked = reactionResponse.data.value === 1;
+            console.log('사용자 좋아요 상태:', userLiked);
+            setIsLiked(userLiked);
+          } catch (err) {
+            // 반응 없으면 false
+            console.log('좋아요 상태 조회 실패 (반응 없음):', err.message);
+            setIsLiked(false);
+          }
+        } else {
+          console.log('로그인 안됨 - 좋아요 상태 false');
+        }
 
         // 키워드 가져오기
         const filteredKeywords = JSON.parse(article.keywords).filter(
@@ -264,7 +291,17 @@ function ArticlePage() {
                 </div>
               </div>
 
-              <NewsText contents={article.contents} onSentenceClick={handleSentenceClick} />
+              <NewsText
+                contents={article.contents}
+                onSentenceClick={handleSentenceClick}
+                articleId={id}
+                likeCount={likeCount}
+                isLiked={isLiked}
+                onLikeUpdate={(newCount, newIsLiked) => {
+                  setLikeCount(newCount);
+                  setIsLiked(newIsLiked);
+                }}
+              />
 
               <div className="wordcloud-section" style={{ marginTop: '60px', padding: '20px', backgroundColor: '#f9f9f9', borderRadius: '12px' }}>
                 <h3 className="section-title" style={{ textAlign: 'center', marginBottom: '30px' }}>기사 핵심 키워드</h3>
@@ -272,6 +309,9 @@ function ArticlePage() {
                   <WordCloudComponent keywords={keywords} width={400} height={400} />
                 </div>
               </div>
+
+              {/* [Restored] Sources Section */}
+              <Sources clusterId={article.cluster_id} />
             </div>
 
             {/* No sidebar inside here */}

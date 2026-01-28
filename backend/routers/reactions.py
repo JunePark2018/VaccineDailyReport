@@ -52,11 +52,19 @@ def add_news_reaction(
             db.add(reaction)
             status_msg = "added"
 
-        db.commit()
+        # 반응 변경사항을 flush하여 DB에 반영 (commit 전)
+        db.flush()
 
         # 업데이트된 like/dislike 개수 계산
         likes = db.query(NewsReaction).filter(NewsReaction.news_id == news_id, NewsReaction.value == 1).count()
         dislikes = db.query(NewsReaction).filter(NewsReaction.news_id == news_id, NewsReaction.value == -1).count()
+
+        # AiGeneratedNews 테이블의 캐시 컬럼 업데이트
+        news.like_count = likes
+        news.dislike_count = dislikes
+        
+        # 모든 변경사항을 한 번에 커밋
+        db.commit()
 
     except Exception as e:
         db.rollback()

@@ -35,12 +35,10 @@
   */
   transform: translateX(-200px);
 
-  /* [Refine] Prevent Overlap:
-     If 100vw is narrow, ensure the article body shrinks so it doesn't overlap with the sidebar.
-     Sidebar is 400px. We leave ~40px buffer. 
-     So max available width is 100vw - 440px.
+  /* [Refine] Prevent Overlap & Prevent Expansion:
+     Ensure width shrinks to fit sidebar, BUT never exceeds original 1000px.
   */
-  max-width: calc(100vw - 440px);
+  max-width: min(1000px, calc(100vw - 440px));
 }
 
 /* 대화면 대응: 사이드바가 500px로 커지므로, 이동 거리도 그 절반인 250px로 조정 */
@@ -50,9 +48,9 @@
 
     /* 
        Sidebar 500px. Buffer 50px.
-       Max Width = 100vw - 550px 
+       Max Width = 100vw - 550px, but capped at 1000px.
     */
-    max-width: calc(100vw - 550px);
+    max-width: min(1000px, calc(100vw - 550px));
   }
 }
 
