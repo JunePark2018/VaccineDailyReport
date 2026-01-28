@@ -449,33 +449,35 @@ def update_user_subscriptions(
 
     # 2. Keywords
     if new_keywords is not None:
-        # 기존 키워드 구독 날리기 (delete-orphan cascade 동작 기대)
-        # user.keyword_subscriptions is a relationship list.
-        # Clearing it should trigger deletion if cascade="all, delete-orphan" is set.
-        # User defined: keyword_subscriptions = relationship(..., cascade="all, delete-orphan", ...)
-        user.keyword_subscriptions.clear()
-
-        for k in new_keywords:
-            normalized_kw = normalize_keyword(k)
-            if not normalized_kw:
-                continue
-
-            # Add new subscription
-            # 주의: (user_id, keyword) PK이므로 중복 없는지 체크 필요?
-            # clear() 했으므로 중복은 입력 리스트 내 중복만 체크하면 됨.
-
-            # We can't easily check against `user.keyword_subscriptions` because it's pending flush/clear.
-            # actually `clear()` removes them from session.
-            pass
-
-        # Deduplicate and add
-        unique_kws = set()
+        # Normalize new keywords
+        normalized_new = set()
         for k in new_keywords:
             n = normalize_keyword(k)
             if n:
-                unique_kws.add(n)
+                normalized_new.add(n)
 
-        for kw in unique_kws:
+        # Get existing keywords
+        # user.keyword_subscriptions is a list of UserKeywordSubscription objects
+        existing_map = {ks.keyword: ks for ks in user.keyword_subscriptions}
+        existing_keys = set(existing_map.keys())
+
+        # Determine what to remove and what to add
+        to_remove = existing_keys - normalized_new
+        to_add = normalized_new - existing_keys
+
+        # Remove
+        if to_remove:
+            # We can modify the relationship list directly
+            # Or delete via DB query if we want to be explicit, but manipulating the list is more ORM-idiomatic
+            # However, modifying the list while iterating is dangerous.
+            # Let's rebuild the list or use individual removes.
+            # Safe way: keep only those NOT in to_remove
+            user.keyword_subscriptions = [
+                ks for ks in user.keyword_subscriptions if ks.keyword not in to_remove
+            ]
+        
+        # Add
+        for kw in to_add:
             user.keyword_subscriptions.append(UserKeywordSubscription(keyword=kw))
 
     db.flush()

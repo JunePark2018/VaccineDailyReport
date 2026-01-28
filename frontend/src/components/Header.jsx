@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import axios from 'axios';
 import './Header.css';
 import { categories } from './categoryIcon/categoryData';
 import sampleArticles from '../sample_/sampleArticle.json';
@@ -22,12 +23,35 @@ const Header = ({
 
   const [currentArticleIndex, setCurrentArticleIndex] = useState(0);
 
+  const [articles, setArticles] = useState([]);
+
+  useEffect(() => {
+    // 1. AI 뉴스 가져오기
+    const fetchNews = async () => {
+      try {
+        const res = await axios.get('http://localhost:8000/generated-news?limit=5');
+        if (res.data && res.data.length > 0) {
+          setArticles(res.data);
+        } else {
+          // Fallback if no news
+          setArticles(sampleArticles);
+        }
+      } catch (err) {
+        console.error("AI 뉴스 로딩 실패, 샘플 데이터 사용", err);
+        setArticles(sampleArticles);
+      }
+    };
+    fetchNews();
+  }, []);
+
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentArticleIndex((prevIndex) => (prevIndex + 1) % sampleArticles.length);
-    }, 2300);
+      if (articles.length > 0) {
+        setCurrentArticleIndex((prevIndex) => (prevIndex + 1) % articles.length);
+      }
+    }, 3000); // 3초 간격
     return () => clearInterval(timer);
-  }, []);
+  }, [articles]);
 
   return (
     <div className={"Header-Container " + className}>
@@ -39,7 +63,7 @@ const Header = ({
               onClick={() => nav('/article')}
               style={{ cursor: 'pointer' }}
             >
-              {sampleArticles[currentArticleIndex].title}
+              {articles.length > 0 ? (articles[currentArticleIndex]?.title || "로딩 중...") : "최신 AI 뉴스 로딩 중..."}
             </span>
             <Weather />
           </div>
