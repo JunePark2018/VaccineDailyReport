@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 import './LikeButton.css';
 
-const LikeButton = ({ initialLiked = false, initialCount = 0, onToggle }) => {
+const LikeButton = ({ articleId, initialLiked = false, initialCount = 0, onLikeUpdate }) => {
     const [isLiked, setIsLiked] = useState(initialLiked);
     const [likeCount, setLikeCount] = useState(initialCount);
 
@@ -10,6 +11,12 @@ const LikeButton = ({ initialLiked = false, initialCount = 0, onToggle }) => {
 
     // 이전 값을 추적하기 위한 ref
     const prevCountRef = useRef(initialCount);
+
+    // props가 변경되면 state 업데이트
+    useEffect(() => {
+        setIsLiked(initialLiked);
+        setLikeCount(initialCount);
+    }, [initialLiked, initialCount]);
 
     useEffect(() => {
         // 숫자가 변할 때 방향 결정
@@ -22,6 +29,14 @@ const LikeButton = ({ initialLiked = false, initialCount = 0, onToggle }) => {
     }, [likeCount]);
 
     const handleClick = async () => {
+        const login_id = localStorage.getItem('login_id');
+
+        // 로그인 확인
+        if (!login_id) {
+            alert('로그인이 필요합니다.');
+            return;
+        }
+
         const prevLiked = isLiked;
         const prevCount = likeCount;
         const nextLiked = !prevLiked;
@@ -31,11 +46,35 @@ const LikeButton = ({ initialLiked = false, initialCount = 0, onToggle }) => {
         setLikeCount(nextLiked ? prevCount + 1 : prevCount - 1);
 
         try {
-            if (onToggle) await onToggle(nextLiked);
+            // 2. 백엔드 API 호출
+            const response = await axios.post(
+                `http://localhost:8000/news/${articleId}/reaction`,
+                null,
+                {
+                    params: {
+                        value: 1, // 1 = 좋아요
+                        login_id: login_id
+                    }
+                }
+            );
+
+            // 3. 서버 응답으로 실제 좋아요 수 동기화
+            const actualLikeCount = response.data.likes;
+            const actualIsLiked = response.data.status !== 'removed';
+
+            setLikeCount(actualLikeCount);
+            setIsLiked(actualIsLiked);
+
+            // 4. 부모 컴포넌트에 업데이트 알림
+            if (onLikeUpdate) {
+                onLikeUpdate(actualLikeCount, actualIsLiked);
+            }
         } catch (error) {
-            console.error(error);
+            console.error('좋아요 처리 실패:', error);
+            // 실패 시 롤백
             setIsLiked(prevLiked);
             setLikeCount(prevCount);
+            alert('좋아요 처리에 실패했습니다.');
         }
     };
 

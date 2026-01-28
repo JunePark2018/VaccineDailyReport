@@ -12,7 +12,13 @@ SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./sql.db")
 
 # 데이터베이스 엔진 생성
 if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
-    engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+    engine = create_engine(
+        SQLALCHEMY_DATABASE_URL, 
+        connect_args={
+            "check_same_thread": False,
+            "timeout": 30  # 30초 타임아웃 (기본값은 5초)
+        }
+    )
 
     # SQLite 전용 PRAGMA 설정
     @event.listens_for(Engine, "connect")

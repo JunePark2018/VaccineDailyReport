@@ -26,6 +26,10 @@ function ArticlePage() {
 
   const [imgURL, setImgURL] = useState("");
 
+  // 좋아요 관련 상태
+  const [likeCount, setLikeCount] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+
   // [수정 1] 사이드바 열림 상태 + '어떤 문장'이 선택되었는지 저장하는 상태 추가
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [selectedSentence, setSelectedSentence] = useState(null);
@@ -79,6 +83,23 @@ function ArticlePage() {
         const article = ai_news_response.data;
         console.log(article);
         setArticle(article);
+
+        // 좋아요 수 설정
+        setLikeCount(article.like_count || 0);
+
+        // 사용자의 좋아요 상태 확인 (로그인 시)
+        const login_id = localStorage.getItem('login_id');
+        if (login_id) {
+          try {
+            const reactionResponse = await axios.get(
+              `http://localhost:8000/users/${login_id}/reactions/${id}`
+            );
+            setIsLiked(reactionResponse.data.value === 1);
+          } catch (err) {
+            // 반응 없으면 false
+            setIsLiked(false);
+          }
+        }
 
         // 키워드 가져오기
         const filteredKeywords = JSON.parse(article.keywords).filter(
@@ -174,6 +195,13 @@ function ArticlePage() {
                 title={article.title}
                 contents={article.contents}
                 onSentenceClick={handleSentenceClick}
+                articleId={id}
+                likeCount={likeCount}
+                isLiked={isLiked}
+                onLikeUpdate={(newCount, newIsLiked) => {
+                  setLikeCount(newCount);
+                  setIsLiked(newIsLiked);
+                }}
               />
               <div className="article-comparer">
                 <h3 className="section-title">비교분석</h3>
