@@ -30,6 +30,9 @@ function ArticlePage() {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [selectedSentence, setSelectedSentence] = useState(null);
 
+  // [수정 3] 언론사 이름 목록 상태 추가 (비교분석 하이라이팅용)
+  const [mediaNames, setMediaNames] = useState([]);
+
   // [수정 2] 문장 클릭 시 실행될 함수 (NewsText에서 호출됨)
   const handleSentenceClick = (sentence) => {
     console.log("부모(ArticlePage)가 받은 문장:", sentence);
@@ -40,6 +43,29 @@ function ArticlePage() {
   // 사이드바 닫기 함수
   const closeSidebar = () => {
     setSidebarOpen(false);
+  };
+
+  // [추가] 텍스트에서 언론사 이름을 찾아 하이라이트하는 함수
+  const highlightMediaText = (text) => {
+    if (!text || mediaNames.length === 0) return text;
+
+    // 언론사 이름들을 이용해 정규식 생성 (긴 이름부터 매칭되도록 정렬)
+    const sortedNames = [...mediaNames].sort((a, b) => b.length - a.length);
+    const regex = new RegExp(`(${sortedNames.join('|')})`, 'g');
+
+    // split하여 매칭된 부분만 스타일링
+    const parts = text.split(regex);
+
+    return parts.map((part, index) => {
+      if (mediaNames.includes(part)) {
+        return (
+          <span key={index} style={{ color: '#d32f2f', fontWeight: 'bold' }}>
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
   };
 
   useEffect(() => {
@@ -60,9 +86,13 @@ function ArticlePage() {
         );
         setKeywords(filteredKeywords);
 
-        // 사용된 기사들 가져와서 랜덤하게 사진 고르기
+        // 사용된 기사들 가져와서 랜덤하게 사진 고르기 + [추가] 언론사 이름 추출
         const img_url_response = await axios.get(`http://localhost:8000/generated-news/clusters/${article.cluster_id}/news`);
         const newsList = img_url_response.data;
+
+        // 언론사 이름 추출 (중복 제거)
+        const companies = [...new Set(newsList.map(n => n.company_name).filter(Boolean))];
+        setMediaNames(companies);
 
         // 1모든 기사에서 img_urls만 모아서 평탄화
         const allImgUrls = newsList
@@ -149,7 +179,8 @@ function ArticlePage() {
                 <h3 className="section-title">비교분석</h3>
                 <ul className="comparison-list">
                   {article?.analysis_result?.media_comparison_bullets?.map((text, idx) => (
-                    <li key={idx} className="comparison-item">{text.replace(/^- /, '')}</li>
+                    // [수정] 언론사 하이라이팅 적용
+                    <li key={idx} className="comparison-item">{highlightMediaText(text.replace(/^- /, ''))}</li>
                   ))}
                 </ul>
               </div>

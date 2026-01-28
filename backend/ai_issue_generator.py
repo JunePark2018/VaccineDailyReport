@@ -36,85 +36,127 @@ def generate_balanced_article(model_name: str, cluster_topic: str, articles: lis
         context_parts.append(f"[{idx}] 언론사: {company} | 제목: {title}\n    내용: {contents}\n")
     context_text = "\n".join(context_parts)
 
-    # 2) 시스템 프롬프트 (역할 부여)
-    system_role = (
-        "당신은 중복 없이 간결하고 명확한 문장을 구사하며, 팩트 검증에 철저한 '수석 편집장'입니다. "
-        "여러 기사를 읽고, 독자가 한 번에 이해할 수 있도록 내용을 재구성하십시오." \
-        "당신의 응답은 반드시 프로그래밍적으로 파싱 가능한 **정확한 JSON 형식**이어야 합니다."
-    )
-
-    # 3) 유저 프롬프트 (팩트 준수 원칙 추가)
-    user_prompt = f"""
-주제: '{cluster_topic}'
-
-아래 제공된 기사 소스들을 바탕으로 **하나의 완결된 스트레이트 뉴스**를 작성하세요.
-추가로 이 사건에 대한 해외 외신 반응을 추적하기 위한 영문 검색어도 추출하십시오.
-
-[수집된 기사 소스]
+    # ------------------------------------------------------------------
+    # [Agent 1] Writer Agent (초안 작성)
+    # ------------------------------------------------------------------
+    def generate_draft():
+        system_role = (
+            "당신은 '팩트 중심'의 스트레이트 뉴스를 작성하는 **수석 기자**입니다. "
+            "주어진 기사 소스들의 팩트만을 조합하여, 가장 객관적이고 건조한 문체로 기사를 작성하십시오."
+        )
+        user_prompt = f"""
+주제: {cluster_topic}
+소스로 사용할 기사들:
 {context_text}
 
-[🚨 작성 절대 원칙 - 어길 시 해고]
-1. **팩트 준수 (Fact-Only)**: 제공된 기사 소스에 없는 내용은 절대 창작하거나 추측하여 쓰지 마십시오. 오직 주어진 텍스트 데이터에 기반해서만 서술해야 합니다. (없는 내용은 아예 언급하지 말 것)
-2. **중복 금지**: 앞에서 언급한 문장이나 단락을 절대 다시 쓰지 마십시오. 똑같은 내용을 단어만 바꿔서 반복하는 것도 금지합니다.
-3. **객관성 유지**: 감정적인 형용사나 과장된 표현을 배제하고, 건조하고 전문적인 보도체를 유지하십시오.
-4. **논리적 흐름**: [서론 -> 본론 -> 결론]의 흐름이 끊기지 않고 자연스럽게 이어지도록 하십시오.
-5. **멀티미디어 언급 삭제 (중요)**: 원본 기사에 포함된 **"위 사진과 같이", "영상에서 보듯", "아래 표를 보면", "(사진=OOO)"** 등 이미지나 동영상을 지칭하는 문구는 무조건 삭제하거나, 
-     해당 문구가 없어도 문장이 자연스럽게 이어지도록 재구성하십시오. 오직 텍스트로만 내용을 전달해야 합니다.
+[지침]
+1. 모든 기사의 내용을 종합하되, 중복을 피하십시오.
+2. 특정 언론사의 주관적 해석이나 감정적 표현은 제외하고 팩트 위주로 서술하십시오.
+3. 기사 구조: [헤드라인] -> [리드] -> [본문] -> [마무리]
 
-[기사 구조 가이드라인]
-1. **헤드라인**: 전체를 아우르는 30자 이내의 제목 (단 1개만 작성)
-2. **리드(서두)**: 첫 문단만 읽어도 핵심(누가, 무엇을, 왜)을 알 수 있게 요약하십시오.
-3. **본문**:
-   - 반복되는 팩트는 하나로 합치십시오.
-   - 시간 순서나 인과 관계(원인->결과)에 따라 내용을 배치하십시오.
-   - "A에 따르면", "B에 따르면" 같은 출처 나열을 피하고 사건 중심으로 서술하십시오.
-4. **마무리**: 향후 전망이나 업계 반응으로 끝맺음하십시오.
-5. 추가로 영문 검색어 추출: 이 사건이 해외 언론(Google News)에서 보도될 때 사용될 법한 핵심 영문 키워드 1개를 생성하십시오. (예: 'Samsung earnings shock', 'South Korea ferry incident') 
-
-[출력 형식 가이드 - 반드시 아래 JSON 구조를 지킬 것]
+응답은 반드시 아래 JSON 형식으로만 출력하십시오:
 {{
-    "title": "헤드라인 제목",
-    "contents": "작성된 전체 기사 본문 내용 (마크다운 형식 권장)",
-    "search_keyword": "추출된 영문 검색어"
+    "title": "헤드라인",
+    "contents": "기사 본문"
 }}
-
-위 가이드라인을 철저히 지켜 기사를 작성해 주세요.
-""".strip()
-
-    # 4) AI에게 요청 (ask를 여기로 흡수)
-    try:
-        response = openai_client.chat.completions.create(
+"""
+        return openai_client.chat.completions.create(
             model=model_name,
-            messages=[
-                {"role": "system", "content": system_role},
-                {"role": "user", "content": user_prompt},
-            ],
-            temperature=0.2,
-            max_tokens=4000,
-            top_p=0.9,
-            frequency_penalty=0.5,
-            response_format={"type": "json_object"}
+            messages=[{"role": "system", "content": system_role}, {"role": "user", "content": user_prompt}],
+            response_format={"type": "json_object"},
+            temperature=0.3,
         )
-        raw_response = response.choices[0].message.content or "{}"
-        try:
-            result = json.loads(raw_response)
-            # 필수 키가 없는 경우 대비
-            if "contents" not in result: result["contents"] = str(raw_response)
-            if "search_keyword" not in result: result["search_keyword"] = ""
-            if "title" not in result: result["title"] = f"{cluster_topic} 이슈"
-            
-            return result
-            
-        except json.JSONDecodeError:
-            print(f"❌ JSON 파싱 실패. Raw: {raw_response[:100]}...")
-            # 마크다운 코드블록 제거 후 재시도
-            clean_json = raw_response.replace("```json", "").replace("```", "").strip()
-            return json.loads(clean_json)
+
+    # ------------------------------------------------------------------
+    # [Agent 2] Critic Agent (비평 및 검증)
+    # ------------------------------------------------------------------
+    def generate_critique(draft_title, draft_contents):
+        system_role = (
+            "당신은 까다롭고 날카로운 **뉴스 데스크 에디터(비평가)**입니다. "
+            "작성된 초안을 검토하여 팩트 오류, 편향성, 중복, 문장 호응 등을 지적하십시오."
+        )
+        user_prompt = f"""
+[검토할 초안]
+제목: {draft_title}
+내용: {draft_contents}
+
+[원본 소스 데이터]
+{context_text}
+
+[평가 기준]
+1. **팩트 검증**: 원본 소스에 없는 내용이 포함되었는가?
+2. **중립성**: 특정 입장에 치우치진 않았는가?
+3. **가독성**: 문장이 매끄럽고 중복이 없는가?
+4. **구조**: 기사로서 갖춰야 할 형식(리드, 본문 등)이 적절한가?
+
+위 기준에 따라 **구체적인 수정 지시사항**을 3~5가지 항목으로 정리해 주세요.
+잘못된 점이 없다면 "수정 사항 없음"이라고 하십시오.
+"""
+        return openai_client.chat.completions.create(
+            model=model_name,
+            messages=[{"role": "system", "content": system_role}, {"role": "user", "content": user_prompt}],
+            temperature=0.1,
+        )
+
+    # ------------------------------------------------------------------
+    # [Agent 3] Refiner Agent (최종 수정)
+    # ------------------------------------------------------------------
+    def generate_final(draft_title, draft_contents, critique):
+        system_role = (
+            "당신은 **최종 편집장**입니다. "
+            "비평가(Critic)의 지적을 수용하여 기사를 완성도 높게 수정하십시오."
+            "또한 글로벌 독자를 위해 이 이슈의 핵심 영문 검색어(keyword)를 하나 추출하십시오."
+        )
+        user_prompt = f"""
+[초안]
+제목: {draft_title}
+내용: {draft_contents}
+
+[비평가의 지적]
+{critique}
+
+위 지적 사항을 반영하여 기사를 **최종 수정**하십시오.
+특히 "영상에서 보듯", "사진과 같이" 같은 멀티미디어 참조 문구는 모두 삭제하십시오.
+
+[출력 형식 - JSON]
+{{
+    "title": "최종 수정된 제목",
+    "contents": "최종 수정된 본문",
+    "search_keyword": "영문 검색어 (예: Samsung earnings shock)"
+}}
+"""
+        return openai_client.chat.completions.create(
+            model=model_name,
+            messages=[{"role": "system", "content": system_role}, {"role": "user", "content": user_prompt}],
+            response_format={"type": "json_object"},
+            temperature=0.2,
+        )
+
+    # ------------------------------------------------------------------
+    # [Orchestration] 실행 파이프라인
+    # ------------------------------------------------------------------
+    try:
+        # 1. Draft
+        print("🤖 [Writer] 초안 작성 중...")
+        draft_resp = generate_draft()
+        draft_data = json.loads(draft_resp.choices[0].message.content)
+
+        # 2. Critique
+        print("🧐 [Critic] 기사 비평 및 검증 중...")
+        critic_resp = generate_critique(draft_data.get("title"), draft_data.get("contents"))
+        feedback = critic_resp.choices[0].message.content
+        print(f"📝 [Critic Feedback]: {feedback}")
+
+        # 3. Refine
+        print("✍️ [Refiner] 최종 기사 편집 중...")
+        final_resp = generate_final(draft_data.get("title"), draft_data.get("contents"), feedback)
+        final_data = json.loads(final_resp.choices[0].message.content)
+
+        return final_data
 
     except Exception as e:
         print(f"⚠️ 에러 발생: {str(e)}")
-        return {
-            "title": "생성 실패",
-            "contents": f"AI 처리 중 오류가 발생했습니다: {str(e)}",
-            "search_keyword": ""
-        }
+        import traceback
+
+        traceback.print_exc()
+        return {"title": "생성 실패", "contents": f"AI 처리 중 오류가 발생했습니다: {str(e)}", "search_keyword": ""}

@@ -156,26 +156,35 @@ async def call_llm_json(messages: List[Dict[str, str]], temperature: float = 0.2
 # ======================================================
 # Step 2) 개별 분석 (Map Phase) - Async + Semaphore
 # ======================================================
+# ======================================================
+# Step 2) 개별 분석 (Map Phase) - Async + Semaphore
+# ======================================================
 def build_company_system_prompt() -> str:
     return """
-너는 전문 뉴스 편집자(Editor)이다.
+너는 전문 뉴스 편집자(Editor)이자 **데이터 분석가**이다.
 제공된 여러 개의 기사들은 모두 **동일한 언론사**에서 특정 이슈에 대해 보도한 것들이다.
 
-너의 임무는 이 기사들의 내용을 모두 종합하여, **중복을 제거하고 하나의 완벽한 종합 기사(Comprehensive Article)**로 재작성하는 것이다.
+너의 임무는 이 기사들의 내용을 종합하여,
+1. **종합 기사(Comprehensive Article)**를 작성하고,
+2. **지식 그래프(Graph Construction)**를 위한 [핵심 개체(Entity) - 입장(Stance)] 데이터를 추출하는 것이다.
 
 [작성 규칙]
-1. **관점 유지**: 원본 기사들의 논조, 프레임, 주요 주장, 단어 선택 등 **해당 언론사의 고유한 색채(Tone & Manner)**를 그대로 유지해야 한다.
-2. **사실 통합**: 여러 기사에 흩어져 있는 팩트들을 시간순이나 논리적 순서에 맞게 통합하라.
-3. **중복 제거**: 똑같은 내용이 반복되지 않도록 하라.
-4. **언어**: 반드시 **한국어**로 작성하라.
-5. **근거 제한**: 제공된 기사들에 등장하지 않는 사실/수치/인용/고유명사는 절대 추가하지 마라.
-6. **불확실성 표기**: 기사들 간 내용이 엇갈리면 단정하지 말고 "기사마다 다르게 전한다"처럼 표기하라.
+1. **관점 유지**: 해당 언론사의 고유한 색채(Tone & Manner)를 유지하라.
+2. **사실 통합**: 여러 기사의 팩트를 시간순/논리순으로 통합하라.
+3. **GraphRAG 추출**: 기사에서 다루는 핵심 인물, 조직, 정책(Entity)에 대해 이 언론사가 긍정적인지 비판적인지 분석하라.
 
 [출력 JSON 형식]
 {
   "company": "언론사명",
-  "title": "이 모든 기사를 아우르는 대표 제목 (언론사의 논조 반영)",
-  "body": "종합된 기사 본문 (3~5문단 분량, 내용 충실하게)"
+  "title": "대표 제목 (언론사 논조 반영)",
+  "body": "종합된 기사 본문 (3문단 내외)",
+  "graph_entities": [
+    {
+      "name": "대상(인물/조직/정책)",
+      "stance": "긍정/부정/중립/비판/옹호",
+      "description": "이 대상을 어떻게 묘사하는지 한 줄 요약"
+    }
+  ]
 }
 """.strip()
 
@@ -197,10 +206,29 @@ async def analyze_company_perspective(
         ]
 
         data = await call_llm_json(messages, temperature=0.2)
-        # selected ids 넣어두기(추적 가능하게)
+
+        # 보정 로직
         if isinstance(data, dict):
             data["selected_article_ids"] = selected_article_ids
+            # graph_entities가 없으면 빈 리스트 추가
+            if "graph_entities" not in data:
+                data["graph_entities"] = []
+
         return ensure_company_schema(company_name, data)
+
+
+def ensure_company_schema(company_name: str, data: Dict[str, Any]) -> Dict[str, Any]:
+    if not isinstance(data, dict):
+        data = {"error": "non-dict"}
+
+    return {
+        "company": data.get("company") or company_name,
+        "title": data.get("title") or "제목 없음",
+        "body": data.get("body") or "내용 없음",
+        "graph_entities": data.get("graph_entities", []),
+        "error": data.get("error"),
+        "selected_article_ids": data.get("selected_article_ids", []),
+    }
 
 
 async def process_all_companies_async(synthesized_map: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
@@ -226,28 +254,25 @@ async def process_all_companies_async(synthesized_map: Dict[str, Dict[str, Any]]
 # ======================================================
 def build_reduce_system_prompt_ui() -> str:
     return """
-너는 뉴스 비교 분석가다.
-입력은 **각 언론사별로 종합된 '대표 기사(Synthesized Article)'들의 리스트**이다.
+너는 **심층 뉴스 비교 분석가(GraphRAG Analyst)**다.
+입력은 각 언론사별 '종합 기사'와 **'개체-입장(Entity-Stance) 그래프 데이터'**이다.
 
-너의 목표는 이 기사들을 정밀하게 비교 독해하여, **"웹앱 UI에서 바로 렌더링 가능한 최종 JSON"**을 출력하는 것이다.
-UI 요소는 모두 배제하고, 오직 **"언론사별 비교 요약(media_comparison_bullets)"의 품질**에만 집중하라.
+너의 목표는 텍스트와 그래프 데이터를 모두 활용하여, **가장 날카롭고 통찰력 있는 비교 분석**을 수행하는 것이다.
+단순히 "A는 이랬고, B는 저랬다"는 나열이 아니라, **"어떤 대상에 대해 시각이 어떻게 엇갈리는지"**를 포착하라.
 
-[출력 JSON 형식 - 반드시 준수]
+[출력 JSON 형식]
 {
   "media_comparison_bullets": [
-    "- A일보는 ...",
-    "- B일보는 ..."
+    "- [언론사A]는 [대상]에 대해 ...",
+    "- [언론사B]는 [대상]을 ..."
   ]
 }
 
-[핵심 규칙 - media_comparison_bullets 작성법]
-1. **형식 준수**: 반드시 "- [언론사명]은 [특징 서술]" 형태로 작성하라.
-2. **언어**: **모든 텍스트는 한국어로 작성하며, 문장을 반드시 '~니다'로 끝내라.**
-3. **비교 분석(Deep Comparison)**:
-   - 각 언론사가 재구성한 기사의 **헤드라인, 강조하는 팩트, 책임 소재를 묻는 대상, 해결책 제시 방향** 등을 비교하라.
-   - 단순 요약이 아니라, **"다른 언론사와 무엇이 다른지"**를 짚어내는 것이 핵심이다.
-   - 예: "A일보는 '인재'임을 강조하며 정부 책임을 강하게 묻는 반면, B일보는 '불가항력'적 측면 부각하며 시민 의식 개선을 촉구함"
-4. **포괄성**: 입력된 **모든 언론사**에 대해 빠짐없이 한 줄씩 작성하라.
+[작성 규칙]
+1. **Graph 활용**: 입력된 `graph_entities` 정보를 적극 활용하여, 특정 인물이나 정책에 대한 입장 차이를 부각하라.
+2. **표현의 다양성**: 입장 차이를 부각할 때, "반면", "한편", "이와 달리", "대조적으로" 등 다양한 접속사를 활용하거나, 문장을 아예 분리하여 서술하라.
+3. **언어**: 한국어 작성, 어미는 '~니다' 사용.
+4. **포괄성**: 모든 언론사를 한 줄씩 언급.
 """.strip()
 
 
