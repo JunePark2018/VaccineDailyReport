@@ -4,6 +4,7 @@ import Button from "./Button";
 import Header from "./Header";
 import Logo from "./Logo";
 import UserMenu from "./UserMenu";
+import Searchbar from "./Searchbar";
 import "./Login.css";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -78,72 +79,86 @@ const Login = () => {
 
     return (
         <div className="Login">
-            <div className="Login_Logo">
-                <Logo />
-            </div>
-            <div className="Login_main_box">
-                <form className="Login_total" onSubmit={handleLogin}>
-                    <div className="input_containter">
-                        <input
-                            className="id_box"
-                            placeholder="아이디"
-                            name="login_id"
-                            value={loginData.login_id}
-                            onChange={handleChange}
-                            disabled={isLoading}
-                        />
+            <Header
+                leftChild={<Logo />}
+                midChild={null}
+                rightChild={
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
+                        <div style={{ position: 'relative' }}>
+                            <Searchbar className="always-open" />
+                        </div>
+                        <UserMenu />
                     </div>
-                    <div className="input_containter">
-                        <input
-                            className="pw_box"
-                            placeholder="비밀번호"
-                            name="password"
-                            type="password"
-                            value={loginData.password}
-                            onChange={handleChange}
-                            disabled={isLoading}
-                        />
+                }
+                headerTop="on"
+                headerMain="on"
+                headerBottom="off"
+            />
+
+            <div className="Login_container_wrapper">
+                <div className="Login_main_box">
+                    <h2 className="login-title">로그인</h2>
+                    <form className="Login_total" onSubmit={handleLogin}>
+                        <div className="login-input-group">
+                            <div className="input_row top">
+                                <input
+                                    className="id_box"
+                                    placeholder="아이디"
+                                    name="login_id"
+                                    value={loginData.login_id}
+                                    onChange={handleChange}
+                                    disabled={isLoading}
+                                />
+                            </div>
+                            <div className="input_row bottom">
+                                <input
+                                    className="pw_box"
+                                    placeholder="비밀번호"
+                                    name="password"
+                                    type="password"
+                                    value={loginData.password}
+                                    onChange={handleChange}
+                                    disabled={isLoading}
+                                />
+                            </div>
+                        </div>
                         {error && (
                             <p className="error_login">
                                 {error}
                             </p>
                         )}
-                    </div>
-                </form>
-                <div>
-                    {/*로그인 버튼 */}
-                    <div className="button_wrapper">
-                        <div className="button_container">
+
+                        <div className="login-options">
+                            <label className="stay-signed-in">
+                                <input type="checkbox" />
+                                <span className="checkmark"></span>
+                                로그인 상태 유지
+                            </label>
+                        </div>
+
+                        <div className="button_wrapper">
                             <Button
                                 type='submit'
                                 text={isLoading ? '로그인 중...' : '로그인'}
-                                textColor='black'
-                                borderRadius="3px"
-                                color='rgba(186, 214, 205, 1)'
+                                textColor='white'
+                                borderRadius="6px"
+                                color='#333333'
                                 width="100%"
-                                height="55px"
+                                height="50px"
                                 onClick={handleLogin}
                                 disabled={isLoading}
+                                fontWeight="bold"
+                                fontSize="18px"
                             />
                         </div>
-                    </div>
-                    {/* 구분선 */}
-                    <div className="line">
-                        <span className="line_01"></span>
-                        <span className="line_text">또는</span>
-                        <span className="line_01"></span>
-                    </div>
-                    {/*회원가입 버튼 */}
-                    <div className="signup_text">
-                        <Button onClick={() => nav('/CreateAccount')}
-                            text='회원가입'
-                            textColor='black'
-                            borderRadius="3px"
-                            color='rgba(220, 220, 220, 1)'
-                            width="100%"
-                            height="55px"
+                    </form>
 
-                        />
+                    <div className="login-footer-links">
+                        <span>비밀번호 찾기</span>
+                        <span className="divider">|</span>
+                        <span>아이디 찾기</span>
+                        <span className="divider">|</span>
+                        <span onClick={() => nav('/CreateAccount')} style={{ cursor: 'pointer', fontWeight: 'bold' }}>회원가입</span>
                     </div>
                 </div>
             </div>

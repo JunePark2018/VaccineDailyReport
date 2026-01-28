@@ -98,11 +98,11 @@ const PoliticsPage = () => {
         if (!blockArticles || blockArticles.length === 0) return null;
 
         const slideArticles = blockArticles.slice(0, 4); // Top 4 for Slideshow
-        // const gridArticles = blockArticles.slice(4, 6); // Grid Removed
-        const listArticles = blockArticles.slice(4, 12); // Next 8 for List (shifted up)
+        const gridArticles = blockArticles.slice(4, 8); // Next 4 for Grid (4 cols)
+        const listArticles = blockArticles.slice(8, 16); // Next 8 for List (unused but defined for safety)
 
         // Feed Logic
-        const allFeedArticles = blockArticles.slice(13); // 20 items (13 to 32)
+        const allFeedArticles = blockArticles; // Show ALL articles in Feed
         const feedPageSize = 5;
         const totalFeedPages = Math.ceil(allFeedArticles.length / feedPageSize);
         const currentFeedArticles = allFeedArticles.slice((feedPage - 1) * feedPageSize, feedPage * feedPageSize);
@@ -116,6 +116,15 @@ const PoliticsPage = () => {
         }));
 
         const activeSlide = slideData[topFocusIndex] || slideData[0];
+
+        const grid = gridArticles.map((art, i) => ({
+            id: art?.id,
+            title: art?.title || "제목 예시",
+            content: art?.short_text || "내용 예시...",
+            image: art ? (imageMap[art.image] || art.image) : null,
+            // Simple grid item without related links for now, as user requested "layout" primarily. 
+            // If related links are needed, we need more data slices.
+        }));
 
 
 
@@ -193,13 +202,34 @@ const PoliticsPage = () => {
 
 
 
+                <div className="section-divider"></div>
+
+                {/* Grid Section (4 items) */}
+                {grid.length > 0 && (
+                    <section className="bottom-grid-section" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '50px', textAlign: 'left' }}>
+                        {grid.map((news, i) => (
+                            <div key={i} className="grid-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                <div className="grid-image" style={{ width: '100%', aspectRatio: '1.5/1', border: '1px solid #eee', position: 'relative', overflow: 'hidden' }}>
+                                    <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
+                                </div>
+                                <div className="grid-info">
+                                    <h3 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 5px 0', lineHeight: '1.4' }}>{news.title}</h3>
+                                    <p style={{ fontSize: '13px', color: '#666', margin: 0, lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                        {news.content}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </section>
+                )}
+
                 {/* Feed Section (Pagination) */}
                 {feed.length > 0 && (
                     <>
                         <div className="section-divider"></div>
                         <section className="bottom-feed-section" style={{ display: 'flex', flexDirection: 'column', gap: '30px', textAlign: 'left', marginTop: '30px', padding: '0 120px' }}>
                             {feed.map((news) => (
-                                <div key={news.id} className="feed-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px' }}>
+                                <div key={news.id} className="feed-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px', gap: '20px' }}>
 
                                     {/* Left Container: Like + Text */}
                                     <div style={{ display: 'flex', flex: 1, paddingRight: '0px' }}>
@@ -233,7 +263,7 @@ const PoliticsPage = () => {
                                     </div>
 
                                     {/* Image Right (Reduced Height: aspect-ratio 1.8/1) */}
-                                    <div className="feed-image" style={{ width: '312px', aspectRatio: '1.8/1', flexShrink: 0, overflow: 'hidden', borderRadius: '4px', marginLeft: '-20px' }}>
+                                    <div className="feed-image" style={{ width: '312px', aspectRatio: '1.8/1', flexShrink: 0, overflow: 'hidden', borderRadius: '4px' }}>
                                         <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                                     </div>
                                 </div>
@@ -289,12 +319,12 @@ const PoliticsPage = () => {
     return (
         <div className="category-page">
             <Header
-                leftChild={<div />}
-                midChild={<Logo />}
+                leftChild={<Logo />}
+                midChild={null}
                 rightChild={
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
                         <div style={{ position: 'relative' }}>
-                            <Searchbar />
+                            <Searchbar className="always-open" />
                         </div>
                         <UserMenu />
                     </div>

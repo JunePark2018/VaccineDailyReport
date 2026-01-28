@@ -49,6 +49,7 @@ const WorldPage = () => {
                     while (expanded.length < 31) {
                         expanded = [...expanded, ...filtered];
                     }
+                    // Shuffle and slice to exactly 31
                     const shuffled = expanded.sort(() => Math.random() - 0.5).slice(0, 31);
                     setDisplayArticles(shuffled);
 
@@ -98,7 +99,7 @@ const WorldPage = () => {
         const listArticles = blockArticles.slice(3, 11);
 
         // Feed Logic
-        const allFeedArticles = blockArticles.slice(11);
+        const allFeedArticles = blockArticles; // Show ALL articles in Feed
         const feedPageSize = 5;
         const totalFeedPages = Math.ceil(allFeedArticles.length / feedPageSize);
         const currentFeedArticles = allFeedArticles.slice((feedPage - 1) * feedPageSize, feedPage * feedPageSize);
@@ -179,9 +180,9 @@ const WorldPage = () => {
                 {list.length > 0 && (
                     <>
                         <div className="section-divider"></div>
-                        <section className="bottom-list-section" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', columnGap: '40px', rowGap: '30px', textAlign: 'left' }}>
-                            {list.map((news) => (
-                                <div key={news.id} className="list-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
+                        <section className="bottom-list-section" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', columnGap: '20px', rowGap: '30px', textAlign: 'left' }}>
+                            {list.slice(0, 8).map((news, i) => (
+                                <div key={i} className="list-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
                                     <div className="list-image" style={{ width: '120px', height: '76px', flexShrink: 0, border: '1px solid #eee', overflow: 'hidden' }}>
                                         <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                                     </div>
@@ -203,7 +204,7 @@ const WorldPage = () => {
                         <div className="section-divider"></div>
                         <section className="bottom-feed-section" style={{ display: 'flex', flexDirection: 'column', gap: '30px', textAlign: 'left', marginTop: '30px', padding: '0 120px' }}>
                             {feed.map((news) => (
-                                <div key={news.id} className="feed-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px' }}>
+                                <div key={news.id} className="feed-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px', gap: '20px' }}>
 
                                     {/* Left Container: Like + Text */}
                                     <div style={{ display: 'flex', flex: 1, paddingRight: '0px' }}>
@@ -237,7 +238,7 @@ const WorldPage = () => {
                                     </div>
 
                                     {/* Image Right (Reduced Height: aspect-ratio 1.8/1) */}
-                                    <div className="feed-image" style={{ width: '312px', aspectRatio: '1.8/1', flexShrink: 0, overflow: 'hidden', borderRadius: '4px', marginLeft: '-20px' }}>
+                                    <div className="feed-image" style={{ width: '312px', aspectRatio: '1.8/1', flexShrink: 0, overflow: 'hidden', borderRadius: '4px' }}>
                                         <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                                     </div>
                                 </div>
@@ -293,12 +294,12 @@ const WorldPage = () => {
     return (
         <div className="category-page">
             <Header
-                leftChild={<div />}
-                midChild={<Logo />}
+                leftChild={<Logo />}
+                midChild={null}
                 rightChild={
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
                         <div style={{ position: 'relative' }}>
-                            <Searchbar />
+                            <Searchbar className="always-open" />
                         </div>
                         <UserMenu />
                     </div>
