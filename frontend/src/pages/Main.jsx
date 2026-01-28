@@ -12,7 +12,6 @@ import './Main.css';
 
 import axios from 'axios'; // axios imported
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 export const Main = () => {
   const { name } = useParams();
   const navigate = useNavigate();
@@ -40,7 +39,7 @@ export const Main = () => {
     const loadData = async () => {
       try {
         // 1. Fetch AI Generated News (Limit 50 for main page coverage)
-        const response = await axios.get(`${API_BASE_URL}/generated-news?limit=100`); // Fetch enough to cover all sections
+        const response = await axios.get('http://localhost:8000/generated-news?limit=100'); // Fetch enough to cover all sections
         const realArticles = response.data;
 
         // 2. Map Backend Data to Frontend Structure
@@ -65,7 +64,7 @@ export const Main = () => {
         const loginId = localStorage.getItem('login_id');
         if (loginId) {
           try {
-            const userRes = await axios.get(`${API_BASE_URL}/users/${loginId}/dashboard`);
+            const userRes = await axios.get(`http://localhost:8000/users/${loginId}/dashboard`);
             const subKeywords = userRes.data.subscribed_keywords || [];
 
             if (subKeywords.length > 0) {
@@ -107,7 +106,7 @@ export const Main = () => {
         // Use Promise.allSettled to fetch images/details in parallel
         await Promise.allSettled(filtered.map(async (art) => {
           try {
-            const imgRes = await axios.get(`${API_BASE_URL}/generated-news/clusters/${art.cluster_id}/news`);
+            const imgRes = await axios.get(`http://localhost:8000/generated-news/clusters/${art.cluster_id}/news`);
             const newsList = imgRes.data;
 
             // Store detailed news list for highlights
@@ -145,6 +144,25 @@ export const Main = () => {
   // Slideshow State
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [articleDetailsMap, setArticleDetailsMap] = useState({});
+  const [touchStart, setTouchStart] = useState(0);
+
+  const handleTouchStart = (e) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = (e) => {
+    const touchEnd = e.changedTouches[0].clientX;
+    const distance = touchStart - touchEnd;
+
+    // Swipe threshold (e.g., 50px)
+    if (distance > 50) {
+      // Swipe Left -> Next
+      setCurrentSlideIndex(prev => (prev + 1) % 3);
+    } else if (distance < -50) {
+      // Swipe Right -> Prev
+      setCurrentSlideIndex(prev => (prev - 1 + 3) % 3);
+    }
+  };
 
   // Auto-rotate slideshow
   useEffect(() => {
@@ -247,13 +265,56 @@ export const Main = () => {
           </div>
 
           {/* Center Column (Image) - Synced with Active Item */}
-          <div className="main-image-column" style={{ flex: 1.6, display: 'flex', flexDirection: 'column' }}>
-            <div className="article-image-center" onClick={() => activeArticle && navigate(`/article/${activeArticle.ai_generated_news_id}`)} style={{ cursor: 'pointer', width: '100%', aspectRatio: '1.5/1' }}>
+          <div className="main-image-column" style={{ flex: 1.6, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+            <div
+              className="article-image-center"
+              onClick={() => activeArticle && navigate(`/article/${activeArticle.ai_generated_news_id}`)}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+              style={{ cursor: 'pointer', width: '100%', aspectRatio: '1.5/1' }}
+            >
               <img src={activeImage} alt="Main" onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
+
+              {/* Mobile Carousel Arrows */}
+              <button
+                className="carousel-arrow prev-arrow"
+                onClick={(e) => { e.stopPropagation(); setCurrentSlideIndex(prev => (prev - 1 + 3) % 3); }}
+              >
+                &#10094;
+              </button>
+              <button
+                className="carousel-arrow next-arrow"
+                onClick={(e) => { e.stopPropagation(); setCurrentSlideIndex(prev => (prev + 1) % 3); }}
+              >
+                &#10095;
+              </button>
+
               <div className="main-image-text">
                 {/* Title Overlay matches Active Item */}
                 <h3>{activeArticle?.title}</h3>
+                <p className="mobile-carousel-desc">{activeArticle?.short_text}</p>
               </div>
+            </div>
+
+            {/* Mobile Carousel Dots */}
+            <div className="carousel-dots-mobile">
+              {[0, 1, 2].map(dotIdx => (
+                <span
+                  key={dotIdx}
+                  className={`carousel-dot ${dotIdx === currentSlideIndex ? 'active' : ''}`}
+                  onClick={() => setCurrentSlideIndex(dotIdx)}
+                />
+              ))}
+            </div>
+
+            {/* Mobile-Only Highlights Section (Directly below dots) */}
+            <div className="carousel-highlights-mobile">
+              {highlights.slice(0, 2).map((item, midx) => (
+                <div key={midx} className="highlight-item-mobile">
+                  <span className="hl-keyword">{item.keyword}</span>
+                  <span className="hl-content">{item.content}</span>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -363,8 +424,11 @@ export const Main = () => {
                 <img src={imageMap[articles[0].image] || articles[0].image} alt={articles[0].title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
               </div>
               <div className="cat-box-info">
-                <h3 className="cat-box-title" onClick={() => navigate(`/article/${articles[0].id}`)} style={{ fontSize: '15px', cursor: 'pointer' }}>{articles[0].title}</h3>
-                <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>{articles[0].short_text}</p>
+                {/* Wrapped Title and Desc in a group for isolated hover */}
+                <div className="cat-box-text-group" onClick={() => navigate(`/article/${articles[0].id}`)} style={{ cursor: 'pointer' }}>
+                  <h3 className="cat-box-title">{articles[0].title}</h3>
+                  <p className="cat-box-desc">{articles[0].short_text}</p>
+                </div>
 
                 {articles.length > 1 && (
                   <div className="cat-box-list">
@@ -399,7 +463,7 @@ export const Main = () => {
       <section className="category-detailed-section" style={{ borderTop: 'none', marginTop: '25px' }}>
         <div className="cat-global-row">
           <h2 className="cat-box-header" onClick={() => navigate('/society')} style={{ cursor: 'pointer', borderLeft: '5px solid #000', paddingLeft: '10px', paddingBottom: '2px', lineHeight: '1' }}>사회</h2>
-          <div className="global-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+          <div className="global-grid society-mobile-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
             {society.map((art, i) => (
               <div key={i} className="global-card" onClick={() => navigate(`/article/${art.id}`)} style={{ cursor: 'pointer' }}>
                 <div className="global-img">
@@ -446,7 +510,7 @@ export const Main = () => {
           <div className="global-grid" style={{ gridTemplateColumns: '1fr' }}>
             {science.map((art, i) => (
               <div key={i} className="global-card" onClick={() => navigate(`/article/${art.id}`)} style={{ cursor: 'pointer', flexDirection: 'row', alignItems: 'center', gap: '30px' }}>
-                <div className="global-img" style={{ width: '60%', aspectRatio: '21/9', flex: 'none' }}>
+                <div className="global-img" style={{ width: 'calc(60% - 90px)', aspectRatio: '16/9', flex: 'none' }}>
                   <img src={imageMap[art.image] || art.image} alt={art.title} style={{ objectFit: 'cover', width: '100%', height: '100%' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                 </div>
                 <div style={{ flex: 1, textAlign: 'left' }}>
@@ -507,6 +571,7 @@ export const Main = () => {
         {renderSocietySection()}
         <div className="full-width-divider"></div>
         {renderLivingCultureSection()}
+        <div className="full-width-divider mobile-only-divider"></div>
 
         {renderAIRecommendedNews(0 + (currentPage - 1) * 5)}
 

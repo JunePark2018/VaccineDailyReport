@@ -146,6 +146,64 @@
   text-align: left;
 }
 
+/* Carousel Controls (Hidden by default) */
+.main-page .carousel-arrow {
+  display: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  padding: 15px 10px;
+  cursor: pointer;
+  z-index: 10;
+  font-size: 20px;
+  transition: background 0.2s;
+}
+
+.main-page .carousel-arrow:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.main-page .prev-arrow {
+  left: 0;
+}
+
+.main-page .next-arrow {
+  right: 0;
+}
+
+.main-page .carousel-dots-mobile {
+  display: none;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.main-page .carousel-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ccc;
+  cursor: pointer;
+}
+
+.main-page .carousel-dot.active {
+  background: #333;
+}
+
+/* Mobile Carousel Refinements */
+.main-page .mobile-carousel-desc {
+  display: none;
+  /* Desktop hidden */
+}
+
+/* Mobile-Only Highlights Section (Hidden by default) */
+.main-page .carousel-highlights-mobile {
+  display: none;
+}
+
 .main-page .ai-news-badge {
   display: block;
   width: fit-content;
@@ -307,6 +365,10 @@
   /* Slightly darker gray for visibility */
   margin-top: 50px;
   margin-bottom: 40px;
+}
+
+.main-page .mobile-only-divider {
+  display: none;
 }
 
 .main-page .divider {
@@ -531,109 +593,7 @@
 }
 
 
-/* TOP 10 Section Styles (Sidebar) */
-/* TOP 10 Section Styles (Sidebar) */
-.main-page .top10-section {
-  margin-top: 0;
-  margin-bottom: 30px;
-  text-align: left;
-  /* Fixed height window for ONE item - INCREASED ~50% from 90px */
-  height: 135px;
-  overflow: hidden;
-  position: relative;
-  background: #fff;
-  /* border & rounded corners REMOVED */
-  perspective: 1000px;
-  /* Enable 3D perspective */
-}
 
-.main-page .top10-section h3 {
-  font-size: 18px;
-  /* Standardized to 18px */
-  font-weight: 800;
-  margin: 0 0 20px 0;
-  border-bottom: none;
-  /* Remove bottom border */
-  border-left: 5px solid #000;
-  /* Add left border */
-  padding-left: 10px;
-  padding-bottom: 2px;
-  /* Extend border down slightly */
-  line-height: 1;
-  background: #fff;
-  width: fit-content;
-}
-
-/* Reseting Grid for Static Layout */
-.main-page .top10-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 20px;
-}
-
-.main-page .top10-item {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.main-page .top10-rank {
-  font-size: 36px;
-  /* Increase 50% from 24px */
-  font-weight: 900;
-  font-style: italic;
-  color: #333;
-  min-width: 45px;
-  /* Increased */
-  text-align: center;
-}
-
-/* Specific colors for top ranks */
-.main-page .top10-item:nth-child(1) .top10-rank,
-.main-page .top10-item:nth-child(2) .top10-rank,
-.main-page .top10-item:nth-child(3) .top10-rank {
-  color: #cc0000;
-}
-
-.main-page .top10-image-wrapper {
-  flex: none;
-  width: 180px;
-  /* Increase 50% maybe? Previously was auto/small. Let's make it bigger. was 50px in prev attempt? no, 50% bigger than default */
-  /* Default was small icon-like? Let's aim for substantial size */
-  height: 100px;
-  /* Aspect */
-  position: relative;
-  border-radius: 5px;
-  overflow: hidden;
-}
-
-.main-page .top10-image-wrapper img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-/* Alternative: Text next to image */
-.main-page .top10-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.main-page .top10-title {
-  font-size: 21px;
-  /* Increase 50% from 14px */
-  font-weight: bold;
-  color: #000;
-  margin: 0;
-  line-height: 1.3;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
 
 /* Category Box Section (Politics & Economy) */
 .main-page .category-detailed-section {
@@ -712,12 +672,32 @@
   object-fit: cover;
 }
 
-.main-page .cat-box-title,
+.main-page .cat-box-title {
+  font-size: 18px;
+  /* Increased by 2px */
+  font-weight: 800;
+  margin: 0 0 5px 0;
+  line-height: 1.3;
+}
+
 .main-page .cat-box-list-item h3 {
   font-size: 16px;
   font-weight: 800;
   margin: 0 0 5px 0;
   line-height: 1.3;
+}
+
+.main-page .cat-box-desc {
+  font-size: 13px;
+  /* Increased from 12px */
+  color: #666;
+  margin: 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .main-page .cat-box-list {
@@ -798,29 +778,82 @@
   .main-page .main-article-section {
     flex-direction: column;
     gap: 30px;
+    margin-bottom: 20px;
+    touch-action: pan-y;
   }
 
-  /* 1. Article Info (Left) */
-  .main-page .article-info-side {
-    order: 2;
-    /* Move text below image */
+  /* Hide Side Columns on Mobile to focus on Carousel */
+  .main-page .article-info-side,
+  .main-page .highlights-side {
+    display: none !important;
   }
 
-  .main-page .article-info-side h2 {
-    font-size: 18px;
-    /* Slightly smaller */
-  }
-
-  .main-page .article-info-side h3 {
-    font-size: 20px;
-  }
-
-  /* 2. Main Image (Center) */
+  /* 2. Main Image (Center) -> Primary Carousel */
   .main-page .main-image-column {
     flex: auto;
     width: 100%;
     order: 1;
-    /* Image first */
+  }
+
+  /* Show Carousel Controls on Mobile */
+  .main-page .carousel-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .main-page .carousel-dots-mobile {
+    display: flex;
+  }
+
+  .main-page .mobile-carousel-desc {
+    display: -webkit-box;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 5px 0 0 0;
+    line-height: 1.4;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .main-page .carousel-highlights-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 25px;
+    padding: 0 5px;
+  }
+
+  .main-page .highlight-item-mobile {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #eee;
+  }
+
+  .main-page .highlight-item-mobile:last-child {
+    border-bottom: none;
+  }
+
+  .main-page .highlight-item-mobile .hl-keyword {
+    color: #ff4d4d;
+    font-weight: bold;
+    font-size: 15px;
+    margin-bottom: 4px;
+  }
+
+  .main-page .highlight-item-mobile .hl-content {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #444;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .main-page .article-image-center {
@@ -848,6 +881,12 @@
      .main-image-column { flex: 2.7; }
      So it's 2 columns. 
   */
+
+  /* 3. Highlights (Right) - Now moved to bottom */
+  .main-page .highlights-side {
+    order: 3;
+    width: 100%;
+  }
 
   /* --- Highlights Container --- */
   .main-page .highlights-container {
@@ -896,8 +935,7 @@
 
   /* --- AI Recommended Section --- */
   .main-page .ai-recommended-section {
-    padding: 40px 0;
-    margin-bottom: 60px;
+    display: none !important;
   }
 
   .main-page .ai-layout-split {
@@ -941,8 +979,19 @@
 
   /* Inside Left Column: Cat Split Row */
   .main-page .cat-split-row {
-    flex-direction: column;
+    flex-direction: column !important;
     gap: 40px;
+  }
+
+  /* Add divider between stacked columns (Politics / Economy) */
+  .main-page .cat-split-row .cat-box-column:first-child {
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 40px;
+    margin-bottom: 10px;
+  }
+
+  .main-page .cat-box-main {
+    flex-direction: column !important;
   }
 
   .main-page .cat-box-img {
@@ -970,4 +1019,153 @@
   .main-page .global-img {
     width: 100%;
   }
+
+  /* Society Mobile Grid: Row Layout (Image Left, Title Right) */
+  .main-page .society-mobile-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .main-page .society-mobile-grid .global-card {
+    flex-direction: row !important;
+    align-items: center;
+    text-align: left;
+    gap: 15px;
+  }
+
+  .main-page .society-mobile-grid .global-img {
+    width: 120px;
+    /* Fixed width for consistent list look */
+    min-width: 120px;
+    aspect-ratio: 4/3;
+    flex: none;
+  }
+
+  .main-page .society-mobile-grid h4 {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  /* Force divider to show on mobile */
+  .main-page .mobile-only-divider {
+    display: block !important;
+    margin-top: 30px;
+    margin-bottom: 30px;
+  }
+}
+
+/* --- Analysis Block Interactive Styles --- */
+.main-page .analysis-block {
+  padding: 15px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Hover: Underline ONLY the title of the hovered block */
+.main-page .analysis-block:hover h2 {
+  text-decoration: underline;
+}
+
+/* Active State: Black Background, White Text */
+.main-page .analysis-block.active {
+  background-color: #000;
+  color: #fff;
+}
+
+/* Force children to inherit white color in active state */
+.main-page .analysis-block.active h2,
+.main-page .analysis-block.active p {
+  color: #fff !important;
+}
+
+/* --- Global Article Hover Effects --- */
+
+/* 1. Main Slide Image Title Hover */
+.main-page .article-image-center:hover .main-image-text h3 {
+  text-decoration: underline;
+}
+
+/* 2. Category Box (Politics/Economy) - Main Article */
+.main-page .cat-box-main:hover .cat-box-title {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* 3. Category Box - List Items */
+.main-page .cat-box-list-item:hover h3 {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* 4. Global Grid Cards (Society/Culture/Science/World) */
+.main-page .global-card:hover h4 {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* 5. Bottom Grid Section */
+.main-page .grid-item:hover h3 {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* 6. AI Related Items */
+/* 6. AI Related Items */
+.main-page .ai-related-item:hover h4 {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* --- FIX: Strict Hover Isolation for Article Info Side --- */
+
+/* 1. Reset: When hovering the CONTAINER, do NOT underline children */
+.main-page .article-info-side:hover h2,
+.main-page .article-info-side:hover h3 {
+  text-decoration: none !important;
+}
+
+/* 2. Re-apply: ONLY underline the individual BLOCKS when hovered explicitly */
+.main-page .analysis-block:hover h2 {
+  text-decoration: underline !important;
+}
+
+/* 3. Ensure Active State Text Color persists (White) even if container is hovered */
+.main-page .analysis-block.active h2,
+.main-page .analysis-block.active p {
+  color: #fff !important;
+  text-decoration: none !important;
+  /* Active item usually shouldn't underline? Or maybe it should. User didn't specify. Assuming underline on hover is fine, but color must be white. */
+}
+
+/* Allow underline on hover even if active */
+.main-page .analysis-block.active:hover h2 {
+  text-decoration: underline !important;
+}
+
+/* --- FIX: Strict Hover Isolation for Politics/Economy (Bottom Section) --- */
+
+/* 1. Reset: When hovering the CONTAINER (Column), do NOT underline children */
+.main-page .cat-box-column:hover .cat-box-title,
+.main-page .cat-box-column:hover .cat-box-list-item h3 {
+  text-decoration: none !important;
+}
+
+/* 2. Re-apply: ONLY underline the individual BLOCKS when hovered explicitly */
+
+/* A. Main Article Text Group Hover */
+.main-page .cat-box-text-group:hover .cat-box-title {
+  text-decoration: underline !important;
+}
+
+/* B. Main Article Image Hover -> Underline Title (via adjacent sibling) */
+/* Structure: .cat-box-img + .cat-box-info > .cat-box-text-group > .cat-box-title */
+/* Since text-group is inside info, we target info then text-group title */
+.main-page .cat-box-img:hover+.cat-box-info .cat-box-title {
+  text-decoration: underline !important;
+}
+
+/* C. List Item Hover */
+.main-page .cat-box-column .cat-box-list-item:hover h3 {
+  text-decoration: underline !important;
 }

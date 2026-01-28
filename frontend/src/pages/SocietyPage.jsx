@@ -96,14 +96,17 @@ const SocietyPage = () => {
         if (!blockArticles || blockArticles.length === 0) return null;
 
         const mainArticle = blockArticles[0];
-        const gridArticles = blockArticles.slice(1, 5);
-        const listArticles = blockArticles.slice(5, 13);
+
+        // Ensure subsequent sections DO NOT contain the Main article
+        const remainingArticles = blockArticles.slice(1).filter(art => art.id !== mainArticle.id);
+        const gridArticles = remainingArticles.slice(0, 4);
+        const listArticles = remainingArticles.slice(4, 12);
 
         // Feed Logic
         const allFeedArticles = blockArticles; // Show ALL articles in Feed
         const feedPageSize = 5;
-        const totalFeedPages = Math.ceil(allFeedArticles.length / feedPageSize);
-        const currentFeedArticles = allFeedArticles.slice((feedPage - 1) * feedPageSize, feedPage * feedPageSize);
+        const totalFeedPages = Math.ceil(allFeedArticles.length / 5);
+        const currentFeedArticles = allFeedArticles.slice((feedPage - 1) * 5, feedPage * 5);
 
         const mainData = {
             id: mainArticle?.id,
@@ -166,14 +169,14 @@ const SocietyPage = () => {
                             */}
 
                             <div className="right-grid-container" style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
-                                {grid.map((news, i) => (
-                                    <div key={`${news.id}-${i}`} className="grid-item-small" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                {grid.slice(0, 4).map((news, i) => (
+                                    <div key={i} className="grid-item-small" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                         <div className="grid-image" style={{ width: '100%', aspectRatio: '1.5/1', border: '1px solid #eee', position: 'relative', overflow: 'hidden' }}>
                                             <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                                         </div>
                                         <div className="grid-info">
-                                            <h3 style={{ fontSize: '14px', fontWeight: 'bold', margin: '0', lineHeight: '1.3', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{news.title}</h3>
-                                            <p style={{ fontSize: '13px', color: '#666', margin: '5px 0 0 0', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                            <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0', lineHeight: '1.3', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{news.title}</h3>
+                                            <p style={{ fontSize: '14px', color: '#666', margin: '5px 0 0 0', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                                                 {news.content}
                                             </p>
                                         </div>
@@ -211,8 +214,8 @@ const SocietyPage = () => {
                     <>
                         <div className="section-divider"></div>
                         <section className="bottom-feed-section" style={{ display: 'flex', flexDirection: 'column', gap: '30px', textAlign: 'left', marginTop: '30px', padding: '0 120px' }}>
-                            {feed.map((news, i) => (
-                                <div key={`${news.id}-${i}`} className="feed-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px', gap: '20px' }}>
+                            {feed.slice(0, 5).map((news, i) => (
+                                <div key={i} className="feed-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px', gap: '20px' }}>
 
                                     {/* Left Container: Like + Text */}
                                     <div style={{ display: 'flex', flex: 1, paddingRight: '0px' }}>
@@ -233,7 +236,7 @@ const SocietyPage = () => {
                                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                 <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 0 0 1-2-2v-7a2 0 0 1 2-2h3" />
                                             </svg>
-                                            <span style={{ fontSize: '14px', fontWeight: '500' }}>{120 + news.id}</span>
+                                            <span style={{ fontSize: '14px', fontWeight: '500' }}>{120 + (news.id || 0)}</span>
                                         </div>
 
                                         {/* Text Info */}

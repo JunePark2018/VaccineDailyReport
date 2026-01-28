@@ -626,3 +626,8 @@
         font-size: 11px !important;
     }
 }
+
+/* Hover for related articles in grid */
+.category-page .related-article-link:hover {
+    text-decoration: underline !important;
+}
