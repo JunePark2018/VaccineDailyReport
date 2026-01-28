@@ -439,6 +439,42 @@ def check_claim_evidence(req: ClaimEvidenceRequest, db: Session = Depends(get_db
     from sklearn.metrics.pairwise import cosine_similarity
     import numpy as np
 
+    # 정크 문장 필터 (구독, 제보, 저작권 등)
+    def is_junk_sentence(text: str) -> bool:
+        t = text.replace(" ", "")  # 공백 제거 후 확인
+        junk_keywords = [
+            "제보",
+            "구독",
+            "채널추가",
+            "무단전재",
+            "재배포금지",
+            "Copyright",
+            "Allrightsreserved",
+            "이메일",
+            "카카오톡",
+            "전화",
+            "기자",
+            "http",
+            "www",
+        ]
+
+        # 특정 키워드가 포함되어 있고, 문장 길이가 홍보성 멘트처럼 짧거나(100자 이하)
+        # 키워드가 아주 명확한 경우
+        count = 0
+        for kw in junk_keywords:
+            if kw in t:
+                count += 1
+
+        # 키워드가 2개 이상이면 매우 유력 (예: 제보+전화)
+        if count >= 2:
+            return True
+
+        # 단일 키워드지만 문맥상 쓰레기인 경우
+        if "무단전재" in t or "재배포금지" in t or "Copyright" in t:
+            return True
+
+        return False
+
     # 1. 원본 기사 가져오기
     original_news_list = crud.get_original_news_details_by_cluster(db, req.cluster_id)
     if not original_news_list:
@@ -468,6 +504,10 @@ def check_claim_evidence(req: ClaimEvidenceRequest, db: Session = Depends(get_db
         # 인덱스 추적을 위해 리스트업
         for i, s in enumerate(sentences_raw):
             if len(s) < 10:  # 너무 짧은 문장 제외
+                continue
+
+            # [Filter] 불필요한 홍보/구독/제보 문구 제거
+            if is_junk_sentence(s):
                 continue
 
             candidates.append(
