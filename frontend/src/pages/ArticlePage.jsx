@@ -309,6 +309,9 @@ function ArticlePage() {
                   <WordCloudComponent keywords={keywords} width={400} height={400} />
                 </div>
               </div>
+
+              {/* [Restored] Sources Section */}
+              <Sources clusterId={article.cluster_id} />
             </div>
 
             {/* No sidebar inside here */}
