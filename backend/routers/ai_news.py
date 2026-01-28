@@ -9,7 +9,7 @@ from sqlalchemy import or_, and_
 
 # ... (other imports are fine, but I need to make sure I match the file content structure.
 # The previous `from sqlalchemy import or_` was on line 8.
-# I will edit the import line separately or include it in the replace if I can span that far, but the file is large. 
+# I will edit the import line separately or include it in the replace if I can span that far, but the file is large.
 # Better to do two edits or use multi_replace.
 # I will use multi_replace to handle both the import and the function body safely.
 
@@ -24,9 +24,11 @@ from database import crud
 # schemas import 제거 - dict 반환으로 충분
 from pydantic import BaseModel
 
+
 class CitationRequest(BaseModel):
     cluster_id: int
     target_sentence: str
+
 
 # -----------------------------------------------------------
 # [Deep Citation Agent] Logic
@@ -41,9 +43,11 @@ def split_sentences_positions(text: str):
         return []
     # 마침표, 물음표, 느낌표 뒤에 공백이 있는 경우 분리
     import re
+
     # 단순화된 정규식: 문장 종결 부호(.!?) 뒤에 공백 혹은 문자열 끝
-    sentences = re.split(r'(?<=[.!?])\s+', text)
+    sentences = re.split(r"(?<=[.!?])\s+", text)
     return [s.strip() for s in sentences if s.strip()]
+
 
 router = APIRouter(prefix="/generated-news", tags=["AI Generated News"])
 
@@ -214,70 +218,104 @@ def check_citation(req: CitationRequest, db: Session = Depends(get_db)):
     [Deep Citation Agent]
     특정 문장이 주어졌을 때, 해당 클러스터에 연결된 원본 기사들 중에서
     가장 유사한 문장(근거)을 찾아 반환합니다. (On-Demand Vector Search)
+    반환값: 관련도(score)가 높은 순서대로 정렬된 '기사 목록'
     """
     from database.vector_store import encode_texts
     from sklearn.metrics.pairwise import cosine_similarity
     import numpy as np
 
-    # 1. 원본 기사 가져오기
+    # 1. 원본 기사 가져오기 (news_id, created_at 포함)
     original_news_list = crud.get_original_news_details_by_cluster(db, req.cluster_id)
     if not original_news_list:
         return {"match_found": False, "message": "원본 기사가 없습니다."}
 
     # 2. 모든 기사의 문장을 추출하여 후보군(Corpus) 생성
     candidates = []
-    # candidates 구조: { "text": 문장, "doc_title": 기사제목, "company": 언론사, "url": 기사URL }
+    # candidates 구조: { "text": 문장, "doc_title": 기사제목, "company": 언론사, "url": 기사URL, "news_id": ID, ... }
 
     for news in original_news_list:
         sentences = split_sentences_positions(str(news["contents"]))
         for s in sentences:
-            if len(s) < 10: continue # 너무 짧은 문장은 제외
-            candidates.append({
-                "text": s,
-                "doc_title": news["title"],
-                "company": news["company_name"],
-                "url": news["url"]
-            })
-    
+            if len(s) < 10:
+                continue  # 너무 짧은 문장은 제외
+            candidates.append(
+                {
+                    "text": s,
+                    "doc_title": news["title"],
+                    "company": news["company_name"],
+                    "url": news["url"],
+                    "news_id": news.get("news_id"),  # crud 업데이트 필요
+                    "created_at": news.get("created_at"),  # crud 업데이트 필요
+                    "full_contents": news["contents"],
+                }
+            )
+
     if not candidates:
         return {"match_found": False, "message": "비교할 문장이 없습니다."}
 
     # 3. 임베딩 생성 (Target 1개 + Candidates N개)
     #    속도 최적화를 위해 한 번에 encoding
     all_texts = [req.target_sentence] + [c["text"] for c in candidates]
-    
+
     # vector_store의 encode_texts 사용
     embeddings = encode_texts(all_texts)
-    
+
     target_vec = embeddings[0].reshape(1, -1)
     candidate_vecs = embeddings[1:]
 
     # 4. 유사도 계산
     sim_scores = cosine_similarity(target_vec, candidate_vecs)[0]
 
-    # 5. Top 3 추출
-    # argsort는 오름차순이므로 뒤집어야 함
-    top_indices = sim_scores.argsort()[::-1][:3]
-    
-    results = []
-    for idx in top_indices:
-        score = float(sim_scores[idx])
-        if score < 0.3: # 유사도 너무 낮으면 무시 (Threshold)
-            continue
-            
-        match_item = candidates[idx]
-        results.append({
-            "score": round(score * 100, 1),
-            "text": match_item["text"],
-            "company": match_item["company"],
-            "doc_title": match_item["doc_title"],
-            "url": match_item["url"]
-        })
+    # 5. 기사별 최고 점수 집계 (Article-based Aggregation)
+    article_scores = {}  # news_id -> { score, match_sentence, ... }
 
-    return {
-        "match_found": len(results) > 0,
-        "matches": results
-    }
+    for idx, score in enumerate(sim_scores):
+        if score < 0.2:  # 노이즈 제거 (Threshold)
+            continue
+
+        cand = candidates[idx]
+        nid = cand["news_id"]
+
+        # 이미 저장된 기사보다 점수가 높으면 갱신
+        if nid not in article_scores or score > article_scores[nid]["score"]:
+            article_scores[nid] = {
+                "score": score,
+                "match_sentence": cand["text"],
+                "news_id": nid,
+                "title": cand["doc_title"],
+                "company": cand["company"],
+                "url": cand["url"],
+                "created_at": cand["created_at"],
+                "contents": cand["full_contents"],
+            }
+
+    # 6. 정렬 (점수 내림차순)
+    sorted_articles = sorted(article_scores.values(), key=lambda x: x["score"], reverse=True)
+
+    # 상위 5개만
+    top_articles = sorted_articles[:5]
+
+    results = []
+    for art in top_articles:
+        # 날짜 포맷
+        date_str = ""
+        if art["created_at"]:
+            date_str = str(art["created_at"])
+
+        results.append(
+            {
+                "id": art["news_id"],
+                "score": round(float(art["score"]) * 100, 1),
+                "match_text": art["match_sentence"],  # 가장 유사한 문장
+                "company": art["company"],
+                "title": art["title"],
+                "url": art["url"],
+                "date": date_str,
+                "content": art["contents"],  # 전체 본문 (or 요약)
+            }
+        )
+
+    return {"match_found": len(results) > 0, "matches": results}
 
 
 @router.get("/{generated_news_id}/related")
@@ -301,6 +339,7 @@ def get_related_news(generated_news_id: int, limit: int = 3, db: Session = Depen
     current_kws = current_news.keywords
     if isinstance(current_kws, str):
         import json
+
         try:
             current_kws = json.loads(current_kws)
         except:
@@ -323,7 +362,7 @@ def get_related_news(generated_news_id: int, limit: int = 3, db: Session = Depen
     # 3. Tiered Search Strategy (3 keywords -> 2 keywords -> 1 keyword)
     # 최대 3개까지만 시도 (키워드가 적으면 그만큼만)
     max_k = min(len(all_top_keywords), 3)
-    
+
     # 3부터 1까지 역순으로 시도 (예: 3, 2, 1)
     for k_count in range(max_k, 0, -1):
         if len(final_results) >= limit:
@@ -331,20 +370,20 @@ def get_related_news(generated_news_id: int, limit: int = 3, db: Session = Depen
 
         needed = limit - len(final_results)
         target_keywords = all_top_keywords[:k_count]
-        
+
         # 쿼리 생성: (제목이나 내용에 k1 포함) AND (제목이나 내용에 k2 포함) ...
         # excluded_ids에 없는 것만
         query = db.query(AiGeneratedNews).filter(AiGeneratedNews.ai_generated_news_id.notin_(excluded_ids))
-        
+
         # AND 조건 추가
         conditions = []
         for kw in target_keywords:
             pattern = f"%{kw}%"
             conditions.append(or_(AiGeneratedNews.title.ilike(pattern), AiGeneratedNews.contents.ilike(pattern)))
-        
+
         if conditions:
             query = query.filter(and_(*conditions))
-        
+
         # 최신순 정렬하여 필요한 만큼 가져오기
         tier_results = query.order_by(AiGeneratedNews.created_at.desc()).limit(needed).all()
 
@@ -363,22 +402,20 @@ def get_related_news(generated_news_id: int, limit: int = 3, db: Session = Depen
                     urls = origin_news.img_urls
                     if isinstance(urls, str):
                         import json
+
                         try:
                             urls = json.loads(urls)
                         except:
                             urls = []
-                    
+
                     if isinstance(urls, list) and len(urls) > 0:
                         img_url = urls[0]
                         break
-        
+
         summary = item.contents[:40] + "..." if item.contents and len(item.contents) > 40 else item.contents
-        
-        response_data.append({
-            "id": item.ai_generated_news_id,
-            "title": item.title,
-            "image_url": img_url,
-            "contents_short": summary
-        })
+
+        response_data.append(
+            {"id": item.ai_generated_news_id, "title": item.title, "image_url": img_url, "contents_short": summary}
+        )
 
     return response_data

@@ -15,26 +15,50 @@ export default function RightSideBar({ isOpen, onClose, searchKeyword, clusterId
         setSourceList(null);
 
         try {
-          console.log(`[RightSideBar] Fetching news for cluster: ${clusterId}`);
-          const response = await axios.get(`http://localhost:8000/generated-news/clusters/${clusterId}/news`);
+          // 1. 문장이 선택된 경우 -> /citation (유사도 정렬)
+          if (searchKeyword) {
+            console.log(`[RightSideBar] Fetching related news for sentence: "${searchKeyword}"`);
+            const response = await axios.post(`http://localhost:8000/generated-news/citation`, {
+              cluster_id: clusterId,
+              target_sentence: searchKeyword
+            });
 
-          // API 응답 매핑: Sources.jsx의 구조와 RightSideBar가 기대하는 구조를 맞춤
-          // API: { company_name, title, contents, created_at, url, ... }
-          // Sidebar UI: { company, title, content, date, url ... }
-          const mappedData = response.data.map(item => ({
-            id: item.id,
-            company: item.company_name,
-            title: item.title,
-            content: item.contents, // 본문
-            date: item.created_at ? item.created_at.substring(0, 10) : "", // 날짜 포맷팅 단순화
-            url: item.url
-          }));
+            if (response.data.match_found) {
+              // 매핑: backend returns matches: [ { id, score, match_text, company, title, url, date, content }, ... ]
+              const mappedData = response.data.matches.map(item => ({
+                id: item.id,
+                company: item.company,
+                title: item.title,
+                content: item.content,
+                date: item.date ? item.date.substring(0, 10) : "",
+                url: item.url,
+                score: item.score,      // 유사도 점수
+                match_text: item.match_text // 가장 유사한 문장
+              }));
+              setSourceList(mappedData);
+            } else {
+              setSourceList([]);
+            }
+          }
+          // 2. 문장이 선택 안 된 경우 -> 기존 로직 (단순 기사 목록)
+          else {
+            console.log(`[RightSideBar] Fetching news for cluster: ${clusterId}`);
+            const response = await axios.get(`http://localhost:8000/generated-news/clusters/${clusterId}/news`);
 
-          setSourceList(mappedData);
+            const mappedData = response.data.map(item => ({
+              id: item.news_id, // crud update 반영
+              company: item.company_name,
+              title: item.title,
+              content: item.contents,
+              date: item.created_at ? String(item.created_at).substring(0, 10) : "",
+              url: item.url
+            }));
+            setSourceList(mappedData);
+          }
 
         } catch (error) {
           console.error("Failed to fetch sidebar articles:", error);
-          setSourceList([]); // 에러 시 빈 배열
+          setSourceList([]);
         } finally {
           setIsLoading(false);
         }
@@ -42,17 +66,20 @@ export default function RightSideBar({ isOpen, onClose, searchKeyword, clusterId
 
       fetchArticles();
     }
-  }, [isOpen, clusterId]); // searchKeyword는 데이터 로딩 조건에서 제외 (필요 시 필터링에 사용 가능)
+  }, [isOpen, clusterId, searchKeyword]); // searchKeyword 변경 시에도 재호출
 
   return (
     <aside className={`right-sidebar ${isOpen ? 'open' : ''}`}>
 
-      {/* 헤더: 텍스트 부분을 div로 감싸 왼쪽 정렬을 명확히 함 */}
       <div className="sidebar-header">
         <div className="header-text">
-          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>참조된 원본 기사</h3>
+          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>
+            {searchKeyword ? "관련 기사 (유사도순)" : "참조된 원본 기사"}
+          </h3>
           <p style={{ margin: '5px 0 0', fontSize: '12px', color: '#666' }}>
-            선택한 문장은 아래 기사들을 바탕으로 생성되었습니다.
+            {searchKeyword
+              ? "선택한 문장과 가장 내용이 유사한 기사를 찾았습니다."
+              : "이 AI 뉴스를 생성하는 데 사용된 원본 기사들입니다."}
           </p>
         </div>
         <button onClick={onClose} className="close-btn" title="닫기">✕</button>
@@ -68,10 +95,12 @@ export default function RightSideBar({ isOpen, onClose, searchKeyword, clusterId
 
         {!isLoading && sourceList && (
           <div className="fade-in">
-            <div className="selected-sentence-box">
-              <span className="label">선택된 문장</span>
-              <p>"{searchKeyword}"</p>
-            </div>
+            {searchKeyword && (
+              <div className="selected-sentence-box">
+                <span className="label">선택된 문장</span>
+                <p>"{searchKeyword}"</p>
+              </div>
+            )}
 
             <div className="article-list">
               {sourceList.map((article) => (
@@ -85,11 +114,22 @@ export default function RightSideBar({ isOpen, onClose, searchKeyword, clusterId
                   <div className="card-header">
                     <span className="company-badge">{article.company}</span>
                     <span className="article-date">{article.date}</span>
+                    {article.score && (
+                      <span className="similarity-badge" style={{ marginLeft: 'auto', color: '#2563eb', fontWeight: 'bold', fontSize: '0.8rem' }}>
+                        {article.score}% 일치
+                      </span>
+                    )}
                   </div>
                   <h4 className="article-title">{article.title}</h4>
 
-                  {/* [추가] 본문 내용 표시 (CSS로 말줄임표 처리됨) */}
-                  <p className="article-summary">{article.content}</p>
+                  {/* 유사도 모드일 땐 'match_text'를 강조해서 보여주고, 아니면 content 요약 */}
+                  {article.match_text ? (
+                    <div className="match-highlight" style={{ fontSize: '0.9rem', color: '#555', background: '#f9f9f9', padding: '10px', borderRadius: '4px', marginTop: '8px', lineHeight: '1.5' }}>
+                      "... {article.match_text} ..."
+                    </div>
+                  ) : (
+                    <p className="article-summary">{article.content}</p>
+                  )}
 
                   <div className="card-footer">
                     원문 보러가기 &rarr;
