@@ -5,11 +5,14 @@ import './NewsText.css';
 /**
  * NewsText 컴포넌트
  * props:
- * - title: 기사 제목
  * - contents: 기사 본문 (긴 텍스트)
  * - onSentenceClick: 문장 클릭 시 실행할 부모 함수 [핵심!]
+ * - articleId: 기사 ID (좋아요 API 호출용)
+ * - likeCount: 현재 좋아요 수
+ * - isLiked: 사용자의 좋아요 상태
+ * - onLikeUpdate: 좋아요 업데이트 콜백
  */
-const NewsText = ({ contents, onSentenceClick }) => {
+const NewsText = ({ contents, onSentenceClick, articleId, likeCount = 0, isLiked = false, onLikeUpdate }) => {
 
   // [내부 함수] 문장 클릭 시 실행될 로직
   const handleSentenceClick = (sentence) => {
@@ -64,7 +67,12 @@ const NewsText = ({ contents, onSentenceClick }) => {
           })}
           {isLastParagraph && (
             <span className="news-inline-like">
-              <LikeButton initialLiked={false} initialCount={120} />
+              <LikeButton
+                articleId={articleId}
+                initialLiked={isLiked}
+                initialCount={likeCount}
+                onLikeUpdate={onLikeUpdate}
+              />
             </span>
           )}
         </p>

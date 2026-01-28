@@ -15,6 +15,7 @@ from database.crud import (
     list_user_top_keywords,
     get_ai_generated_news,
     get_category_name,
+    get_reaction,
 )
 from schemas import UserCreateRequest, UserLoginRequest, UserUpdate, UserDashboardResponse
 
@@ -52,6 +53,21 @@ def signup(user: UserCreateRequest, db: Session = Depends(get_db)):
         "subscribed_categories": [cat.name for cat in new_user.subscribed_categories],
         "subscribed_keywords": [kw.keyword for kw in new_user.keyword_subscriptions],
     }
+
+
+@router.get("/{login_id}/reactions/{news_id}")
+def get_user_reaction(login_id: str, news_id: int, db: Session = Depends(get_db)):
+    """
+    사용자의 특정 기사에 대한 좋아요/싫어요 상태 조회
+    Returns: {"value": 1 or -1 or null}
+    """
+    user = get_user_by_login_id(db, login_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    reaction_value = get_reaction(db, user_id=user.user_id, ai_news_id=news_id)
+    
+    return {"value": reaction_value}
 
 
 @router.get("/{login_id}")  # response_model 제거
