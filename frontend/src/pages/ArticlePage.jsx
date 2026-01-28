@@ -198,13 +198,6 @@ function ArticlePage() {
           headerBottom="on"
         />
 
-        {/* [추가] 생성일자 표시 */}
-        <div style={{ textAlign: 'center', marginTop: '20px', color: '#000000ff', fontSize: '1.5rem', fontWeight: 'bold' }}>
-          {article.created_at ? (
-            `${new Date(article.created_at).getFullYear()}년 ${new Date(article.created_at).getMonth() + 1}월 ${new Date(article.created_at).getDate()}일에 생성된 AI 뉴스 기사 입니다.`
-          ) : null}
-        </div>
-
         {/* 하단 */}
         <main className="main-content">
           <div className="article-content-wrapper">
@@ -217,6 +210,37 @@ function ArticlePage() {
               {/* [수정] 제목과 구분선을 NewsText에서 분리하여 상위에 배치 */}
               <div style={{ padding: '0 20px' }}>
                 <h1 className="article-head-title">{article.title}</h1>
+
+                {/* [추가] 생성일자 표시 - 자연스럽게 */}
+                {article.created_at && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    marginTop: '12px',
+                    marginBottom: '8px',
+                    fontSize: '0.9rem',
+                    color: '#999',
+                    fontWeight: 'normal'
+                  }}>
+                    <span style={{
+                      padding: '4px 10px',
+                      backgroundColor: '#f0f0f0',
+                      borderRadius: '4px',
+                      fontSize: '0.85rem',
+                      color: '#666',
+                      fontWeight: '500'
+                    }}>
+                      AI 생성
+                    </span>
+                    <span>
+                      {new Date(article.created_at).getFullYear()}.
+                      {String(new Date(article.created_at).getMonth() + 1).padStart(2, '0')}.
+                      {String(new Date(article.created_at).getDate()).padStart(2, '0')}
+                    </span>
+                  </div>
+                )}
+
                 <hr className="article-head-divider" />
 
                 {/* [이동] 비교분석 섹션을 이곳으로 이동 */}
