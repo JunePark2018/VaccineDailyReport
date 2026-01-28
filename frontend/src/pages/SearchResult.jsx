@@ -8,6 +8,7 @@ import UserMenu from "../components/UserMenu";
 import Searchbar from "../components/Searchbar";
 import Button from "../components/Button";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 export default function SearchResult() {
     const location = useLocation();
     const [searchTerm, setSearchTerm] = useState("");
@@ -26,7 +27,7 @@ export default function SearchResult() {
         setVisibleNewsCount(3);
 
         try {
-            const res = await axios.get(`http://localhost:8000/api/comprehensive-search`, {
+            const res = await axios.get(`${API_BASE_URL}/api/comprehensive-search`, {
                 params: { keyword: keyword }
             });
 

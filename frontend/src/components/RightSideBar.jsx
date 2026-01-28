@@ -3,6 +3,7 @@ import './RightSideBar.css';
 
 import axios from 'axios'; // axios 임포트 확인
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 export default function RightSideBar({ isOpen, onClose, searchKeyword, clusterId }) {
   const [isLoading, setIsLoading] = useState(false);
   const [sourceList, setSourceList] = useState(null);
@@ -16,7 +17,7 @@ export default function RightSideBar({ isOpen, onClose, searchKeyword, clusterId
 
         try {
           console.log(`[RightSideBar] Fetching news for cluster: ${clusterId}`);
-          const response = await axios.get(`http://localhost:8000/generated-news/clusters/${clusterId}/news`);
+          const response = await axios.get(`${API_BASE_URL}/generated-news/clusters/${clusterId}/news`);
 
           // API 응답 매핑: Sources.jsx의 구조와 RightSideBar가 기대하는 구조를 맞춤
           // API: { company_name, title, contents, created_at, url, ... }

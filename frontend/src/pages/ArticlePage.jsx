@@ -13,6 +13,7 @@ import axios from 'axios';
 import WordCloudComponent from '../components/WordCloud';
 import AI_News_Recommendation from '../components/AI_News_Recommendation';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 function ArticlePage() {
 
   const { id } = useParams();
@@ -49,7 +50,7 @@ function ArticlePage() {
     const fetchInfo = async () => {
       try {
         // AI 생성 기사 가져오기
-        const ai_news_response = await axios.get(`http://localhost:8000/generated-news/${id}`);
+        const ai_news_response = await axios.get(`${API_BASE_URL}/generated-news/${id}`);
         const article = ai_news_response.data;
         console.log(article);
         setArticle(article);
@@ -61,7 +62,7 @@ function ArticlePage() {
         setKeywords(filteredKeywords);
 
         // 사용된 기사들 가져와서 랜덤하게 사진 고르기
-        const img_url_response = await axios.get(`http://localhost:8000/generated-news/clusters/${article.cluster_id}/news`);
+        const img_url_response = await axios.get(`${API_BASE_URL}/generated-news/clusters/${article.cluster_id}/news`);
         const newsList = img_url_response.data;
 
         // 1모든 기사에서 img_urls만 모아서 평탄화

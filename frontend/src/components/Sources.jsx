@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './Sources.css';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 const Sources = ({ clusterId }) => {
   const [articles, setArticles] = useState([]);
   const [visibleCount, setVisibleCount] = useState(5);
@@ -15,7 +16,7 @@ const Sources = ({ clusterId }) => {
       try {
         console.log(`[Sources] Cluster ID ${clusterId}로 원본 기사 요청 중...`);
 
-        const response = await axios.get(`http://localhost:8000/generated-news/clusters/${clusterId}/news`);
+        const response = await axios.get(`${API_BASE_URL}/generated-news/clusters/${clusterId}/news`);
 
         console.log("[Sources] 원본 기사 로딩 완료:", response.data);
         setArticles(response.data);

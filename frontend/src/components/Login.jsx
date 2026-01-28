@@ -6,6 +6,7 @@ import Logo from "./Logo";
 import UserMenu from "./UserMenu";
 import "./Login.css";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 const Login = () => {
 
     const nav = useNavigate();
@@ -37,7 +38,7 @@ const Login = () => {
 
         try {
             // POST request to backend login API
-            const response = await fetch('http://localhost:8000/login', {
+            const response = await fetch(`${API_BASE_URL}/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
