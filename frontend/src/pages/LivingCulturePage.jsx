@@ -16,6 +16,15 @@ const LivingCulturePage = () => {
     const [displayArticles, setDisplayArticles] = useState([]);
     const [imageMap, setImageMap] = useState({});
     const [feedPage, setFeedPage] = useState(1);
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     useEffect(() => {
         setCurrentPage(1);
@@ -30,6 +39,7 @@ const LivingCulturePage = () => {
                 // 2. Map Backend Data to Frontend Structure
                 const formattedArticles = realArticles.map(art => ({
                     ...art,
+                    id: art.ai_generated_news_id, // [Fix] Map native ID to 'id'
                     category: art.category_name,
                     image: `cluster_${art.cluster_id}`,
                     short_text: art.contents ? (art.contents.substring(0, 100) + "...") : "내용 없음"
@@ -130,10 +140,10 @@ const LivingCulturePage = () => {
             <React.Fragment key={blockIndex}>
 
 
-                <div style={{ padding: '0 40px' }}>
+                <div style={{ padding: isMobile ? '0 20px' : '0 40px' }}>
                     {/* Main Article Section */}
-                    <section className="main-article-section" style={{ marginBottom: '50px', position: 'relative' }}>
-                        <div className="main-image" style={{ width: '100%', aspectRatio: '2.5/1', position: 'relative', overflow: 'hidden', borderRadius: '4px' }}>
+                    <section className="main-article-section" style={{ marginBottom: isMobile ? '30px' : '50px', position: 'relative' }}>
+                        <div className="main-image" style={{ width: '100%', aspectRatio: isMobile ? '1.5/1' : '2.5/1', position: 'relative', overflow: 'hidden', borderRadius: '4px' }}>
                             <img src={mainData.image} alt={mainData.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                             <div style={{
                                 position: 'absolute',
@@ -141,11 +151,11 @@ const LivingCulturePage = () => {
                                 left: 0,
                                 right: 0,
                                 background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
-                                padding: '30px',
+                                padding: isMobile ? '20px' : '30px',
                                 textAlign: 'left'
                             }}>
-                                <h2 style={{ fontSize: '32px', fontWeight: 'bold', color: '#fff', margin: '0 0 10px 0' }}>{mainData.title}</h2>
-                                <p style={{ fontSize: '16px', color: '#ddd', margin: 0, maxWidth: '80%' }}>{mainData.description}</p>
+                                <h2 style={{ fontSize: isMobile ? '24px' : '32px', fontWeight: 'bold', color: '#fff', margin: '0 0 10px 0' }}>{mainData.title}</h2>
+                                {!isMobile && <p style={{ fontSize: '16px', color: '#ddd', margin: 0, maxWidth: '80%' }}>{mainData.description}</p>}
                             </div>
                         </div>
                     </section>
@@ -154,11 +164,11 @@ const LivingCulturePage = () => {
                     {/* Grid Section (3 items, Vertical Portrait, Title Overlay) */}
                     {grid.length > 0 && (
                         <>
-                            <section className="bottom-grid-section" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '40px', marginBottom: '50px', textAlign: 'left' }}>
+                            <section className="bottom-grid-section" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? '20px' : '40px', marginBottom: '50px', textAlign: 'left' }}>
                                 {grid.map((news) => (
                                     <div key={news.id} className="grid-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', position: 'relative', overflow: 'hidden', borderRadius: '4px' }}>
                                         {/* Image Container (Vertical Aspect Ratio 3:4) */}
-                                        <div className="grid-image" style={{ width: '100%', aspectRatio: '3/4', position: 'relative', border: 'none' }}>
+                                        <div className="grid-image" style={{ width: '100%', aspectRatio: isMobile ? '2/1' : '3/4', position: 'relative', border: 'none' }}>
                                             <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
 
                                             {/* Gradient Overlay */}
@@ -176,14 +186,14 @@ const LivingCulturePage = () => {
                                             {/* Title Overlay */}
                                             <div style={{
                                                 position: 'absolute',
-                                                bottom: '20px',
-                                                left: '20px',
-                                                right: '20px',
+                                                bottom: isMobile ? '15px' : '20px',
+                                                left: isMobile ? '15px' : '20px',
+                                                right: isMobile ? '15px' : '20px',
                                                 zIndex: 4,
                                                 textAlign: 'center'
                                             }}>
                                                 <h3 style={{
-                                                    fontSize: '30px',
+                                                    fontSize: isMobile ? '20px' : '30px',
                                                     fontWeight: 'bold',
                                                     color: '#fff',
                                                     margin: 0,
@@ -202,41 +212,41 @@ const LivingCulturePage = () => {
                     )}
                 </div>
 
-
-
                 {/* Feed Section (Pagination) */}
                 {feed.length > 0 && (
                     <>
                         <div className="section-divider"></div>
-                        <section className="bottom-feed-section" style={{ display: 'flex', flexDirection: 'column', gap: '30px', textAlign: 'left', marginTop: '30px', padding: '0 120px' }}>
+                        <section className="bottom-feed-section" style={{ display: 'flex', flexDirection: 'column', gap: '30px', textAlign: 'left', marginTop: '30px', padding: isMobile ? '0 20px' : '0 120px' }}>
                             {feed.map((news) => (
-                                <div key={news.id} className="feed-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px' }}>
+                                <div key={news.id} className="feed-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', flexDirection: isMobile ? 'column-reverse' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px', gap: isMobile ? '15px' : '0' }}>
 
                                     {/* Left Container: Like + Text */}
-                                    <div style={{ display: 'flex', flex: 1, paddingRight: '0px' }}>
+                                    <div style={{ display: 'flex', flex: 1, paddingRight: isMobile ? '0' : '0px', width: '100%' }}>
                                         {/* Like Button (Display Only) */}
-                                        <div className="like-icon" style={{
-                                            marginRight: '50px',
-                                            paddingRight: '15px',
-                                            borderRight: '1px solid #ddd',
-                                            marginTop: '5px',
-                                            display: 'flex',
-                                            flexDirection: 'row', // Horizontal
-                                            alignItems: 'center',
-                                            justifyContent: 'center', // Center content in fixed width
-                                            color: '#999',
-                                            minWidth: '100px', // Reserve space for 6 digits
-                                            gap: '8px' // Gap between icon and number
-                                        }}>
-                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 0 0 1-2-2v-7a2 0 0 1 2-2h3" />
-                                            </svg>
-                                            <span style={{ fontSize: '14px', fontWeight: '500' }}>{120 + news.id}</span>
-                                        </div>
+                                        {!isMobile &&
+                                            <div className="like-icon" style={{
+                                                marginRight: '50px',
+                                                paddingRight: '15px',
+                                                borderRight: '1px solid #ddd',
+                                                marginTop: '5px',
+                                                display: 'flex',
+                                                flexDirection: 'row', // Horizontal
+                                                alignItems: 'center',
+                                                justifyContent: 'center', // Center content in fixed width
+                                                color: '#999',
+                                                minWidth: '100px', // Reserve space for 6 digits
+                                                gap: '8px' // Gap between icon and number
+                                            }}>
+                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 0 0 1-2-2v-7a2 0 0 1 2-2h3" />
+                                                </svg>
+                                                <span style={{ fontSize: '14px', fontWeight: '500' }}>{120 + news.id}</span>
+                                            </div>
+                                        }
 
                                         {/* Text Info */}
                                         <div className="feed-info">
-                                            <h3 style={{ fontSize: '20px', fontWeight: 'bold', margin: '0 0 12px 0', lineHeight: '1.3' }}>{news.title}</h3>
+                                            <h3 style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: 'bold', margin: '0 0 12px 0', lineHeight: '1.3' }}>{news.title}</h3>
                                             <p style={{ fontSize: '15px', color: '#666', margin: 0, lineHeight: '1.6', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                                                 {news.content}
                                             </p>
@@ -244,7 +254,7 @@ const LivingCulturePage = () => {
                                     </div>
 
                                     {/* Image Right (Reduced Height: aspect-ratio 1.8/1) */}
-                                    <div className="feed-image" style={{ width: '312px', aspectRatio: '1.8/1', flexShrink: 0, overflow: 'hidden', borderRadius: '4px', marginLeft: '-20px' }}>
+                                    <div className="feed-image" style={{ width: isMobile ? '100%' : '312px', aspectRatio: isMobile ? '1.8/1' : '1.8/1', flexShrink: 0, overflow: 'hidden', borderRadius: '4px', marginLeft: isMobile ? '0' : '-20px' }}>
                                         <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                                     </div>
                                 </div>
