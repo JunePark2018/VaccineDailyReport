@@ -624,6 +624,7 @@
         font-size: 11px !important;
     }
 }
+
 /* Forced Layout Fix for List Section */
 .category-page .bottom-list-section {
     display: grid !important;
@@ -635,4 +636,9 @@
     .category-page .bottom-list-section {
         grid-template-columns: 1fr !important;
     }
+}
+
+/* Hover for grid items in society page */
+.category-page .grid-item-small:hover h3 {
+    text-decoration: underline !important;
 }

@@ -94,17 +94,20 @@ const EconomicsPage = () => {
         if (!blockArticles || blockArticles.length === 0) return null;
 
         const mainArticle = blockArticles[0];
-        const gridArticles = blockArticles.slice(1, 7); // Fetch 6 items for 3-col x 2-row grid
+
+        // Ensure subsequent sections DO NOT contain the Main article
+        const remainingArticles = blockArticles.slice(1).filter(art => art.id !== mainArticle.id);
+        const gridArticles = remainingArticles.slice(0, 6); // Fetch 6 items for 3-col x 2-row grid
 
         // Mock Related Articles (2 per grid item)
-        const listArticles = blockArticles.slice(7, 15); // 8 items
+        const listArticles = remainingArticles.slice(6, 14); // 8 items
 
         // Feed Logic
         // Feed Logic
         const allFeedArticles = blockArticles; // Show ALL articles in Feed
         const feedPageSize = 5;
-        const totalFeedPages = Math.ceil(allFeedArticles.length / feedPageSize);
-        const currentFeedArticles = allFeedArticles.slice((feedPage - 1) * feedPageSize, feedPage * feedPageSize);
+        const totalFeedPages = Math.ceil(allFeedArticles.length / 5);
+        const currentFeedArticles = allFeedArticles.slice((feedPage - 1) * 5, feedPage * 5);
 
         const mainData = {
             id: mainArticle?.id,
@@ -162,8 +165,8 @@ const EconomicsPage = () => {
 
                 {/* Grid Section (Previously Split) */}
                 <section className="bottom-grid-section" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '50px', textAlign: 'left' }}>
-                    {grid.map((news) => (
-                        <div key={news.id} className="grid-item-container" style={{ paddingBottom: '20px' }}>
+                    {grid.slice(0, 6).map((news, i) => (
+                        <div key={i} className="grid-item-container" style={{ paddingBottom: '20px' }}>
                             {/* Main Grid Item */}
                             <div className="grid-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '10px' }}>
                                 <div className="grid-image" style={{ width: '100%', aspectRatio: '1.5/1', border: '1px solid #eee', position: 'relative', overflow: 'hidden' }}>
@@ -179,7 +182,7 @@ const EconomicsPage = () => {
                             {/* Follow-up Articles (2 text links vertical) */}
                             <div className="related-articles" style={{ display: 'flex', flexDirection: 'column', gap: '5px', paddingLeft: '0', marginTop: '10px' }}>
                                 {news.related && news.related.map((rel, idx) => (
-                                    <div key={idx} onClick={() => navigate(`/article/${rel.id}`)} style={{ cursor: 'pointer', fontSize: '13px', color: '#444' }}>
+                                    <div key={idx} className="related-article-link" onClick={() => navigate(`/article/${rel.id}`)} style={{ cursor: 'pointer', fontSize: '13px', color: '#444' }}>
                                         • {rel.title || "Related Article Title Sample"}
                                     </div>
                                 ))}
@@ -193,8 +196,8 @@ const EconomicsPage = () => {
                     <>
                         <div className="section-divider"></div>
                         <section className="bottom-list-section" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', columnGap: '20px', rowGap: '30px', textAlign: 'left' }}>
-                            {list.map((news) => (
-                                <div key={news.id} className="list-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
+                            {list.slice(0, 8).map((news, i) => (
+                                <div key={i} className="list-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
                                     <div className="list-image" style={{ width: '120px', height: '76px', flexShrink: 0, border: '1px solid #eee', overflow: 'hidden' }}>
                                         <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                                     </div>
@@ -215,8 +218,8 @@ const EconomicsPage = () => {
                     <>
                         <div className="section-divider"></div>
                         <section className="bottom-feed-section" style={{ display: 'flex', flexDirection: 'column', gap: '30px', textAlign: 'left', marginTop: '30px', padding: '0 120px' }}>
-                            {feed.map((news) => (
-                                <div key={news.id} className="feed-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px', gap: '20px' }}>
+                            {feed.slice(0, 5).map((news, i) => (
+                                <div key={i} className="feed-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px', gap: '20px' }}>
 
                                     {/* Left Container: Like + Text */}
                                     <div style={{ display: 'flex', flex: 1, paddingRight: '0px' }}>
@@ -237,7 +240,7 @@ const EconomicsPage = () => {
                                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                 <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
                                             </svg>
-                                            <span style={{ fontSize: '14px', fontWeight: '500' }}>{120 + news.id}</span>
+                                            <span style={{ fontSize: '14px', fontWeight: '500' }}>{120 + (news.id || 0)}</span>
                                         </div>
 
                                         {/* Text Info */}

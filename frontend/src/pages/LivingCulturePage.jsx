@@ -104,14 +104,17 @@ const LivingCulturePage = () => {
         if (!blockArticles || blockArticles.length === 0) return null;
 
         const mainArticle = blockArticles[0];
-        const gridArticles = blockArticles.slice(1, 4); // 3 items (1 to 3)
+
+        // Ensure subsequent sections DO NOT contain the Main article
+        const remainingArticles = blockArticles.slice(1).filter(art => art.id !== mainArticle.id);
+        const gridArticles = remainingArticles.slice(0, 3); // 3 items
         // List removed
 
         // Feed Logic
-        const allFeedArticles = blockArticles; // Show ALL articles in Feed // 20 items (4 to 23)
+        const allFeedArticles = blockArticles; // Show ALL articles in Feed
         const feedPageSize = 5;
-        const totalFeedPages = Math.ceil(allFeedArticles.length / feedPageSize);
-        const currentFeedArticles = allFeedArticles.slice((feedPage - 1) * feedPageSize, feedPage * feedPageSize);
+        const totalFeedPages = Math.ceil(allFeedArticles.length / 5);
+        const currentFeedArticles = allFeedArticles.slice((feedPage - 1) * 5, feedPage * 5);
 
         const mainData = {
             id: mainArticle?.id,
@@ -218,37 +221,35 @@ const LivingCulturePage = () => {
                 {feed.length > 0 && (
                     <>
                         <div className="section-divider"></div>
-                        <section className="bottom-feed-section" style={{ display: 'flex', flexDirection: 'column', gap: '30px', textAlign: 'left', marginTop: '30px', padding: isMobile ? '0 20px' : '0 120px' }}>
-                            {feed.map((news) => (
-                                <div key={news.id} className="feed-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', flexDirection: isMobile ? 'column-reverse' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px', gap: '20px' }}>
+                        <section className="bottom-feed-section" style={{ display: 'flex', flexDirection: 'column', gap: '30px', textAlign: 'left', marginTop: '30px', padding: '0 120px' }}>
+                            {feed.slice(0, 5).map((news, i) => (
+                                <div key={i} className="feed-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px', gap: '20px' }}>
 
                                     {/* Left Container: Like + Text */}
-                                    <div style={{ display: 'flex', flex: 1, paddingRight: isMobile ? '0' : '0px', width: '100%' }}>
+                                    <div style={{ display: 'flex', flex: 1, paddingRight: '0px', width: '100%' }}>
                                         {/* Like Button (Display Only) */}
-                                        {!isMobile &&
-                                            <div className="like-icon" style={{
-                                                marginRight: '50px',
-                                                paddingRight: '15px',
-                                                borderRight: '1px solid #ddd',
-                                                marginTop: '5px',
-                                                display: 'flex',
-                                                flexDirection: 'row', // Horizontal
-                                                alignItems: 'center',
-                                                justifyContent: 'center', // Center content in fixed width
-                                                color: '#999',
-                                                minWidth: '100px', // Reserve space for 6 digits
-                                                gap: '8px' // Gap between icon and number
-                                            }}>
-                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 0 0 1-2-2v-7a2 0 0 1 2-2h3" />
-                                                </svg>
-                                                <span style={{ fontSize: '14px', fontWeight: '500' }}>{120 + news.id}</span>
-                                            </div>
-                                        }
+                                        <div className="like-icon" style={{
+                                            marginRight: '50px',
+                                            paddingRight: '15px',
+                                            borderRight: '1px solid #ddd',
+                                            marginTop: '5px',
+                                            display: 'flex',
+                                            flexDirection: 'row', // Horizontal
+                                            alignItems: 'center',
+                                            justifyContent: 'center', // Center content in fixed width
+                                            color: '#999',
+                                            minWidth: '100px', // Reserve space for 6 digits
+                                            gap: '8px' // Gap between icon and number
+                                        }}>
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 0 0 1-2-2v-7a2 0 0 1 2-2h3" />
+                                            </svg>
+                                            <span style={{ fontSize: '14px', fontWeight: '500' }}>{120 + (news.id || 0)}</span>
+                                        </div>
 
                                         {/* Text Info */}
                                         <div className="feed-info">
-                                            <h3 style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: 'bold', margin: '0 0 12px 0', lineHeight: '1.3' }}>{news.title}</h3>
+                                            <h3 style={{ fontSize: '20px', fontWeight: 'bold', margin: '0 0 12px 0', lineHeight: '1.3' }}>{news.title}</h3>
                                             <p style={{ fontSize: '15px', color: '#666', margin: 0, lineHeight: '1.6', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                                                 {news.content}
                                             </p>
@@ -256,7 +257,7 @@ const LivingCulturePage = () => {
                                     </div>
 
                                     {/* Image Right (Reduced Height: aspect-ratio 1.8/1) */}
-                                    <div className="feed-image" style={{ width: isMobile ? '100%' : '312px', aspectRatio: isMobile ? '1.8/1' : '1.8/1', flexShrink: 0, overflow: 'hidden', borderRadius: '4px' }}>
+                                    <div className="feed-image" style={{ width: '312px', aspectRatio: '1.8/1', flexShrink: 0, overflow: 'hidden', borderRadius: '4px' }}>
                                         <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                                     </div>
                                 </div>

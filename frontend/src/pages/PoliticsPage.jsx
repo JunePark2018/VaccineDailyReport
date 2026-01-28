@@ -98,14 +98,19 @@ const PoliticsPage = () => {
         if (!blockArticles || blockArticles.length === 0) return null;
 
         const slideArticles = blockArticles.slice(0, 4); // Top 4 for Slideshow
-        const gridArticles = blockArticles.slice(4, 8); // Next 4 for Grid (4 cols)
-        const listArticles = blockArticles.slice(8, 16); // Next 8 for List (unused but defined for safety)
+
+        // Ensure Grid articles DO NOT duplicate any Slide articles
+        const slideIds = new Set(slideArticles.map(a => a.id));
+        const remainingArticles = blockArticles.slice(4).filter(art => !slideIds.has(art.id));
+
+        const gridArticles = remainingArticles.slice(0, 4); // Next 4 for Grid
+        const listArticles = remainingArticles.slice(4, 12); // Next 8 for List
 
         // Feed Logic
         const allFeedArticles = blockArticles; // Show ALL articles in Feed
         const feedPageSize = 5;
-        const totalFeedPages = Math.ceil(allFeedArticles.length / feedPageSize);
-        const currentFeedArticles = allFeedArticles.slice((feedPage - 1) * feedPageSize, feedPage * feedPageSize);
+        const totalFeedPages = Math.ceil(allFeedArticles.length / 5);
+        const currentFeedArticles = allFeedArticles.slice((feedPage - 1) * 5, feedPage * 5);
 
         // Slideshow Data Preparation
         const slideData = slideArticles.map((art, i) => ({
@@ -148,11 +153,11 @@ const PoliticsPage = () => {
 
                     {/* Left Column: Interactive List (4 Items) */}
                     <div className="politics-content-side" style={{ flex: 1.4, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                        {slideData.map((item, idx) => {
+                        {slideData.slice(0, 4).map((item, idx) => {
                             const isActive = idx === topFocusIndex;
                             return (
                                 <div
-                                    key={item.id || idx}
+                                    key={idx}
                                     className={`politics-slide-item ${isActive ? 'active' : ''}`}
                                     onClick={() => setTopFocusIndex(idx)}
                                     style={{
@@ -228,8 +233,8 @@ const PoliticsPage = () => {
                     <>
                         <div className="section-divider"></div>
                         <section className="bottom-feed-section" style={{ display: 'flex', flexDirection: 'column', gap: '30px', textAlign: 'left', marginTop: '30px', padding: '0 120px' }}>
-                            {feed.map((news) => (
-                                <div key={news.id} className="feed-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px', gap: '20px' }}>
+                            {feed.slice(0, 5).map((news, i) => (
+                                <div key={i} className="feed-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px', gap: '20px' }}>
 
                                     {/* Left Container: Like + Text */}
                                     <div style={{ display: 'flex', flex: 1, paddingRight: '0px' }}>
@@ -248,9 +253,9 @@ const PoliticsPage = () => {
                                             gap: '8px' // Gap between icon and number
                                         }}>
                                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 0 0 1-2-2v-7a2 0 0 1 2-2h3" />
+                                                <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
                                             </svg>
-                                            <span style={{ fontSize: '14px', fontWeight: '500' }}>{120 + news.id}</span>
+                                            <span style={{ fontSize: '14px', fontWeight: '500' }}>{120 + (news.id || 0)}</span>
                                         </div>
 
                                         {/* Text Info */}
