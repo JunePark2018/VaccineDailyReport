@@ -9,7 +9,7 @@ import './NewsText.css';
  * - contents: 기사 본문 (긴 텍스트)
  * - onSentenceClick: 문장 클릭 시 실행할 부모 함수 [핵심!]
  */
-const NewsText = ({ title, contents, onSentenceClick }) => {
+const NewsText = ({ contents, onSentenceClick }) => {
 
   // [내부 함수] 문장 클릭 시 실행될 로직
   const handleSentenceClick = (sentence) => {
@@ -74,8 +74,7 @@ const NewsText = ({ title, contents, onSentenceClick }) => {
 
   return (
     <div className="NewsText">
-      <h1 className="news-title">{title}</h1>
-      <hr className="news-divider" />
+      {/* 제목 및 구분선은 부모 컴포넌트(ArticlePage)에서 렌더링하도록 변경됨 */}
       <div className="news-body">
         {formatContent(contents)}
       </div>

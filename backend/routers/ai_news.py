@@ -419,3 +419,135 @@ def get_related_news(generated_news_id: int, limit: int = 3, db: Session = Depen
         )
 
     return response_data
+
+
+class ClaimEvidenceRequest(BaseModel):
+    cluster_id: int
+    claim_text: str
+    target_media: List[str]  # e.g., ["조선일보", "한겨레"]
+
+
+@router.post("/claim-evidence")
+def check_claim_evidence(req: ClaimEvidenceRequest, db: Session = Depends(get_db)):
+    """
+    [Fact-Check Agent]
+    비교분석 문장(Claim)과 대상 언론사들이 주어졌을 때,
+    각 언론사의 실제 기사에서 해당 주장을 뒷받침하는 가장 유사한 '문단(Paragraph)'을 찾습니다.
+    (사용자 요청: 문장보다는 문맥이 있는 문단 단위가 낫다)
+    """
+    from database.vector_store import encode_texts
+    from sklearn.metrics.pairwise import cosine_similarity
+    import numpy as np
+
+    # 1. 원본 기사 가져오기
+    original_news_list = crud.get_original_news_details_by_cluster(db, req.cluster_id)
+    if not original_news_list:
+        return {"match_found": False, "message": "원본 기사가 없습니다."}
+
+    # 2. 대상 언론사 필터링 & 후보군(문장) 생성
+    candidates = []
+    target_media_set = set(req.target_media)
+
+    def is_target_media(company_name):
+        if not target_media_set:
+            return True
+        for target in target_media_set:
+            if target in company_name:
+                return True
+        return False
+
+    for news in original_news_list:
+        company = news["company_name"]
+        if not is_target_media(company):
+            continue
+
+        raw_contents = str(news["contents"] or "")
+        # [변경] 다시 문장 단위로 변경 (사용자 요청: 문단은 너무 길다)
+        sentences_raw = split_sentences_positions(raw_contents)
+
+        # 인덱스 추적을 위해 리스트업
+        for i, s in enumerate(sentences_raw):
+            if len(s) < 10:  # 너무 짧은 문장 제외
+                continue
+
+            candidates.append(
+                {
+                    "text": s,
+                    "doc_title": news["title"],
+                    "company": company,
+                    "url": news["url"],
+                    "news_id": news.get("news_id"),
+                    "index": i,
+                    "total_len": len(sentences_raw),
+                    "context_prev": sentences_raw[i - 1] if i > 0 else None,
+                    "context_next": sentences_raw[i + 1] if i < len(sentences_raw) - 1 else None,
+                }
+            )
+
+    if not candidates:
+        return {"match_found": False, "message": "해당 언론사의 기사 내용을 찾을 수 없습니다."}
+
+    # 3. 임베딩 & 유사도 계산
+    all_texts = [req.claim_text] + [c["text"] for c in candidates]
+    embeddings = encode_texts(all_texts)
+
+    target_vec = embeddings[0].reshape(1, -1)
+    candidate_vecs = embeddings[1:]
+
+    sim_scores = cosine_similarity(target_vec, candidate_vecs)[0]
+
+    # 임시 저장소: (score, candidate)
+    scored_candidates = []
+    for idx, score in enumerate(sim_scores):
+        if score < 0.35:
+            continue
+        scored_candidates.append((score, candidates[idx]))
+
+    # 언론사별 최고 점수 찾기
+    best_per_company = {}
+
+    for score, cand in scored_candidates:
+        company = cand["company"]
+        if company not in best_per_company or score > best_per_company[company]["score"]:
+            best_per_company[company] = {"score": score, "cand": cand}
+
+    # 4. 문맥 병합 (Context Merging)
+    results = []
+    for company, item in best_per_company.items():
+        score = item["score"]
+        cand = item["cand"]
+
+        final_text = cand["text"]
+
+        # 앞/뒤 문장 단순 병합 (문맥상 중요할 확률 높음)
+        # 로직: 단순히 앞뒤 문장을 붙여서 보여줌으로서 '흐름'을 제공
+        # 단, 너무 길어지지 않게 체크
+
+        prev_text = cand["context_prev"] or ""
+        next_text = cand["context_next"] or ""
+
+        # 앞 문장이 있고, 너무 길지 않으면 추가 (문맥 연결)
+        if prev_text and len(prev_text) < 100:
+            final_text = prev_text + " " + final_text
+
+        # 뒷 문장이 있고, 너무 길지 않으면 추가
+        if next_text and len(next_text) < 100:
+            final_text = final_text + " " + next_text
+
+        # ... 처리
+        if cand["index"] > 1:  # prev를 썼더라도 그 앞이 더 있으면
+            final_text = "... " + final_text
+        if cand["index"] < cand["total_len"] - 2:
+            final_text = final_text + " ..."
+
+        results.append(
+            {
+                "score": round(float(score) * 100, 1),
+                "text": final_text,
+                "title": cand["doc_title"],
+                "url": cand["url"],
+                "company": company,
+            }
+        )
+
+    return {"match_found": len(results) > 0, "evidence": results}
