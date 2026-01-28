@@ -14,7 +14,7 @@ import SubscribedKeywords from '../components/SubscribedKeywords';
 import './MyPage.css';
 
 // MOCK_USER_DATA 제거
-
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 const MyPage = () => {
   const { login_id } = useParams();
   const [loading, setLoading] = useState(true);
@@ -31,7 +31,7 @@ const MyPage = () => {
           setLoading(false);
           return;
         }
-        const response = await axios.get(`http://localhost:8000/users/${login_id}/dashboard`);
+        const response = await axios.get(`${API_BASE_URL}/users/${login_id}/dashboard`);
         setUserData(response.data);
       } catch (error) {
         console.error("데이터 로딩 실패:", error);

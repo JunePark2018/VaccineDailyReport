@@ -12,6 +12,7 @@ import './Main.css';
 
 import axios from 'axios'; // axios imported
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 export const Main = () => {
   const { name } = useParams();
   const navigate = useNavigate();
@@ -39,7 +40,7 @@ export const Main = () => {
     const loadData = async () => {
       try {
         // 1. Fetch AI Generated News (Limit 50 for main page coverage)
-        const response = await axios.get('http://localhost:8000/generated-news?limit=100'); // Fetch enough to cover all sections
+        const response = await axios.get(`${API_BASE_URL}/generated-news?limit=100`); // Fetch enough to cover all sections
         const realArticles = response.data;
 
         // 2. Map Backend Data to Frontend Structure
@@ -64,7 +65,7 @@ export const Main = () => {
         const loginId = localStorage.getItem('login_id');
         if (loginId) {
           try {
-            const userRes = await axios.get(`http://localhost:8000/users/${loginId}/dashboard`);
+            const userRes = await axios.get(`${API_BASE_URL}/users/${loginId}/dashboard`);
             const subKeywords = userRes.data.subscribed_keywords || [];
 
             if (subKeywords.length > 0) {
@@ -106,7 +107,7 @@ export const Main = () => {
         // Use Promise.allSettled to fetch images/details in parallel
         await Promise.allSettled(filtered.map(async (art) => {
           try {
-            const imgRes = await axios.get(`http://localhost:8000/generated-news/clusters/${art.cluster_id}/news`);
+            const imgRes = await axios.get(`${API_BASE_URL}/generated-news/clusters/${art.cluster_id}/news`);
             const newsList = imgRes.data;
 
             // Store detailed news list for highlights

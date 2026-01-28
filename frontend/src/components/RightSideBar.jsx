@@ -3,6 +3,7 @@ import './RightSideBar.css';
 
 import axios from 'axios'; // axios 임포트 확인
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 export default function RightSideBar({ isOpen, onClose, searchKeyword, clusterId }) {
   const [isLoading, setIsLoading] = useState(false);
   const [sourceList, setSourceList] = useState(null);
@@ -43,7 +44,7 @@ export default function RightSideBar({ isOpen, onClose, searchKeyword, clusterId
           // 2. 문장이 선택 안 된 경우 -> 기존 로직 (단순 기사 목록)
           else {
             console.log(`[RightSideBar] Fetching news for cluster: ${clusterId}`);
-            const response = await axios.get(`http://localhost:8000/generated-news/clusters/${clusterId}/news`);
+            const response = await axios.get(`${API_BASE_URL}/generated-news/clusters/${clusterId}/news`);
 
             const mappedData = response.data.map(item => ({
               id: item.news_id, // crud update 반영
@@ -55,7 +56,6 @@ export default function RightSideBar({ isOpen, onClose, searchKeyword, clusterId
             }));
             setSourceList(mappedData);
           }
-
         } catch (error) {
           console.error("Failed to fetch sidebar articles:", error);
           setSourceList([]);

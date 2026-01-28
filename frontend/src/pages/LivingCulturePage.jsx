@@ -8,6 +8,7 @@ import Searchbar from '../components/Searchbar';
 import UserMenu from '../components/UserMenu';
 import './LivingCulturePage.css';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 const LivingCulturePage = () => {
     const name = '생활/문화';
     const navigate = useNavigate();
@@ -33,7 +34,7 @@ const LivingCulturePage = () => {
         const loadData = async () => {
             try {
                 // 1. Fetch AI Generated News
-                const response = await axios.get('http://localhost:8000/generated-news?limit=100');
+                const response = await axios.get(`${API_BASE_URL}/generated-news?limit=100`);
                 const realArticles = response.data;
 
                 // 2. Map Backend Data to Frontend Structure
@@ -66,7 +67,7 @@ const LivingCulturePage = () => {
 
                     await Promise.allSettled(uniqueClusters.map(async (clusterId) => {
                         try {
-                            const imgRes = await axios.get(`http://localhost:8000/generated-news/clusters/${clusterId}/news`);
+                            const imgRes = await axios.get(`${API_BASE_URL}/generated-news/clusters/${clusterId}/news`);
                             const newsList = imgRes.data;
                             const allImgUrls = newsList.flatMap(news => news.img_urls ?? []).filter(Boolean);
 

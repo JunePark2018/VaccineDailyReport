@@ -167,9 +167,11 @@ app = FastAPI(lifespan=lifespan)
 #             프론트-백 FastAPI 연결
 from fastapi.middleware.cors import CORSMiddleware
 
+#서버목록
 origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://158.179.164.153:3000",
 ]
 
 app.add_middleware(

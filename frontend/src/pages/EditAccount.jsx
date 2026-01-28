@@ -8,6 +8,7 @@ import { categories as categoryData } from '../components/categoryIcon/categoryD
 import './EditAccount.css';
 import axios from 'axios';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 export default function EditAccount() {
     const navigate = useNavigate();
 
@@ -40,7 +41,7 @@ export default function EditAccount() {
             }
 
             try {
-                const response = await axios.get(`http://localhost:8000/users/${login_id}`);
+                const response = await axios.get(`${API_BASE_URL}/users/${login_id}`);
                 const data = response.data;
 
                 setFormData({
@@ -191,7 +192,7 @@ export default function EditAccount() {
             }
 
             try {
-                await axios.put(`http://localhost:8000/users/${formData.loginId}`, submitData);
+                await axios.put(`${API_BASE_URL}/users/${formData.loginId}`, submitData);
                 alert("회원 정보가 수정되었습니다.");
                 navigate('/mypage'); // URL parameter 없이 이동하면, MyPage가 localStorage에서 ID를 읽어야 함.
                 // MyPage.jsx를 확인해보니 useParams를 씀 (<Route path='/mypage/:login_id' />)

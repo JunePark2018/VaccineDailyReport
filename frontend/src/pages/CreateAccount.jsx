@@ -7,6 +7,7 @@ import UserMenu from '../components/UserMenu';
 import { categories as categoryData } from '../components/categoryIcon/categoryData';
 import './CreateAccount.css';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 export default function CreateAccount() {
     const navigate = useNavigate();
 
@@ -176,7 +177,7 @@ export default function CreateAccount() {
                 console.log("Sending signup request:", submitData);
 
                 // POST request to backend
-                const response = await fetch('http://localhost:8000/users', {
+                const response = await fetch(`${API_BASE_URL}/users`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
