@@ -3,141 +3,135 @@
     flex-direction: column;
     height: 100vh;
     width: 100vw;
+    background-color: #f9f9f9;
+    /* Slight background color for contrast */
 }
 
-.Login .Login_total {
+/* Wrapper to center the login box in the remaining height */
+.Login .Login_container_wrapper {
     flex: 1;
     display: flex;
-    flex-direction: column;
-    align-items: center;
     justify-content: center;
-    width: 400px;
-    margin: 0 auto;
-    text-align: center;
-}
-
-.Login .id_box,
-.Login .pw_box {
-    width: 300px;
-    height: 40px;
-    padding-left: 10px;
-    border: 1.5px solid rgba(0, 0, 0, 0.2);
-    margin-bottom: 10px;
-    box-sizing: border-box;
-}
-
-.Login .button_wrapper {
-    display: flex;
-    width: 300px;
-    gap: 10px;
-    margin-top: 10px;
-}
-
-.Login .button_wrapper>div {
-    flex: 1;
-}
-
-.Login {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    width: 100vw;
-}
-
-.Login .Login_Logo {
-    margin-top: 80px;
-    padding: 50px;
-    padding-left: 30px;
+    align-items: center;
+    padding-bottom: 80px;
+    /* Slight offset upwards */
 }
 
 .Login .Login_main_box {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 40px;
-    border: 0.5px solid rgb(221, 221, 221);
-    width: 450px;
-    margin: 0 auto;
+    padding: 50px 40px;
+    border: 1px solid #ddd;
+    background-color: #fff;
+    width: 420px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    /* Square corners */
+    border-radius: 0;
+}
+
+.Login .login-title {
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 30px;
+    color: #333;
 }
 
 .Login .Login_total {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 400px;
-    margin: 0 auto;
-    text-align: center;
-    padding-top: 30px;
-}
-
-.Login .signup_text {
-    width: 350px;
-    margin: 0 auto;
-    padding-bottom: 30px;
-}
-
-.line {
-    display: flex;
-    align-items: center;
-    margin: 20px 0;
-    color: #888;
-    font-size: 14px;
-}
-
-.line_01 {
-    flex: 1;
-    height: 1px;
-    background-color: #ddd;
-}
-
-.line_text {
-    margin: 0 10px;
-}
-
-.Button {
     width: 100%;
+}
+
+/* Input Group (Naver Style) */
+.Login .login-input-group {
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background-color: #fff;
+    overflow: hidden;
     margin-bottom: 10px;
 }
 
+.Login .input_row {
+    width: 100%;
+    height: 50px;
+}
+
+.Login .input_row.top {
+    border-bottom: 1px solid #eee;
+}
 
 .Login .id_box,
 .Login .pw_box {
+    width: 100%;
+    height: 100%;
+    padding: 0 15px;
     font-size: 15px;
-    width: 350px;
-    height: 55px;
-    padding-left: 0px;
-    padding-top: 15px;
     border: none;
-    border-bottom: 1.5px solid rgba(0, 0, 0, 0.2);
-    transition: border-bottom 0.3s ease;
-    box-sizing: border-box;
     outline: none;
+    box-sizing: border-box;
+    display: block;
 }
 
-/* placeholder 숨김 처리 (focus 시) */
-.Login .id_box:focus::placeholder,
-.Login .pw_box:focus::placeholder {
-    color: transparent;
-}
-
-/* hover 및 focus 시 bottom line 굵게 */
-.Login .id_box:hover,
-.Login .pw_box:hover,
+/* Focus effects for the group wrapper could be complex, keeping it simple for now */
 .Login .id_box:focus,
 .Login .pw_box:focus {
-    border-bottom: 1.5px solid black;
+    background-color: #fcfcfc;
 }
 
-.Login .button_wrapper {
+/* Error message style */
+.Login .error_login {
+    color: #cc0000;
+    font-size: 13px;
+    margin-bottom: 15px;
+    text-align: left;
+}
+
+/* Login Options (Stay Signed In) */
+.Login .login-options {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 350px;
-    margin: 90px auto 0;
-    gap: 10px;
+    justify-content: flex-end;
+    /* Right aligned like Naver often does, or Left */
+    margin-bottom: 20px;
+    width: 100%;
 }
 
-.Login .button_wrapper>div {
+.Login .stay-signed-in {
+    font-size: 14px;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}
+
+.Login .stay-signed-in input {
+    margin: 0;
+}
+
+/* Button Wrapper */
+.Login .button_wrapper {
     width: 100%;
+    margin-top: 10px;
+}
+
+/* Footer Links */
+.Login .login-footer-links {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    font-size: 13px;
+    color: #888;
+}
+
+.Login .login-footer-links span {
+    cursor: pointer;
+}
+
+.Login .login-footer-links .divider {
+    color: #ddd;
+    font-size: 12px;
+    cursor: default;
 }

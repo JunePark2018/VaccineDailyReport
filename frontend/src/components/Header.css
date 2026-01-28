@@ -11,10 +11,16 @@
     background-color: #0c0c0c;
     display: flex;
     align-items: center;
-    justify-content: center;
     border-bottom: 1px solid #eee;
     font-size: 12px;
     color: #dbd7d7;
+}
+
+/* Hide Hamburger on Desktop by default */
+.hamburger-icon,
+.mobile-side-menu,
+.mobile-side-menu-overlay {
+    display: none;
 }
 
 .Header-Container .header-top-content {
@@ -167,62 +173,201 @@
     /* Stack Header Main Content */
     .Header-Container .Header-Main {
         height: auto;
-        padding: 10px 15px;
+        padding: 5px 10px;
     }
 
+    /* GRID LAYOUT for Mobile Header: [Hamburger] [Logo] [Login] */
     .Header-Container .Header-Main .header-main-content {
-        flex-wrap: wrap;
-        gap: 10px;
+        display: grid;
+        grid-template-columns: 40px 1fr 40px;
+        /* Left | Center | Right */
+        align-items: center;
+        position: relative;
+        padding-bottom: 70px;
+        /* Space for searchbar */
+        min-height: 50px;
+        width: 100%;
+        justify-content: normal;
+        /* Override default */
     }
 
-    /* Logo - Top Left */
-    .Header-Container .Header-Main .left-child {
-        flex: 1 1 auto;
-        justify-content: center;
-        /* Center logo on mobile usually looks better, or keep left? Let's keep flex behavior */
-        order: 1;
-    }
-
-    /* Login/User - Top Right */
-    .Header-Container .Header-Main .right-child {
-        flex: 1 1 auto;
-        order: 2;
-    }
-
-    /* Search - Second Row, Full Width */
-    .Header-Container .Header-Main .mid-child {
-        flex: 1 1 100%;
-        order: 3;
-        margin-top: 5px;
-    }
-
-    /* Adjust Bottom Navigation for nice scrolling */
-    .Header-Container .Header-Bottom {
-        height: 50px;
-        /* Slightly taller for touch targets */
-        overflow-y: hidden;
-    }
-
-    .Header-Container .Header-Bottom .category-list {
+    /* 1. Hamburger Icon (Grid Column 1) */
+    .hamburger-icon {
+        display: flex;
+        align-items: center;
         justify-content: flex-start;
-        /* Align left to allow scrolling start */
-        padding-left: 10px;
-        padding-right: 10px;
-        gap: 15px;
-        /* Hide scrollbar aesthetics if possible */
-        -ms-overflow-style: none;
-        /* IE and Edge */
-        scrollbar-width: none;
-        /* Firefox */
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+        position: relative;
+        z-index: 100;
+        margin: 0;
+        padding-left: 5px;
     }
 
-    .Header-Container .Header-Bottom .category-list::-webkit-scrollbar {
+    /* 2. Logo (Grid Column 2) */
+    .Header-Container .Header-Main .left-child {
+        grid-column: 2;
+        position: relative;
+        left: auto;
+        top: auto;
+        right: auto;
+        bottom: auto;
+        transform: scale(0.7);
+        /* Scale only */
+        transform-origin: center center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        z-index: 10;
+        margin: 0;
+    }
+
+    /* 3. Login/User (Grid Column 3) */
+    .Header-Container .Header-Main .right-child {
+        grid-column: 3;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        position: static;
+        /* IMPORTANT: Static so child absolute looks to parent */
+        margin: 0;
+        padding: 0;
+        z-index: 101;
+        width: 100%;
+    }
+
+    /* Ensure internal flex wrapper is also static */
+    .Header-Container .Header-Main .right-child>div {
+        position: static;
+        width: auto;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    /* Reset internal positioning for UserMenu container */
+    .Header-Container .Header-Main .right-child .user-menu-container {
+        position: relative !important;
+        right: auto;
+        top: auto;
+        z-index: 101;
+    }
+
+    /* Mid Child is Empty (Hidden/Collapsed) */
+    .Header-Container .Header-Main .mid-child {
         display: none;
     }
 
-    .Header-Container .Header-Bottom .category-item {
-        flex: 0 0 auto;
-        /* Don't shrink */
-        min-width: 60px;
+    /* Searchbar Wrapper - Absolute Bottom of Main Content */
+    /* Targeting: right-child > flex div > wrapper div > Searchbar */
+    .Header-Container .Header-Main .right-child>div>div {
+        position: absolute !important;
+        bottom: 0px;
+        left: 0;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        height: 40px;
+        z-index: 50;
+    }
+
+    /* Force Searchbar to fill the width on mobile */
+    .Searchbar.always-open .search-box {
+        width: 100% !important;
+        max-width: none !important;
+        position: relative;
+        right: auto !important;
+        top: auto !important;
+    }
+
+    .Searchbar {
+        width: 100% !important;
+        justify-content: center !important;
+        padding: 0 10px;
+    }
+
+    /* Ensure Bottom Nav scrolls nicely - HIDDEN ON MOBILE NOW */
+    .Header-Container .Header-Bottom {
+        display: none;
+    }
+
+    /* Mobile Menu Styles */
+    .mobile-side-menu-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 998;
+        display: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .mobile-side-menu-overlay.open {
+        display: block;
+        opacity: 1;
+    }
+
+    .mobile-side-menu {
+        position: fixed;
+        top: 0;
+        left: -280px;
+        width: 250px;
+        height: 100vh;
+        background-color: white;
+        z-index: 999;
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+        transition: left 0.3s ease;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .mobile-side-menu.open {
+        left: 0;
+    }
+
+    .mobile-menu-header {
+        height: 50px;
+        background-color: #000;
+        border-bottom: 1px solid #333;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 0 15px;
+    }
+
+    .close-btn {
+        font-size: 28px;
+        color: #fff;
+        cursor: pointer;
+        line-height: 1;
+    }
+
+    .mobile-menu-list {
+        display: flex;
+        flex-direction: column;
+        padding: 10px 0;
+    }
+
+    .mobile-menu-item {
+        padding: 15px 20px;
+        font-size: 16px;
+        font-weight: 500;
+        color: #333;
+        border-bottom: 1px solid #f9f9f9;
+        cursor: pointer;
+    }
+
+    .mobile-menu-item:hover {
+        background-color: #f5f5f5;
+    }
+
+    .mobile-menu-item.active {
+        color: #000;
+        font-weight: 700;
+        background-color: #f0f0f0;
     }
 }

@@ -72,3 +72,23 @@
 .user-menu-container .menu-item:hover {
   background-color: #f1f1f1;
 }
+
+/* Mobile Responsive */
+@media screen and (max-width: 768px) {
+  .user-menu-container .user-icon-box {
+    border: none;
+    background-color: transparent;
+    width: auto;
+    height: auto;
+  }
+
+  .user-menu-container .user-icon {
+    width: 28px;
+    height: 28px;
+    /* Slightly larger icon on mobile since box is gone */
+  }
+
+  .user-menu-container .user-name {
+    display: none !important;
+  }
+}
