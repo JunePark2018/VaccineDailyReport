@@ -326,7 +326,7 @@
 
 /* Hover Effects for Titles */
 .politics-title-side:hover h2,
-.main-article-section:hover h2 {
+.category-page .main-article-section:hover h2 {
     text-decoration: underline;
 }
 
@@ -598,4 +598,9 @@
         height: 28px !important;
         font-size: 11px !important;
     }
+}
+
+/* Hover for slide items in politics page */
+.category-page .politics-slide-item:hover h2 {
+    text-decoration: underline !important;
 }

@@ -95,14 +95,19 @@ const WorldPage = () => {
         if (!blockArticles || blockArticles.length === 0) return null;
 
         const mainArticle = blockArticles[0];
-        const gridArticles = blockArticles.slice(1, 3);
-        const listArticles = blockArticles.slice(3, 11);
+
+        // Ensure Grid articles DO NOT contain the Main article
+        const remainingArticles = blockArticles.slice(1).filter(art => art.id !== mainArticle.id);
+        const gridArticles = remainingArticles.slice(0, 2);
+
+        // List takes the next available articles
+        const listArticles = remainingArticles.slice(2, 10);
 
         // Feed Logic
         const allFeedArticles = blockArticles; // Show ALL articles in Feed
         const feedPageSize = 5;
-        const totalFeedPages = Math.ceil(allFeedArticles.length / feedPageSize);
-        const currentFeedArticles = allFeedArticles.slice((feedPage - 1) * feedPageSize, feedPage * feedPageSize);
+        const totalFeedPages = Math.ceil(allFeedArticles.length / 5);
+        const currentFeedArticles = allFeedArticles.slice((feedPage - 1) * 5, feedPage * 5);
 
         const mainData = {
             id: mainArticle?.id,
@@ -159,8 +164,8 @@ const WorldPage = () => {
                 {grid.length > 0 && (
                     <>
                         <section className="bottom-grid-section" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '40px', marginBottom: '50px', textAlign: 'left' }}>
-                            {grid.map((news, idx) => (
-                                <div key={`${news.id}-${idx}`} className="grid-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            {grid.slice(0, 2).map((news, i) => (
+                                <div key={i} className="grid-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                     <div className="grid-image" style={{ width: '100%', aspectRatio: '1.5/1', border: '1px solid #eee', position: 'relative', overflow: 'hidden' }}>
                                         <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                                     </div>
@@ -203,8 +208,8 @@ const WorldPage = () => {
                     <>
                         <div className="section-divider"></div>
                         <section className="bottom-feed-section" style={{ display: 'flex', flexDirection: 'column', gap: '30px', textAlign: 'left', marginTop: '30px', padding: '0 120px' }}>
-                            {feed.map((news, idx) => (
-                                <div key={`${news.id}-${idx}`} className="feed-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px', gap: '20px' }}>
+                            {feed.slice(0, 5).map((news, i) => (
+                                <div key={i} className="feed-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px', gap: '20px' }}>
 
                                     {/* Left Container: Like + Text */}
                                     <div style={{ display: 'flex', flex: 1, paddingRight: '0px' }}>
@@ -223,9 +228,9 @@ const WorldPage = () => {
                                             gap: '8px' // Gap between icon and number
                                         }}>
                                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 0 0 1 2-2h3" />
+                                                <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
                                             </svg>
-                                            <span style={{ fontSize: '14px', fontWeight: '500' }}>{120 + news.id}</span>
+                                            <span style={{ fontSize: '14px', fontWeight: '500' }}>{120 + (news.id || 0)}</span>
                                         </div>
 
                                         {/* Text Info */}
