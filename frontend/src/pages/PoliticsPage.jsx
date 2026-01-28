@@ -152,7 +152,7 @@ const PoliticsPage = () => {
                             const isActive = idx === topFocusIndex;
                             return (
                                 <div
-                                    key={item.id || idx}
+                                    key={`${item.id}-${idx}`}
                                     className={`politics-slide-item ${isActive ? 'active' : ''}`}
                                     onClick={() => setTopFocusIndex(idx)}
                                     style={{
@@ -228,8 +228,8 @@ const PoliticsPage = () => {
                     <>
                         <div className="section-divider"></div>
                         <section className="bottom-feed-section" style={{ display: 'flex', flexDirection: 'column', gap: '30px', textAlign: 'left', marginTop: '30px', padding: '0 120px' }}>
-                            {feed.map((news) => (
-                                <div key={news.id} className="feed-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px', gap: '20px' }}>
+                            {feed.map((news, idx) => (
+                                <div key={`${news.id}-${idx}`} className="feed-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px', gap: '20px' }}>
 
                                     {/* Left Container: Like + Text */}
                                     <div style={{ display: 'flex', flex: 1, paddingRight: '0px' }}>

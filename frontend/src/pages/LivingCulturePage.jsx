@@ -167,8 +167,8 @@ const LivingCulturePage = () => {
                     {grid.length > 0 && (
                         <>
                             <section className="bottom-grid-section" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? '20px' : '40px', marginBottom: '50px', textAlign: 'left' }}>
-                                {grid.map((news) => (
-                                    <div key={news.id} className="grid-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', position: 'relative', overflow: 'hidden', borderRadius: '4px' }}>
+                                {grid.map((news, idx) => (
+                                    <div key={`${news.id}-${idx}`} className="grid-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', position: 'relative', overflow: 'hidden', borderRadius: '4px' }}>
                                         {/* Image Container (Vertical Aspect Ratio 3:4) */}
                                         <div className="grid-image" style={{ width: '100%', aspectRatio: isMobile ? '2/1' : '3/4', position: 'relative', border: 'none' }}>
                                             <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
@@ -219,8 +219,8 @@ const LivingCulturePage = () => {
                     <>
                         <div className="section-divider"></div>
                         <section className="bottom-feed-section" style={{ display: 'flex', flexDirection: 'column', gap: '30px', textAlign: 'left', marginTop: '30px', padding: isMobile ? '0 20px' : '0 120px' }}>
-                            {feed.map((news) => (
-                                <div key={news.id} className="feed-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', flexDirection: isMobile ? 'column-reverse' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px', gap: '20px' }}>
+                            {feed.map((news, idx) => (
+                                <div key={`${news.id}-${idx}`} className="feed-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', flexDirection: isMobile ? 'column-reverse' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px', gap: '20px' }}>
 
                                     {/* Left Container: Like + Text */}
                                     <div style={{ display: 'flex', flex: 1, paddingRight: isMobile ? '0' : '0px', width: '100%' }}>

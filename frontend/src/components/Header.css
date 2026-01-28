@@ -25,7 +25,7 @@
 
 .Header-Container .header-top-content {
     width: 100%;
-    max-width: 1320px;
+    /* max-width: 1320px;  <-- Removed to allow full width per user request */
     display: flex;
     justify-content: space-between;
     padding: 0 20px;
