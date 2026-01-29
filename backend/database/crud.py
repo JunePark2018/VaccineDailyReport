@@ -420,6 +420,28 @@ def get_user_by_login_id(db: Session, login_id: str) -> Optional[User]:
     return result
 
 
+def delete_user_account(db: Session, *, user_id: int) -> bool:
+    """
+    사용자 계정을 완전히 삭제합니다.
+    cascade delete로 관련된 모든 데이터도 함께 삭제됩니다:
+    - UserKeywordReadStat
+    - NewsView
+    - NewsReaction
+    - SearchLog
+    - UserKeywordSubscription
+    - user_category_subscriptions (M:N)
+    
+    Returns: True if user was deleted, False if user not found
+    """
+    user = db.get(User, user_id)
+    if not user:
+        return False
+    
+    db.delete(user)
+    db.flush()
+    return True
+
+
 def update_user_subscriptions(
     db: Session, user: User, new_categories: Optional[List[str]], new_keywords: Optional[List[str]]
 ) -> None:

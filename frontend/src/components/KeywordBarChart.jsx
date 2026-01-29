@@ -32,18 +32,27 @@ const KeywordBarChart = ({ readKeywords = {}, isActive, onReset }) => {
           <button
             onClick={onReset}
             style={{
-              padding: '6px 12px',
+              padding: '6px 14px',
               fontSize: '12px',
-              backgroundColor: '#ef4444',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
+              backgroundColor: 'transparent',
+              color: '#6b7280',
+              border: '1px solid #e5e7eb',
+              borderRadius: '6px',
               cursor: 'pointer',
-              fontWeight: '600',
-              transition: 'background-color 0.2s'
+              fontWeight: '500',
+              transition: 'all 0.2s ease',
+              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
             }}
-            onMouseOver={(e) => e.target.style.backgroundColor = '#dc2626'}
-            onMouseOut={(e) => e.target.style.backgroundColor = '#ef4444'}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = '#fef2f2';
+              e.target.style.borderColor = '#fca5a5';
+              e.target.style.color = '#dc2626';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = 'transparent';
+              e.target.style.borderColor = '#e5e7eb';
+              e.target.style.color = '#6b7280';
+            }}
           >
             초기화
           </button>
