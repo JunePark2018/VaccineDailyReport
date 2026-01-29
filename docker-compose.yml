@@ -1,23 +1,23 @@
-version: '3.8'
+version: "3.8"
 
 services:
-  # 1. 데이터베이스: PostgreSQL
+  # 1. PostgreSQL
   postgres:
     image: postgres:15-alpine
     container_name: finalproject_postgres
     restart: always
     environment:
-      - POSTGRES_USER=${POSTGRES_USER:-myuser}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-mypassword}
-      - POSTGRES_DB=${POSTGRES_DB:-mydb}
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
-    volumes:
-      - ./postgres_data:/var/lib/postgresql/data
     networks:
       - finalproject_network
 
-  # 2. DB 관리 도구: Adminer
+  # 2. Adminer
   adminer:
     image: adminer
     container_name: finalproject_adminer
@@ -29,15 +29,13 @@ services:
     networks:
       - finalproject_network
 
-  # 3. 백엔드: FastAPI
+  # 3. Backend (FastAPI)
   backend:
     build: ./backend
     container_name: finalproject_backend
     restart: always
-    env_file:
-      - ./backend/.env
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-myuser}:${POSTGRES_PASSWORD:-mypassword}@postgres:5432/${POSTGRES_DB:-mydb}
+      DATABASE_URL: postgresql://myuser:mypassword@postgres:5432/mydb
     ports:
       - "8081:8000"
     depends_on:
@@ -45,12 +43,12 @@ services:
     networks:
       - finalproject_network
 
-  # 4. 프론트엔드: Nginx (빌드 시 IP 주입)
+  # 4. Frontend (React + Nginx)
   frontend:
-    build: 
+    build:
       context: ./frontend
       args:
-        - NEXT_PUBLIC_API_URL=http://168.107.51.224:8081
+        REACT_APP_API_URL: http://backend:8000
     container_name: finalproject_frontend
     restart: always
     ports:
@@ -62,7 +60,6 @@ services:
 
 networks:
   finalproject_network:
-    name: finalproject_network
     driver: bridge
 
 volumes:

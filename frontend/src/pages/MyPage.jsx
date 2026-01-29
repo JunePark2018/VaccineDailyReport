@@ -14,7 +14,7 @@ import SubscribedKeywords from '../components/SubscribedKeywords';
 import './MyPage.css';
 
 // MOCK_USER_DATA 제거
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 const MyPage = () => {
   const { login_id } = useParams();
   const [loading, setLoading] = useState(true);

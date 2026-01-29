@@ -7,7 +7,7 @@ import './AI_News_Recommendation.css';
 // 이 컴포넌트는 현재 보고 있는 AI 기사와 연관된(키워드가 유사한) 다른 기사 3개를 추천해줍니다.
 // This component recommends 3 other articles related (similar keywords) to the current AI article being viewed.
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 const AI_News_Recommendation = ({ articleId, number_of_article = 3 }) => {
     const [recommendations, setRecommendations] = useState([]);
     const navigate = useNavigate();
