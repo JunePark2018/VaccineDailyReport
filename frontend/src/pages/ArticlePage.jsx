@@ -13,7 +13,7 @@ import axios from 'axios';
 import WordCloudComponent from '../components/WordCloud';
 import AI_News_Recommendation from '../components/AI_News_Recommendation';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL; || 'http://localhost:8000';
 function ArticlePage() {
 
   const { id } = useParams();
