@@ -14,6 +14,7 @@ from database.crud import (
     bump_user_keyword_stats_from_ai_news,
     list_user_top_keywords,
     clear_user_keyword_stats,
+    delete_user_account,
     get_ai_generated_news,
     get_category_name,
     get_reaction,
@@ -69,6 +70,25 @@ def clear_interest_keywords(login_id: str, db: Session = Depends(get_db)):
     db.commit()
     
     return {"message": "Keywords cleared", "deleted_count": deleted_count}
+
+
+@router.delete("/{login_id}")
+def delete_user_account_endpoint(login_id: str, db: Session = Depends(get_db)):
+    """
+    사용자 계정 완전 삭제 (회원탈퇴)
+    모든 관련 데이터도 함께 삭제됩니다.
+    """
+    user = get_user_by_login_id(db, login_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    success = delete_user_account(db, user_id=user.user_id)
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to delete account")
+    
+    db.commit()
+    
+    return {"message": "Account deleted successfully"}
 
 
 @router.get("/{login_id}/reactions/{news_id}")

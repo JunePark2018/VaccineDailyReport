@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 // 공통 컴포넌트
@@ -17,6 +17,7 @@ import './MyPage.css';
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 const MyPage = () => {
   const { login_id } = useParams();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
   const [isActive, setIsActive] = useState(false);
@@ -105,6 +106,37 @@ const MyPage = () => {
     }
   };
 
+  // 회원탈퇴 핸들러
+  const handleDeleteAccount = async () => {
+    // 첫 번째 확인
+    if (!window.confirm('정말로 회원탈퇴 하시겠습니까?')) {
+      return;
+    }
+
+    // 두 번째 확인 (강력한 경고)
+    if (!window.confirm('⚠️ 경고 ⚠️\n\n회원탈퇴 시 모든 데이터가 영구적으로 삭제되며 복구할 수 없습니다.\n\n- 조회 기록\n- 좋아요/싫어요\n- 관심 키워드 통계\n- 구독 정보\n\n정말로 계속하시겠습니까?')) {
+      return;
+    }
+
+    try {
+      const encodedLoginId = encodeURIComponent(login_id);
+      await axios.delete(`${API_BASE_URL}/users/${encodedLoginId}`);
+
+      // 성공 시 로그아웃 처리
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('user_id');
+      localStorage.removeItem('login_id');
+      localStorage.removeItem('user_real_name');
+
+      alert('회원탈퇴가 완료되었습니다.');
+      navigate('/');
+      window.location.reload(); // 완전한 로그아웃을 위해  리로드
+    } catch (error) {
+      console.error("회원탈퇴 실패:", error);
+      alert(`회원탈퇴에 실패했습니다.\n${error.response?.data?.detail || error.message}`);
+    }
+  };
+
 
   if (loading) return <div className="loading-state">데이터 분석 중...</div>;
 
@@ -156,6 +188,43 @@ const MyPage = () => {
           onDelete={handleDeleteKeyword}
           onAdd={handleAddKeyword}
         />
+
+        {/* 회원탈퇴 버튼 */}
+        <div style={{
+          textAlign: 'center',
+          marginTop: '60px',
+          paddingBottom: '40px',
+          borderTop: '1px solid #e5e7eb',
+          paddingTop: '20px'
+        }}>
+          <button
+            onClick={handleDeleteAccount}
+            style={{
+              backgroundColor: 'white',
+              border: '1px solid #e5e7eb',
+              color: '#6b7280',
+              fontSize: '12px',
+              cursor: 'pointer',
+              padding: '8px 16px',
+              fontWeight: '400',
+              borderRadius: '6px',
+              transition: 'all 0.2s ease',
+              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = '#fef2f2';
+              e.target.style.borderColor = '#fca5a5';
+              e.target.style.color = '#dc2626';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = 'white';
+              e.target.style.borderColor = '#e5e7eb';
+              e.target.style.color = '#6b7280';
+            }}
+          >
+            회원탈퇴
+          </button>
+        </div>
 
         {/* 3. 구독 키워드 관리 컴포넌트 */}
 
