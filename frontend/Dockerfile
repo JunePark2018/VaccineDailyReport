@@ -1,4 +1,4 @@
-# --- 스테이지 1: 빌드 ---
+# 1단계: 빌드 스테이지
 FROM node:18-alpine AS builder
 WORKDIR /app
 
@@ -6,22 +6,29 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-# 환경 변수 설정 (Build 시점에 필요)
+# 소스 복사
+COPY . .
+
+# [중요] docker-compose의 args로부터 IP 주소를 받아옴
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
-# 소스 복사 및 빌드
-COPY . .
+# 이 시점에 NEXT_PUBLIC_API_URL이 정적 파일에 포함됨
 RUN npm run build
 
-# --- 스테이지 2: 실행 (Nginx) ---
+# 2단계: 실행 스테이지 (Nginx)
 FROM nginx:stable-alpine
+COPY --from=builder /app/build /usr/share/nginx/html
 
-# 빌드 결과물(out 또는 .next)을 Nginx 웹 디렉토리로 복사
-# Next.js export 모드인 경우 'out' 폴더를 복사합니다.
-COPY --from=builder /app/out /usr/share/nginx/html
+# React 라우팅 대응 Nginx 설정
+RUN echo 'server { \
+    listen 80; \
+    location / { \
+        root /usr/share/nginx/html; \
+        index index.html index.htm; \
+        try_files $uri $uri/ /index.html; \
+    } \
+}' > /etc/nginx/conf.d/default.conf
 
-# Nginx 포트 개방
 EXPOSE 80
-
 CMD ["nginx", "-g", "daemon off;"]
