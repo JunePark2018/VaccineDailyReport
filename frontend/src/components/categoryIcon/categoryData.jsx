@@ -11,7 +11,7 @@ export const categories = [
     { id: 'sub3', label: '정치', icon: governmentIcon },
     { id: 'sub4', label: '경제', icon: economicsIcon },
     { id: 'sub5', label: '사회', icon: societyIcon },
-    { id: 'sub6', label: '생활/문화', icon: livingcultureIcon },
+    // { id: 'sub6', label: '생활/문화', icon: livingcultureIcon },
     { id: 'sub7', label: 'IT/과학', icon: scienceIcon },
     { id: 'sub9', label: '세계', icon: worldIcon }
 ];

@@ -47,19 +47,16 @@ const LivingCulturePage = () => {
                 }));
 
                 // 3. Filter by category
-                const filtered = formattedArticles.filter(a => {
+                let filtered = formattedArticles.filter(a => {
                     if (!a.category) return false;
                     return a.category === name;
                 });
 
+
+
                 if (filtered.length > 0) {
-                    let expanded = [...filtered];
-                    // Ensure at least 24 items for LivingCulturePage layout
-                    while (expanded.length < 24) {
-                        expanded = [...expanded, ...filtered];
-                    }
-                    // Shuffle and slice to exactly 24
-                    const shuffled = expanded.sort(() => Math.random() - 0.5).slice(0, 24);
+                    // [Fix] Remove duplication loop to prevent duplicates
+                    const shuffled = [...filtered].sort(() => Math.random() - 0.5);
                     setDisplayArticles(shuffled);
 
                     // 4. Fetch Images
@@ -111,7 +108,8 @@ const LivingCulturePage = () => {
         // List removed
 
         // Feed Logic
-        const allFeedArticles = blockArticles; // Show ALL articles in Feed
+        // Feed Logic: Exclude articles already shown in top sections (1 main, 3 grid)
+        const allFeedArticles = remainingArticles.slice(3);
         const feedPageSize = 5;
         const totalFeedPages = Math.ceil(allFeedArticles.length / 5);
         const currentFeedArticles = allFeedArticles.slice((feedPage - 1) * 5, feedPage * 5);
@@ -147,7 +145,7 @@ const LivingCulturePage = () => {
 
                 <div style={{ padding: isMobile ? '0 20px' : '0 40px' }}>
                     {/* Main Article Section */}
-                    <section className="main-article-section" style={{ marginBottom: isMobile ? '30px' : '50px', position: 'relative' }}>
+                    <section className="main-article-section" onClick={() => navigate(`/article/${mainData.id}`)} style={{ marginBottom: isMobile ? '30px' : '50px', position: 'relative', cursor: 'pointer' }}>
                         <div className="main-image" style={{ width: '100%', aspectRatio: isMobile ? '1.5/1' : '2.5/1', position: 'relative', overflow: 'hidden', borderRadius: '4px' }}>
                             <img src={mainData.image} alt={mainData.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                             <div style={{

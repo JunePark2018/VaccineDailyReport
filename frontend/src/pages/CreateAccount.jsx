@@ -212,15 +212,16 @@ export default function CreateAccount() {
                 headerMain="on"
                 headerBottom="off"
                 leftChild={<Logo />}
-                midChild={<div />}
+                midChild={null}
                 rightChild={
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
-                        <div style={{ position: 'relative' }}>
+                        <div className="mobile-hidden" style={{ position: 'relative' }}>
                             <Searchbar className="always-open" />
                         </div>
                         <UserMenu />
                     </div>
                 }
+                noSearchMobile={true}
             />
             <div className="create-account-box">
                 <h2>회원가입</h2>

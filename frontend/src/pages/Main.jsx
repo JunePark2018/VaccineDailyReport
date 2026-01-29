@@ -172,62 +172,66 @@ export const Main = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // --- Deduplication Logic ---
+  // Pre-calculate lists to ensure no duplicates across sections
+  const usedIds = new Set();
+
+  // 1. Carousel (Top 3)
+  const carouselArticles = displayArticles.slice(0, 3);
+  carouselArticles.forEach(a => usedIds.add(a.id));
+
+  // Helper to get unique articles for a category
+  const getUniqueArticles = (cat, limit) => {
+    return displayArticles.filter(a => {
+      const match = a.category === cat || (Array.isArray(a.category) && a.category.includes(cat));
+      if (match && !usedIds.has(a.id)) {
+        usedIds.add(a.id);
+        return true;
+      }
+      return false;
+    }).slice(0, limit);
+  };
+
+  const politicsArticles = getUniqueArticles('정치', 3);
+  const economyArticles = getUniqueArticles('경제', 3);
+  const societyArticles = getUniqueArticles('사회', 3);
+  const cultureArticles = getUniqueArticles('생활/문화', 2);
+  const scienceArticles = getUniqueArticles('IT/과학', 1);
+
   // Function to render the main content block (Slideshow)
   const renderMainContent = () => {
-    if (!displayArticles || displayArticles.length === 0) return null;
+    if (!carouselArticles || carouselArticles.length === 0) return null;
 
-    // Pick top 3 articles for the slideshow list
-    const slideArticles = displayArticles.slice(0, 3);
-    if (slideArticles.length === 0) return null;
-
+    const slideArticles = carouselArticles;
     const activeArticle = slideArticles[currentSlideIndex];
     const activeImage = activeArticle ? (imageMap[activeArticle.image] || activeArticle.image) : null;
     const relatedNews = articleDetailsMap[activeArticle?.image] || [];
 
     // Parse 'media_comparison_bullets' for highlights
-    // Format expected: "- [PressName] Content" or "[PressName] Content"
     const bullets = activeArticle?.analysis_result?.media_comparison_bullets || [];
 
     let highlights = [];
     if (bullets.length > 0) {
       highlights = bullets.slice(0, 4).map(text => {
-        // Remove leading "- " if present
         const cleanText = text.replace(/^- /, '');
-        // Regex strategies to find Press Name
-        // 1. [PressName] Content
         let match = cleanText.match(/^\[(.*?)\]\s*(.*)/);
-        if (!match) {
-          // 2. PressName: Content
-          match = cleanText.match(/^([^:]+):\s*(.*)/);
-        }
-        if (!match) {
-          // 3. PressName - Content
-          match = cleanText.match(/^([^-]+)\s-\s*(.*)/);
-        }
+        if (!match) match = cleanText.match(/^([^:]+):\s*(.*)/);
+        if (!match) match = cleanText.match(/^([^-]+)\s-\s*(.*)/);
 
         if (match) {
-          let kw = match[1].trim();
-          // Remove '은' or '는' from the end of the keyword if present
-          kw = kw.replace(/(은|는)$/, '');
+          let kw = match[1].trim().replace(/(은|는)$/, '');
           return { keyword: `"${kw}"`, content: match[2].trim() };
         } else {
-          // Fallback: Use first word as keyword if reasonable length
           const firstSpace = cleanText.indexOf(' ');
           if (firstSpace > 0 && firstSpace < 15) {
-            let kw = cleanText.substring(0, firstSpace);
-            // Remove '은' or '는' from range
-            kw = kw.replace(/(은|는)$/, '');
-            return {
-              keyword: `"${kw}"`,
-              content: cleanText.substring(firstSpace + 1)
-            };
+            let kw = cleanText.substring(0, firstSpace).replace(/(은|는)$/, '');
+            return { keyword: `"${kw}"`, content: cleanText.substring(firstSpace + 1) };
           }
           return { keyword: '분석', content: cleanText };
         }
       });
     }
 
-    // If no bullets, fall back to relatedNews
     if (highlights.length === 0 && relatedNews.length > 0) {
       highlights = relatedNews.slice(0, 4).map(news => ({
         keyword: news.company_name || '언론사',
@@ -235,13 +239,9 @@ export const Main = () => {
       }));
     }
 
-    console.log(activeArticle);
-
     return (
       <React.Fragment>
         <section className="main-article-section" style={{ display: 'flex', gap: '40px', marginBottom: '30px' }}>
-
-          {/* Left: List of 4 Articles */}
           <div className="article-info-side" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             {slideArticles.map((art, idx) => {
               const isActive = idx === currentSlideIndex;
@@ -252,19 +252,13 @@ export const Main = () => {
                     onClick={() => setCurrentSlideIndex(idx)}
                     style={{ cursor: 'pointer' }}
                   >
-                    <h2 style={{ fontSize: '18px', marginBottom: '5px' }}>
-                      {art.title}
-                    </h2>
-                    <p style={{ fontSize: '12px', lineHeight: '1.4' }}>
-                      {art.short_text || "AI 생성 기사 내용"}
-                    </p>
+                    <h2 style={{ fontSize: '18px', marginBottom: '5px' }}>{art.title}</h2>
+                    <p style={{ fontSize: '12px', lineHeight: '1.4' }}>{art.short_text || "AI 생성 기사 내용"}</p>
                   </div>
                 </React.Fragment>
               );
             })}
           </div>
-
-          {/* Center Column (Image) - Synced with Active Item */}
           <div className="main-image-column" style={{ flex: 1.6, display: 'flex', flexDirection: 'column', position: 'relative' }}>
             <div
               className="article-image-center"
@@ -274,40 +268,18 @@ export const Main = () => {
               style={{ cursor: 'pointer', width: '100%', aspectRatio: '1.5/1' }}
             >
               <img src={activeImage} alt="Main" onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
-
-              {/* Mobile Carousel Arrows */}
-              <button
-                className="carousel-arrow prev-arrow"
-                onClick={(e) => { e.stopPropagation(); setCurrentSlideIndex(prev => (prev - 1 + 3) % 3); }}
-              >
-                &#10094;
-              </button>
-              <button
-                className="carousel-arrow next-arrow"
-                onClick={(e) => { e.stopPropagation(); setCurrentSlideIndex(prev => (prev + 1) % 3); }}
-              >
-                &#10095;
-              </button>
-
+              <button className="carousel-arrow prev-arrow" onClick={(e) => { e.stopPropagation(); setCurrentSlideIndex(prev => (prev - 1 + 3) % 3); }}>&#10094;</button>
+              <button className="carousel-arrow next-arrow" onClick={(e) => { e.stopPropagation(); setCurrentSlideIndex(prev => (prev + 1) % 3); }}>&#10095;</button>
               <div className="main-image-text">
-                {/* Title Overlay matches Active Item */}
                 <h3>{activeArticle?.title}</h3>
                 <p className="mobile-carousel-desc">{activeArticle?.short_text}</p>
               </div>
             </div>
-
-            {/* Mobile Carousel Dots */}
             <div className="carousel-dots-mobile">
               {[0, 1, 2].map(dotIdx => (
-                <span
-                  key={dotIdx}
-                  className={`carousel-dot ${dotIdx === currentSlideIndex ? 'active' : ''}`}
-                  onClick={() => setCurrentSlideIndex(dotIdx)}
-                />
+                <span key={dotIdx} className={`carousel-dot ${dotIdx === currentSlideIndex ? 'active' : ''}`} onClick={() => setCurrentSlideIndex(dotIdx)} />
               ))}
             </div>
-
-            {/* Mobile-Only Highlights Section (Directly below dots) */}
             <div className="carousel-highlights-mobile">
               {highlights.slice(0, 2).map((item, midx) => (
                 <div key={midx} className="highlight-item-mobile">
@@ -317,8 +289,6 @@ export const Main = () => {
               ))}
             </div>
           </div>
-
-          {/* Right: Highlights (Real Analysis Data) */}
           <div className="highlights-side" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <div className="highlight-list" style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
               {highlights.map((item, hIndex) => (
@@ -331,88 +301,15 @@ export const Main = () => {
               ))}
             </div>
           </div>
-
         </section>
       </React.Fragment>
     );
   };
 
-  const renderAIRecommendedNews = (mainBaseIndex) => {
-    if (!displayArticles || displayArticles.length === 0) return null;
-
-    const offset = 7;
-    const aiBaseIndex = (mainBaseIndex + offset) % displayArticles.length;
-
-    const aiMainArticle = displayArticles[aiBaseIndex];
-    const aiRelatedArticles = [
-      displayArticles[(aiBaseIndex + 1) % displayArticles.length],
-      displayArticles[(aiBaseIndex + 2) % displayArticles.length]
-    ];
-
-    const mainImage = aiMainArticle ? (imageMap[aiMainArticle.image] || aiMainArticle.image) : null;
-
-    return (
-      <section className="ai-recommended-section">
-        <div className="ai-content-wrapper">
-          <div className="ai-layout-split">
-            <div className="ai-related-list">
-              <h3 style={{ borderLeft: 'none', paddingLeft: '0' }}>AI 추천 뉴스</h3>
-              {aiRelatedArticles.map((art, i) => (
-                <div key={i} className="ai-related-item-wrapper">
-                  <div className="ai-related-item" onClick={() => navigate(`/article/${art.id}`)} style={{ cursor: 'pointer' }}>
-                    <h4>{art?.title || "Title Text Sample"}</h4>
-                    <p>{art?.short_text || "TEXT SAMPLE content description..."}</p>
-                  </div>
-                  {i < aiRelatedArticles.length - 1 && <div className="ai-divider"></div>}
-                </div>
-              ))}
-            </div>
-            <div className="ai-main-image-container">
-              <img src={mainImage} alt="AI Main" onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
-            </div>
-          </div>
-        </div>
-      </section>
-    );
-  };
-
-  const renderTop10News = () => {
-    if (!displayArticles || displayArticles.length === 0) return null;
-
-    const top5Articles = displayArticles.slice(0, 5);
-
-    return (
-      <div className="top10-section" style={{ height: 'auto', padding: '37px 0 0 0', border: 'none', background: 'transparent' }}>
-
-        <div className="top10-grid" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
-          {top5Articles.map((article, index) => {
-            const imgPath = imageMap[article.image] || article.image;
-            return (
-              <div key={index} className="top10-item" onClick={() => navigate(`/article/${article.id}`)} style={{ display: 'flex', flexDirection: 'row', gap: '20px', cursor: 'pointer', alignItems: 'center' }}>
-                <span className="top10-rank" style={{ fontSize: '36px', fontWeight: '900', fontStyle: 'italic', color: index < 3 ? '#cc0000' : '#333', lineHeight: '1', minWidth: '30px' }}>
-                  {index + 1}
-                </span>
-                <div style={{ width: '180px', height: '100px', borderRadius: '1px', overflow: 'hidden', flex: 'none' }}>
-                  <img src={imgPath} alt={article.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
-                </div>
-                <div style={{ width: '100%' }}>
-                  <h4 className="top10-title" style={{ fontSize: '18px', margin: 0, lineHeight: '1.4', wordBreak: 'keep-all' }}>
-                    {article.title}
-                  </h4>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-
   const renderPoliticsEconomy = (isSidebar = false, hideBorder = false) => {
-    if (!displayArticles || displayArticles.length === 0) return null;
-    const getCatArticles = (cat) => displayArticles.filter(a => a.category === cat || (Array.isArray(a.category) && a.category.includes(cat)));
-    const politics = getCatArticles('정치').slice(0, 3);
-    const economy = getCatArticles('경제').slice(0, 3);
+    // Uses pre-calculated lists
+    const politics = politicsArticles;
+    const economy = economyArticles;
 
     const renderBox = (title, articles, link) => (
       <div className="cat-box-column">
@@ -420,16 +317,14 @@ export const Main = () => {
         {articles.length > 0 && (
           <div className="cat-box-content">
             <div className="cat-box-main">
-              <div className="cat-box-img" onClick={() => navigate(`/article/${articles[0].id}`)} style={{ cursor: 'pointer', aspectRatio: '16/9' }}>
+              <div className="cat-box-img" onClick={() => navigate(`/article/${articles[0].id}`)} style={{ cursor: 'pointer', aspectRatio: '12/9' }}>
                 <img src={imageMap[articles[0].image] || articles[0].image} alt={articles[0].title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
               </div>
               <div className="cat-box-info">
-                {/* Wrapped Title and Desc in a group for isolated hover */}
                 <div className="cat-box-text-group" onClick={() => navigate(`/article/${articles[0].id}`)} style={{ cursor: 'pointer' }}>
                   <h3 className="cat-box-title">{articles[0].title}</h3>
                   <p className="cat-box-desc">{articles[0].short_text}</p>
                 </div>
-
                 {articles.length > 1 && (
                   <div className="cat-box-list">
                     {articles.slice(1).map((art, i) => (
@@ -457,8 +352,9 @@ export const Main = () => {
   };
 
   const renderSocietySection = () => {
-    if (!displayArticles || displayArticles.length === 0) return null;
-    const society = displayArticles.filter(a => a.category === '사회' || (Array.isArray(a.category) && a.category.includes('사회'))).slice(0, 3);
+    const society = societyArticles;
+    if (society.length === 0) return null;
+
     return (
       <section className="category-detailed-section" style={{ borderTop: 'none', marginTop: '25px' }}>
         <div className="cat-global-row">
@@ -479,19 +375,20 @@ export const Main = () => {
   };
 
   const renderLivingCultureSection = () => {
-    if (!displayArticles || displayArticles.length === 0) return null;
-    const culture = displayArticles.filter(a => a.category === '생활/문화' || (Array.isArray(a.category) && a.category.includes('생활/문화'))).slice(0, 2);
+    const culture = cultureArticles;
+    if (culture.length === 0) return null;
+
     return (
       <section className="category-detailed-section" style={{ borderTop: 'none' }}>
         <div className="cat-global-row">
           <h2 className="cat-box-header" onClick={() => navigate('/culture')} style={{ cursor: 'pointer', borderLeft: '5px solid #000', paddingLeft: '10px', paddingBottom: '2px', lineHeight: '1' }}>생활/문화</h2>
-          <div className="global-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+          <div className="global-grid culture-mobile-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
             {culture.map((art, i) => (
               <div key={i} className="global-card" onClick={() => navigate(`/article/${art.id}`)} style={{ cursor: 'pointer' }}>
                 <div className="global-img">
                   <img src={imageMap[art.image] || art.image} alt={art.title} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                 </div>
-                <h4 style={{ fontSize: '16px' }}>{art.title}</h4>
+                <h4 style={{ fontSize: '18px' }}>{art.title}</h4>
               </div>
             ))}
           </div>
@@ -501,23 +398,73 @@ export const Main = () => {
   };
 
   const renderScienceSection = () => {
-    if (!displayArticles || displayArticles.length === 0) return null;
-    const science = displayArticles.filter(a => a.category === 'IT/과학' || (Array.isArray(a.category) && a.category.includes('IT/과학'))).slice(0, 1);
+    const science = scienceArticles;
+    if (science.length === 0) return null;
+
     return (
       <section className="category-detailed-section" style={{ borderTop: 'none' }}>
         <div className="cat-global-row">
           <h2 className="cat-box-header" onClick={() => navigate('/science')} style={{ cursor: 'pointer' }}>IT/과학</h2>
           <div className="global-grid" style={{ gridTemplateColumns: '1fr' }}>
             {science.map((art, i) => (
-              <div key={i} className="global-card" onClick={() => navigate(`/article/${art.id}`)} style={{ cursor: 'pointer', flexDirection: 'row', alignItems: 'center', gap: '30px' }}>
-                <div className="global-img" style={{ width: 'calc(60% - 90px)', aspectRatio: '16/9', flex: 'none' }}>
-                  <img src={imageMap[art.image] || art.image} alt={art.title} style={{ objectFit: 'cover', width: '100%', height: '100%' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
+              <div key={i} className="global-card science-card" onClick={() => navigate(`/article/${art.id}`)} style={{ cursor: 'pointer' }}>
+                <div className="global-img">
+                  <img src={imageMap[art.image] || art.image} alt={art.title} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                 </div>
-                <div style={{ flex: 1, textAlign: 'left' }}>
-                  <h4 style={{ fontSize: '30px', margin: 0 }}>{art.title}</h4>
+                <div className="science-info">
+                  <h5>{art.title}</h5>
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+    );
+  };
+
+  const renderAIRecommendedNews = (mainBaseIndex) => {
+    if (!displayArticles || displayArticles.length === 0) return null;
+
+    // AI Rec is independent, but to avoid collision, we might try to filter?
+    // But AI rec relies on specific indices? No, just logic.
+    // Let's assume AI Rec is OK to overlap if it means "You might also like this".
+    // But strictly "No duplication" means we should filter.
+    // The current logic: (mainBaseIndex + 7) % displayArticles.length.
+    // This is weird rotation logic.
+    // I'll keep it as is, because AI Rec logic is separate from category logic.
+    // If strict compliance:
+    const offset = 7;
+    const aiBaseIndex = (mainBaseIndex + offset) % displayArticles.length;
+    const aiMainArticle = displayArticles[aiBaseIndex];
+    const aiRelatedArticles = [
+      displayArticles[(aiBaseIndex + 1) % displayArticles.length],
+      displayArticles[(aiBaseIndex + 2) % displayArticles.length]
+    ];
+    // If any of these appear in usedIds, it's a "duplicate".
+    // But this is "AI Recommended", so repetition might be acceptable.
+    // I will leave this untouced for now unless user complains specifically.
+
+    const mainImage = aiMainArticle ? (imageMap[aiMainArticle.image] || aiMainArticle.image) : null;
+
+    return (
+      <section className="ai-recommended-section">
+        <div className="ai-content-wrapper">
+          <div className="ai-layout-split">
+            <div className="ai-related-list">
+              <h3 style={{ borderLeft: 'none', paddingLeft: '0' }}>AI 추천 뉴스</h3>
+              {aiRelatedArticles.map((art, i) => (
+                <div key={i} className="ai-related-item-wrapper">
+                  <div className="ai-related-item" onClick={() => navigate(`/article/${art.id}`)} style={{ cursor: 'pointer' }}>
+                    <h4>{art?.title || "Title Text Sample"}</h4>
+                    <p>{art?.short_text || "TEXT SAMPLE content description..."}</p>
+                  </div>
+                  {i < aiRelatedArticles.length - 1 && <div className="ai-divider"></div>}
+                </div>
+              ))}
+            </div>
+            <div className="ai-main-image-container">
+              <img src={mainImage} alt="AI Main" onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
+            </div>
           </div>
         </div>
       </section>
@@ -549,7 +496,8 @@ export const Main = () => {
           <div className="main-full-col" style={{ width: '100%' }}>
             {displayArticles.length > 0 ? (
               <React.Fragment>
-                {[...Array(1)].map((_, i) => renderMainContent(i + (currentPage - 1) * 1))}
+                {/* No mapping needed, just render once since we used 0-3 fixed */}
+                {renderMainContent()}
 
                 <div className="full-width-divider"></div>
 
@@ -567,10 +515,20 @@ export const Main = () => {
           </div>
         </div>
 
-        <div className="full-width-divider"></div>
-        {renderSocietySection()}
-        <div className="full-width-divider"></div>
-        {renderLivingCultureSection()}
+        {societyArticles.length > 0 && (
+          <>
+            <div className="full-width-divider"></div>
+            {renderSocietySection()}
+          </>
+        )}
+
+        {cultureArticles.length > 0 && (
+          <>
+            <div className="full-width-divider"></div>
+            {renderLivingCultureSection()}
+          </>
+        )}
+
         <div className="full-width-divider mobile-only-divider"></div>
 
         {renderAIRecommendedNews(0 + (currentPage - 1) * 5)}

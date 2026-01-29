@@ -43,13 +43,8 @@ const EconomicsPage = () => {
                 });
 
                 if (filtered.length > 0) {
-                    let expanded = [...filtered];
-                    // Ensure at least 31 items for EconomicsPage layout
-                    while (expanded.length < 31) {
-                        expanded = [...expanded, ...filtered];
-                    }
-                    // Shuffle and slice to exactly 31
-                    const shuffled = expanded.sort(() => Math.random() - 0.5).slice(0, 31);
+                    // [Fix] Remove duplication loop to prevent duplicates
+                    const shuffled = [...filtered].sort(() => Math.random() - 0.5);
                     setDisplayArticles(shuffled);
 
                     // 4. Fetch Images
@@ -103,8 +98,8 @@ const EconomicsPage = () => {
         const listArticles = remainingArticles.slice(6, 14); // 8 items
 
         // Feed Logic
-        // Feed Logic
-        const allFeedArticles = blockArticles; // Show ALL articles in Feed
+        // Feed Logic: Exclude articles already shown in Main, Grid, and List sections
+        const allFeedArticles = remainingArticles.slice(14);
         const feedPageSize = 5;
         const totalFeedPages = Math.ceil(allFeedArticles.length / 5);
         const currentFeedArticles = allFeedArticles.slice((feedPage - 1) * 5, feedPage * 5);

@@ -44,13 +44,8 @@ const WorldPage = () => {
                 });
 
                 if (filtered.length > 0) {
-                    let expanded = [...filtered];
-                    // Ensure at least 31 items for WorldPage layout
-                    while (expanded.length < 31) {
-                        expanded = [...expanded, ...filtered];
-                    }
-                    // Shuffle and slice to exactly 31
-                    const shuffled = expanded.sort(() => Math.random() - 0.5).slice(0, 31);
+                    // [Fix] Remove duplication loop to prevent duplicates
+                    const shuffled = [...filtered].sort(() => Math.random() - 0.5);
                     setDisplayArticles(shuffled);
 
                     // 4. Fetch Images
@@ -104,7 +99,8 @@ const WorldPage = () => {
         const listArticles = remainingArticles.slice(2, 10);
 
         // Feed Logic
-        const allFeedArticles = blockArticles; // Show ALL articles in Feed
+        // Feed Logic: Exclude articles already shown in top sections (1 main, 2 grid, 8 list)
+        const allFeedArticles = remainingArticles.slice(10);
         const feedPageSize = 5;
         const totalFeedPages = Math.ceil(allFeedArticles.length / 5);
         const currentFeedArticles = allFeedArticles.slice((feedPage - 1) * 5, feedPage * 5);
