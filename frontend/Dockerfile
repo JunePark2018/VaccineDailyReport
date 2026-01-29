@@ -10,8 +10,8 @@ RUN npm install
 COPY . .
 
 # [중요] docker-compose의 args로부터 IP 주소를 받아옴
-ARG NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ARG REACT_APP_API_URL
+ENV REACT_APP_API_URL=$REACT_APP_API_URL
 
 # 이 시점에 NEXT_PUBLIC_API_URL이 정적 파일에 포함됨
 RUN npm run build
