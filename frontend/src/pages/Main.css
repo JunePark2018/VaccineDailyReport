@@ -764,6 +764,30 @@
   line-height: 1.4;
 }
 
+.main-page .science-card {
+  flex-direction: row;
+  align-items: center;
+  gap: 30px;
+  text-align: left;
+}
+
+.main-page .science-card .global-img {
+  width: calc(60% - 90px);
+  aspect-ratio: 16 / 9;
+  flex: none;
+}
+
+.main-page .science-info {
+  flex: 1;
+}
+
+.main-page .science-card h5 {
+  font-size: 30px;
+  margin: 0;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
 /* =========================================
    Mobile Responsive Adjustments (Max 768px)
    ========================================= */
@@ -772,6 +796,11 @@
   /* --- Global Container --- */
   .main-page .category-content {
     padding: 20px 15px;
+  }
+
+  .main-page .full-width-divider {
+    margin-top: 10px;
+    margin-bottom: 10px;
   }
 
   /* --- Main Article Section (Top 3 Columns) --- */
@@ -980,7 +1009,11 @@
   /* Inside Left Column: Cat Split Row */
   .main-page .cat-split-row {
     flex-direction: column !important;
-    gap: 40px;
+    margin-bottom: 20px;
+  }
+
+  .main-page .category-detailed-section {
+    padding-bottom: 0;
   }
 
   /* Add divider between stacked columns (Politics / Economy) */
@@ -995,7 +1028,13 @@
   }
 
   .main-page .cat-box-img {
-    width: 100%;
+    width: calc(100% + 30px);
+    margin-left: -15px;
+    border-radius: 0;
+  }
+
+  .main-page .cat-box-info {
+    padding: 0 15px;
   }
 
   /* --- Top 10 Section (Sidebar -> Stacked) --- */
@@ -1020,30 +1059,13 @@
     width: 100%;
   }
 
-  /* Society Mobile Grid: Row Layout (Image Left, Title Right) */
+  /* Society Mobile Grid: Default Category Layout (Vertical) */
   .main-page .society-mobile-grid {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: repeat(1, 1fr) !important;
   }
 
-  .main-page .society-mobile-grid .global-card {
-    flex-direction: row !important;
-    align-items: center;
-    text-align: left;
-    gap: 15px;
-  }
-
-  .main-page .society-mobile-grid .global-img {
-    width: 120px;
-    /* Fixed width for consistent list look */
-    min-width: 120px;
-    aspect-ratio: 4/3;
-    flex: none;
-  }
-
-  .main-page .society-mobile-grid h4 {
-    margin: 0;
-    font-size: 15px;
-    line-height: 1.4;
+  .main-page .culture-mobile-grid {
+    grid-template-columns: repeat(1, 1fr) !important;
   }
 
   /* Force divider to show on mobile */
@@ -1051,6 +1073,21 @@
     display: block !important;
     margin-top: 30px;
     margin-bottom: 30px;
+  }
+
+  /* Science Section Mobile Override */
+  .main-page .science-card {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+
+  .main-page .science-card .global-img {
+    width: 100%;
+  }
+
+  .main-page .science-card h5 {
+    font-size: 16px;
   }
 }
 
@@ -1099,7 +1136,8 @@
 }
 
 /* 4. Global Grid Cards (Society/Culture/Science/World) */
-.main-page .global-card:hover h4 {
+.main-page .global-card:hover h4,
+.main-page .global-card:hover h5 {
   text-decoration: underline;
   cursor: pointer;
 }

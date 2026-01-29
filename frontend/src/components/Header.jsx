@@ -17,7 +17,8 @@ const Header = ({
   darkmode,
   headerTop = "on",
   headerMain = "on",
-  headerBottom = "on"
+  headerBottom = "on",
+  noSearchMobile = false
 }) => {
   const nav = useNavigate();
   const location = useLocation();
@@ -102,7 +103,7 @@ const Header = ({
       )}
 
       {headerMain === "on" && (
-        <header className="Header-Main">
+        <header className={`Header-Main ${noSearchMobile ? 'no-search-mobile' : ''}`}>
           <div className="header-main-content">
             {/* Hamburger Icon (Mobile Only via CSS) */}
             <div className="hamburger-icon" onClick={() => setIsMenuOpen(true)}>

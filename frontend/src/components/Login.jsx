@@ -84,7 +84,7 @@ const Login = () => {
                 midChild={null}
                 rightChild={
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
-                        <div style={{ position: 'relative' }}>
+                        <div className="mobile-hidden" style={{ position: 'relative' }}>
                             <Searchbar className="always-open" />
                         </div>
                         <UserMenu />
@@ -93,6 +93,7 @@ const Login = () => {
                 headerTop="on"
                 headerMain="on"
                 headerBottom="off"
+                noSearchMobile={true}
             />
 
             <div className="Login_container_wrapper">

@@ -44,14 +44,8 @@ const PoliticsPage = () => {
                 });
 
                 if (filtered.length > 0) {
-                    let expanded = [...filtered];
-                    // Ensure at least 33 items (1 Main + 4 Grid + 8 List + 20 Feed) for testing layout
-                    // If real data is too small, duplicate it to fill the layout
-                    while (expanded.length < 33) {
-                        expanded = [...expanded, ...filtered];
-                    }
-                    // Shuffle and slice to exactly 33
-                    const shuffled = expanded.sort(() => Math.random() - 0.5).slice(0, 33);
+                    // [Fix] Remove duplication loop to prevent duplicates
+                    const shuffled = [...filtered].sort(() => Math.random() - 0.5);
                     setDisplayArticles(shuffled);
 
                     // 4. Fetch Images for the filtered set (N+1 pattern)
@@ -106,8 +100,8 @@ const PoliticsPage = () => {
         const gridArticles = remainingArticles.slice(0, 4); // Next 4 for Grid
         const listArticles = remainingArticles.slice(4, 12); // Next 8 for List
 
-        // Feed Logic
-        const allFeedArticles = blockArticles; // Show ALL articles in Feed
+        // Feed Logic: Exclude articles already shown in Main, Grid, and List sections (4 slide, 4 grid)
+        const allFeedArticles = remainingArticles.slice(8);
         const feedPageSize = 5;
         const totalFeedPages = Math.ceil(allFeedArticles.length / 5);
         const currentFeedArticles = allFeedArticles.slice((feedPage - 1) * 5, feedPage * 5);
@@ -149,10 +143,10 @@ const PoliticsPage = () => {
 
         return (
             <React.Fragment key={blockIndex}>
-                <section className="politics-main-section" style={{ display: 'flex', gap: '40px', marginBottom: '30px', alignItems: 'flex-start', textAlign: 'left', minHeight: '350px' }}>
+                <section className="politics-main-section">
 
                     {/* Left Column: Interactive List (4 Items) */}
-                    <div className="politics-content-side" style={{ flex: 1.4, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <div className="politics-content-side">
                         {slideData.slice(0, 4).map((item, idx) => {
                             const isActive = idx === topFocusIndex;
                             return (
@@ -160,26 +154,12 @@ const PoliticsPage = () => {
                                     key={idx}
                                     className={`politics-slide-item ${isActive ? 'active' : ''}`}
                                     onClick={() => setTopFocusIndex(idx)}
-                                    style={{
-                                        cursor: 'pointer',
-                                        padding: '15px 0',
-                                        borderBottom: idx < 3 ? '1px solid #eee' : 'none',
-                                        backgroundColor: isActive ? '#f9f9f9' : 'transparent', // Highlight active
-                                        paddingLeft: isActive ? '10px' : '0', // Indent active
-                                        transition: 'all 0.2s ease'
-                                    }}
                                 >
-                                    <h2 style={{
-                                        fontSize: isActive ? '20px' : '18px',
-                                        fontWeight: isActive ? 'bold' : 'normal',
-                                        lineHeight: '1.3',
-                                        color: isActive ? '#000' : '#444',
-                                        margin: '0 0 5px 0'
-                                    }}>
+                                    <h2>
                                         {item.title}
                                     </h2>
                                     {isActive && (
-                                        <p style={{ fontSize: '14px', color: '#666', lineHeight: '1.5', margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                        <p>
                                             {item.description}
                                         </p>
                                     )}
@@ -188,11 +168,11 @@ const PoliticsPage = () => {
                         })}
 
                         {/* Divider */}
-                        <div style={{ width: '100%', height: '1px', backgroundColor: '#333', marginTop: '10px' }}></div>
+                        <div className="politics-side-divider"></div>
                     </div>
 
                     {/* Right Column: Active Image Display */}
-                    <div className="politics-image-side" onClick={() => activeSlide && navigate(`/article/${activeSlide.id}`)} style={{ flex: 1.6, cursor: 'pointer' }}>
+                    <div className="politics-image-side" onClick={() => activeSlide && navigate(`/article/${activeSlide.id}`)}>
                         <div className="article-image-center" style={{ width: '100%', aspectRatio: '16/9', borderRadius: '1px', overflow: 'hidden', position: 'relative' }}>
                             <img src={activeSlide?.image} alt="Main" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                 onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }}
@@ -211,7 +191,7 @@ const PoliticsPage = () => {
 
                 {/* Grid Section (4 items) */}
                 {grid.length > 0 && (
-                    <section className="bottom-grid-section" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '50px', textAlign: 'left' }}>
+                    <section className="bottom-grid-section">
                         {grid.map((news, i) => (
                             <div key={i} className="grid-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                 <div className="grid-image" style={{ width: '100%', aspectRatio: '1.5/1', border: '1px solid #eee', position: 'relative', overflow: 'hidden' }}>
@@ -322,7 +302,7 @@ const PoliticsPage = () => {
     }
 
     return (
-        <div className="category-page">
+        <div className="category-page politics-page">
             <Header
                 leftChild={<Logo />}
                 midChild={null}

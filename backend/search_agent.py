@@ -50,69 +50,7 @@ You are a helpful assistant that summarizes and analyzes text in Korean accurate
         return "시스템 오류로 인해 AI 요약을 생성할 수 없습니다."
 
 
-# 1. 위키피디아 검색 (Section 1)
-def search_wikipedia(keyword: str) -> Optional[Dict[str, str]]:
-    """
-    위키피디아 API를 통해 정의와 요약을 가져온 후, LLM을 통해 내용을 정리합니다.
-    API 검색 실패 시 None을 반환합니다.
-    위키피디아의 출처를 표시하지 않습니다.
-    (개선: 키워드로 먼저 '검색'하여 가장 적절한 문서 제목을 찾은 뒤 요약을 가져옴)
-    """
 
-    # 1. 관련 문서 제목 검색 (Opensearch API 사용)
-    search_url = "https://ko.wikipedia.org/w/api.php"
-    search_params = {"action": "opensearch", "search": keyword, "limit": 1, "namespace": 0, "format": "json"}
-
-    # Headers - 위키피디아 정책 준수
-    headers = {"User-Agent": "VaccineDailyReportBot/1.0 (contact@example.com)"}
-
-    target_title = keyword  # 기본값은 입력받은 그대로
-
-    try:
-        search_res = requests.get(search_url, params=search_params, headers=headers, timeout=5)
-        if search_res.status_code == 200:
-            search_data = search_res.json()
-            if search_data and len(search_data) > 1 and search_data[1]:
-                target_title = search_data[1][0]
-    except Exception as e:
-        print(f"Wikipedia Search API Error: {e}")
-
-    # 2. 해당 제목(target_title)으로 요약 정보 가져오기
-    encoded_keyword = quote(target_title)
-    url = f"https://ko.wikipedia.org/api/rest_v1/page/summary/{encoded_keyword}"
-
-    try:
-        response = requests.get(url, headers=headers, timeout=5)
-        if response.status_code == 200:
-            data = response.json()
-
-            # 'type' 체크를 완화하고, title과 extract가 있는지 확인
-            # 'disambiguation' (동음이의어 문서) 타입은 제외할 수 있으나,
-            # 사용자 요구에 따라 일단 정보가 있으면 보여줌.
-            if data.get("title") and data.get("extract"):
-                raw_summary = data.get("extract")
-
-                # LLM을 이용해 내용을 정리 (1차 정보 전달)
-                llm_prompt = (
-                    f"다음은 위키피디아의 '{target_title}'에 대한 요약 내용입니다. "
-                    "위키피디아의 정보를 정확하게 전달해야 합니다."
-                    "위키피디아의 출처는 표시하지 않습니다."
-                    "한문과 한자가 포함되어있다면 번역하여 출력합니다."
-                    f"이 내용을 읽기 쉽게 핵심만 정리해서 한국어로 설명해 주세요:\n\n{raw_summary}"
-                )
-
-                llm_summary = get_llm_summary(llm_prompt)
-
-                return {
-                    "title": data.get("title"),
-                    "summary": llm_summary,
-                    "original_summary": raw_summary,
-                    "url": data.get("content_urls", {}).get("desktop", {}).get("page"),
-                }
-    except Exception as e:
-        print(f"Wikipedia Summary API Error: {e}")
-
-    return None
 
 
 # 2. AI 요약(Issues) 검색 (Section 2)
@@ -160,6 +98,20 @@ def search_issues_by_keyword(db: Session, keyword: str) -> Dict[str, Any]:
     )
 
     analysis_result = get_llm_summary(prompt)
+
+    # ---------------------------------------------------------
+    # [추가] 300자 내외로 최종 요양 및 최근 트렌드 강조
+    # ---------------------------------------------------------
+    refined_prompt = (
+        f"다음은 '{keyword}'와 관련된 최근 주요 기사 분석 내용입니다:\n\n{analysis_result}\n\n"
+        "위 내용을 바탕으로 최근 트렌드를 반영하여 **한글 300자 이내**로 아주 간결하게 핵심만 요약해 주세요. "
+        "반드시 **하나의 단락(one paragraph)**으로만 작성해 주세요. 줄바꿈은 하지 않습니다. "
+        "한자(Hanja)는 절대 사용하지 마세요. 모든 한자는 한글로 번역하여 표기해야 합니다. "
+        "불필요한 수식어는 빼고 팩트 위주로 전달합니다. "
+        "특수 기호(*, # 등)는 모두 제거하고 평문으로 작성합니다."
+    )
+    
+    analysis_result = get_llm_summary(refined_prompt)
 
     return {"analysis": analysis_result, "issues": issues_list}
 
