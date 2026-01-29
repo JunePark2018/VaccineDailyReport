@@ -8,7 +8,7 @@ import Searchbar from '../components/Searchbar';
 import UserMenu from '../components/UserMenu';
 import './LivingCulturePage.css';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 const LivingCulturePage = () => {
     const name = '생활/문화';
     const navigate = useNavigate();

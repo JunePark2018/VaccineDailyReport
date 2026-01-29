@@ -3,7 +3,7 @@ import './RightSideBar.css';
 
 import axios from 'axios'; // axios 임포트 확인
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 export default function RightSideBar({ isOpen, onClose, searchKeyword, clusterId }) {
   const [isLoading, setIsLoading] = useState(false);
   const [sourceList, setSourceList] = useState(null);

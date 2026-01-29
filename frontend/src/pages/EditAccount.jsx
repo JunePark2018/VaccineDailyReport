@@ -8,7 +8,7 @@ import { categories as categoryData } from '../components/categoryIcon/categoryD
 import './EditAccount.css';
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 export default function EditAccount() {
     const navigate = useNavigate();
 

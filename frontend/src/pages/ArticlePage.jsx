@@ -13,7 +13,7 @@ import axios from 'axios';
 import WordCloudComponent from '../components/WordCloud';
 import AI_News_Recommendation from '../components/AI_News_Recommendation';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 function ArticlePage() {
 
   const { id } = useParams();
@@ -60,7 +60,7 @@ function ArticlePage() {
     setEvidenceMap(prev => ({ ...prev, [index]: { loading: true, data: null } }));
 
     try {
-      const response = await axios.post('http://localhost:8000/generated-news/claim-evidence', {
+      const response = await axios.post(`${API_BASE_URL}/generated-news/claim-evidence`, {
         cluster_id: article.cluster_id,
         claim_text: text,
         target_media: targetMedia
@@ -195,7 +195,7 @@ function ArticlePage() {
     // [추가] 읽음 처리 (로그인 시)
     const login_id = localStorage.getItem('login_id');
     if (login_id) {
-      axios.post(`http://localhost:8000/users/${login_id}/read/${id}`)
+      axios.post(`${API_BASE_URL}/users/${login_id}/read/${id}`)
         .then(() => console.log("Read recorded"))
         .catch(err => console.error("Failed to record read:", err));
     }

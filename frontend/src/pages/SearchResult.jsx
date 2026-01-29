@@ -8,7 +8,7 @@ import UserMenu from "../components/UserMenu";
 import Searchbar from "../components/Searchbar";
 import Button from "../components/Button";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 export default function SearchResult() {
     const location = useLocation();
     const [searchTerm, setSearchTerm] = useState("");

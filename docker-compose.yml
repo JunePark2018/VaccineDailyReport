@@ -1,60 +1,50 @@
-version: '3.8'
+version: "3.8"
 
 services:
-  # 1. 데이터베이스: 기존 설정 유지
   postgres:
     image: postgres:15-alpine
-    container_name: finalproject_postgres
+    container_name: postgres
     restart: always
     environment:
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypassword
-      POSTGRES_DB: finalproject
-    ports:
-      - "5432:5432"
+      POSTGRES_DB: mydb
     volumes:
-      - ./postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_net
 
-  # 2. DB 관리 도구: Adminer
-  adminer:
-    image: adminer
-    container_name: finalproject_adminer
-    restart: always
-    ports:
-      - "8080:8080"
-    depends_on:
-      - postgres
-
-  # 3. 백엔드: FastAPI (Portainer와 충돌 방지를 위해 8081 포트 사용)
   backend:
-    build: ./backend  # backend 폴더 안에 Dockerfile이 있어야 함
-    container_name: finalproject_backend
+    build: ./backend
+    container_name: backend
     restart: always
-    environment:
-      - DATABASE_URL=postgresql://myuser:mypassword@postgres:5432/finalproject
-      - REDIS_HOST=158.179.164.153  # 기존에 떠 있는 redis-vector 주소
-      - REDIS_PORT=6379
+    env_file:
+      - ./backend/.env
     ports:
-      - "8081:8000"  # 외부에서 8081로 접속하면 컨테이너 내부 8000(FastAPI)으로 연결
+      - "8081:8000"
     depends_on:
       - postgres
+    networks:
+      - app_net
 
-  # 4. 프론트엔드: Next.js/React
   frontend:
-    build: 
-      context: ./frontend  # frontend 폴더 안에 Dockerfile이 있어야 함
+    build:
+      context: ./frontend
       args:
-        - NEXT_PUBLIC_API_URL=http://158.179.164.153:8081
-    container_name: finalproject_frontend
+        REACT_APP_API_URL: http://168.107.51.224:8081
+    container_name: frontend
     restart: always
-    environment:
-      - NEXT_PUBLIC_API_URL=http://158.179.164.153:8081
     ports:
       - "3000:80"
     depends_on:
       - backend
+    networks:
+      - app_net
 
-# 공통 네트워크 설정 (필요 시)
 networks:
-  default:
-    name: finalproject_network
+  app_net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+

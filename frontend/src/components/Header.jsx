@@ -7,6 +7,8 @@ import sampleArticles from '../sample_/sampleArticle.json';
 
 import Weather from './Weather';
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 const Header = ({
   className = "",
   leftChild,
@@ -30,7 +32,7 @@ const Header = ({
     // 1. AI 뉴스 가져오기
     const fetchNews = async () => {
       try {
-        const res = await axios.get('http://localhost:8000/generated-news?limit=5');
+        const res = await axios.get(`${API_BASE_URL}/generated-news?limit=5`);
         if (res.data && res.data.length > 0) {
           setArticles(res.data);
         } else {

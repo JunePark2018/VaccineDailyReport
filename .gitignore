@@ -1,23 +1,47 @@
-# IDE
+# ------------------------------
+# IDE / 편집기
+# ------------------------------
 .idea/
+.vscode/
 
-# Cache
+# ------------------------------
+# Python 캐시 / 가상환경
+# ------------------------------
 **/__pycache__/
 *.py[cod]
-
-# frontend
-frontend/node_modules
-
-# backend
-backend/__pycache__/
 backend/venv/
 backend/.venv/
-backend/.env
-backend/chroma_db
-backend/sql.db*
 
-# Database Data (Docker)
+# ------------------------------
+# 환경 변수
+# ------------------------------
+backend/.env
+
+# ------------------------------
+# 데이터베이스 관련
+# ------------------------------
+# PostgreSQL 데이터 (Docker Volume 혹은 호스트 폴더)
 postgres_data/
 
-# DB
-postgres_data
+# 벡터 DB (ChromaDB)
+backend/chroma_db
+
+# SQLite (만약 사용한다면)
+backend/sql.db*
+
+# ------------------------------
+# Node / frontend
+# ------------------------------
+frontend/node_modules/
+
+# ------------------------------
+# 빌드 결과물
+# ------------------------------
+frontend/build/
+frontend/.next/
+frontend/out/
+
+# ------------------------------
+# 로그 파일
+# ------------------------------
+*.log
