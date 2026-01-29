@@ -30,7 +30,7 @@ def comprehensive_search(keyword: str = Query(..., min_length=1, description="�
     """
 
     # 1. 위키피디아 검색 (외부 API)
-    wiki_info = search_wikipedia(keyword)
+    wiki_info = None # search_wikipedia(keyword)
 
     # 2. AI 이슈 요약 검색 (DB: Issue)
     ai_summaries = search_issues_by_keyword(db, keyword)
