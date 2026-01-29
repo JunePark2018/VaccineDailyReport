@@ -1,10 +1,9 @@
 version: "3.8"
 
 services:
-  # 1. PostgreSQL
   postgres:
     image: postgres:15-alpine
-    container_name: finalproject_postgres
+    container_name: postgres
     restart: always
     environment:
       POSTGRES_USER: myuser
@@ -12,55 +11,40 @@ services:
       POSTGRES_DB: mydb
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     networks:
-      - finalproject_network
+      - app_net
 
-  # 2. Adminer
-  adminer:
-    image: adminer
-    container_name: finalproject_adminer
-    restart: always
-    ports:
-      - "8080:8080"
-    depends_on:
-      - postgres
-    networks:
-      - finalproject_network
-
-  # 3. Backend (FastAPI)
   backend:
     build: ./backend
-    container_name: finalproject_backend
+    container_name: backend
     restart: always
-    environment:
-      DATABASE_URL: postgresql://myuser:mypassword@postgres:5432/mydb
+    env_file:
+      - ./backend/.env
     ports:
       - "8081:8000"
     depends_on:
       - postgres
     networks:
-      - finalproject_network
+      - app_net
 
-  # 4. Frontend (React + Nginx)
   frontend:
     build:
       context: ./frontend
       args:
-        REACT_APP_API_URL: http://backend:8000
-    container_name: finalproject_frontend
+        REACT_APP_API_URL: http://168.107.51.224:8081
+    container_name: frontend
     restart: always
     ports:
       - "3000:80"
     depends_on:
       - backend
     networks:
-      - finalproject_network
+      - app_net
 
 networks:
-  finalproject_network:
+  app_net:
     driver: bridge
 
 volumes:
   postgres_data:
+
