@@ -770,6 +770,17 @@ def list_user_top_keywords(db: Session, *, user_id: int, limit: int = 1000) -> L
     return [(r[0], r[1]) for r in rows]
 
 
+def clear_user_keyword_stats(db: Session, *, user_id: int) -> int:
+    """
+    사용자의 모든 관심 키워드 통계를 삭제합니다.
+    Returns: 삭제된 레코드 개수
+    """
+    count = db.query(UserKeywordReadStat).filter(UserKeywordReadStat.user_id == user_id).delete()
+    db.flush()
+    return count
+
+
+
 # -------------------------
 # Feed helpers (예시)
 # -------------------------

@@ -13,6 +13,7 @@ from database.crud import (
     add_view,
     bump_user_keyword_stats_from_ai_news,
     list_user_top_keywords,
+    clear_user_keyword_stats,
     get_ai_generated_news,
     get_category_name,
     get_reaction,
@@ -53,6 +54,21 @@ def signup(user: UserCreateRequest, db: Session = Depends(get_db)):
         "subscribed_categories": [cat.name for cat in new_user.subscribed_categories],
         "subscribed_keywords": [kw.keyword for kw in new_user.keyword_subscriptions],
     }
+
+
+@router.delete("/{login_id}/keywords/stats")
+def clear_interest_keywords(login_id: str, db: Session = Depends(get_db)):
+    """
+    사용자의 모든 관심 키워드 통계 초기화
+    """
+    user = get_user_by_login_id(db, login_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    deleted_count = clear_user_keyword_stats(db, user_id=user.user_id)
+    db.commit()
+    
+    return {"message": "Keywords cleared", "deleted_count": deleted_count}
 
 
 @router.get("/{login_id}/reactions/{news_id}")
@@ -158,6 +174,7 @@ def record_article_read(login_id: str, news_id: int, db: Session = Depends(get_d
 
 
 @router.get("/{login_id}/dashboard", response_model=UserDashboardResponse)
+
 def get_user_dashboard(login_id: str, db: Session = Depends(get_db)):
     """
     마이페이지 대시보드 데이터 조회
