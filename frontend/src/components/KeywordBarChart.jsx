@@ -1,6 +1,6 @@
 import React from 'react';
 
-const KeywordBarChart = ({ readKeywords = {}, isActive }) => {
+const KeywordBarChart = ({ readKeywords = {}, isActive, onReset }) => {
   const topKeywords = Object.entries(readKeywords)
     .sort(([, a], [, b]) => b - a)
     .slice(0, 10);
@@ -8,7 +8,7 @@ const KeywordBarChart = ({ readKeywords = {}, isActive }) => {
   const maxCount = Math.max(...Object.values(readKeywords), 1);
 
   return (
-    <section className="info-section">
+    <section className="info-section" style={{ position: 'relative' }}>
       <h3 className="section-title">관심 키워드 Top 10</h3>
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', height: '180px', padding: '20px 0' }}>
         {topKeywords.map(([keyword, count], index) => (
@@ -17,18 +17,40 @@ const KeywordBarChart = ({ readKeywords = {}, isActive }) => {
               {count}회 읽음
             </div>
             <div style={{ width: '80%', backgroundColor: '#ffffff', height: '100px', position: 'relative', overflow: 'hidden', cursor: 'pointer', borderBottom: '1px solid #eee' }}>
-              <div className="bar-fill-element" style={{ 
-                  position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#0095f6', 
-                  height: isActive ? `${(count / (maxCount + 5)) * 100}%` : '0%',
-                  transition: `height 1s cubic-bezier(0.17, 0.67, 0.83, 0.67) ${index * 0.05}s` 
+              <div className="bar-fill-element" style={{
+                position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#0095f6',
+                height: isActive ? `${(count / (maxCount + 5)) * 100}%` : '0%',
+                transition: `height 1s cubic-bezier(0.17, 0.67, 0.83, 0.67) ${index * 0.05}s`
               }} />
             </div>
             <span style={{ fontSize: '9px', marginTop: '8px', fontWeight: '600', color: '#475569', textAlign: 'center', wordBreak: 'keep-all' }}>{keyword}</span>
           </div>
         ))}
       </div>
+      {onReset && (
+        <div style={{ position: 'absolute', bottom: '20px', right: '20px' }}>
+          <button
+            onClick={onReset}
+            style={{
+              padding: '6px 12px',
+              fontSize: '12px',
+              backgroundColor: '#ef4444',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontWeight: '600',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseOver={(e) => e.target.style.backgroundColor = '#dc2626'}
+            onMouseOut={(e) => e.target.style.backgroundColor = '#ef4444'}
+          >
+            초기화
+          </button>
+        </div>
+      )}
     </section>
   );
 };
 
-export default KeywordBarChart; // 💡 Export 추가!
+export default KeywordBarChart;

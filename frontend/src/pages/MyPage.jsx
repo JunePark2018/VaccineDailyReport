@@ -83,6 +83,29 @@ const MyPage = () => {
     }
   };
 
+  // 관심 키워드 통계 초기화 핸들러
+  const handleResetKeywords = async () => {
+    if (!window.confirm('모든 관심 키워드 기록을 초기화하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) {
+      return;
+    }
+
+    try {
+      const encodedLoginId = encodeURIComponent(login_id);
+      const apiUrl = `${API_BASE_URL}/users/${encodedLoginId}/keywords/stats`;
+      console.log('Calling API:', apiUrl);
+      const response = await axios.delete(apiUrl);
+      console.log('Reset response:', response.data);
+      // 성공 시 UI 업데이트
+      setUserData({ ...userData, read_keywords: {} });
+      alert('관심 키워드가 초기화되었습니다.');
+    } catch (error) {
+      console.error("관심 키워드 초기화 실패:", error);
+      console.error("Error response:", error.response);
+      alert(`초기화에 실패했습니다. 다시 시도해주세요.\n${error.response?.data?.detail || error.message}`);
+    }
+  };
+
+
   if (loading) return <div className="loading-state">데이터 분석 중...</div>;
 
   return (
@@ -119,6 +142,7 @@ const MyPage = () => {
           <KeywordBarChart
             readKeywords={userData?.read_keywords}
             isActive={isActive}
+            onReset={handleResetKeywords}
           />
           {/* 2. 바 차트 컴포넌트 */}
 
