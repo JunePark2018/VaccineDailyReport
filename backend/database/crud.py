@@ -471,12 +471,27 @@ def update_user_subscriptions(
 
     # 2. Keywords
     if new_keywords is not None:
+        # Validate keyword count (max 20)
+        if len(new_keywords) > 20:
+            raise ValueError("키워드는 최대 20개까지만 등록할 수 있습니다.")
+        
         # Normalize new keywords
         normalized_new = set()
         for k in new_keywords:
+            # Validate keyword length (max 60 bytes)
+            if len(k.encode('utf-8')) > 60:
+                raise ValueError(f"키워드 '{k}'는 60바이트를 초과합니다. 더 짧은 키워드를 사용해주세요.")
+            
             n = normalize_keyword(k)
             if n:
+                # Double-check normalized keyword length
+                if len(n.encode('utf-8')) > 60:
+                    raise ValueError(f"키워드 '{n}'는 60바이트를 초과합니다.")
                 normalized_new.add(n)
+        
+        # Validate normalized keyword count (max 20)
+        if len(normalized_new) > 20:
+            raise ValueError("키워드는 최대 20개까지만 등록할 수 있습니다.")
 
         # Get existing keywords
         # user.keyword_subscriptions is a list of UserKeywordSubscription objects
