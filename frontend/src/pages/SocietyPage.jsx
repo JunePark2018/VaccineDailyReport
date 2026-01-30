@@ -44,13 +44,8 @@ const SocietyPage = () => {
                 });
 
                 if (filtered.length > 0) {
-                    let expanded = [...filtered];
-                    // Ensure at least 33 items for SocietyPage layout
-                    while (expanded.length < 33) {
-                        expanded = [...expanded, ...filtered];
-                    }
-                    // Shuffle and slice to exactly 33
-                    const shuffled = expanded.sort(() => Math.random() - 0.5).slice(0, 33);
+                    // [Fix] Remove duplication loop to prevent duplicates
+                    const shuffled = [...filtered].sort(() => Math.random() - 0.5);
                     setDisplayArticles(shuffled);
 
                     // 4. Fetch Images
@@ -103,7 +98,8 @@ const SocietyPage = () => {
         const listArticles = remainingArticles.slice(4, 12);
 
         // Feed Logic
-        const allFeedArticles = blockArticles; // Show ALL articles in Feed
+        // Feed Logic: Exclude articles already shown in top sections (1 main, 4 grid, 8 list)
+        const allFeedArticles = remainingArticles.slice(12);
         const feedPageSize = 5;
         const totalFeedPages = Math.ceil(allFeedArticles.length / 5);
         const currentFeedArticles = allFeedArticles.slice((feedPage - 1) * 5, feedPage * 5);

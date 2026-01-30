@@ -364,6 +364,7 @@
     border: 1px dashed #ccc;
     margin: 20px 0;
 }
+
 /* Hover Effects for Titles */
 .politics-title-side:hover h2,
 .main-article-section:hover h2 {
@@ -375,4 +376,3 @@
 .feed-item:hover h3 {
     text-decoration: underline;
 }
-

@@ -116,17 +116,16 @@
 
 .AI_Title {
     font-size: 1.6rem;
-    background: rgb(84, 139, 223);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    font-weight: bold;
+    color: #000;
+    font-weight: 800;
+    /* Extra Bold like Main page */
 }
 
 .Loading_Spinner {
     width: 22px;
     height: 22px;
-    border: 3px solid rgba(66, 133, 244, 0.1);
-    border-top: 3px solid #4285f4;
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-top: 3px solid #000;
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
@@ -291,19 +290,22 @@
 
 /* ìµœì í™”: ê³µí†µ ë²„íŠ¼ ìŠ¤íƒ€ì¼ */
 .Action_Button {
-    background-color: rgb(84, 139, 223) !important;
+    background-color: #333 !important;
+    /* Dark gray for Main page concept */
     color: #fff !important;
     font-size: 0.85rem !important;
     padding: 8px 20px !important;
-    border-radius: 100px !important;
-    border: none !important;
+    border-radius: 4px !important;
+    /* Squarer like Main page */
+    border: none;
     cursor: pointer;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
-    transition: background-color 0.2s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.2s;
+    font-weight: 600;
 }
 
 .Action_Button:hover {
-    background-color: rgb(64, 119, 203) !important;
+    background-color: rgb(104, 104, 104) !important;
 }
 
 /* ìµœì í™”: ê²°ê³¼ ì—†ìŒ ë©”ì‹œì§€ ìŠ¤íƒ€ì¼ */
@@ -532,4 +534,24 @@
     text-align: center;
     background: #f9f9f9;
     border-radius: 8px;
+}
+/* --- ¸ğ¹ÙÀÏ ´ëÀÀ (768px ÀÌÇÏ) --- */
+@media (max-width: 768px) {
+    .AI_Content_Wrapper {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .AI_Right_Section {
+        display: none !important;
+    }
+
+    .AI_Left_Section {
+        flex: 1;
+        width: 100%;
+    }
+
+    .AI_Title {
+        font-size: 1.2rem;
+    }
 }

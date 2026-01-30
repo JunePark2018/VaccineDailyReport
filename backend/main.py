@@ -26,7 +26,6 @@ from database.crud import create_news, create_user, get_user, get_user_by_login_
 from ai_processor import process_news_pipeline
 from clustering import run_issue_clustering
 from search_agent import (
-    search_wikipedia,
     search_issues_by_keyword,
     search_hot_topics_by_keyword,
     search_articles_by_keyword,

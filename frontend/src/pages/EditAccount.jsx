@@ -164,10 +164,10 @@ export default function EditAccount() {
             newErrors.categories = `최소 3개의 관심 분야를 선택해주세요. (현재 ${selectedCategories.length}개 선택)`;
         }
 
-        // 6. Agreement Check
-        if (!formData.marketingAgree) {
-            newErrors.agreement = "서비스 이용을 위해 사용자 경험 데이터 수집에 동의해야 합니다.";
-        }
+        // 6. Agreement Check - Disabled
+        // if (!formData.marketingAgree) {
+        //     newErrors.agreement = "서비스 이용을 위해 사용자 경험 데이터 수집에 동의해야 합니다.";
+        // }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -215,17 +215,18 @@ export default function EditAccount() {
             <Header
                 headerTop="on"
                 headerMain="on"
-                headerBottom="on"
-                leftChild={<div />}
-                midChild={<Logo />}
+                headerBottom="off"
+                leftChild={<Logo />}
+                midChild={null}
                 rightChild={
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
-                        <div style={{ position: 'relative' }}>
-                            <Searchbar />
+                        <div className="mobile-hidden" style={{ position: 'relative' }}>
+                            <Searchbar className="always-open" />
                         </div>
                         <UserMenu />
                     </div>
                 }
+                noSearchMobile={true}
             />
             <div className="edit-account-box">
                 <h2>정보 수정</h2>
@@ -262,65 +263,61 @@ export default function EditAccount() {
 
                     <div className="input-group">
                         <label>새 비밀번호 (변경 시에만 입력)</label>
-                        <div className="password-wrapper">
-                            <input
-                                type={showPassword ? "text" : "password"}
-                                name="password"
-                                placeholder="8자 이상, 대문자/특수문자 포함 권장"
-                                value={formData.password}
-                                onChange={handleChange}
-                                className={errors.password ? "input-error" : ""}
-                            />
-                            <button
-                                type="button"
-                                className="toggle-btn"
-                                onClick={() => setShowPassword(!showPassword)}
-                            >
-                                {showPassword ? "숨기기" : "보기"}
-                            </button>
-                        </div>
-                        {formData.password && (
-                            <div className="strength-meter-container">
-                                <div
-                                    className="strength-bar"
-                                    style={{
-                                        width: `${(passwordStrength.score + 1) * 20}%`,
-                                        backgroundColor: passwordStrength.color
-                                    }}
-                                ></div>
-                                <span style={{ color: passwordStrength.color }}>
-                                    {passwordStrength.label}
-                                </span>
+                        <div className="input-group-joined">
+                            <div className="input-row-joined top">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    name="password"
+                                    placeholder="8자 이상, 대문자/특수문자 포함 권장"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    className={errors.password ? "input-error" : ""}
+                                />
+                                <button
+                                    type="button"
+                                    className="toggle-btn-joined"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                >
+                                    {showPassword ? "숨기기" : "보기"}
+                                </button>
                             </div>
-                        )}
-                        {errors.password && <span className="error-msg">{errors.password}</span>}
-                    </div>
-
-                    <div className="input-group">
-                        <label>비밀번호 확인</label>
-                        <div className="password-wrapper">
-                            <input
-                                type={showPassword ? "text" : "password"}
-                                name="confirmPassword"
-                                placeholder="비밀번호를 다시 입력해주세요"
-                                value={formData.confirmPassword}
-                                onChange={handleChange}
-                                className={errors.confirmPassword ? "input-error" : ""}
-                            />
-                            <button
-                                type="button"
-                                className="toggle-btn"
-                                onClick={() => setShowPassword(!showPassword)}
-                            >
-                                {showPassword ? "숨기기" : "보기"}
-                            </button>
+                            <div className="input-row-joined bottom">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    name="confirmPassword"
+                                    placeholder="비밀번호 재확인"
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
+                                    className={errors.confirmPassword ? "input-error" : ""}
+                                />
+                            </div>
                         </div>
-                        {formData.password && formData.confirmPassword && formData.password === formData.confirmPassword && (
-                            <span className="success-msg" style={{ color: '#2ecc71', fontSize: '0.85rem', marginTop: '4px', display: 'block' }}>
-                                비밀번호 일치
-                            </span>
-                        )}
-                        {errors.confirmPassword && <span className="error-msg">{errors.confirmPassword}</span>}
+                        {/* Password Feedback (Strength & Match) */}
+                        <div className="password-feedback">
+                            {formData.password && (
+                                <div className="strength-meter-container">
+                                    <div
+                                        className="strength-bar"
+                                        style={{
+                                            width: `${(passwordStrength.score + 1) * 20}%`,
+                                            backgroundColor: passwordStrength.color
+                                        }}
+                                    ></div>
+                                    <span style={{ color: passwordStrength.color }}>
+                                        {passwordStrength.label}
+                                    </span>
+                                </div>
+                            )}
+
+                            {formData.password && formData.confirmPassword && formData.password === formData.confirmPassword && (
+                                <span className="success-msg" style={{ color: '#2ecc71', fontSize: '13px', marginTop: '5px', display: 'block' }}>
+                                    비밀번호가 일치합니다.
+                                </span>
+                            )}
+
+                            {errors.password && <span className="error-msg">{errors.password}</span>}
+                            {errors.confirmPassword && <span className="error-msg">{errors.confirmPassword}</span>}
+                        </div>
                     </div>
 
                     <div className="input-group">
@@ -387,6 +384,8 @@ export default function EditAccount() {
                         {errors.categories && <span className="error-msg">{errors.categories}</span>}
                     </div>
 
+                    {/* Agreement Section Disabled */}
+                    {/* 
                     <div className="agreement-section">
                         <label className="checkbox-container">
                             <input
@@ -395,19 +394,35 @@ export default function EditAccount() {
                                 checked={formData.marketingAgree}
                                 onChange={handleChange}
                             />
-                            <span className="checkmark"></span>
+                            <span className="checkmark-custom"></span>
                             <span className="text">
                                 (필수) 사용자 경험 향상 및 서비스 개선을 위한 활동 기록 수집에 동의합니다.
                             </span>
                         </label>
                         {errors.agreement && <span className="error-msg">{errors.agreement}</span>}
                     </div>
+                    */}
 
-                    <button type="submit" className="submit-btn">수정 완료</button>
+                    <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                        <button type="submit" className="submit-btn outline-black" style={{ flex: 1, margin: 0 }}>수정 완료</button>
+                        <button
+                            type="button"
+                            className="submit-btn outline-red"
+                            style={{
+                                flex: 1,
+                                margin: 0
+                            }}
+                            onClick={() => navigate(-1)}
+                        >
+                            취소
+                        </button>
+                    </div>
 
+                    {/* 
                     <div className="login-redirect">
                         <span onClick={() => navigate('/mypage')}>마이페이지로 돌아가기</span>
                     </div>
+                    */}
                 </form>
             </div>
         </div>
