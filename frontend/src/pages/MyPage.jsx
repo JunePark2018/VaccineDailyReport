@@ -65,6 +65,16 @@ const MyPage = () => {
       await axios.put(`http://localhost:8000/users/${login_id}`, { subscribed_keywords: newList });
     } catch (error) {
       console.error("서버 업데이트 실패:", error);
+      // Show error message from backend if available
+      const errorMessage = error.response?.data?.detail || "서버 업데이트에 실패했습니다.";
+      alert(errorMessage);
+      // Revert to previous state by refetching
+      try {
+        const response = await axios.get(`${API_BASE_URL}/users/${login_id}/dashboard`);
+        setUserData(response.data);
+      } catch (refetchError) {
+        console.error("데이터 재로딩 실패:", refetchError);
+      }
     }
   };
 

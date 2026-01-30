@@ -154,7 +154,10 @@ def update_user(login_id: str, user_update: UserUpdate, db: Session = Depends(ge
             setattr(user, key, value)
 
     if user_update.subscribed_categories is not None or user_update.subscribed_keywords is not None:
-        update_user_subscriptions(db, user, user_update.subscribed_categories, user_update.subscribed_keywords)
+        try:
+            update_user_subscriptions(db, user, user_update.subscribed_categories, user_update.subscribed_keywords)
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     try:
         db.commit()
