@@ -212,7 +212,8 @@ export const Main = () => {
 
     let highlights = [];
     if (bullets.length > 0) {
-      highlights = bullets.slice(0, 4).map(text => {
+      // 1. Map & Filter strict matches only
+      const parsedBullets = bullets.map(text => {
         const cleanText = text.replace(/^- /, '');
         let match = cleanText.match(/^\[(.*?)\]\s*(.*)/);
         if (!match) match = cleanText.match(/^([^:]+):\s*(.*)/);
@@ -221,15 +222,23 @@ export const Main = () => {
         if (match) {
           let kw = match[1].trim().replace(/(은|는)$/, '');
           return { keyword: `"${kw}"`, content: match[2].trim() };
-        } else {
-          const firstSpace = cleanText.indexOf(' ');
-          if (firstSpace > 0 && firstSpace < 15) {
-            let kw = cleanText.substring(0, firstSpace).replace(/(은|는)$/, '');
-            return { keyword: `"${kw}"`, content: cleanText.substring(firstSpace + 1) };
-          }
-          return { keyword: '분석', content: cleanText };
         }
-      });
+        return null;
+      }).filter(Boolean);
+
+      // 2. Deduplicate by keyword (media name)
+      const seenKeywords = new Set();
+      const uniqueHighlights = [];
+
+      for (const item of parsedBullets) {
+        if (!seenKeywords.has(item.keyword)) {
+          seenKeywords.add(item.keyword);
+          uniqueHighlights.push(item);
+        }
+        if (uniqueHighlights.length >= 4) break; // Limit to 4
+      }
+
+      highlights = uniqueHighlights;
     }
 
     if (highlights.length === 0 && relatedNews.length > 0) {
