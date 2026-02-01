@@ -1,27 +1,28 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from '../components/Header';
-import Logo from '../components/Logo';
-import Searchbar from '../components/Searchbar';
-import UserMenu from '../components/UserMenu';
-import { categories as categoryData } from '../components/categoryIcon/categoryData';
-import './EditAccount.css';
+import { categories as categoryData } from './categoryIcon/categoryData';
 import axios from 'axios';
 
+// Reuse styles from EditAccount.css, but we might want to scoped or rename later.
+// For now, assuming MyPage will load EditAccount.css or we import it here.
+// Since EditAccount.css selectors are scoped to .edit-account-container, we should keep that wrapper or update CSS.
+import './EditAccountForm.css';
+
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-export default function EditAccount() {
+
+export default function EditAccountForm({ loginId, onUpdateSuccess }) {
     const navigate = useNavigate();
 
     // --- State Management ---
     const [formData, setFormData] = useState({
         name: '',
-        loginId: '',
+        loginId: '', // Display only
         password: '',
         confirmPassword: '',
         email: '',
         ageGroup: '',
         gender: '',
-
     });
 
     const [selectedCategories, setSelectedCategories] = useState([]);
@@ -33,26 +34,20 @@ export default function EditAccount() {
     // --- Fetch User Data ---
     useEffect(() => {
         const fetchUserData = async () => {
-            const login_id = localStorage.getItem('login_id');
-            if (!login_id) {
-                alert("로그인 정보가 없습니다.");
-                navigate('/login');
-                return;
-            }
+            if (!loginId) return;
 
             try {
-                const response = await axios.get(`${API_BASE_URL}/users/${login_id}`);
+                const response = await axios.get(`${API_BASE_URL}/users/${loginId}`);
                 const data = response.data;
 
                 setFormData({
                     name: data.username || '',
                     loginId: data.login_id,
-                    password: '', // 보안상 비밀번호는 비워둠
+                    password: '',
                     confirmPassword: '',
                     email: data.email || '',
                     ageGroup: data.age_range || '',
                     gender: data.gender || '',
-
                 });
                 setSelectedCategories(data.subscribed_categories || []);
             } catch (error) {
@@ -64,7 +59,7 @@ export default function EditAccount() {
         };
 
         fetchUserData();
-    }, [navigate]);
+    }, [loginId]);
 
     // --- Static Data ---
     const categoryOptions = categoryData
@@ -164,13 +159,36 @@ export default function EditAccount() {
             newErrors.categories = `최소 3개의 관심 분야를 선택해주세요. (현재 ${selectedCategories.length}개 선택)`;
         }
 
-        // 6. Agreement Check - Disabled
-        // if (!formData.marketingAgree) {
-        //     newErrors.agreement = "서비스 이용을 위해 사용자 경험 데이터 수집에 동의해야 합니다.";
-        // }
-
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
+    };
+
+    // --- Account Deletion ---
+    const handleDeleteAccount = async () => {
+        if (!window.confirm('정말로 회원탈퇴 하시겠습니까?')) {
+            return;
+        }
+
+        if (!window.confirm('⚠️ 경고 ⚠️\n\n회원탈퇴 시 모든 데이터가 영구적으로 삭제되며 복구할 수 없습니다.\n\n- 조회 기록\n- 좋아요/싫어요\n- 관심 키워드 통계\n- 구독 정보\n\n정말로 계속하시겠습니까?')) {
+            return;
+        }
+
+        try {
+            await axios.delete(`${API_BASE_URL}/users/${loginId}`);
+
+            // Logout logic
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('user_id');
+            localStorage.removeItem('login_id');
+            localStorage.removeItem('username');
+
+            alert('회원탈퇴가 완료되었습니다.');
+            navigate('/');
+            window.location.reload();
+        } catch (error) {
+            console.error("회원탈퇴 실패:", error);
+            alert(`회원탈퇴에 실패했습니다.\n${error.response?.data?.detail || error.message}`);
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -183,10 +201,8 @@ export default function EditAccount() {
                 age_range: formData.ageGroup,
                 gender: formData.gender,
                 subscribed_categories: selectedCategories,
-
             };
 
-            // 비밀번호가 입력된 경우에만 포함
             if (formData.password) {
                 submitData.password = formData.password;
             }
@@ -194,11 +210,7 @@ export default function EditAccount() {
             try {
                 await axios.put(`${API_BASE_URL}/users/${formData.loginId}`, submitData);
                 alert("회원 정보가 수정되었습니다.");
-                navigate('/mypage'); // URL parameter 없이 이동하면, MyPage가 localStorage에서 ID를 읽어야 함.
-                // MyPage.jsx를 확인해보니 useParams를 씀 (<Route path='/mypage/:login_id' />)
-                // 따라서 navigate(`/mypage/${formData.loginId}`)로 수정 필요할 수 있음.
-                // App.js: <Route path='/mypage/:login_id' element={<MyPage />} />
-                navigate(`/mypage/${formData.loginId}`);
+                if (onUpdateSuccess) onUpdateSuccess();
             } catch (error) {
                 console.error("업데이트 실패:", error);
                 alert("회원 정보 수정 중 오류가 발생했습니다.");
@@ -207,35 +219,18 @@ export default function EditAccount() {
     };
 
     if (loading) {
-        return <div className="edit-account-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>로딩 중...</div>;
+        return <div style={{ padding: '40px', textAlign: 'center' }}>로딩 중...</div>;
     }
 
     return (
-        <div className="edit-account-container">
-            <Header
-                headerTop="on"
-                headerMain="on"
-                headerBottom="off"
-                leftChild={<Logo />}
-                midChild={null}
-                rightChild={
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
-                        <div className="mobile-hidden" style={{ position: 'relative' }}>
-                            <Searchbar className="always-open" />
-                        </div>
-                        <UserMenu />
-                    </div>
-                }
-                noSearchMobile={true}
-            />
-            <div className="edit-account-box">
-                <h2>정보 수정</h2>
-                <p className="description">
+        <div className="edit-account-container" style={{ minHeight: 'auto', backgroundColor: 'transparent' }}>
+            <div className="edit-account-box" style={{ margin: '0', maxWidth: '100%', border: 'none', padding: '0 20px 20px 20px', boxShadow: 'none' }}>
+                <h2 style={{ textAlign: 'left', fontSize: '1.5rem', marginBottom: '10px' }}>정보 수정</h2>
+                <p className="description" style={{ textAlign: 'left', marginBottom: '30px' }}>
                     회원 정보를 수정하고 맞춤형 서비스를 계속 이용하세요.
                 </p>
 
                 <form onSubmit={handleSubmit}>
-
                     <div className="input-group">
                         <label>이름</label>
                         <input
@@ -258,7 +253,7 @@ export default function EditAccount() {
                             disabled
                             style={{ backgroundColor: '#f0f0f0', cursor: 'not-allowed' }}
                         />
-                        <span className="sub-label" style={{ marginTop: '4px' }}>아이디는 변경할 수 없습니다.</span>
+                        <span className="sub-label" style={{ marginTop: '4px', display: 'block', textAlign: 'left' }}>아이디는 변경할 수 없습니다.</span>
                     </div>
 
                     <div className="input-group">
@@ -292,7 +287,7 @@ export default function EditAccount() {
                                 />
                             </div>
                         </div>
-                        {/* Password Feedback (Strength & Match) */}
+
                         <div className="password-feedback">
                             {formData.password && (
                                 <div className="strength-meter-container">
@@ -333,7 +328,6 @@ export default function EditAccount() {
                         {errors.email && <span className="error-msg">{errors.email}</span>}
                     </div>
 
-                    {/* New Sections: Age Group and Gender */}
                     <div className="input-row">
                         <div className="input-group half">
                             <label>연령대</label>
@@ -364,7 +358,7 @@ export default function EditAccount() {
                     </div>
 
                     <div className="category-section">
-                        <label>관심 분야 선택 <span className="sub-label">(우선순위대로 번호가 지정됩니다, 최소 3개)</span></label>
+                        <label>관심 분야 선택 <span className="sub-label">(최소 3개)</span></label>
                         <div className="category-grid">
                             {categoryOptions.map((cat) => {
                                 const index = selectedCategories.indexOf(cat);
@@ -384,28 +378,39 @@ export default function EditAccount() {
                         {errors.categories && <span className="error-msg">{errors.categories}</span>}
                     </div>
 
-
-
-                    <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                    <div style={{ display: 'flex', gap: '10px', marginBottom: '40px' }}>
                         <button type="submit" className="submit-btn outline-black" style={{ flex: 1, margin: 0 }}>수정 완료</button>
+                    </div>
+
+                    {/* Danger Zone: Delete Account */}
+                    <div style={{
+                        marginTop: '60px',
+                        paddingTop: '30px',
+                        borderTop: '1px solid #eee',
+                        textAlign: 'left'
+                    }}>
+                        <h3 style={{ fontSize: '1rem', color: '#dc2626', marginBottom: '10px' }}>계정 삭제</h3>
+                        <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '15px' }}>
+                            계정을 삭제하면 모든 개인정보와 활동 기록이 영구적으로 제거됩니다.
+                        </p>
                         <button
                             type="button"
-                            className="submit-btn outline-red"
+                            onClick={handleDeleteAccount}
                             style={{
-                                flex: 1,
-                                margin: 0
+                                backgroundColor: 'white',
+                                border: '1px solid #ff4d4d',
+                                color: '#ff4d4d',
+                                fontSize: '13px',
+                                padding: '8px 16px',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontWeight: '500'
                             }}
-                            onClick={() => navigate(-1)}
                         >
-                            취소
+                            회원탈퇴
                         </button>
                     </div>
 
-                    {/* 
-                    <div className="login-redirect">
-                        <span onClick={() => navigate('/mypage')}>마이페이지로 돌아가기</span>
-                    </div>
-                    */}
                 </form>
             </div>
         </div>

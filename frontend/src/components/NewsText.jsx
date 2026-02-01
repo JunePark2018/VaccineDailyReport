@@ -12,7 +12,7 @@ import './NewsText.css';
  * - isLiked: 사용자의 좋아요 상태
  * - onLikeUpdate: 좋아요 업데이트 콜백
  */
-const NewsText = ({ contents, onSentenceClick, articleId, likeCount = 0, isLiked = false, onLikeUpdate }) => {
+const NewsText = ({ contents, onSentenceClick, articleId, likeCount = 0, isLiked = false, onLikeUpdate, fontSize = 3 }) => {
 
   // [내부 함수] 문장 클릭 시 실행될 로직
   const handleSentenceClick = (sentence) => {
@@ -83,7 +83,7 @@ const NewsText = ({ contents, onSentenceClick, articleId, likeCount = 0, isLiked
   return (
     <div className="NewsText">
       {/* 제목 및 구분선은 부모 컴포넌트(ArticlePage)에서 렌더링하도록 변경됨 */}
-      <div className="news-body">
+      <div className={`news-body fs-${fontSize}`}>
         {formatContent(contents)}
       </div>
     </div>

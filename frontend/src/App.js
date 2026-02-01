@@ -8,7 +8,6 @@ import CategoryPage from './pages/CategoryPage.jsx';
 import CreateAccount from './pages/CreateAccount.jsx';
 import Login from './components/Login.jsx';
 import MyPage from './pages/MyPage.jsx';
-import EditAccount from './pages/EditAccount.jsx';
 import SearchResult from './pages/SearchResult.jsx';
 
 import PoliticsPage from './pages/PoliticsPage.jsx';
@@ -40,7 +39,6 @@ function App() {
           <Route path='/login' element={<Login />} />
           <Route path='/CreateAccount' element={<CreateAccount />} />
           <Route path='/mypage/:login_id' element={<MyPage />} />
-          <Route path='/edit-account' element={<EditAccount />} />
           <Route path='/search' element={<SearchResult />} />
         </Routes>
       </div>

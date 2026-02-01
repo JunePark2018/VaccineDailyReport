@@ -6,6 +6,7 @@ import Logo from '../components/Logo';
 import logoImg from '../components/Logo.png';
 import Searchbar from '../components/Searchbar';
 import UserMenu from '../components/UserMenu';
+import SkeletonNews from '../components/SkeletonNews';
 import './PoliticsPage.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
@@ -17,6 +18,7 @@ const PoliticsPage = () => {
     const [imageMap, setImageMap] = useState({});
     const [feedPage, setFeedPage] = useState(1);
     const [topFocusIndex, setTopFocusIndex] = useState(0); // State for slideshow focus
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         setCurrentPage(1);
@@ -25,13 +27,13 @@ const PoliticsPage = () => {
         const loadData = async () => {
             try {
                 // 1. Fetch AI Generated News (Limit 100 to ensure coverage)
-                const response = await axios.get(`${API_BASE_URL}/generated-news?limit=100`);
+                const response = await axios.get(`${API_BASE_URL}/reports?limit=100`);
                 const realArticles = response.data;
 
                 // 2. Map Backend Data to Frontend Structure
                 const formattedArticles = realArticles.map(art => ({
                     ...art,
-                    id: art.ai_generated_news_id, // [Fix] Map native ID to 'id'
+                    id: art.report_id, // [Fix] Map native ID to 'id'
                     category: art.category_name, // Map category_name to category
                     image: `cluster_${art.cluster_id}`, // Placeholder ID for image map
                     short_text: art.contents ? (art.contents.substring(0, 100) + "...") : "내용 없음"
@@ -55,7 +57,7 @@ const PoliticsPage = () => {
 
                     await Promise.allSettled(uniqueClusters.map(async (clusterId) => {
                         try {
-                            const imgRes = await axios.get(`${API_BASE_URL}/generated-news/clusters/${clusterId}/news`);
+                            const imgRes = await axios.get(`${API_BASE_URL}/reports/clusters/${clusterId}/news`);
                             const newsList = imgRes.data;
                             const allImgUrls = newsList.flatMap(news => news.img_urls ?? []).filter(Boolean);
 
@@ -77,9 +79,12 @@ const PoliticsPage = () => {
                 console.error('Failed to load real data:', error);
                 setDisplayArticles([]);
                 setImageMap({});
+            } finally {
+                setLoading(false);
             }
         };
 
+        setLoading(true);
         loadData();
     }, []);
 
@@ -324,15 +329,25 @@ const PoliticsPage = () => {
                     <h1>{name}</h1>
                 </div>
 
-                {articleBlocks.length > 0 ? (
+                {loading ? (
+                    <div style={{ marginTop: '40px' }}>
+                        <SkeletonNews type="main" />
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '40px' }}>
+                            <SkeletonNews type="grid" />
+                            <SkeletonNews type="grid" />
+                            <SkeletonNews type="grid" />
+                            <SkeletonNews type="grid" />
+                        </div>
+                        <SkeletonNews type="feed" />
+                        <SkeletonNews type="feed" />
+                    </div>
+                ) : articleBlocks.length > 0 ? (
                     articleBlocks.map((block, i) => renderMainContent(block, i))
                 ) : (
                     <div className="empty-category">
                         <p>해당 카테고리에 표시할 기사가 없습니다.</p>
                     </div>
                 )}
-
-                {/* Pagination Removed */}
             </main>
         </div>
     );

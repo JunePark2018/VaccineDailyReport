@@ -5,6 +5,7 @@ import Logo from '../components/Logo';
 import logoImg from '../components/Logo.png';
 import Searchbar from '../components/Searchbar';
 import UserMenu from '../components/UserMenu';
+import SkeletonNews from '../components/SkeletonNews';
 
 
 import './Main.css';
@@ -20,6 +21,7 @@ export const Main = () => {
   const [imageMap, setImageMap] = useState({});
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
+  const [loading, setLoading] = useState(true); // Loading state
   const itemsPerPage = 5;
 
   // Check login status
@@ -37,6 +39,7 @@ export const Main = () => {
     setCurrentPage(1);
 
     const loadData = async () => {
+      setLoading(true);
       try {
         // 1. Fetch AI Generated News (Limit 50 for main page coverage)
         const response = await axios.get(`${API_BASE_URL}/reports?limit=100`); // Fetch enough to cover all sections
@@ -131,8 +134,10 @@ export const Main = () => {
 
       } catch (error) {
         console.error('Failed to load real data:', error);
-        setDisplayArticles([]);
         setImageMap({});
+      } finally {
+        // Delay slightly for smooth transition if data loads too fast, or just set false
+        setLoading(false);
       }
     };
 
@@ -501,49 +506,61 @@ export const Main = () => {
       />
 
       <main className="category-content">
-        <div className="main-content-split">
-          <div className="main-full-col" style={{ width: '100%' }}>
-            {displayArticles.length > 0 ? (
-              <React.Fragment>
-                {/* No mapping needed, just render once since we used 0-3 fixed */}
-                {renderMainContent()}
-
-                <div className="full-width-divider"></div>
-
-                <div className="pol-eco-top5-row" style={{ display: 'flex', gap: '0', marginTop: '40px' }}>
-                  <div style={{ flex: 1, borderRight: 'none', paddingRight: '0' }}>
-                    {renderPoliticsEconomy(false, true)}
-                  </div>
-                </div>
-              </React.Fragment>
-            ) : (
-              <div className="empty-category">
-                <p>해당 카테고리에 표시할 기사가 없습니다.</p>
-              </div>
-            )}
+        {loading ? (
+          <div className="main-skeleton-container" style={{ padding: '20px 0' }}>
+            <SkeletonNews type="main" />
+            <div style={{ display: 'flex', gap: '40px', marginTop: '40px' }}>
+              <div style={{ flex: 1 }}><SkeletonNews type="grid" /></div>
+              <div style={{ flex: 1 }}><SkeletonNews type="grid" /></div>
+            </div>
           </div>
-        </div>
-
-        {societyArticles.length > 0 && (
+        ) : (
           <>
-            <div className="full-width-divider"></div>
-            {renderSocietySection()}
+            <div className="main-content-split">
+              <div className="main-full-col" style={{ width: '100%' }}>
+                {displayArticles.length > 0 ? (
+                  <React.Fragment>
+                    {/* No mapping needed, just render once since we used 0-3 fixed */}
+                    {renderMainContent()}
+
+                    <div className="full-width-divider"></div>
+
+                    <div className="pol-eco-top5-row" style={{ display: 'flex', gap: '0', marginTop: '40px' }}>
+                      <div style={{ flex: 1, borderRight: 'none', paddingRight: '0' }}>
+                        {renderPoliticsEconomy(false, true)}
+                      </div>
+                    </div>
+                  </React.Fragment>
+                ) : (
+                  <div className="empty-category">
+                    <p>해당 카테고리에 표시할 기사가 없습니다.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {societyArticles.length > 0 && (
+              <>
+                <div className="full-width-divider"></div>
+                {renderSocietySection()}
+              </>
+            )}
+
+            {cultureArticles.length > 0 && (
+              <>
+                <div className="full-width-divider"></div>
+                {renderLivingCultureSection()}
+              </>
+            )}
+
+            <div className="full-width-divider mobile-only-divider"></div>
+
+            {renderAIRecommendedNews(0 + (currentPage - 1) * 5)}
+
+            {renderScienceSection()}
           </>
         )}
-
-        {cultureArticles.length > 0 && (
-          <>
-            <div className="full-width-divider"></div>
-            {renderLivingCultureSection()}
-          </>
-        )}
-
-        <div className="full-width-divider mobile-only-divider"></div>
-
-        {renderAIRecommendedNews(0 + (currentPage - 1) * 5)}
-
-        {renderScienceSection()}
       </main>
-    </div>
+    </div >
   );
 };

@@ -33,7 +33,7 @@ const Header = ({
     // 1. AI 뉴스 가져오기
     const fetchNews = async () => {
       try {
-        const res = await axios.get(`${API_BASE_URL}/generated-news?limit=5`);
+        const res = await axios.get(`${API_BASE_URL}/reports?limit=5`);
         if (res.data && res.data.length > 0) {
           setArticles(res.data);
         } else {

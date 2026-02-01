@@ -566,8 +566,14 @@ def add_view(
         db.flush()
         return
 
-    db.add(NewsView(user_id=user_id, news_id=ai_news_id, category_id=cat_id, viewed_at=datetime.utcnow()))
-    db.flush()
+    try:
+        db.add(NewsView(user_id=user_id, news_id=ai_news_id, category_id=cat_id, viewed_at=datetime.utcnow()))
+        db.flush()
+    except IntegrityError:
+        db.rollback()
+        # Race condition: already inserted by another request.
+        # We can optionally update the existing one here, or just ignore since it's "viewed"
+        pass
 
 
 def has_viewed(db: Session, *, user_id: int, ai_news_id: int) -> bool:
@@ -807,7 +813,7 @@ def list_user_top_keywords(db: Session, *, user_id: int, limit: int = 1000) -> L
     rows = db.execute(
         select(KwStat.keyword, KwStat.count)
         .where(KwStat.user_id == user_id)
-        .order_by(KwStat.count.desc(), KwStat.updated_at.desc())
+        .order_by(KwStat.count.desc(), KwStat.read_at.desc())
         .limit(limit)
     ).all()
     return [(r[0], r[1]) for r in rows]
@@ -892,5 +898,41 @@ def get_user_search_logs(db: Session, *, user_id: int, limit: int = 20) -> List[
         .filter(SearchLog.user_id == user_id)
         .order_by(SearchLog.searched_at.desc())
         .limit(limit)
+    )
+
+
+# -------------------------
+# Image Helpers
+# -------------------------
+def get_representative_image(db: Session, cluster_id: int) -> Optional[str]:
+    """
+    클러스터에 포함된 뉴스 중 대표 이미지 URL을 하나 가져옵니다.
+    """
+    import random
+    
+    # News와 cluster_news_link 조인
+    news_list = (
+        db.query(News.img_urls)
+        .join(cluster_news_link, News.news_id == cluster_news_link.c.news_id)
+        .filter(cluster_news_link.c.cluster_id == cluster_id)
+        .limit(10)
         .all()
     )
+    
+    candidates = []
+    for row in news_list:
+        imgs = row.img_urls
+        if not imgs:
+            continue
+            
+        if isinstance(imgs, list):
+            candidates.extend([url for url in imgs if url])
+        elif isinstance(imgs, dict):
+            candidates.extend([v for v in imgs.values() if v])
+        elif isinstance(imgs, str) and imgs.startswith('http'):
+             candidates.append(imgs)
+            
+    if candidates:
+        return random.choice(candidates)
+        
+    return None

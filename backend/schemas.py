@@ -53,7 +53,10 @@ class ReportResponse(BaseModel):
     contents: Optional[str] = None
     created_at: datetime
     analysis_result: Optional[Any]
-    keywords: Optional[List[str]] = None
+    keywords: Optional[List[Dict[str, Any]]] = None
+    image: Optional[str] = None # Representative image URL
+
+    # 반응/조회수 (옵션)
 
     # 반응/조회수 (옵션)
     like_count: int = 0
@@ -83,7 +86,7 @@ class IssueResponse(BaseModel):
     contents: Optional[str] = None
     created_at: datetime
     analysis_result: Optional[Any]
-    keywords: Optional[List[str]] = None
+    keywords: Optional[List[Dict[str, Any]]] = None
 
     # 반응/조회수 (옵션)
     like_count: int = 0
@@ -126,9 +129,14 @@ class UserResponse(BaseModel):
     created_at: datetime
     subscribed_categories: List[str] = []
     subscribed_keywords: List[str] = []
+    scraps: Optional[List[str]] = []
     
     class Config:
         from_attributes = True
+
+class ScrapRequest(BaseModel):
+    url: Optional[str] = None
+    report_id: Optional[int] = None
 
 class UserDashboardResponse(BaseModel):
     username: Optional[str]

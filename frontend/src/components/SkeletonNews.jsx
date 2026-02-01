@@ -1,0 +1,51 @@
+import React from 'react';
+import './SkeletonNews.css';
+
+const SkeletonNews = ({ type = 'list' }) => {
+    // type: 'main' (big block), 'grid' (square), 'list' (row), 'feed' (row with image)
+
+    if (type === 'main') {
+        return (
+            <div className="skeleton-main-wrapper">
+                {/* Left Side List */}
+                <div className="skeleton-side-list">
+                    {[1, 2, 3, 4].map(i => (
+                        <div key={i} className="skeleton-item-row">
+                            <div className="skeleton-text-half shimmer"></div>
+                            <div className="skeleton-text-full shimmer" style={{ marginTop: '8px' }}></div>
+                        </div>
+                    ))}
+                </div>
+                {/* Right Side Image */}
+                <div className="skeleton-main-image shimmer"></div>
+            </div>
+        );
+    }
+
+    if (type === 'grid') {
+        return (
+            <div className="skeleton-grid-item">
+                <div className="skeleton-rect shimmer"></div>
+                <div className="skeleton-text-full shimmer" style={{ marginTop: '10px' }}></div>
+                <div className="skeleton-text-half shimmer" style={{ marginTop: '6px' }}></div>
+            </div>
+        );
+    }
+
+    if (type === 'feed') {
+        return (
+            <div className="skeleton-feed-item">
+                <div className="skeleton-feed-content">
+                    <div className="skeleton-text-title shimmer"></div>
+                    <div className="skeleton-text-full shimmer" style={{ marginTop: '10px' }}></div>
+                    <div className="skeleton-text-full shimmer" style={{ marginTop: '6px' }}></div>
+                </div>
+                <div className="skeleton-feed-image shimmer"></div>
+            </div>
+        );
+    }
+
+    return null;
+};
+
+export default SkeletonNews;

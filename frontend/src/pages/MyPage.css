@@ -1,155 +1,362 @@
-/* MyPage.css */
-.mypage-container {
-  min-height: 100vh;
-  background-color: #ffffff;
-  font-family: sans-serif;
-}
+/* Existing styles... */
 
-.mypage-container .mypage-main {
-  max-width: 1000px;
-  margin: 24px auto 0;
-}
-
-.mypage-container .profile-header {
-  color: rgb(0, 0, 0);
-  padding: 32px;
-}
-
-/* 옆으로 붙게 만드는 핵심 클래스 */
-.mypage-container .content-wrapper {
+/* Embedded Loading State */
+.loading-state-embedded {
   display: flex;
-  flex-direction: row;
-  /* 가로 나열 강제 */
-  gap: 12px;
-  /*나의 관심 카테고리 나의 관심 키워드  사이 간격*/
-  overflow-x: auto;
-  /* 화면 좁으면 가로 스크롤 */
-  padding-bottom: 16px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 400px;
+  color: #888;
+  gap: 16px;
+  font-size: 0.95rem;
 }
 
-.mypage-container .info-section {
-  background-color: white;
-  border: 1px solid #e5e7eb;
-  padding: 8px;
-  min-width: 350px;
-  /* 옆으로 붙을 때 찌그러짐 방지 */
-  flex: 1;
-  height: 500px;
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* MyPage Sidebar Layout */
+.mypage-container-new {
+  min-height: 100vh;
+  background-color: #f9f9f9;
   display: flex;
   flex-direction: column;
 }
 
-.mypage-container .section-title {
-  font-weight: bold;
-  margin-bottom: 16px;
-  border-bottom: 1px solid #f3f4f6;
-  padding-bottom: 25px;
+.mypage-content-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 20px;
+  display: flex;
+  gap: 30px;
+  flex: 1;
+  align-items: flex-start;
+  /* Important for sidebar height */
 }
 
-.mypage-container .chart-container {
-  flex: 1;
+/* Sidebar */
+.mypage-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: sticky;
+  top: 20px;
+}
+
+.sidebar-group {
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.sidebar-group:last-child {
+  border-bottom: none;
+}
+
+.sidebar-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 12px;
+  padding-left: 12px;
+  text-align: left;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebar-item {
   display: flex;
   align-items: center;
-  justify-content: center;
-}
-
-.mypage-container .keyword-list {
-  display: flex;
-  flex-wrap: wrap;
-  padding-left: 20px;
-  gap: 0px;
-}
-
-
-.mypage-container .keyword-tag {
-  /* 배경은 투명하게, 글자색은 인스타 블루 */
-  background-color: transparent;
-  color: #0095f6;
-  /* 인스타그램 공식 브랜드 블루 계열 */
-  padding: 0;
-  /* 배경이 없으므로 패딩 제거 */
-  font-size: 14px;
-  font-weight: 500;
-  /* 너무 얇지 않게 */
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
   border: none;
-  /* 테두리 제거 */
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: none;
+  text-align: left;
+  font-size: 0.95rem;
+  color: #555;
+  border-radius: 6px;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: all 0.2s;
 }
 
-.mypage-container .analysis-footer {
-  border-top: 1px solid #f3f4f6;
-  padding-top: 16px;
+.sidebar-item:hover {
+  background-color: #f0f0f0;
+  color: #333;
 }
 
-.mypage-container .radar-polygon {
-  /* points 트랜지션은 지우거나 아주 짧게(0.1s) 설정하세요 */
-  transition: opacity 0.5s ease-out;
-  opacity: 0;
+.sidebar-item.active {
+  background-color: #eedddd;
+  /* Very subtle highlight or just transparent */
+  background-color: rgba(0, 0, 0, 0.05);
+  color: black;
+  font-weight: 600;
 }
 
-.mypage-container .radar-polygon.active {
-  opacity: 1;
+.sidebar-item.active .sidebar-icon {
+  color: black;
 }
 
-/* MyPage.css */
-
-/* 막대 전체 영역에 마우스를 올렸을 때 */
-.mypage-container .bar-wrapper:hover .bar-tooltip {
-  opacity: 1 !important;
-  transform: translateY(-5px);
+.sidebar-icon {
+  font-size: 1.2rem;
+  color: #999;
 }
 
-.mypage-container .bar-wrapper:hover .bar-fill-element {
-  background-color: #0077c7 !important;
-  /* 마우스 올리면 좀 더 진한 파란색으로 변경 */
+.sidebar-item.logout {
+  color: #888;
 }
 
-/* 툴팁 아래 작은 화살표 효과 (선택 사항) */
-.mypage-container .bar-tooltip::after {
-  content: "";
+.sidebar-item.logout:hover {
+  color: #e74c3c;
+  background-color: #fce8e6;
+}
+
+.sidebar-item.logout .sidebar-icon {
+  /* Log out icon color */
+}
+
+/* Main Area */
+.mypage-main-area {
+  flex: 1;
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 40px;
+  min-height: 600px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+.profile-header-simple {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* Charts Grid (Reused but adjusted) */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+/* Article Grid & Card Styles */
+.article-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.article-card {
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 24px;
+  background: white;
+  transition: all 0.2s;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 180px;
+}
+
+.article-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+  border-color: #ddd;
+}
+
+.article-card-link {
+  text-decoration: none;
+  color: inherit;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.article-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+}
+
+.article-card-cat {
+  padding: 4px 8px;
+  background-color: #f0f4f8;
+  color: #007bff;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.article-card-date {
+  color: #999;
+}
+
+.article-card-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 16px;
+  line-height: 1.4;
+  word-break: keep-all;
+
+  /* Multiline ellipsis */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.article-card-keywords {
+  font-size: 0.85rem;
+  color: #888;
+  margin-top: auto;
+  /* Push to bottom of content area */
+}
+
+/* Removal Buttons */
+.card-remove-btn {
   position: absolute;
-  top: 100%;
-  left: 50%;
-  margin-left: -4px;
-  border-width: 4px;
-  border-style: solid;
-  border-color: #1e293b transparent transparent transparent;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #eee;
+  background: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  font-size: 1.1rem;
+  color: #ccc;
+  transition: all 0.2s;
+  z-index: 2;
+  /* Ensure clickable above link */
+}
+
+.card-remove-btn:hover {
+  background: #f8f8f8;
+  border-color: #ddd;
+}
+
+.card-remove-btn.liked {
+  color: #ef4444;
+  /* Already red to indicate state */
+}
+
+.card-remove-btn.scrapped {
+  color: #0ea5e9;
+  /* Blue */
+}
+
+.card-remove-btn.liked:hover {
+  background: #fee2e2;
+}
+
+.card-remove-btn.scrapped:hover {
+  background: #e0f2fe;
 }
 
 
-/* Mobile Responsiveness */
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 0;
+  gap: 16px;
+  color: #999;
+  font-size: 1rem;
+}
+
+.loading-text {
+  text-align: center;
+  padding: 40px;
+  color: #888;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-  .mypage-container .mypage-main {
-    margin: 10px auto 0;
-    padding: 0 16px;
-  }
-
-  .mypage-container .content-wrapper {
+  .mypage-content-wrapper {
     flex-direction: column;
-    overflow-x: visible;
-    gap: 24px;
   }
 
-  .mypage-container .info-section {
-    min-width: 0;
-    /* Reset min-width constraint */
+  .mypage-sidebar {
     width: 100%;
-    margin-bottom: 20px;
-    height: auto;
-    min-height: 400px;
-    /* Preserve some height for charts */
+    position: static;
+    flex-direction: row;
+    overflow-x: auto;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
   }
 
-  .mypage-container .profile-header {
-    padding: 20px 0;
-    text-align: center;
+  .sidebar-group {
+    border-bottom: none;
+    padding-bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
 
-  /* Adjust charts if needed */
-  .mypage-container .chart-container {
-    width: 100%;
-    overflow: hidden;
+  .sidebar-title {
+    display: none;
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .article-grid {
+    grid-template-columns: 1fr;
+    /* Single column on mobile */
+  }
+}
+
+/* Fade In Animation */
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

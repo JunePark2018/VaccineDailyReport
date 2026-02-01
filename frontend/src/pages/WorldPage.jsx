@@ -6,6 +6,7 @@ import Logo from '../components/Logo';
 import logoImg from '../components/Logo.png';
 import Searchbar from '../components/Searchbar';
 import UserMenu from '../components/UserMenu';
+import SkeletonNews from '../components/SkeletonNews';
 import './WorldPage.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
@@ -17,6 +18,7 @@ const WorldPage = () => {
     const [displayArticles, setDisplayArticles] = useState([]);
     const [imageMap, setImageMap] = useState({});
     const [feedPage, setFeedPage] = useState(1);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         setCurrentPage(1);
@@ -25,13 +27,13 @@ const WorldPage = () => {
         const loadData = async () => {
             try {
                 // 1. Fetch AI Generated News
-                const response = await axios.get(`${API_BASE_URL}/generated-news?limit=100`);
+                const response = await axios.get(`${API_BASE_URL}/reports?limit=100`);
                 const realArticles = response.data;
 
                 // 2. Map Backend Data to Frontend Structure
                 const formattedArticles = realArticles.map(art => ({
                     ...art,
-                    id: art.ai_generated_news_id, // [Fix] Map native ID to 'id'
+                    id: art.report_id, // [Fix] Map native ID to 'id'
                     category: art.category_name,
                     image: `cluster_${art.cluster_id}`,
                     short_text: art.contents ? (art.contents.substring(0, 100) + "...") : "내용 없음"
@@ -54,7 +56,7 @@ const WorldPage = () => {
 
                     await Promise.allSettled(uniqueClusters.map(async (clusterId) => {
                         try {
-                            const imgRes = await axios.get(`${API_BASE_URL}/generated-news/clusters/${clusterId}/news`);
+                            const imgRes = await axios.get(`${API_BASE_URL}/reports/clusters/${clusterId}/news`);
                             const newsList = imgRes.data;
                             const allImgUrls = newsList.flatMap(news => news.img_urls ?? []).filter(Boolean);
 
@@ -75,9 +77,12 @@ const WorldPage = () => {
                 console.error('Failed to load real data:', error);
                 setDisplayArticles([]);
                 setImageMap({});
+            } finally {
+                setLoading(false);
             }
         };
 
+        setLoading(true);
         loadData();
     }, []);
 
@@ -315,7 +320,18 @@ const WorldPage = () => {
                     <h1>{name}</h1>
                 </div>
 
-                {articleBlocks.length > 0 ? (
+                {loading ? (
+                    <div style={{ marginTop: '40px' }}>
+                        <SkeletonNews type="main" />
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '40px' }}>
+                            <SkeletonNews type="grid" />
+                            <SkeletonNews type="grid" />
+                            <SkeletonNews type="grid" />
+                            <SkeletonNews type="grid" />
+                        </div>
+                        <SkeletonNews type="feed" />
+                    </div>
+                ) : articleBlocks.length > 0 ? (
                     articleBlocks.map((block, i) => renderMainContent(block, i))
                 ) : (
                     <div className="empty-category">

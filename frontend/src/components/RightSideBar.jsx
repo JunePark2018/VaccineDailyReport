@@ -19,7 +19,7 @@ export default function RightSideBar({ isOpen, onClose, searchKeyword, clusterId
           // 1. 문장이 선택된 경우 -> /citation (유사도 정렬)
           if (searchKeyword) {
             console.log(`[RightSideBar] Fetching related news for sentence: "${searchKeyword}"`);
-            const response = await axios.post(`http://localhost:8000/generated-news/citation`, {
+            const response = await axios.post(`http://localhost:8000/reports/citation`, {
               cluster_id: clusterId,
               target_sentence: searchKeyword
             });
@@ -44,7 +44,7 @@ export default function RightSideBar({ isOpen, onClose, searchKeyword, clusterId
           // 2. 문장이 선택 안 된 경우 -> 기존 로직 (단순 기사 목록)
           else {
             console.log(`[RightSideBar] Fetching news for cluster: ${clusterId}`);
-            const response = await axios.get(`${API_BASE_URL}/generated-news/clusters/${clusterId}/news`);
+            const response = await axios.get(`${API_BASE_URL}/reports/clusters/${clusterId}/news`);
 
             const mappedData = response.data.map(item => ({
               id: item.news_id, // crud update 반영

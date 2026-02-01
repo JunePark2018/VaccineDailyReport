@@ -143,6 +143,9 @@ class User(Base):
 
     age_range = Column(String(30), nullable=True)
     gender = Column(String(30), nullable=True)
+    
+    # List of scraped news IDs/URLs
+    scraps = Column(JSON, default=[], nullable=True)
 
     # fcm_token removed
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

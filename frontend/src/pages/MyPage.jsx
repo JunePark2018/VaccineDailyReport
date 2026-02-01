@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import axios from 'axios';
+import { HiOutlineUser, HiOutlineChartPie, HiArrowRightOnRectangle, HiHeart, HiBookmark, HiOutlineFaceFrown } from "react-icons/hi2";
 
 // 공통 컴포넌트
 import Logo from '../components/Logo';
@@ -11,17 +12,65 @@ import Searchbar from '../components/Searchbar';
 import CategoryRadarChart from '../components/CategoryRadarChart';
 import KeywordBarChart from '../components/KeywordBarChart';
 import SubscribedKeywords from '../components/SubscribedKeywords';
+import EditAccountForm from '../components/EditAccountForm';
 import './MyPage.css';
 
-// MOCK_USER_DATA 제거
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
+const ArticleCard = ({ article, type, onRemove }) => {
+  // type: 'liked' or 'scrapped'
+  const dateStr = new Date(article.created_at).toLocaleDateString();
+
+  // Parse keywords if needed
+  let parsedKeywords = [];
+  if (Array.isArray(article.keywords)) {
+    parsedKeywords = article.keywords;
+  } else if (typeof article.keywords === 'string') {
+    try { parsedKeywords = JSON.parse(article.keywords); } catch { }
+  }
+  const topKeywords = parsedKeywords.slice(0, 3).map(k => k.text || k).join(', ');
+
+  return (
+    <div className="article-card">
+      <Link to={`/article/${article.report_id}`} className="article-card-link">
+        <div className="article-card-header">
+          <span className="article-card-cat">{article.category_name || '일반'}</span>
+          <span className="article-card-date">{dateStr}</span>
+        </div>
+        <h3 className="article-card-title">{article.title}</h3>
+        {topKeywords && <div className="article-card-keywords">#{topKeywords}</div>}
+      </Link>
+      <button
+        className={`card-remove-btn ${type}`}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onRemove(article.report_id);
+        }}
+        title={type === 'liked' ? "좋아요 취소" : "스크랩 취소"}
+      >
+        {type === 'liked' ? <HiHeart /> : <HiBookmark />}
+      </button>
+    </div>
+  );
+};
+
 const MyPage = () => {
   const { login_id } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'insights'; // 'insights' | 'edit' | 'liked' | 'scraps'
+
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
   const [isActive, setIsActive] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+
+  // New States for lists
+  const [likedArticles, setLikedArticles] = useState([]);
+  const [scrappedArticles, setScrappedArticles] = useState([]);
+  const [listLoading, setListLoading] = useState(false);
+
   const MY_CATEGORIES = ['정치', '경제', '사회', 'IT/과학', '세계'];
 
   // 데이터 로딩
@@ -36,7 +85,6 @@ const MyPage = () => {
         setUserData(response.data);
       } catch (error) {
         console.error("데이터 로딩 실패:", error);
-        // Fallback for demo if needed, or just let it render empty
         setUserData(null);
       } finally {
         setLoading(false);
@@ -45,13 +93,40 @@ const MyPage = () => {
     fetchUserData();
   }, [login_id]);
 
+  // Tab Data Fetching
+  useEffect(() => {
+    const fetchTabData = async () => {
+      if (!login_id) return;
+
+      setListLoading(true);
+      try {
+        if (activeTab === 'liked') {
+          const res = await axios.get(`${API_BASE_URL}/users/${login_id}/liked-news`);
+          setLikedArticles(res.data);
+        } else if (activeTab === 'scraps') {
+          const res = await axios.get(`${API_BASE_URL}/users/${login_id}/scrapped-news`);
+          setScrappedArticles(res.data);
+        }
+      } catch (err) {
+        console.error("탭 데이터 로딩 실패:", err);
+      } finally {
+        setListLoading(false);
+      }
+    };
+
+    if (['liked', 'scraps'].includes(activeTab)) {
+      fetchTabData();
+    }
+  }, [activeTab, login_id]);
+
+
   // 애니메이션 트리거
   useEffect(() => {
-    if (!loading) {
+    if (!loading && activeTab === 'insights') {
       const timer = setTimeout(() => setIsActive(true), 100);
       return () => clearTimeout(timer);
     }
-  }, [loading]);
+  }, [loading, activeTab]);
 
   // 차트 최대치 계산
   const dynamicLimit = useMemo(() => {
@@ -59,16 +134,14 @@ const MyPage = () => {
     return values.length > 0 ? Math.max(...values) + 10 : 100;
   }, [userData]);
 
-  // 서버 업데이트 로직
+  // 서버 업데이트 로직 (Keyword)
   const updateKeywordsOnServer = async (newList) => {
     try {
       await axios.put(`http://localhost:8000/users/${login_id}`, { subscribed_keywords: newList });
     } catch (error) {
       console.error("서버 업데이트 실패:", error);
-      // Show error message from backend if available
       const errorMessage = error.response?.data?.detail || "서버 업데이트에 실패했습니다.";
       alert(errorMessage);
-      // Revert to previous state by refetching
       try {
         const response = await axios.get(`${API_BASE_URL}/users/${login_id}/dashboard`);
         setUserData(response.data);
@@ -78,14 +151,12 @@ const MyPage = () => {
     }
   };
 
-  // 키워드 삭제 핸들러
   const handleDeleteKeyword = (target) => {
     const newList = userData.subscribed_keywords.filter(k => k !== target);
     setUserData({ ...userData, subscribed_keywords: newList });
     updateKeywordsOnServer(newList);
   };
 
-  // 키워드 추가 핸들러
   const handleAddKeyword = (newKeyword) => {
     if (newKeyword && !userData.subscribed_keywords.includes(newKeyword)) {
       const newList = [...userData.subscribed_keywords, newKeyword];
@@ -94,7 +165,6 @@ const MyPage = () => {
     }
   };
 
-  // 관심 키워드 통계 초기화 핸들러
   const handleResetKeywords = async () => {
     if (!window.confirm('모든 관심 키워드 기록을 초기화하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) {
       return;
@@ -103,55 +173,59 @@ const MyPage = () => {
     try {
       const encodedLoginId = encodeURIComponent(login_id);
       const apiUrl = `${API_BASE_URL}/users/${encodedLoginId}/keywords/stats`;
-      console.log('Calling API:', apiUrl);
-      const response = await axios.delete(apiUrl);
-      console.log('Reset response:', response.data);
-      // 성공 시 UI 업데이트
+      await axios.delete(apiUrl);
       setUserData({ ...userData, read_keywords: {} });
       alert('관심 키워드가 초기화되었습니다.');
     } catch (error) {
-      console.error("관심 키워드 초기화 실패:", error);
-      console.error("Error response:", error.response);
       alert(`초기화에 실패했습니다. 다시 시도해주세요.\n${error.response?.data?.detail || error.message}`);
     }
   };
 
-  // 회원탈퇴 핸들러
-  const handleDeleteAccount = async () => {
-    // 첫 번째 확인
-    if (!window.confirm('정말로 회원탈퇴 하시겠습니까?')) {
-      return;
-    }
-
-    // 두 번째 확인 (강력한 경고)
-    if (!window.confirm('⚠️ 경고 ⚠️\n\n회원탈퇴 시 모든 데이터가 영구적으로 삭제되며 복구할 수 없습니다.\n\n- 조회 기록\n- 좋아요/싫어요\n- 관심 키워드 통계\n- 구독 정보\n\n정말로 계속하시겠습니까?')) {
-      return;
-    }
-
-    try {
-      const encodedLoginId = encodeURIComponent(login_id);
-      await axios.delete(`${API_BASE_URL}/users/${encodedLoginId}`);
-
-      // 성공 시 로그아웃 처리
+  const handleLogout = () => {
+    if (window.confirm("로그아웃 하시겠습니까?")) {
       localStorage.removeItem('isLoggedIn');
       localStorage.removeItem('user_id');
       localStorage.removeItem('login_id');
       localStorage.removeItem('username');
-
-      alert('회원탈퇴가 완료되었습니다.');
       navigate('/');
-      window.location.reload(); // 완전한 로그아웃을 위해  리로드
-    } catch (error) {
-      console.error("회원탈퇴 실패:", error);
-      alert(`회원탈퇴에 실패했습니다.\n${error.response?.data?.detail || error.message}`);
+      window.location.reload();
     }
   };
 
+  const handleTabChange = (tab) => {
+    setSearchParams({ tab });
+  };
 
-  if (loading) return <div className="loading-state">데이터 분석 중...</div>;
+  // Remove Handlers
+  const handleRemoveLike = async (newsId) => {
+    if (!window.confirm("정말 취소하시겠습니까?")) return;
+    try {
+      // Toggle request (if value matches, it removes)
+      // Value 1 is like. Sending 1 again removes it.
+      await axios.post(`${API_BASE_URL}/news/${newsId}/reaction?value=1&login_id=${login_id}`);
+
+      setLikedArticles(prev => prev.filter(a => a.report_id !== newsId));
+    } catch (err) {
+      console.error("좋아요 취소 실패:", err);
+      alert("처리 중 오류가 발생했습니다.");
+    }
+  };
+
+  const handleRemoveScrap = async (newsId) => {
+    if (!window.confirm("스크랩을 취소하시겠습니까?")) return;
+    try {
+      await axios.post(`${API_BASE_URL}/users/${login_id}/scraps`, { report_id: newsId });
+      setScrappedArticles(prev => prev.filter(a => a.report_id !== newsId));
+    } catch (err) {
+      console.error("스크랩 취소 실패:", err);
+      alert("처리 중 오류가 발생했습니다.");
+    }
+  };
+
+  // if (loading) return <div className="loading-state">데이터 로딩 중...</div>; // Removed global loading
 
   return (
-    <div className="mypage-container">
+    <div className="mypage-container-new">
       <Header
         headerTop="on" headerMain="on" headerBottom="on"
         leftChild={<Logo />}
@@ -166,81 +240,166 @@ const MyPage = () => {
         }
       />
 
-      <main className="mypage-main">
-        <section className="profile-header">
-          <h1 className="text-xl font-bold">{userData?.username} 님의 인사이트</h1>
-          <p className="text-gray-400 text-sm mt-1">{userData?.email}</p>
+      <main className="mypage-content-wrapper">
+        {/* Sidebar */}
+        <aside className="mypage-sidebar">
+          <div className="sidebar-group">
+            <h2 className="sidebar-title">설정</h2>
+            <nav className="sidebar-nav">
+              <button
+                className={`sidebar-item ${activeTab === 'insights' ? 'active' : ''}`}
+                onClick={() => handleTabChange('insights')}
+              >
+                <HiOutlineChartPie className="sidebar-icon" />
+                나의 인사이트
+              </button>
+              <button
+                className={`sidebar-item ${activeTab === 'liked' ? 'active' : ''}`}
+                onClick={() => handleTabChange('liked')}
+              >
+                <HiHeart className="sidebar-icon" />
+                좋아요 누른 기사
+              </button>
+              <button
+                className={`sidebar-item ${activeTab === 'scraps' ? 'active' : ''}`}
+                onClick={() => handleTabChange('scraps')}
+              >
+                <HiBookmark className="sidebar-icon" />
+                스크랩한 기사
+              </button>
+              <button
+                className={`sidebar-item ${activeTab === 'edit' ? 'active' : ''}`}
+                onClick={() => handleTabChange('edit')}
+              >
+                <HiOutlineUser className="sidebar-icon" />
+                정보수정
+              </button>
+            </nav>
+          </div>
+          <div className="sidebar-group bottom">
+            <nav className="sidebar-nav">
+              <button className="sidebar-item logout" onClick={handleLogout}>
+                <HiArrowRightOnRectangle className="sidebar-icon" />
+                로그아웃
+              </button>
+            </nav>
+          </div>
+        </aside>
+
+        {/* Main Content Area */}
+        <section className="mypage-main-area">
+          {loading ? (
+            <div className="loading-state-embedded">
+              <div className="spinner"></div>
+              <p>데이터를 불러오는 중입니다...</p>
+            </div>
+          ) : (
+            <>
+              {activeTab === 'insights' && (
+                <div className="insights-view fade-in">
+                  <div className="profile-header-simple">
+                    <h1 className="text-xl font-bold">{userData?.username} 님의 인사이트</h1>
+                    <p className="text-gray-400 text-sm mt-1">{userData?.email}</p>
+                  </div>
+
+                  <div className="charts-grid">
+                    <CategoryRadarChart
+                      title="나의 관심 카테고리"
+                      labels={MY_CATEGORIES}
+                      targetScores={userData?.read_categories}
+                      dynamicLimit={dynamicLimit}
+                      isActive={isActive}
+                    />
+                    <KeywordBarChart
+                      readKeywords={userData?.read_keywords}
+                      isActive={isActive}
+                      onReset={handleResetKeywords}
+                    />
+                  </div>
+
+                  <SubscribedKeywords
+                    keywords={userData?.subscribed_keywords}
+                    isEditMode={isEditMode}
+                    onToggleEdit={() => setIsEditMode(!isEditMode)}
+                    onDelete={handleDeleteKeyword}
+                    onAdd={handleAddKeyword}
+                  />
+                </div>
+              )}
+
+              {activeTab === 'liked' && (
+                <div className="list-view fade-in">
+                  <div className="profile-header-simple">
+                    <h1 className="text-xl font-bold">좋아요 누른 기사</h1>
+                    <p className="text-gray-400 text-sm mt-1">회원님이 좋아요를 누른 기사 목록입니다.</p>
+                  </div>
+                  {listLoading ? (
+                    <div className="loading-text">로딩 중...</div>
+                  ) : likedArticles.length === 0 ? (
+                    <div className="empty-state">
+                      <HiOutlineFaceFrown size={48} color="#ddd" />
+                      <p>좋아요를 누른 기사가 없습니다.</p>
+                    </div>
+                  ) : (
+                    <div className="article-grid">
+                      {likedArticles.map(article => (
+                        <ArticleCard
+                          key={article.report_id}
+                          article={article}
+                          type="liked"
+                          onRemove={handleRemoveLike}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'scraps' && (
+                <div className="list-view fade-in">
+                  <div className="profile-header-simple">
+                    <h1 className="text-xl font-bold">스크랩한 기사</h1>
+                    <p className="text-gray-400 text-sm mt-1">나중에 읽기 위해 저장한 기사입니다.</p>
+                  </div>
+                  {listLoading ? (
+                    <div className="loading-text">로딩 중...</div>
+                  ) : scrappedArticles.length === 0 ? (
+                    <div className="empty-state">
+                      <HiOutlineFaceFrown size={48} color="#ddd" />
+                      <p>스크랩한 기사가 없습니다.</p>
+                    </div>
+                  ) : (
+                    <div className="article-grid">
+                      {scrappedArticles.map(article => (
+                        <ArticleCard
+                          key={article.report_id}
+                          article={article}
+                          type="scrapped"
+                          onRemove={handleRemoveScrap}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'edit' && (
+                <div className="edit-view fade-in">
+                  <EditAccountForm
+                    loginId={login_id}
+                    onUpdateSuccess={() => {
+                      axios.get(`${API_BASE_URL}/users/${login_id}/dashboard`)
+                        .then(res => setUserData(res.data));
+                    }}
+                  />
+                </div>
+              )}
+            </>
+          )}
         </section>
-
-        <div className="content-wrapper">
-          {/* 1. 레이더 차트 컴포넌트 */}
-          <CategoryRadarChart
-            title="나의 관심 카테고리"
-            labels={MY_CATEGORIES}
-            targetScores={userData?.read_categories} // { '정치': 7, '경제': 4 ... }
-            dynamicLimit={dynamicLimit}
-            isActive={isActive}
-          />
-          <KeywordBarChart
-            readKeywords={userData?.read_keywords}
-            isActive={isActive}
-            onReset={handleResetKeywords}
-          />
-          {/* 2. 바 차트 컴포넌트 */}
-
-
-        </div>
-
-        <SubscribedKeywords
-          keywords={userData?.subscribed_keywords}
-          isEditMode={isEditMode}
-          onToggleEdit={() => setIsEditMode(!isEditMode)}
-          onDelete={handleDeleteKeyword}
-          onAdd={handleAddKeyword}
-        />
-
-        {/* 회원탈퇴 버튼 */}
-        <div style={{
-          textAlign: 'center',
-          marginTop: '60px',
-          paddingBottom: '40px',
-          borderTop: '1px solid #e5e7eb',
-          paddingTop: '20px'
-        }}>
-          <button
-            onClick={handleDeleteAccount}
-            style={{
-              backgroundColor: 'white',
-              border: '1px solid #e5e7eb',
-              color: '#6b7280',
-              fontSize: '12px',
-              cursor: 'pointer',
-              padding: '8px 16px',
-              fontWeight: '400',
-              borderRadius: '6px',
-              transition: 'all 0.2s ease',
-              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-            }}
-            onMouseOver={(e) => {
-              e.target.style.backgroundColor = '#fef2f2';
-              e.target.style.borderColor = '#fca5a5';
-              e.target.style.color = '#dc2626';
-            }}
-            onMouseOut={(e) => {
-              e.target.style.backgroundColor = 'white';
-              e.target.style.borderColor = '#e5e7eb';
-              e.target.style.color = '#6b7280';
-            }}
-          >
-            회원탈퇴
-          </button>
-        </div>
-
-        {/* 3. 구독 키워드 관리 컴포넌트 */}
-
       </main>
     </div>
   );
 };
 
-export default MyPage; // 💡 여기서 내보내기를 해줘야 다른 곳에서 import 가능합니다!
+export default MyPage;

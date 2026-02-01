@@ -34,7 +34,7 @@ def add_news_reaction(
     try:
         # 기존 반응 찾기
         reaction = (
-            db.query(NewsReaction).filter(NewsReaction.user_id == user.user_id, NewsReaction.report_id == news_id).first()
+            db.query(NewsReaction).filter(NewsReaction.user_id == user.user_id, NewsReaction.news_id == news_id).first()
         )
 
         if reaction:
@@ -48,7 +48,7 @@ def add_news_reaction(
                 status_msg = "changed"
         else:
             # 새 반응 추가
-            reaction = NewsReaction(user_id=user.user_id, report_id=news_id, value=value)
+            reaction = NewsReaction(user_id=user.user_id, news_id=news_id, value=value)
             db.add(reaction)
             status_msg = "added"
 
@@ -56,8 +56,8 @@ def add_news_reaction(
         db.flush()
 
         # 업데이트된 like/dislike 개수 계산
-        likes = db.query(NewsReaction).filter(NewsReaction.report_id == news_id, NewsReaction.value == 1).count()
-        dislikes = db.query(NewsReaction).filter(NewsReaction.report_id == news_id, NewsReaction.value == -1).count()
+        likes = db.query(NewsReaction).filter(NewsReaction.news_id == news_id, NewsReaction.value == 1).count()
+        dislikes = db.query(NewsReaction).filter(NewsReaction.news_id == news_id, NewsReaction.value == -1).count()
 
         # Report 테이블의 캐시 컬럼 업데이트
         news.like_count = likes
@@ -91,7 +91,7 @@ def record_news_view(
     news_item = db.query(Report).filter(Report.report_id == news_id).first()
     category_id = news_item.category_id if news_item else None
 
-    view = NewsView(user_id=user.user_id, report_id=news_id, category_id=category_id)
+    view = NewsView(user_id=user.user_id, news_id=news_id, category_id=category_id)
     db.add(view)
     db.commit()
 

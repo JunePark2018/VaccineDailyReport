@@ -90,9 +90,6 @@ const UserMenu = () => {
           {!location.pathname.startsWith('/mypage') && (
             <div className="menu-item" onClick={handleMyPage}>마이페이지</div>
           )}
-          {location.pathname !== '/edit-account' && (
-            <div className="menu-item" onClick={handleEditAccount}>정보수정</div>
-          )}
           <div className="menu-item" onClick={handleLogout}>로그아웃</div>
         </div>
       )}
