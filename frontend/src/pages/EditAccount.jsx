@@ -21,7 +21,7 @@ export default function EditAccount() {
         email: '',
         ageGroup: '',
         gender: '',
-        marketingAgree: false,
+
     });
 
     const [selectedCategories, setSelectedCategories] = useState([]);
@@ -45,14 +45,14 @@ export default function EditAccount() {
                 const data = response.data;
 
                 setFormData({
-                    name: data.user_real_name || '',
+                    name: data.username || '',
                     loginId: data.login_id,
                     password: '', // 보안상 비밀번호는 비워둠
                     confirmPassword: '',
                     email: data.email || '',
                     ageGroup: data.age_range || '',
                     gender: data.gender || '',
-                    marketingAgree: data.marketing_agree || false,
+
                 });
                 setSelectedCategories(data.subscribed_categories || []);
             } catch (error) {
@@ -178,12 +178,12 @@ export default function EditAccount() {
 
         if (validate()) {
             const submitData = {
-                user_real_name: formData.name,
+                username: formData.name,
                 email: formData.email,
                 age_range: formData.ageGroup,
                 gender: formData.gender,
                 subscribed_categories: selectedCategories,
-                marketing_agree: formData.marketingAgree
+
             };
 
             // 비밀번호가 입력된 경우에만 포함
@@ -384,24 +384,7 @@ export default function EditAccount() {
                         {errors.categories && <span className="error-msg">{errors.categories}</span>}
                     </div>
 
-                    {/* Agreement Section Disabled */}
-                    {/* 
-                    <div className="agreement-section">
-                        <label className="checkbox-container">
-                            <input
-                                type="checkbox"
-                                name="marketingAgree"
-                                checked={formData.marketingAgree}
-                                onChange={handleChange}
-                            />
-                            <span className="checkmark-custom"></span>
-                            <span className="text">
-                                (필수) 사용자 경험 향상 및 서비스 개선을 위한 활동 기록 수집에 동의합니다.
-                            </span>
-                        </label>
-                        {errors.agreement && <span className="error-msg">{errors.agreement}</span>}
-                    </div>
-                    */}
+
 
                     <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
                         <button type="submit" className="submit-btn outline-black" style={{ flex: 1, margin: 0 }}>수정 완료</button>

@@ -5,7 +5,7 @@ AI 생성 뉴스 관련 라우터
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import or_, and_
+from sqlalchemy import or_, and_, desc
 
 # ... (other imports are fine, but I need to make sure I match the file content structure.
 # The previous `from sqlalchemy import or_` was on line 8.
@@ -18,7 +18,7 @@ from sqlalchemy import or_, and_
 
 
 from routers import get_db
-from database.models import AiGeneratedNews, Cluster
+from database.models import Report, Cluster
 from database import crud
 
 # schemas import 제거 - dict 반환으로 충분
@@ -49,30 +49,30 @@ def split_sentences_positions(text: str):
     return [s.strip() for s in sentences if s.strip()]
 
 
-router = APIRouter(prefix="/generated-news", tags=["AI Generated News"])
+router = APIRouter(prefix="/reports", tags=["Reports"])
 
 
 @router.get("")
-def get_generated_news(
+def get_reports(
     skip: int = 0,
     limit: int = 10,
     category_id: Optional[int] = Query(None, description="카테고리 ID로 필터링"),
     db: Session = Depends(get_db),
 ):
     """
-    AI가 생성한 뉴스들을 가져옵니다.
+    AI가 생성한 리포트(뉴스)들을 가져옵니다.
 
     **skip**: 앞에서부터 건너뛸 데이터의 개수 (페이지 번호 구현 시 사용)<br/>
     **limit**: 한 번에 가져올 최대 데이터 개수 (페이지 당 목록 수)<br/>
     **category_id**: (선택) 특정 카테고리로 필터링<br/>
     """
 
-    query = db.query(AiGeneratedNews).options(joinedload(AiGeneratedNews.category))
+    query = db.query(Report).options(joinedload(Report.category))
 
     if category_id is not None:
-        query = query.filter(AiGeneratedNews.category_id == category_id)
+        query = query.filter(Report.category_id == category_id)
 
-    results = query.order_by(AiGeneratedNews.created_at.desc()).offset(skip).limit(limit).all()
+    results = query.order_by(Report.created_at.desc()).offset(skip).limit(limit).all()
 
     # 카테고리 이름 포함하여 반환
     response_data = []
@@ -85,7 +85,7 @@ def get_generated_news(
             keywords_value = json.dumps(keywords_value, ensure_ascii=False)
 
         item_dict = {
-            "ai_generated_news_id": item.ai_generated_news_id,
+            "report_id": item.report_id,
             "cluster_id": item.cluster_id,
             "category_id": item.category_id,
             "category_name": item.category.name if item.category else None,
@@ -103,7 +103,7 @@ def get_generated_news(
 
 
 @router.get("/search")
-def search_generated_news(
+def search_reports(
     keyword: str = Query(..., min_length=1, description="검색어"),
     category_id: Optional[int] = Query(None, description="카테고리 ID로 필터링"),
     skip: int = 0,
@@ -111,7 +111,7 @@ def search_generated_news(
     db: Session = Depends(get_db),
 ):
     """
-    AI가 생성한 뉴스에서 '내용(contents)' 또는 '제목(title)'에 키워드가 포함된 뉴스를 찾습니다.
+    AI가 생성한 리포트에서 '내용(contents)' 또는 '제목(title)'에 키워드가 포함된 리포트를 찾습니다.
 
     **keyword**: 검색할 키워드.<br/>
     **category_id**: (선택) 특정 카테고리로 필터링<br/>
@@ -122,13 +122,13 @@ def search_generated_news(
     search_pattern = f"%{keyword}%"
 
     query = (
-        db.query(AiGeneratedNews)
-        .options(joinedload(AiGeneratedNews.category))
-        .filter(or_(AiGeneratedNews.title.ilike(search_pattern), AiGeneratedNews.contents.ilike(search_pattern)))
+        db.query(Report)
+        .options(joinedload(Report.category))
+        .filter(or_(Report.title.ilike(search_pattern), Report.contents.ilike(search_pattern)))
     )
 
     if category_id is not None:
-        query = query.filter(AiGeneratedNews.category_id == category_id)
+        query = query.filter(Report.category_id == category_id)
 
     results = query.offset(skip).limit(limit).all()
 
@@ -143,7 +143,7 @@ def search_generated_news(
                 keywords_value = json.dumps(keywords_value, ensure_ascii=False)
 
             item_dict = {
-                "ai_generated_news_id": item.ai_generated_news_id,
+                "report_id": item.report_id,
                 "cluster_id": item.cluster_id,
                 "category_id": item.category_id,
                 "category_name": item.category.name if item.category else None,
@@ -161,44 +161,44 @@ def search_generated_news(
     return []
 
 
-@router.get("/{generated_news_id}")
-def get_generated_news_detail(generated_news_id: int, db: Session = Depends(get_db)):
+@router.get("/{report_id}")
+def get_report_detail(report_id: int, db: Session = Depends(get_db)):
     """
-    AI가 생성한 뉴스 중 특정 ID에 해당하는 뉴스를 가져옵니다.
+    AI가 생성한 리포트 중 특정 ID에 해당하는 리포트를 가져옵니다.
 
-    **generated_news_id**: AI가 생성한 뉴스의 ID.
+    **report_id**: AI가 생성한 리포트의 ID.
     """
 
-    generated_news = (
-        db.query(AiGeneratedNews)
-        .options(joinedload(AiGeneratedNews.cluster).joinedload(Cluster.news), joinedload(AiGeneratedNews.category))
-        .filter(AiGeneratedNews.ai_generated_news_id == generated_news_id)
+    report = (
+        db.query(Report)
+        .options(joinedload(Report.cluster).joinedload(Cluster.news), joinedload(Report.category))
+        .filter(Report.report_id == report_id)
         .first()
     )
 
-    if not generated_news:
-        raise HTTPException(status_code=404, detail="해당 뉴스를 찾을 수 없습니다.")
+    if not report:
+        raise HTTPException(status_code=404, detail="해당 리포트를 찾을 수 없습니다.")
 
     # keywords가 JSON이면 string으로 변환
-    keywords_value = generated_news.keywords
+    keywords_value = report.keywords
     if isinstance(keywords_value, (dict, list)):
         import json
 
         keywords_value = json.dumps(keywords_value, ensure_ascii=False)
 
     return {
-        "ai_generated_news_id": generated_news.ai_generated_news_id,
-        "cluster_id": generated_news.cluster_id,
-        "category_id": generated_news.category_id,
-        "category_name": generated_news.category.name if generated_news.category else None,
-        "title": generated_news.title,
-        "contents": generated_news.contents,
-        "created_at": generated_news.created_at,
-        "analysis_result": generated_news.analysis_result,
+        "report_id": report.report_id,
+        "cluster_id": report.cluster_id,
+        "category_id": report.category_id,
+        "category_name": report.category.name if report.category else None,
+        "title": report.title,
+        "contents": report.contents,
+        "created_at": report.created_at,
+        "analysis_result": report.analysis_result,
         "keywords": keywords_value,
-        "like_count": generated_news.like_count,
-        "dislike_count": generated_news.dislike_count,
-        # "cluster": generated_news.cluster, # 순환 참조 주의, 필요한 경우 serialize
+        "like_count": report.like_count,
+        "dislike_count": report.dislike_count,
+        # "cluster": report.cluster, # 순환 참조 주의, 필요한 경우 serialize
     }
 
 
@@ -318,25 +318,25 @@ def check_citation(req: CitationRequest, db: Session = Depends(get_db)):
     return {"match_found": len(results) > 0, "matches": results}
 
 
-@router.get("/{generated_news_id}/related")
-def get_related_news(generated_news_id: int, limit: int = 3, db: Session = Depends(get_db)):
+@router.get("/{report_id}/related")
+def get_related_reports(report_id: int, limit: int = 3, db: Session = Depends(get_db)):
     """
-    특정 AI 뉴스와 연관된(키워드가 유사한) 다른 AI 뉴스들을 추천합니다.
+    특정 AI 리포트와 연관된(키워드가 유사한) 다른 AI 리포트들을 추천합니다.
     [Fallback Logic]
-    1. Top 3 키워드를 모두 포함하는 기사 검색
-    2. 부족하면 Top 2 키워드를 모두 포함하는 기사 검색
-    3. 부족하면 Top 1 키워드를 포함하는 기사 검색
+    1. Top 3 키워드를 모두 포함하는 리포트 검색
+    2. 부족하면 Top 2 키워드를 모두 포함하는 리포트 검색
+    3. 부족하면 Top 1 키워드를 포함하는 리포트 검색
     """
-    # 1. 현재 뉴스 조회
-    current_news = db.get(AiGeneratedNews, generated_news_id)
-    if not current_news:
-        raise HTTPException(status_code=404, detail="News not found")
+    # 1. 현재 리포트 조회
+    current_report = db.get(Report, report_id)
+    if not current_report:
+        raise HTTPException(status_code=404, detail="Report not found")
 
     # 2. 키워드 추출
-    if not current_news.keywords:
+    if not current_report.keywords:
         return []
 
-    current_kws = current_news.keywords
+    current_kws = current_report.keywords
     if isinstance(current_kws, str):
         import json
 
@@ -357,7 +357,7 @@ def get_related_news(generated_news_id: int, limit: int = 3, db: Session = Depen
         return []
 
     final_results = []
-    excluded_ids = {generated_news_id}  # 자기 자신 제외
+    excluded_ids = {report_id}  # 자기 자신 제외
 
     # 3. Tiered Search Strategy (3 keywords -> 2 keywords -> 1 keyword)
     # 최대 3개까지만 시도 (키워드가 적으면 그만큼만)
@@ -373,23 +373,23 @@ def get_related_news(generated_news_id: int, limit: int = 3, db: Session = Depen
 
         # 쿼리 생성: (제목이나 내용에 k1 포함) AND (제목이나 내용에 k2 포함) ...
         # excluded_ids에 없는 것만
-        query = db.query(AiGeneratedNews).filter(AiGeneratedNews.ai_generated_news_id.notin_(excluded_ids))
+        query = db.query(Report).filter(Report.report_id.notin_(excluded_ids))
 
         # AND 조건 추가
         conditions = []
         for kw in target_keywords:
             pattern = f"%{kw}%"
-            conditions.append(or_(AiGeneratedNews.title.ilike(pattern), AiGeneratedNews.contents.ilike(pattern)))
+            conditions.append(or_(Report.title.ilike(pattern), Report.contents.ilike(pattern)))
 
         if conditions:
             query = query.filter(and_(*conditions))
 
         # 최신순 정렬하여 필요한 만큼 가져오기
-        tier_results = query.order_by(AiGeneratedNews.created_at.desc()).limit(needed).all()
+        tier_results = query.order_by(Report.created_at.desc()).limit(needed).all()
 
         for item in tier_results:
             final_results.append(item)
-            excluded_ids.add(item.ai_generated_news_id)
+            excluded_ids.add(item.report_id)
 
     # 4. 결과 포맷팅
     response_data = []
@@ -415,10 +415,95 @@ def get_related_news(generated_news_id: int, limit: int = 3, db: Session = Depen
         summary = item.contents[:40] + "..." if item.contents and len(item.contents) > 40 else item.contents
 
         response_data.append(
-            {"id": item.ai_generated_news_id, "title": item.title, "image_url": img_url, "contents_short": summary}
+            {"id": item.report_id, "title": item.title, "image_url": img_url, "contents_short": summary}
         )
 
     return response_data
+
+
+@router.get("/{report_id}/timeline")
+def get_report_timeline(report_id: int, limit: int = 5, db: Session = Depends(get_db)):
+    """
+    특정 이슈와 관련된 과거의 이슈들을 시간순(오래된 순)으로 나열하여 반환합니다.
+    (키워드 기반 연관 검색)
+    """
+    # 1. 현재 리포트
+    current_report = db.get(Report, report_id)
+    if not current_report:
+        raise HTTPException(status_code=404, detail="Report not found")
+
+    # 2. 키워드 추출
+    if not current_report.keywords:
+        return []
+
+    current_kws = current_report.keywords
+    if isinstance(current_kws, str):
+        import json
+        try:
+            current_kws = json.loads(current_kws)
+        except:
+            current_kws = []
+
+    # 상위 3개 키워드 추출
+    try:
+        sorted_kws = sorted(current_kws, key=lambda x: x.get("value", 0), reverse=True)
+        top_keywords = [k.get("text") for k in sorted_kws if k.get("text")][:3]
+    except:
+        return []
+
+    if not top_keywords:
+        return []
+
+    # 3. 과거 리포트 검색 (현재 리포트보다 이전에 생성된 것들)
+    # 조건: (키워드 중 하나라도 포함) AND (현재 리포트 아님) AND (현재 리포트보다 과거)
+    query = db.query(Report).filter(
+        and_(
+            Report.report_id != report_id,
+            Report.created_at < current_report.created_at
+        )
+    )
+
+    conditions = []
+    for kw in top_keywords:
+        pattern = f"%{kw}%"
+        # 각 키워드가 제목이나 내용에 있어야 함
+        conditions.append(or_(Report.title.ilike(pattern), Report.contents.ilike(pattern)))
+    
+    # [수정] 모든 키워드를 다 포함해야 함 (AND)
+    if conditions:
+        query = query.filter(and_(*conditions))
+
+    # 4. 정렬 (오래된 순? 최신순? 타임라인이니까 오래된 순이 흐름 보기에 좋음)
+    # 하지만 "가까운 과거"가 더 관련성 높을 수 있으니, 
+    # 일단 최신순으로 가져와서 뒤집거나, 아니면 그냥 최신순으로 보여줄 수도 있음.
+    # User Request: "어떻게 변해왔는지" -> Chronological order (Old -> New) preferable.
+    # 하지만 DB 쿼리는 limit을 걸어야 하므로, "가장 최근의 연관 기사 N개"를 가져와서 날짜순 정렬하는 게 합리적.
+    
+    related_past = query.order_by(Report.created_at.desc()).limit(limit).all()
+    
+    # 시간순(과거->현재) 정렬
+    related_past.sort(key=lambda x: x.created_at)
+
+    results = []
+    for item in related_past:
+        results.append({
+            "id": item.report_id,
+            "date": item.created_at.strftime("%Y-%m-%d"),
+            "title": item.title,
+            "summary": (item.contents or "")[:60] + "..."
+        })
+    
+    # 마지막에 현재 리포트도 포함? (선택사항)
+    # 타임라인의 '현재' 점을 찍어주면 좋음
+    results.append({
+        "id": current_report.report_id,
+        "date": current_report.created_at.strftime("%Y-%m-%d"),
+        "title": current_report.title,
+        "summary": "현재 보고 있는 리포트",
+        "is_current": True
+    })
+
+    return results
 
 
 class ClaimEvidenceRequest(BaseModel):

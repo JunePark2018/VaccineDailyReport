@@ -20,8 +20,8 @@ const AI_News_Recommendation = ({ articleId, number_of_article = 3 }) => {
         const fetchRecommendations = async () => {
             try {
                 // [백엔드 통신]
-                // GET /generated-news/{id}/related
-                const response = await axios.get(`${API_BASE_URL}/generated-news/${articleId}/related`, {
+                // GET /reports/{id}/related
+                const response = await axios.get(`${API_BASE_URL}/reports/${articleId}/related`, {
                     params: { limit: number_of_article }
                 });
 

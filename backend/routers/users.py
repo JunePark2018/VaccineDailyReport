@@ -11,11 +11,11 @@ from database.crud import (
     get_user_by_login_id,
     update_user_subscriptions,
     add_view,
-    bump_user_keyword_stats_from_ai_news,
+    bump_user_keyword_stats_from_report,
     list_user_top_keywords,
     clear_user_keyword_stats,
     delete_user_account,
-    get_ai_generated_news,
+    get_report,
     get_category_name,
     get_reaction,
 )
@@ -36,7 +36,7 @@ def signup(user: UserCreateRequest, db: Session = Depends(get_db)):
     new_user = create_user(
         db,
         login_id=user.login_id,
-        user_real_name=user.user_real_name,
+        username=user.username,
         password_hash=user.password_hash,
         email=user.email,
         subscribed_categories=user.subscribed_categories,
@@ -48,7 +48,7 @@ def signup(user: UserCreateRequest, db: Session = Depends(get_db)):
     return {
         "user_id": new_user.user_id,
         "login_id": new_user.login_id,
-        "user_real_name": new_user.user_real_name,
+        "username": new_user.username,
         "email": new_user.email,
         "user_status": new_user.user_status,
         "created_at": new_user.created_at,
@@ -122,11 +122,11 @@ def read_user(login_id: str, db: Session = Depends(get_db)):
     return {
         "user_id": user.user_id,
         "login_id": user.login_id,
-        "user_real_name": user.user_real_name,
+        "username": user.username,
         "email": user.email,
         "age_range": user.age_range,
         "gender": user.gender,
-        "marketing_agree": user.marketing_agree,
+
         "subscribed_categories": subscribed_categories,
         "subscribed_keywords": subscribed_keywords,
     }
@@ -190,7 +190,7 @@ def record_article_read(login_id: str, news_id: int, db: Session = Depends(get_d
     # 이미 본 기사라도 다시 읽으면 관심도가 올라간다고 가정할 수 있음.
     # 단, 너무 루프 도는 것을 방지하려면 has_viewed 체크를 할 수도 있으나,
     # 여기서는 "읽을 때마다 관심도 증가"로 구현.
-    bump_user_keyword_stats_from_ai_news(db, user_id=user.user_id, ai_news_id=news_id, inc=1)
+    bump_user_keyword_stats_from_report(db, user_id=user.user_id, report_id=news_id, inc=1)
 
     db.commit()
     return {"message": "Read recorded"}
@@ -215,7 +215,7 @@ def get_user_dashboard(login_id: str, db: Session = Depends(get_db)):
     # 2. Category Read Counts
     # user.views (NewsView)를 통해 집계
     # NewsView에는 category_id가 저장되어 있지 않을 수도 있음(초기 설계 상).
-    # 하지만 AiGeneratedNews join해서 카운트 가능
+    # 하지만 Report join해서 카운트 가능
     # 여기서는 간단히 user.views -> news -> category로 접근하거나
     # NewsView에 category_id가 있다면 그것을 씀 (models.py에 category_id 있음)
     from sqlalchemy import func
@@ -243,7 +243,7 @@ def get_user_dashboard(login_id: str, db: Session = Depends(get_db)):
     sub_kws = [k.keyword for k in user.keyword_subscriptions]
 
     return UserDashboardResponse(
-        user_real_name=user.user_real_name,
+        username=user.username,
         email=user.email,
         read_categories=read_categories_map,
         read_keywords=read_keywords_map,

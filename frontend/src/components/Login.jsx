@@ -57,7 +57,7 @@ const Login = () => {
                 localStorage.setItem('isLoggedIn', 'true');
                 localStorage.setItem('user_id', data.user_id);
                 localStorage.setItem('login_id', data.login_id);
-                localStorage.setItem('user_real_name', data.user_real_name);
+                localStorage.setItem('username', data.username);
 
                 console.log('Login successful:', data);
 

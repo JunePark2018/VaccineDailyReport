@@ -19,7 +19,7 @@ async def regenerate_analysis(news_id: int):
     try:
         # 1. Get Target AI News
         ai_news = (
-            db.query(models.AiGeneratedNews).filter(models.AiGeneratedNews.ai_generated_news_id == news_id).first()
+            db.query(models.Report).filter(models.Report.report_id == news_id).first()
         )
         if not ai_news:
             print(f"[Error] AI News ID {news_id} not found.")

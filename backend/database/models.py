@@ -56,8 +56,8 @@ class Cluster(Base):
         lazy="selectin",
     )
 
-    ai_generated_news = relationship(
-        "AiGeneratedNews",
+    reports = relationship(
+        "Report",
         back_populates="cluster",
         cascade="all, delete-orphan",
         lazy="selectin",
@@ -96,10 +96,10 @@ class News(Base):
         return self.company.name if self.company else None
 
 
-class AiGeneratedNews(Base):
-    __tablename__ = "ai_generated_news"
+class Report(Base):
+    __tablename__ = "reports"
 
-    ai_generated_news_id = Column(Integer, primary_key=True, index=True)
+    report_id = Column(Integer, primary_key=True, index=True)
     cluster_id = Column(Integer, ForeignKey("clusters.cluster_id", ondelete="CASCADE"), nullable=False, index=True)
     category_id = Column(Integer, ForeignKey("categories.category_id", ondelete="RESTRICT"), nullable=True, index=True)
 
@@ -121,11 +121,11 @@ class AiGeneratedNews(Base):
     like_count = Column(Integer, default=0, nullable=False)
     dislike_count = Column(Integer, default=0, nullable=False)
 
-    cluster = relationship("Cluster", back_populates="ai_generated_news")
-    category = relationship("Category", backref="ai_generated_news")
+    cluster = relationship("Cluster", back_populates="reports")
+    category = relationship("Category", backref="reports")
 
-    reactions = relationship("NewsReaction", back_populates="news", cascade="all, delete-orphan")
-    views = relationship("NewsView", back_populates="news", cascade="all, delete-orphan")
+    reactions = relationship("NewsReaction", back_populates="report", cascade="all, delete-orphan")
+    views = relationship("NewsView", back_populates="report", cascade="all, delete-orphan")
 
 
 # -------------------------
@@ -137,19 +137,20 @@ class User(Base):
     user_id = Column(Integer, primary_key=True)
     login_id = Column(String(50), unique=True, nullable=False, index=True)
 
-    user_real_name = Column(String(50), nullable=True)
+    username = Column(String(50), nullable=True)
     password_hash = Column(String(255), nullable=False)
     email = Column(String(100), nullable=True)
 
     age_range = Column(String(30), nullable=True)
     gender = Column(String(30), nullable=True)
 
-    fcm_token = Column(String(255), nullable=True)
+    # fcm_token removed
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     modified_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=True)
     deleted_at = Column(DateTime, nullable=True)
 
-    marketing_agree = Column(Boolean, default=False, nullable=False)
+    # marketing_agree removed
+
     user_status = Column(Integer, default=1, nullable=False)
 
     reactions = relationship("NewsReaction", back_populates="user", cascade="all, delete-orphan")
@@ -157,25 +158,25 @@ class User(Base):
     searches = relationship("SearchLog", back_populates="user", cascade="all, delete-orphan")
 
     keyword_stats = relationship(
-        "UserKeywordReadStat",
+        "KwStat",
         back_populates="user",
         cascade="all, delete-orphan",
         lazy="selectin",
     )
 
     subscribed_categories = relationship(
-        "Category", secondary="user_category_subscriptions", back_populates="subscribers"
+        "Category", secondary="ctgr_sub", back_populates="subscribers"
     )
     keyword_subscriptions = relationship(
-        "UserKeywordSubscription",
+        "KwSub",
         back_populates="user",
         cascade="all, delete-orphan",
         lazy="selectin",
     )
 
 
-class UserKeywordSubscription(Base):
-    __tablename__ = "user_keyword_subscriptions"
+class KwSub(Base):
+    __tablename__ = "kw_sub"
 
     user_id = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), primary_key=True)
     keyword = Column(String(200), primary_key=True)
@@ -184,7 +185,7 @@ class UserKeywordSubscription(Base):
 
 
 # -------------------------
-# Like/Dislike (AiGeneratedNews만)
+# Like/Dislike (Report 기준)
 # -------------------------
 class NewsReaction(Base):
     __tablename__ = "news_reactions"
@@ -192,13 +193,13 @@ class NewsReaction(Base):
     news_reaction_id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True)
     news_id = Column(
-        Integer, ForeignKey("ai_generated_news.ai_generated_news_id", ondelete="CASCADE"), nullable=False, index=True
+        Integer, ForeignKey("reports.report_id", ondelete="CASCADE"), nullable=False, index=True
     )
 
     value = Column(Integer, nullable=False)  # 1=like, -1=dislike
 
     user = relationship("User", back_populates="reactions")
-    news = relationship("AiGeneratedNews", back_populates="reactions")
+    report = relationship("Report", back_populates="reactions")
 
     __table_args__ = (
         UniqueConstraint("user_id", "news_id", name="uq_user_news_reaction"),
@@ -207,7 +208,7 @@ class NewsReaction(Base):
 
 
 # -------------------------
-# View History (AiGeneratedNews id 기반)
+# View History (Report id 기반)
 # -------------------------
 class NewsView(Base):
     __tablename__ = "news_views"
@@ -215,7 +216,7 @@ class NewsView(Base):
     news_view_id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True)
     news_id = Column(
-        Integer, ForeignKey("ai_generated_news.ai_generated_news_id", ondelete="CASCADE"), nullable=False, index=True
+        Integer, ForeignKey("reports.report_id", ondelete="CASCADE"), nullable=False, index=True
     )
     category_id = Column(Integer, ForeignKey("categories.category_id", ondelete="SET NULL"), nullable=True, index=True)
 
@@ -224,7 +225,7 @@ class NewsView(Base):
     viewed_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     user = relationship("User", back_populates="views")
-    news = relationship("AiGeneratedNews", back_populates="views")
+    report = relationship("Report", back_populates="views")
 
 
 # -------------------------
@@ -251,11 +252,11 @@ class Category(Base):
     category_id = Column(Integer, primary_key=True)
     name = Column(String(50), unique=True, nullable=False, index=True)
 
-    subscribers = relationship("User", secondary="user_category_subscriptions", back_populates="subscribed_categories")
+    subscribers = relationship("User", secondary="ctgr_sub", back_populates="subscribed_categories")
 
 
-user_category_subscriptions = Table(
-    "user_category_subscriptions",
+ctgr_sub = Table(
+    "ctgr_sub",
     Base.metadata,
     Column("user_id", ForeignKey("users.user_id", ondelete="CASCADE"), primary_key=True),
     Column("category_id", ForeignKey("categories.category_id", ondelete="CASCADE"), primary_key=True),
@@ -267,12 +268,12 @@ user_category_subscriptions = Table(
 # -------------------------
 
 
-class UserKeywordReadStat(Base):
-    __tablename__ = "user_keyword_read_stats"
+class KwStat(Base):
+    __tablename__ = "kw_stats"
 
     user_id = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), primary_key=True)
     keyword = Column(String(200), primary_key=True)
     count = Column(Integer, default=0, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    read_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     user = relationship("User", back_populates="keyword_stats")

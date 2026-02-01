@@ -15,7 +15,7 @@ const UserMenu = () => {
   useEffect(() => {
     // Check login status from localStorage
     const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    const storedUserName = localStorage.getItem('user_real_name');
+    const storedUserName = localStorage.getItem('username');
     const storedLoginId = localStorage.getItem('login_id');
 
     setIsLoggedIn(loggedIn);
@@ -51,7 +51,7 @@ const UserMenu = () => {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('user_id');
     localStorage.removeItem('login_id');
-    localStorage.removeItem('user_real_name');
+    localStorage.removeItem('username');
 
     setIsLoggedIn(false);
     setUserName('');

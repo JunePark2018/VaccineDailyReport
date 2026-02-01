@@ -6,8 +6,8 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from openai import OpenAI, AsyncOpenAI
 from database.engine import SessionLocal
-from database.crud import create_ai_generated_news
-from database.models import AiGeneratedNews
+from database.crud import create_report
+from database.models import Report
 from dotenv import load_dotenv
 
 # 🔑 API 키 확인 필수
@@ -37,17 +37,17 @@ from ai_graph_comparer import compare_articles_with_graph
 from keyword_extractor import KeywordExtractor
 
 
-async def process_single_issue(issue: AiGeneratedNews, kw_extractor: KeywordExtractor, db: Session):
+async def process_single_issue(issue: Report, kw_extractor: KeywordExtractor, db: Session):
     """단일 이슈 처리 (비동기)"""
     try:
         # 2. 관련 기사 가져오기
         cluster = issue.cluster
         if not cluster or not cluster.news:
-            print(f"   -> [Skip] 이슈 ID {issue.ai_generated_news_id}: 연결된 기사가 없습니다.")
+            print(f"   -> [Skip] 이슈 ID {issue.report_id}: 연결된 기사가 없습니다.")
             return
 
         articles = cluster.news
-        print(f"   -> [Processing] 이슈 ID {issue.ai_generated_news_id}: '{issue.title}' (기사 {len(articles)}개)")
+        print(f"   -> [Processing] 이슈 ID {issue.report_id}: '{issue.title}' (기사 {len(articles)}개)")
 
         # 변환: SQLAlchemy Object -> List[Dict]
         articles_data = []
@@ -115,7 +115,7 @@ async def process_single_issue(issue: AiGeneratedNews, kw_extractor: KeywordExtr
                 print(f"      ⚠️ 카테고리 정보 없음")
 
             db.commit()
-            print(f"      ✅ 분석 완료: {issue.ai_generated_news_id} (제목: {issue.title})")
+            print(f"      ✅ 분석 완료: {issue.report_id} (제목: {issue.title})")
 
         except Exception as e:
             print(f"      🚫 LLM 처리 중 오류: {e}")
@@ -124,7 +124,7 @@ async def process_single_issue(issue: AiGeneratedNews, kw_extractor: KeywordExtr
             traceback.print_exc()
 
     except Exception as e:
-        print(f"   -> [Error] 이슈 {issue.ai_generated_news_id} 처리 실패: {e}")
+        print(f"   -> [Error] 이슈 {issue.report_id} 처리 실패: {e}")
 
 
 async def process_news_async_internal():
@@ -132,10 +132,10 @@ async def process_news_async_internal():
     kw_extractor = KeywordExtractor()  # Initialize once
 
     try:
-        # 1. 처리되지 않은(ai_generated_news.contents가 비어있는) 이슈 조회
+        # 1. 처리되지 않은(Report.contents가 비어있는) 이슈 조회
         targets = (
-            db.query(AiGeneratedNews)
-            .filter((AiGeneratedNews.contents == None) | (AiGeneratedNews.contents == ""))
+            db.query(Report)
+            .filter((Report.contents == None) | (Report.contents == ""))
             .all()
         )
 

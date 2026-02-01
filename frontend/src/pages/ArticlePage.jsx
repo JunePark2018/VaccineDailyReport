@@ -11,6 +11,7 @@ import UserMenu from '../components/UserMenu';
 import './ArticlePage.css';
 import axios from 'axios';
 import WordCloudComponent from '../components/WordCloud';
+import Timeline from '../components/Timeline';
 import AI_News_Recommendation from '../components/AI_News_Recommendation';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
@@ -60,7 +61,7 @@ function ArticlePage() {
     setEvidenceMap(prev => ({ ...prev, [index]: { loading: true, data: null } }));
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/generated-news/claim-evidence`, {
+      const response = await axios.post(`${API_BASE_URL}/reports/claim-evidence`, {
         cluster_id: article.cluster_id,
         claim_text: text,
         target_media: targetMedia
@@ -131,7 +132,7 @@ function ArticlePage() {
     const fetchInfo = async () => {
       try {
         // AI 생성 기사 가져오기
-        const ai_news_response = await axios.get(`${API_BASE_URL}/generated-news/${id}`);
+        const ai_news_response = await axios.get(`${API_BASE_URL}/reports/${id}`);
         const article = ai_news_response.data;
         console.log(article);
         setArticle(article);
@@ -166,7 +167,7 @@ function ArticlePage() {
         setKeywords(filteredKeywords);
 
         // 사용된 기사들 가져와서 랜덤하게 사진 고르기
-        const img_url_response = await axios.get(`${API_BASE_URL}/generated-news/clusters/${article.cluster_id}/news`);
+        const img_url_response = await axios.get(`${API_BASE_URL}/reports/clusters/${article.cluster_id}/news`);
         const newsList = img_url_response.data;
 
         // 언론사 이름 추출 (중복 제거)
@@ -308,6 +309,11 @@ function ArticlePage() {
                 <div style={{ display: 'flex', justifyContent: 'center', width: '400px', maxWidth: '100%', margin: '0 auto', aspectRatio: '1/1' }}>
                   <WordCloudComponent keywords={keywords} width={400} height={400} />
                 </div>
+              </div>
+
+              {/* [New] Timeline Section */}
+              <div className="timeline-section" style={{ marginTop: '40px', padding: '20px' }}>
+                <Timeline currentArticleId={id} />
               </div>
 
               {/* [Restored] Sources Section */}

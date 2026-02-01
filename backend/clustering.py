@@ -16,7 +16,7 @@ from kiwipiepy import Kiwi
 
 # DB 관련 임포트 (경로는 프로젝트 구조에 맞게 확인 필요)
 from database.engine import SessionLocal, engine
-from database.models import Base, News, AiGeneratedNews
+from database.models import Base, News, Report
 from database import crud
 
 load_dotenv(override=True)
@@ -268,7 +268,7 @@ def run_issue_clustering(db: Session, days=3):
     # 3. [복구됨] 기존 이슈에 새 기사 병합 (Absorption)
     #    - 기존 이슈와 유사도가 매우 높으면(0.85 이상) 해당 이슈로 편입시킵니다.
     print("🔄 [DEBUG] 기존 이슈와의 병합 검사 시작...")
-    recent_issues = db.query(AiGeneratedNews).filter(AiGeneratedNews.created_at >= since).all()
+    recent_issues = db.query(Report).filter(Report.created_at >= since).all()
 
     for issue in recent_issues:
         # 이슈에 연결된 기사 중 하나를 대표로 선정 (Cluster -> News 관계 활용)
@@ -292,7 +292,7 @@ def run_issue_clustering(db: Session, days=3):
             raw_sim = cosine_similarity(embeddings[i].reshape(1, -1), issue_vec)[0][0]
             sim = float(raw_sim)
             if sim >= 0.85:
-                a.issue_id = issue.ai_generated_news_id
+                a.issue_id = issue.report_id
                 # DB 연결: Cluster에 뉴스 추가
                 crud.add_news_to_cluster(db, cluster_id=issue.cluster_id, news_id=a.news_id)
                 print(f"  🔗 [병합] '{a.title}' -> 기존 이슈 '{issue.title}' (유사도: {sim:.2f})")
@@ -338,11 +338,11 @@ def run_issue_clustering(db: Session, days=3):
         final_title = res.get("title", picked[0].title)
 
         # 5. 이슈 생성 및 DB 저장
-        issue = crud.create_ai_news_issue(db, title=final_title, article_ids=[a.news_id for a in picked])
+        issue = crud.create_report(db, title=final_title, article_ids=[a.news_id for a in picked])
 
         # 런타임 객체에 issue_id 마킹 (중복 처리 방지용)
         for a in picked:
-            a.issue_id = issue.ai_generated_news_id
+            a.issue_id = issue.report_id
 
         print(f"✨ [이슈 생성 완료] {final_title} (기사 {len(picked)}건)")
 

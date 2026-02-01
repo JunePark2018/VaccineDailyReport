@@ -28,5 +28,5 @@ def login(request: UserLoginRequest, db: Session = Depends(get_db)):
         "message": "로그인에 성공하였습니다!",
         "user_id": user.user_id,
         "login_id": user.login_id,
-        "user_real_name": user.user_real_name,
+        "username": user.username,
     }

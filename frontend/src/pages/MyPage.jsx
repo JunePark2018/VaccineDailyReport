@@ -136,7 +136,7 @@ const MyPage = () => {
       localStorage.removeItem('isLoggedIn');
       localStorage.removeItem('user_id');
       localStorage.removeItem('login_id');
-      localStorage.removeItem('user_real_name');
+      localStorage.removeItem('username');
 
       alert('회원탈퇴가 완료되었습니다.');
       navigate('/');
@@ -168,7 +168,7 @@ const MyPage = () => {
 
       <main className="mypage-main">
         <section className="profile-header">
-          <h1 className="text-xl font-bold">{userData?.user_real_name} 님의 인사이트</h1>
+          <h1 className="text-xl font-bold">{userData?.username} 님의 인사이트</h1>
           <p className="text-gray-400 text-sm mt-1">{userData?.email}</p>
         </section>
 

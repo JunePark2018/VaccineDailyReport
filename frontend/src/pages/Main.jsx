@@ -25,7 +25,7 @@ export const Main = () => {
   // Check login status
   useEffect(() => {
     const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    const storedUserName = localStorage.getItem('user_real_name');
+    const storedUserName = localStorage.getItem('username');
 
     setIsLoggedIn(loggedIn);
     if (storedUserName) {
@@ -39,13 +39,13 @@ export const Main = () => {
     const loadData = async () => {
       try {
         // 1. Fetch AI Generated News (Limit 50 for main page coverage)
-        const response = await axios.get(`${API_BASE_URL}/generated-news?limit=100`); // Fetch enough to cover all sections
+        const response = await axios.get(`${API_BASE_URL}/reports?limit=100`); // Fetch enough to cover all sections
         const realArticles = response.data;
 
         // 2. Map Backend Data to Frontend Structure
         const formattedArticles = realArticles.map(art => ({
           ...art,
-          id: art.ai_generated_news_id, // [Fix] Map native ID to 'id' for widespread usage
+          id: art.report_id, // [Fix] Map native ID to 'id' for widespread usage
           category: art.category_name, // Map category_name ('정치', '경제'...) to category
           image: `cluster_${art.cluster_id}`, // Placeholder ID for image map
           short_text: art.contents ? (art.contents.substring(0, 100) + "...") : "내용 없음"
@@ -106,7 +106,7 @@ export const Main = () => {
         // Use Promise.allSettled to fetch images/details in parallel
         await Promise.allSettled(filtered.map(async (art) => {
           try {
-            const imgRes = await axios.get(`${API_BASE_URL}/generated-news/clusters/${art.cluster_id}/news`);
+            const imgRes = await axios.get(`${API_BASE_URL}/reports/clusters/${art.cluster_id}/news`);
             const newsList = imgRes.data;
 
             // Store detailed news list for highlights
@@ -271,7 +271,7 @@ export const Main = () => {
           <div className="main-image-column" style={{ flex: 1.6, display: 'flex', flexDirection: 'column', position: 'relative' }}>
             <div
               className="article-image-center"
-              onClick={() => activeArticle && navigate(`/article/${activeArticle.ai_generated_news_id}`)}
+              onClick={() => activeArticle && navigate(`/article/${activeArticle.report_id}`)}
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
               style={{ cursor: 'pointer', width: '100%', aspectRatio: '1.5/1' }}

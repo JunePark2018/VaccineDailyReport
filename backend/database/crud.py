@@ -9,18 +9,18 @@ from sqlalchemy import and_, delete, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from .models import (
+from database.models import (
     Company,
-    Cluster,
-    News,
-    AiGeneratedNews,
     User,
+    News,
+    Report,
+    Cluster,
     Category,
     NewsReaction,
     NewsView,
     SearchLog,
-    UserKeywordReadStat,
-    UserKeywordSubscription,
+    KwStat,
+    KwSub,
     cluster_news_link,
 )
 
@@ -250,9 +250,9 @@ def get_original_news_details_by_cluster(db: Session, cluster_id: int) -> List[d
 
 
 # -------------------------
-# AiGeneratedNews
+# Report (prev. AiGeneratedNews)
 # -------------------------
-def create_ai_generated_news(
+def create_report(
     db: Session,
     *,
     cluster_id: int,
@@ -262,8 +262,8 @@ def create_ai_generated_news(
     analysis_result: Optional[dict],
     category_id: Optional[int] = None,
     created_at: Optional[datetime] = None,
-) -> AiGeneratedNews:
-    obj = AiGeneratedNews(
+) -> Report:
+    obj = Report(
         cluster_id=cluster_id,
         category_id=category_id,
         title=title,
@@ -279,49 +279,49 @@ def create_ai_generated_news(
     return obj
 
 
-def get_ai_generated_news(db: Session, ai_news_id: int) -> Optional[AiGeneratedNews]:
-    return db.get(AiGeneratedNews, ai_news_id)
+def get_report(db: Session, report_id: int) -> Optional[Report]:
+    return db.get(Report, report_id)
 
 
-def list_ai_generated_news_by_cluster(db: Session, cluster_id: int, limit: int = 50) -> List[AiGeneratedNews]:
+def list_reports_by_cluster(db: Session, cluster_id: int, limit: int = 50) -> List[Report]:
     return list(
         db.execute(
-            select(AiGeneratedNews)
-            .where(AiGeneratedNews.cluster_id == cluster_id)
-            .order_by(AiGeneratedNews.created_at.desc())
+            select(Report)
+            .where(Report.cluster_id == cluster_id)
+            .order_by(Report.created_at.desc())
             .limit(limit)
         ).scalars()
     )
 
 
-def list_ai_generated_news_by_category(db: Session, category_id: int, limit: int = 50) -> List[AiGeneratedNews]:
+def list_reports_by_category(db: Session, category_id: int, limit: int = 50) -> List[Report]:
     """
     특정 카테고리의 AI 생성 뉴스 목록 조회.
     """
     return list(
         db.execute(
-            select(AiGeneratedNews)
-            .where(AiGeneratedNews.category_id == category_id)
-            .order_by(AiGeneratedNews.created_at.desc())
+            select(Report)
+            .where(Report.category_id == category_id)
+            .order_by(Report.created_at.desc())
             .limit(limit)
         ).scalars()
     )
 
 
-def create_ai_news_issue(
+def create_report_issue(
     db: Session, *, title: str, article_ids: List[int], category_id: Optional[int] = None
-) -> AiGeneratedNews:
+) -> Report:
     """
     clustering.py에서 사용하는 이슈 생성 함수.
-    Cluster를 생성하고, AiGeneratedNews와 News를 연결합니다.
+    Cluster를 생성하고, Report와 News를 연결합니다.
     """
     # 1. Cluster 생성
     cluster = Cluster(title=title)
     db.add(cluster)
     db.flush()  # cluster.cluster_id 확보
 
-    # 2. AiGeneratedNews 생성
-    issue = AiGeneratedNews(
+    # 2. Report 생성
+    issue = Report(
         cluster_id=cluster.cluster_id, category_id=category_id, title=title, created_at=datetime.utcnow()
     )
     db.add(issue)
@@ -347,12 +347,12 @@ def create_user(
     *,
     login_id: str,
     password_hash: str,
-    user_real_name: Optional[str] = None,
+    username: Optional[str] = None,
     email: Optional[str] = None,
     age_range: Optional[str] = None,
     gender: Optional[str] = None,
-    fcm_token: Optional[str] = None,
-    marketing_agree: bool = False,
+    # fcm_token removed
+    # marketing_agree removed
     user_status: int = 1,
     subscribed_categories: Optional[List[str]] = None,
     subscribed_keywords: Optional[List[str]] = None,
@@ -360,12 +360,12 @@ def create_user(
     obj = User(
         login_id=login_id,
         password_hash=password_hash,
-        user_real_name=user_real_name,
+        username=username,
         email=email,
         age_range=age_range,
         gender=gender,
-        fcm_token=fcm_token,
-        marketing_agree=marketing_agree,
+        # fcm_token removed
+        # marketing_agree removed
         user_status=user_status,
         created_at=datetime.utcnow(),
     )
@@ -400,7 +400,7 @@ def create_user(
             # crud.py has normalize_keyword at top.
             normalized_kw = normalize_keyword(keyword)
             if normalized_kw:
-                obj.keyword_subscriptions.append(UserKeywordSubscription(keyword=normalized_kw))
+                obj.keyword_subscriptions.append(KwSub(keyword=normalized_kw))
 
     if subscribed_categories or subscribed_keywords:
         db.commit()
@@ -494,7 +494,7 @@ def update_user_subscriptions(
             raise ValueError("키워드는 최대 20개까지만 등록할 수 있습니다.")
 
         # Get existing keywords
-        # user.keyword_subscriptions is a list of UserKeywordSubscription objects
+        # user.keyword_subscriptions is a list of KwSub objects
         existing_map = {ks.keyword: ks for ks in user.keyword_subscriptions}
         existing_keys = set(existing_map.keys())
 
@@ -515,7 +515,7 @@ def update_user_subscriptions(
         
         # Add
         for kw in to_add:
-            user.keyword_subscriptions.append(UserKeywordSubscription(keyword=kw))
+            user.keyword_subscriptions.append(KwSub(keyword=kw))
 
     db.flush()
 
@@ -545,8 +545,8 @@ def add_view(
     unique_per_user=False: 볼 때마다 이벤트 row 추가
     """
     # [Fix] 카테고리 ID 조회
-    ai_news = db.get(AiGeneratedNews, ai_news_id)
-    cat_id = ai_news.category_id if ai_news else None
+    report = db.get(Report, ai_news_id)
+    cat_id = report.category_id if report else None
 
     if not unique_per_user:
         db.add(NewsView(user_id=user_id, news_id=ai_news_id, category_id=cat_id, viewed_at=datetime.utcnow()))
@@ -598,9 +598,9 @@ def set_reaction(
     if value not in (1, -1):
         raise ValueError("value must be 1 or -1")
 
-    ai = db.get(AiGeneratedNews, ai_news_id)
-    if not ai:
-        raise ValueError("AiGeneratedNews not found")
+    report = db.get(Report, ai_news_id)
+    if not report:
+        raise ValueError("Report not found")
 
     r = db.execute(
         select(NewsReaction).where(and_(NewsReaction.user_id == user_id, NewsReaction.news_id == ai_news_id))
@@ -610,21 +610,21 @@ def set_reaction(
     if r is None:
         db.add(NewsReaction(user_id=user_id, news_id=ai_news_id, value=value))
         if value == 1:
-            ai.like_count += 1
+            report.like_count += 1
         else:
-            ai.dislike_count += 1
+            report.dislike_count += 1
         db.flush()
-        return ("set", ai.like_count, ai.dislike_count)
+        return ("set", report.like_count, report.dislike_count)
 
     # 같은 값을 누르면 취소
     if r.value == value:
         db.delete(r)
-        if value == 1 and ai.like_count > 0:
-            ai.like_count -= 1
-        if value == -1 and ai.dislike_count > 0:
-            ai.dislike_count -= 1
+        if value == 1 and report.like_count > 0:
+            report.like_count -= 1
+        if value == -1 and report.dislike_count > 0:
+            report.dislike_count -= 1
         db.flush()
-        return ("cleared", ai.like_count, ai.dislike_count)
+        return ("cleared", report.like_count, report.dislike_count)
 
     # 반대 값으로 변경
     old = r.value
@@ -636,12 +636,12 @@ def set_reaction(
         ai.dislike_count -= 1
 
     if value == 1:
-        ai.like_count += 1
+        report.like_count += 1
     else:
-        ai.dislike_count += 1
+        report.dislike_count += 1
 
     db.flush()
-    return ("switched", ai.like_count, ai.dislike_count)
+    return ("switched", report.like_count, report.dislike_count)
 
 
 def get_reaction(db: Session, *, user_id: int, ai_news_id: int) -> Optional[int]:
@@ -653,7 +653,7 @@ def get_reaction(db: Session, *, user_id: int, ai_news_id: int) -> Optional[int]
 
 def get_view_count(db: Session, *, news_id: int) -> int:
     """
-    뉴스의 조회수 반환. (AiGeneratedNews id)
+    뉴스의 조회수 반환. (Report id)
     """
     return db.query(NewsView).filter(NewsView.news_id == news_id).count()
 
@@ -662,9 +662,12 @@ def get_reaction_counts(db: Session, *, news_id: int) -> Dict[str, int]:
     """
     뉴스의 like/dislike 수 반환.
     """
-    ai = db.get(AiGeneratedNews, news_id)
-    if ai:
-        return {"likes": ai.like_count, "dislikes": ai.dislike_count}
+    """
+    뉴스의 like/dislike 수 반환.
+    """
+    report = db.get(Report, news_id)
+    if report:
+        return {"likes": report.like_count, "dislikes": report.dislike_count}
 
     # Fallback if news not found or relying on table count (though ai table is source of truth now)
     likes = db.query(NewsReaction).filter(NewsReaction.news_id == news_id, NewsReaction.value == 1).count()
@@ -717,11 +720,14 @@ def subscribe_keyword(db: Session, *, user_id: int, keyword: str) -> None:
     if not keyword:
         raise ValueError("keyword is empty")
 
-    existing = db.get(UserKeywordSubscription, {"user_id": user_id, "keyword": keyword})
+    if not keyword:
+        raise ValueError("keyword is empty")
+
+    existing = db.get(KwSub, {"user_id": user_id, "keyword": keyword})
     if existing:
         return
 
-    db.add(UserKeywordSubscription(user_id=user_id, keyword=keyword))
+    db.add(KwSub(user_id=user_id, keyword=keyword))
     db.flush()
 
 
@@ -731,8 +737,8 @@ def unsubscribe_keyword(db: Session, *, user_id: int, keyword: str) -> int:
         return 0
 
     res = db.execute(
-        delete(UserKeywordSubscription).where(
-            and_(UserKeywordSubscription.user_id == user_id, UserKeywordSubscription.keyword == keyword)
+        delete(KwSub).where(
+            and_(KwSub.user_id == user_id, KwSub.keyword == keyword)
         )
     )
     return res.rowcount or 0
@@ -740,32 +746,32 @@ def unsubscribe_keyword(db: Session, *, user_id: int, keyword: str) -> int:
 
 def list_subscribed_keywords(db: Session, *, user_id: int) -> List[str]:
     return list(
-        db.execute(select(UserKeywordSubscription.keyword).where(UserKeywordSubscription.user_id == user_id)).scalars()
+        db.execute(select(KwSub.keyword).where(KwSub.user_id == user_id)).scalars()
     )
 
 
 # -------------------------
-# UserKeywordStat (읽은 기사 기반)
+# KwStat (읽은 기사 기반)
 # -------------------------
-def bump_user_keyword_stats_from_ai_news(
+def bump_user_keyword_stats_from_report(
     db: Session,
     *,
     user_id: int,
-    ai_news_id: int,
+    report_id: int,
     inc: int = 1,
     keyword_limit: int = 200,
 ) -> int:
     """
-    AiGeneratedNews.keywords(JSON 배열)를 읽어서 UserKeywordReadStat(user_id, keyword) count를 +inc.
+    Report.keywords(JSON 배열)를 읽어서 KwStat(user_id, keyword) count를 +inc.
     반환: 업데이트된 키워드 개수
 
     keyword_limit: 한 기사에서 처리할 최대 키워드 수(폭주 방지)
     """
-    ai = db.get(AiGeneratedNews, ai_news_id)
-    if not ai:
-        raise ValueError("AiGeneratedNews not found")
+    report = db.get(Report, report_id)
+    if not report:
+        raise ValueError("Report not found")
 
-    kws = ai.keywords or []
+    kws = report.keywords or []
     if not isinstance(kws, list):
         return 0
 
@@ -785,12 +791,12 @@ def bump_user_keyword_stats_from_ai_news(
         if not kw:
             continue
 
-        stat = db.get(UserKeywordReadStat, {"user_id": user_id, "keyword": kw})
+        stat = db.get(KwStat, {"user_id": user_id, "keyword": kw})
         if stat:
             stat.count += inc
-            stat.updated_at = datetime.utcnow()
+            stat.read_at = datetime.utcnow()
         else:
-            db.add(UserKeywordReadStat(user_id=user_id, keyword=kw, count=inc, updated_at=datetime.utcnow()))
+            db.add(KwStat(user_id=user_id, keyword=kw, count=inc, read_at=datetime.utcnow()))
         updated += 1
 
     db.flush()
@@ -799,9 +805,9 @@ def bump_user_keyword_stats_from_ai_news(
 
 def list_user_top_keywords(db: Session, *, user_id: int, limit: int = 1000) -> List[Tuple[str, int]]:
     rows = db.execute(
-        select(UserKeywordReadStat.keyword, UserKeywordReadStat.count)
-        .where(UserKeywordReadStat.user_id == user_id)
-        .order_by(UserKeywordReadStat.count.desc(), UserKeywordReadStat.updated_at.desc())
+        select(KwStat.keyword, KwStat.count)
+        .where(KwStat.user_id == user_id)
+        .order_by(KwStat.count.desc(), KwStat.updated_at.desc())
         .limit(limit)
     ).all()
     return [(r[0], r[1]) for r in rows]
@@ -812,7 +818,7 @@ def clear_user_keyword_stats(db: Session, *, user_id: int) -> int:
     사용자의 모든 관심 키워드 통계를 삭제합니다.
     Returns: 삭제된 레코드 개수
     """
-    count = db.query(UserKeywordReadStat).filter(UserKeywordReadStat.user_id == user_id).delete()
+    count = db.query(KwStat).filter(KwStat.user_id == user_id).delete()
     db.flush()
     return count
 
@@ -821,22 +827,22 @@ def clear_user_keyword_stats(db: Session, *, user_id: int) -> int:
 # -------------------------
 # Feed helpers (예시)
 # -------------------------
-def list_ai_news_feed_for_user(
+def list_reports_feed_for_user(
     db: Session,
     *,
     user_id: int,
     limit: int = 50,
     exclude_viewed: bool = True,
-) -> List[AiGeneratedNews]:
+) -> List[Report]:
     """
-    단순 예시: 최신 AiGeneratedNews를 가져오되, exclude_viewed면 이미 본 것 제외.
+    단순 예시: 최신 Report를 가져오되, exclude_viewed면 이미 본 것 제외.
     (추천/구독 기반 필터는 여기서 추가하면 됨)
     """
-    stmt = select(AiGeneratedNews).order_by(AiGeneratedNews.created_at.desc()).limit(limit)
+    stmt = select(Report).order_by(Report.created_at.desc()).limit(limit)
 
     if exclude_viewed:
         viewed_subq = select(NewsView.news_id).where(NewsView.user_id == user_id).scalar_subquery()
-        stmt = stmt.where(AiGeneratedNews.ai_generated_news_id.notin_(viewed_subq))
+        stmt = stmt.where(Report.report_id.notin_(viewed_subq))
 
     return list(db.execute(stmt).scalars())
 

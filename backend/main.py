@@ -9,10 +9,10 @@ from sqlalchemy import or_
 from scraper_en import GlobalNewsScraper
 
 from database.engine import engine, SessionLocal
-from database.models import Base, News, AiGeneratedNews, Cluster, User
+from database.models import Base, News, Report, Cluster, User
 from schemas import (
     NewsResponse,
-    AiGeneratedNewsResponse,
+    ReportResponse,
     UserCreateRequest,
     UserLoginRequest,
     UserResponse,
@@ -81,12 +81,12 @@ def run_background_worker():
         #         BATCH_SIZE = 10
 
         #         pending_issues = (
-        #             db.query(AiGeneratedNews)
+        #             db.query(Report)
         #             .filter(
-        #                 AiGeneratedNews.global_search_status == "PENDING",
-        #                 AiGeneratedNews.created_at >= datetime.now() - timedelta(hours=24),
+        #                 Report.global_search_status == "PENDING",
+        #                 Report.created_at >= datetime.now() - timedelta(hours=24),
         #             )
-        #             .order_by(AiGeneratedNews.search_retry_count.asc())
+        #             .order_by(Report.search_retry_count.asc())
         #             .limit(BATCH_SIZE)
         #             .all()
         #         )

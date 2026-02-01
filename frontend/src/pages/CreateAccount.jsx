@@ -20,7 +20,7 @@ export default function CreateAccount() {
         email: '',
         ageGroup: '',
         gender: '',
-        marketingAgree: false, // For the tracking agreement
+
     });
 
     const [selectedCategories, setSelectedCategories] = useState([]); // Stores chosen categories in order
@@ -147,10 +147,7 @@ export default function CreateAccount() {
             newErrors.categories = `최소 3개의 관심 분야를 선택해주세요. (현재 ${selectedCategories.length}개 선택)`;
         }
 
-        // 6. Agreement Check
-        if (!formData.marketingAgree) {
-            newErrors.agreement = "서비스 이용을 위해 사용자 경험 데이터 수집에 동의해야 합니다.";
-        }
+
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -163,14 +160,14 @@ export default function CreateAccount() {
             // Prepare data for backend (matching UserCreateRequest schema)
             const submitData = {
                 login_id: formData.loginId,
-                user_real_name: formData.name,
+                username: formData.name,
                 password_hash: formData.password, // Backend expects 'password_hash'
                 email: formData.email,
                 age_range: formData.ageGroup, // Backend expects 'age_range', not 'age_group'
                 gender: formData.gender,
                 subscribed_categories: selectedCategories,
                 subscribed_keywords: [], // Optional field in backend
-                marketing_agree: formData.marketingAgree
+
             };
 
             try {
@@ -386,22 +383,7 @@ export default function CreateAccount() {
                         {errors.categories && <span className="error-msg">{errors.categories}</span>}
                     </div>
 
-                    {/* 7. Agreement */}
-                    <div className="agreement-section">
-                        <label className="checkbox-container">
-                            <input
-                                type="checkbox"
-                                name="marketingAgree"
-                                checked={formData.marketingAgree}
-                                onChange={handleChange}
-                            />
-                            <span className="checkmark-custom"></span>
-                            <span className="text">
-                                [필수] 개인정보 수집 및 이용 동의
-                            </span>
-                        </label>
-                        {errors.agreement && <span className="error-msg">{errors.agreement}</span>}
-                    </div>
+
 
                     <button type="submit" className="submit-btn" disabled={false}>가입하기</button>
 

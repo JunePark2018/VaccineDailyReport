@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from routers import get_db
-from database.models import AiGeneratedNews, Category
+from database.models import Report, Category
 from database.crud import get_news_statistics, get_category_name
 
 router = APIRouter(prefix="/statistics", tags=["Statistics"])
@@ -19,14 +19,14 @@ def get_news_stats(db: Session = Depends(get_db)):
     return get_news_statistics(db)
 
 
-@router.get("/generated-news")
-def get_ai_news_stats(db: Session = Depends(get_db)):
-    """AI 생성 뉴스 통계 조회"""
-    total = db.query(func.count(AiGeneratedNews.ai_generated_news_id)).scalar()
+@router.get("/reports")
+def get_report_stats(db: Session = Depends(get_db)):
+    """AI 생성 리포트 통계 조회"""
+    total = db.query(func.count(Report.report_id)).scalar()
 
     category_counts = (
-        db.query(AiGeneratedNews.category_id, func.count(AiGeneratedNews.ai_generated_news_id))
-        .group_by(AiGeneratedNews.category_id)
+        db.query(Report.category_id, func.count(Report.report_id))
+        .group_by(Report.category_id)
         .all()
     )
 

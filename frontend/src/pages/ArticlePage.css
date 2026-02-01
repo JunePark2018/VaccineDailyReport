@@ -231,8 +231,8 @@
 }
 
 .ArticlePage .comparison-container.collapsed {
-  max-height: 200px;
-  /* Adjust height as needed */
+  max-height: 400px;
+  /* Reduced from previous, but enough for ~2 items */
 }
 
 /* Gradient Overlay */

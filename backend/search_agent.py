@@ -5,7 +5,7 @@ from urllib.parse import quote
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from typing import List, Dict, Any, Optional, Union
-from database.models import AiGeneratedNews, News
+from database.models import Report, News
 
 # IBM WatsonX AI Import
 from ibm_watsonx_ai.foundation_models import ModelInference
@@ -61,18 +61,18 @@ def search_issues_by_keyword(db: Session, keyword: str) -> Dict[str, Any]:
     """
     search_pattern = f"%{keyword}%"
 
-    # AiGeneratedNews 테이블 검색
+    # Report 테이블 검색
     results = (
-        db.query(AiGeneratedNews)
-        .filter(or_(AiGeneratedNews.title.ilike(search_pattern), AiGeneratedNews.contents.ilike(search_pattern)))
-        .order_by(AiGeneratedNews.created_at.desc())
+        db.query(Report)
+        .filter(or_(Report.title.ilike(search_pattern), Report.contents.ilike(search_pattern)))
+        .order_by(Report.created_at.desc())
         .limit(5)
         .all()
     )
 
     issues_list = [
         {
-            "ai_generated_news_id": issue.ai_generated_news_id,
+            "report_id": issue.report_id,
             "title": issue.title,
             "contents": issue.contents,
             "created_at": issue.created_at,
