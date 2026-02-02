@@ -304,43 +304,86 @@
 }
 
 /* Responsive */
+/* Mobile Dropdown - Hidden on Desktop */
+.mobile-dropdown {
+  display: none;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
   .mypage-content-wrapper {
     flex-direction: column;
+    padding: 10px;
+    gap: 20px;
+    align-items: center;
+    /* Center content on mobile */
   }
 
   .mypage-sidebar {
     width: 100%;
     position: static;
-    flex-direction: row;
-    overflow-x: auto;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
-  }
-
-  .sidebar-group {
+    display: block;
+    /* Reset flex */
     border-bottom: none;
-    padding-bottom: 0;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    padding: 0;
+    margin: 0;
+    background: transparent;
   }
 
-  .sidebar-title {
+  /* Show Dropdown on Mobile */
+  .mobile-dropdown {
+    display: block;
+    width: 100%;
+    height: 48px;
+    padding: 0 14px;
+    font-size: 15px;
+    font-weight: 400;
+    color: #333;
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    appearance: none;
+
+    /* Custom Chevron Icon */
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20fill%3D%22none%22%20stroke%3D%22%23333%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 1.25rem;
+
+    margin-bottom: 24px;
+    box-shadow: none;
+    transition: all 0.2s;
+  }
+
+  .mobile-dropdown:hover {
+    border-color: #bbb;
+    box-shadow: none;
+  }
+
+  .mobile-dropdown:focus {
+    outline: none;
+    border-color: #333;
+    box-shadow: none;
+  }
+
+  /* Hide Desktop Sidebar Items on Mobile */
+  .sidebar-group {
     display: none;
-  }
-
-  .sidebar-nav {
-    flex-direction: row;
   }
 
   .charts-grid {
     grid-template-columns: 1fr;
+    gap: 30px;
   }
 
   .article-grid {
     grid-template-columns: 1fr;
-    /* Single column on mobile */
+  }
+
+  .mypage-main-area {
+    padding: 20px;
+    border: none;
+    box-shadow: none;
   }
 }
 

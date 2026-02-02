@@ -8,9 +8,9 @@ const KeywordBarChart = ({ readKeywords = {}, isActive, onReset }) => {
   const maxCount = Math.max(...Object.values(readKeywords), 1);
 
   return (
-    <section className="info-section" style={{ position: 'relative' }}>
+    <section className="info-section" style={{ position: 'relative', display: 'flex', flexDirection: 'column', height: '100%' }}>
       <h3 className="section-title">관심 키워드 Top 10</h3>
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', height: '180px', padding: '20px 0' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', height: '180px', padding: '20px 0', marginTop: 'auto' }}>
         {topKeywords.map(([keyword, count], index) => (
           <div key={keyword} className="bar-wrapper" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '9%', position: 'relative' }}>
             <div className="bar-tooltip" style={{ position: 'absolute', top: '-30px', backgroundColor: '#1e293b', color: 'white', padding: '4px 8px', fontSize: '10px', fontWeight: 'bold', opacity: 0, transition: 'opacity 0.2s ease', pointerEvents: 'none', whiteSpace: 'nowrap', zIndex: 10 }}>
@@ -28,7 +28,7 @@ const KeywordBarChart = ({ readKeywords = {}, isActive, onReset }) => {
         ))}
       </div>
       {onReset && (
-        <div style={{ position: 'absolute', bottom: '20px', right: '20px' }}>
+        <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
           <button
             onClick={onReset}
             style={{

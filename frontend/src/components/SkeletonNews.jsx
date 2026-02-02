@@ -45,6 +45,25 @@ const SkeletonNews = ({ type = 'list' }) => {
         );
     }
 
+    if (type === 'article') {
+        return (
+            <div className="skeleton-article-container">
+                <div className="skeleton-article-title shimmer"></div>
+                <div className="skeleton-article-meta shimmer"></div>
+                <div className="skeleton-article-image shimmer"></div>
+                <div className="skeleton-article-text shimmer"></div>
+                <div className="skeleton-article-text shimmer"></div>
+                <div className="skeleton-article-text shimmer" style={{ width: '90%' }}></div>
+                <div className="skeleton-article-text shimmer" style={{ width: '95%' }}></div>
+                <div className="skeleton-article-text shimmer" style={{ width: '80%' }}></div>
+                <br />
+                <div className="skeleton-article-text shimmer"></div>
+                <div className="skeleton-article-text shimmer"></div>
+                <div className="skeleton-article-text shimmer" style={{ width: '70%' }}></div>
+            </div>
+        );
+    }
+
     return null;
 };
 

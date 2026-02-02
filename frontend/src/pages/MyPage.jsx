@@ -243,6 +243,23 @@ const MyPage = () => {
       <main className="mypage-content-wrapper">
         {/* Sidebar */}
         <aside className="mypage-sidebar">
+          {/* Mobile Dropdown */}
+          <select
+            className="mobile-dropdown"
+            value={activeTab}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val === 'logout') handleLogout();
+              else handleTabChange(val);
+            }}
+          >
+            <option value="insights">나의 인사이트</option>
+            <option value="liked">좋아요 누른 기사</option>
+            <option value="scraps">스크랩한 기사</option>
+            <option value="edit">정보수정</option>
+            <option value="logout">로그아웃</option>
+          </select>
+
           <div className="sidebar-group">
             <h2 className="sidebar-title">설정</h2>
             <nav className="sidebar-nav">

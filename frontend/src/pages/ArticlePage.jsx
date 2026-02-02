@@ -13,14 +13,17 @@ import axios from 'axios';
 import WordCloudComponent from '../components/WordCloud';
 import Timeline from '../components/Timeline';
 import AI_News_Recommendation from '../components/AI_News_Recommendation';
-import { HiOutlineSpeakerWave, HiOutlinePrinter, HiOutlineDocumentDuplicate, HiOutlineBookmark } from 'react-icons/hi2';
-import { HiMiniBookmark } from 'react-icons/hi2'; // Solid bookmark for active state
+import { HiOutlineSpeakerWave, HiOutlinePrinter, HiOutlineDocumentDuplicate, HiOutlineBookmark, HiMiniBookmark } from 'react-icons/hi2';
+import SkeletonNews from '../components/SkeletonNews'; // Import Skeleton
+
+
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 function ArticlePage() {
 
   const { id } = useParams();
 
+  const [loading, setLoading] = useState(true); // Add loading state
   const [article, setArticle] = useState({
     title: "기사를 찾을 수 없습니다.",
     contents: "기사 내용을 찾을 수 없습니다."
@@ -246,6 +249,7 @@ function ArticlePage() {
     window.scrollTo(0, 0);
 
     const fetchInfo = async () => {
+      setLoading(true);
       try {
         const ai_news_response = await axios.get(`${API_BASE_URL}/reports/${id}`);
         const article = ai_news_response.data;
@@ -309,6 +313,8 @@ function ArticlePage() {
         }
       } catch (error) {
         console.error('Data Fetch Error:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -342,187 +348,195 @@ function ArticlePage() {
 
         {/* Main */}
         <main className="main-content">
-          <div className="article-content-wrapper">
-            <div className='article-section'>
-              <div className='article-img'>
-                <img src={imgURL} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
-              </div>
-
-              <div style={{ padding: '0 20px' }}>
-                <h1 className="article-head-title">{article.title}</h1>
-
-                {/* Metadata Row: Date (Left) + Buttons (Right) */}
-                <div className="article-meta-row">
-                  <div className="meta-left">
-                    {article.created_at && (
-                      <>
-                        <span style={{ padding: '4px 10px', backgroundColor: '#f0f0f0', borderRadius: '4px', fontSize: '0.85rem', color: '#666', fontWeight: '500' }}>AI 생성</span>
-                        <span>
-                          {new Date(article.created_at).getFullYear()}.
-                          {String(new Date(article.created_at).getMonth() + 1).padStart(2, '0')}.
-                          {String(new Date(article.created_at).getDate()).padStart(2, '0')}
-                        </span>
-                      </>
-                    )}
+          {loading ? (
+            <div style={{ padding: '40px 0' }}>
+              <SkeletonNews type="article" />
+            </div>
+          ) : (
+            <>
+              <div className="article-content-wrapper">
+                <div className='article-section'>
+                  <div className='article-img'>
+                    <img src={imgURL} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                   </div>
 
-                  <div className="meta-right">
-                    {/* TTS Button */}
-                    <div style={{ position: 'relative' }}>
-                      <button className="action-btn" onClick={handleSpeakToggle} title="음성 듣기 설정">
-                        <HiOutlineSpeakerWave style={{ color: isSpeaking ? '#4285F4' : 'inherit' }} />
-                      </button>
-                      {activePopup === 'tts' && (
-                        <div className="popup-container tts-popup">
-                          <div className="popup-header">
-                            <h4 className="popup-title">본문 듣기 설정</h4>
-                            <button className="popup-close-btn" onClick={closePopup}>×</button>
-                          </div>
-                          <div className="tts-section">
-                            <span className="tts-label">목소리 (브라우저 제공)</span>
-                            <div className="tts-options">
-                              {voices.length === 0 && <span style={{ fontSize: '0.8rem', color: '#999' }}>한국어 음성 없음</span>}
-                              {voices.map(v => (
-                                <label key={v.name} className="tts-radio-label">
-                                  <input
-                                    type="radio"
-                                    name="voice"
-                                    checked={selectedVoice?.name === v.name}
-                                    onChange={() => { setSelectedVoice(v); }}
-                                  />
-                                  {getFriendlyVoiceName(v)}
-                                </label>
-                              ))}
+                  <div style={{ padding: '0 20px' }}>
+                    <h1 className="article-head-title">{article.title}</h1>
+
+                    {/* Metadata Row: Date (Left) + Buttons (Right) */}
+                    <div className="article-meta-row">
+                      <div className="meta-left">
+                        {article.created_at && (
+                          <>
+                            <span style={{ padding: '4px 10px', backgroundColor: '#f0f0f0', borderRadius: '4px', fontSize: '0.85rem', color: '#666', fontWeight: '500' }}>AI 생성</span>
+                            <span>
+                              {new Date(article.created_at).getFullYear()}.
+                              {String(new Date(article.created_at).getMonth() + 1).padStart(2, '0')}.
+                              {String(new Date(article.created_at).getDate()).padStart(2, '0')}
+                            </span>
+                          </>
+                        )}
+                      </div>
+
+                      <div className="meta-right">
+                        {/* TTS Button */}
+                        <div style={{ position: 'relative' }}>
+                          <button className="action-btn" onClick={handleSpeakToggle} title="음성 듣기 설정">
+                            <HiOutlineSpeakerWave style={{ color: isSpeaking ? '#4285F4' : 'inherit' }} />
+                          </button>
+                          {activePopup === 'tts' && (
+                            <div className="popup-container tts-popup">
+                              <div className="popup-header">
+                                <h4 className="popup-title">본문 듣기 설정</h4>
+                                <button className="popup-close-btn" onClick={closePopup}>×</button>
+                              </div>
+                              <div className="tts-section">
+                                <span className="tts-label">목소리 (브라우저 제공)</span>
+                                <div className="tts-options">
+                                  {voices.length === 0 && <span style={{ fontSize: '0.8rem', color: '#999' }}>한국어 음성 없음</span>}
+                                  {voices.map(v => (
+                                    <label key={v.name} className="tts-radio-label">
+                                      <input
+                                        type="radio"
+                                        name="voice"
+                                        checked={selectedVoice?.name === v.name}
+                                        onChange={() => { setSelectedVoice(v); }}
+                                      />
+                                      {getFriendlyVoiceName(v)}
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+                              <div className="tts-section">
+                                <span className="tts-label">말하기 속도</span>
+                                <div className="tts-options">
+                                  <label className="tts-radio-label"><input type="radio" name="speed" checked={ttsSpeed === 0.8} onChange={() => setTtsSpeed(0.8)} /> 느림</label>
+                                  <label className="tts-radio-label"><input type="radio" name="speed" checked={ttsSpeed === 1.0} onChange={() => setTtsSpeed(1.0)} /> 보통</label>
+                                  <label className="tts-radio-label"><input type="radio" name="speed" checked={ttsSpeed === 1.2} onChange={() => setTtsSpeed(1.2)} /> 빠름</label>
+                                </div>
+                              </div>
+                              <button className="tts-play-btn" onClick={isSpeaking ? stopSpeaking : startSpeaking}>
+                                {isSpeaking ? '본문 듣기 중지' : '본문 듣기 시작'}
+                              </button>
                             </div>
-                          </div>
-                          <div className="tts-section">
-                            <span className="tts-label">말하기 속도</span>
-                            <div className="tts-options">
-                              <label className="tts-radio-label"><input type="radio" name="speed" checked={ttsSpeed === 0.8} onChange={() => setTtsSpeed(0.8)} /> 느림</label>
-                              <label className="tts-radio-label"><input type="radio" name="speed" checked={ttsSpeed === 1.0} onChange={() => setTtsSpeed(1.0)} /> 보통</label>
-                              <label className="tts-radio-label"><input type="radio" name="speed" checked={ttsSpeed === 1.2} onChange={() => setTtsSpeed(1.2)} /> 빠름</label>
+                          )}
+                        </div>
+
+                        {/* Font Size Button */}
+                        <div style={{ position: 'relative' }}>
+                          <button className="action-btn" onClick={handleFontToggle} title="글자 크기">
+                            <span className="action-btn-text font-size-btn-content">
+                              <span className="small-ga">가</span>
+                              <span className="large-ga">가</span>
+                            </span>
+                          </button>
+                          {activePopup === 'font' && (
+                            <div className="popup-container font-size-popup-unified">
+                              <div className="popup-header">
+                                <h4 className="popup-title">글자 크기 설정</h4>
+                                <button className="popup-close-btn" onClick={closePopup}>×</button>
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
+                                {[1, 2, 3, 4, 5].map((level) => (
+                                  <button
+                                    key={level}
+                                    className={`font-option ${fontSize === level ? 'active' : ''}`}
+                                    onClick={() => changeFontSize(level)}
+                                  >
+                                    {level}
+                                  </button>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                          <button className="tts-play-btn" onClick={isSpeaking ? stopSpeaking : startSpeaking}>
-                            {isSpeaking ? '본문 듣기 중지' : '본문 듣기 시작'}
+                          )}
+                        </div>
+
+                        {/* Copy Button */}
+                        <button className="action-btn" onClick={handleCopy} title="원문 복사 (기사 내용)">
+                          <HiOutlineDocumentDuplicate />
+                        </button>
+
+                        {/* Print Button */}
+                        <button className="action-btn" onClick={handlePrint} title="인쇄하기">
+                          <HiOutlinePrinter />
+                        </button>
+
+                        {/* Scrap Button */}
+                        <button className="action-btn" onClick={handleScrap} title={isScraped ? "스크랩 취소" : "스크랩"}>
+                          {isScraped ? <HiMiniBookmark style={{ color: '#007bff' }} /> : <HiOutlineBookmark />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <hr className="article-head-divider" /> {/* Keeping HR invisble via CSS or actually keep it? CSS hides it. */}
+
+                    <div className="article-comparer" style={{ marginTop: '10px', marginBottom: '40px', borderTop: 'none' }}>
+                      <h3 className="section-title">비교분석</h3>
+                      <div className={`comparison-container ${isExpanded ? 'expanded' : 'collapsed'}`}>
+                        <ul className="comparison-list">
+                          {article?.analysis_result?.media_comparison_bullets?.map((text, idx) => (
+                            <li key={idx} className="comparison-item">
+                              {highlightMediaText(text.replace(/^- /, ''))}
+                              {isExpanded && (
+                                <div className="evidence-container" style={{ marginTop: '10px', fontSize: '0.9rem' }}>
+                                  {evidenceMap[idx]?.loading && <div style={{ color: '#888' }}>🔍 관련 기사에서 근거를 찾는 중...</div>}
+                                  {evidenceMap[idx]?.data && (
+                                    <div className="evidence-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+                                      {evidenceMap[idx].data.map((ev, i) => (
+                                        <div key={i} className="evidence-item" style={{ background: '#f1f3f4', padding: '8px 12px', borderRadius: '6px', borderLeft: '4px solid #007bff' }}>
+                                          <span style={{ fontWeight: 'bold', marginRight: '6px', color: '#333' }}>[{ev.company}]</span>
+                                          <a href={ev.url} target="_blank" rel="noopener noreferrer" style={{ color: '#555', textDecoration: 'none' }}>"{ev.text}"</a>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      {article?.analysis_result?.media_comparison_bullets?.length > 0 && (
+                        <div className="show-more-button-wrapper">
+                          <button className="show-more-button link-style" onClick={() => setIsExpanded(!isExpanded)}>
+                            {isExpanded ? '접기' : '펼쳐보기'}
                           </button>
                         </div>
                       )}
                     </div>
-
-                    {/* Font Size Button */}
-                    <div style={{ position: 'relative' }}>
-                      <button className="action-btn" onClick={handleFontToggle} title="글자 크기">
-                        <span className="action-btn-text font-size-btn-content">
-                          <span className="small-ga">가</span>
-                          <span className="large-ga">가</span>
-                        </span>
-                      </button>
-                      {activePopup === 'font' && (
-                        <div className="popup-container font-size-popup-unified">
-                          <div className="popup-header">
-                            <h4 className="popup-title">글자 크기 설정</h4>
-                            <button className="popup-close-btn" onClick={closePopup}>×</button>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
-                            {[1, 2, 3, 4, 5].map((level) => (
-                              <button
-                                key={level}
-                                className={`font-option ${fontSize === level ? 'active' : ''}`}
-                                onClick={() => changeFontSize(level)}
-                              >
-                                {level}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Copy Button */}
-                    <button className="action-btn" onClick={handleCopy} title="원문 복사 (기사 내용)">
-                      <HiOutlineDocumentDuplicate />
-                    </button>
-
-                    {/* Print Button */}
-                    <button className="action-btn" onClick={handlePrint} title="인쇄하기">
-                      <HiOutlinePrinter />
-                    </button>
-
-                    {/* Scrap Button */}
-                    <button className="action-btn" onClick={handleScrap} title={isScraped ? "스크랩 취소" : "스크랩"}>
-                      {isScraped ? <HiMiniBookmark style={{ color: '#007bff' }} /> : <HiOutlineBookmark />}
-                    </button>
                   </div>
-                </div>
 
-                <hr className="article-head-divider" /> {/* Keeping HR invisble via CSS or actually keep it? CSS hides it. */}
+                  <NewsText
+                    contents={article.contents}
+                    onSentenceClick={handleSentenceClick}
+                    articleId={id}
+                    likeCount={likeCount}
+                    isLiked={isLiked}
+                    onLikeUpdate={(newCount, newIsLiked) => {
+                      setLikeCount(newCount);
+                      setIsLiked(newIsLiked);
+                    }}
+                    fontSize={fontSize}
+                  />
 
-                <div className="article-comparer" style={{ marginTop: '10px', marginBottom: '40px', borderTop: 'none' }}>
-                  <h3 className="section-title">비교분석</h3>
-                  <div className={`comparison-container ${isExpanded ? 'expanded' : 'collapsed'}`}>
-                    <ul className="comparison-list">
-                      {article?.analysis_result?.media_comparison_bullets?.map((text, idx) => (
-                        <li key={idx} className="comparison-item">
-                          {highlightMediaText(text.replace(/^- /, ''))}
-                          {isExpanded && (
-                            <div className="evidence-container" style={{ marginTop: '10px', fontSize: '0.9rem' }}>
-                              {evidenceMap[idx]?.loading && <div style={{ color: '#888' }}>🔍 관련 기사에서 근거를 찾는 중...</div>}
-                              {evidenceMap[idx]?.data && (
-                                <div className="evidence-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
-                                  {evidenceMap[idx].data.map((ev, i) => (
-                                    <div key={i} className="evidence-item" style={{ background: '#f1f3f4', padding: '8px 12px', borderRadius: '6px', borderLeft: '4px solid #007bff' }}>
-                                      <span style={{ fontWeight: 'bold', marginRight: '6px', color: '#333' }}>[{ev.company}]</span>
-                                      <a href={ev.url} target="_blank" rel="noopener noreferrer" style={{ color: '#555', textDecoration: 'none' }}>"{ev.text}"</a>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  {article?.analysis_result?.media_comparison_bullets?.length > 0 && (
-                    <div className="show-more-button-wrapper">
-                      <button className="show-more-button link-style" onClick={() => setIsExpanded(!isExpanded)}>
-                        {isExpanded ? '접기' : '펼쳐보기'}
-                      </button>
+                  <div className="wordcloud-section" style={{ marginTop: '60px', padding: '20px', backgroundColor: '#f9f9f9', borderRadius: '12px' }}>
+                    <h3 className="section-title" style={{ textAlign: 'center', marginBottom: '30px' }}>기사 핵심 키워드</h3>
+                    <div style={{ display: 'flex', justifyContent: 'center', width: '400px', maxWidth: '100%', margin: '0 auto', aspectRatio: '1/1' }}>
+                      <WordCloudComponent keywords={keywords} width={400} height={400} />
                     </div>
-                  )}
+                  </div>
+
+                  <div className="timeline-section" style={{ marginTop: '40px', padding: '20px' }}>
+                    <Timeline currentArticleId={id} />
+                  </div>
+
+                  <Sources clusterId={article.cluster_id} />
                 </div>
               </div>
 
-              <NewsText
-                contents={article.contents}
-                onSentenceClick={handleSentenceClick}
-                articleId={id}
-                likeCount={likeCount}
-                isLiked={isLiked}
-                onLikeUpdate={(newCount, newIsLiked) => {
-                  setLikeCount(newCount);
-                  setIsLiked(newIsLiked);
-                }}
-                fontSize={fontSize}
-              />
-
-              <div className="wordcloud-section" style={{ marginTop: '60px', padding: '20px', backgroundColor: '#f9f9f9', borderRadius: '12px' }}>
-                <h3 className="section-title" style={{ textAlign: 'center', marginBottom: '30px' }}>기사 핵심 키워드</h3>
-                <div style={{ display: 'flex', justifyContent: 'center', width: '400px', maxWidth: '100%', margin: '0 auto', aspectRatio: '1/1' }}>
-                  <WordCloudComponent keywords={keywords} width={400} height={400} />
-                </div>
-              </div>
-
-              <div className="timeline-section" style={{ marginTop: '40px', padding: '20px' }}>
-                <Timeline currentArticleId={id} />
-              </div>
-
-              <Sources clusterId={article.cluster_id} />
-            </div>
-          </div>
-
-          <AI_News_Recommendation articleId={id} number_of_article={3} />
+              <AI_News_Recommendation articleId={id} number_of_article={3} />
+            </>
+          )}
         </main>
 
         <RightSideBar
