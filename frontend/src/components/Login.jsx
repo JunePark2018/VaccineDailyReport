@@ -157,7 +157,7 @@ const Login = () => {
                     <div className="login-footer-links">
                         <span>비밀번호 찾기</span>
                         <span className="divider">|</span>
-                        <span>아이디 찾기</span>
+                        <span onClick={() => nav('/find-id')} style={{ cursor: 'pointer' }}>아이디 찾기</span>
                         <span className="divider">|</span>
                         <span onClick={() => nav('/CreateAccount')} style={{ cursor: 'pointer', fontWeight: 'bold' }}>회원가입</span>
                     </div>

@@ -22,13 +22,14 @@
     flex-direction: column;
     align-items: center;
     padding: 50px 40px;
-    border: 1px solid #ddd;
+    padding: 50px 40px;
+    border: 1px solid #eee;
     background-color: #fff;
     width: 100%;
     max-width: 420px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    /* Square corners */
-    border-radius: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+    /* Square corners -> Rounded 12px */
+    border-radius: 12px;
     box-sizing: border-box;
 }
 
@@ -64,8 +65,8 @@
 
 /* Input Group (Naver Style) */
 .Login .login-input-group {
-    border: 1px solid #ccc;
-    border-radius: 6px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
     background-color: #fff;
     overflow: hidden;
     margin-bottom: 10px;
@@ -93,9 +94,15 @@
 }
 
 /* Focus effects for the group wrapper could be complex, keeping it simple for now */
+/* Focus effects for the group wrapper could be complex, keeping it simple for now */
 .Login .id_box:focus,
 .Login .pw_box:focus {
-    background-color: #fcfcfc;
+    background-color: #fff;
+}
+
+.Login .login-input-group:focus-within {
+    border-color: #333;
+    box-shadow: 0 0 0 1px #333;
 }
 
 /* Error message style */
@@ -131,7 +138,9 @@
 /* Button Wrapper */
 .Login .button_wrapper {
     width: 100%;
-    margin-top: 10px;
+    height: 50px;
+    border-radius: 8px;
+    /* Button Wrapper handles content, Button component handles style overrides usually, but if using standard button here... */
 }
 
 /* Footer Links */

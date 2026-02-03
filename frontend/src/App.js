@@ -9,6 +9,7 @@ import CreateAccount from './pages/CreateAccount.jsx';
 import Login from './components/Login.jsx';
 import MyPage from './pages/MyPage.jsx';
 import SearchResult from './pages/SearchResult.jsx';
+import FindId from './pages/FindId.jsx';
 
 import PoliticsPage from './pages/PoliticsPage.jsx';
 import EconomicsPage from './pages/EconomicsPage.jsx';
@@ -40,6 +41,7 @@ function App() {
           <Route path='/CreateAccount' element={<CreateAccount />} />
           <Route path='/mypage/:login_id' element={<MyPage />} />
           <Route path='/search' element={<SearchResult />} />
+          <Route path='/find-id' element={<FindId />} />
         </Routes>
       </div>
     </BrowserRouter>

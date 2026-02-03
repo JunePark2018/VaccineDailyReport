@@ -92,7 +92,10 @@ const Header = ({
           <div className="header-top-content">
             <span
               className="updated-articles"
-              onClick={() => nav('/article')}
+              onClick={() => {
+                const articleId = articles[currentArticleIndex]?.report_id;
+                if (articleId) nav(`/article/${articleId}`);
+              }}
               style={{ cursor: 'pointer' }}
             >
               {articles.length > 0 ? (articles[currentArticleIndex]?.title || "로딩 중...") : "최신 AI 뉴스 로딩 중..."}

@@ -21,8 +21,16 @@ from database.crud import (
     get_category_name,
     get_reaction,
     get_representative_image,
+    get_user_by_name_and_email,
 )
-from schemas import UserCreateRequest, UserLoginRequest, UserUpdate, UserDashboardResponse, ReportResponse
+from schemas import (
+    UserCreateRequest,
+    UserLoginRequest,
+    UserUpdate,
+    UserDashboardResponse,
+    ReportResponse,
+    UserFindIdRequest,
+)
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -60,6 +68,18 @@ def signup(user: UserCreateRequest, db: Session = Depends(get_db)):
     }
 
 
+@router.post("/find-id")
+def find_id(req: UserFindIdRequest, db: Session = Depends(get_db)):
+    """
+    이름과 이메일로 아이디 찾기
+    """
+    user = get_user_by_name_and_email(db, req.username, req.email)
+    if not user:
+        raise HTTPException(status_code=404, detail="해당 정보와 일치하는 사용자를 찾을 수 없습니다.")
+
+    return {"login_id": user.login_id}
+
+
 @router.delete("/{login_id}/keywords/stats")
 def clear_interest_keywords(login_id: str, db: Session = Depends(get_db)):
     """
@@ -68,10 +88,10 @@ def clear_interest_keywords(login_id: str, db: Session = Depends(get_db)):
     user = get_user_by_login_id(db, login_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     deleted_count = clear_user_keyword_stats(db, user_id=user.user_id)
     db.commit()
-    
+
     return {"message": "Keywords cleared", "deleted_count": deleted_count}
 
 
@@ -84,13 +104,13 @@ def delete_user_account_endpoint(login_id: str, db: Session = Depends(get_db)):
     user = get_user_by_login_id(db, login_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     success = delete_user_account(db, user_id=user.user_id)
     if not success:
         raise HTTPException(status_code=500, detail="Failed to delete account")
-    
+
     db.commit()
-    
+
     return {"message": "Account deleted successfully"}
 
 
@@ -105,7 +125,7 @@ def get_user_reaction(login_id: str, news_id: int, db: Session = Depends(get_db)
         raise HTTPException(status_code=404, detail="User not found")
 
     reaction_value = get_reaction(db, user_id=user.user_id, ai_news_id=news_id)
-    
+
     return {"value": reaction_value}
 
 
@@ -129,7 +149,6 @@ def read_user(login_id: str, db: Session = Depends(get_db)):
         "email": user.email,
         "age_range": user.age_range,
         "gender": user.gender,
-
         "subscribed_categories": subscribed_categories,
         "subscribed_keywords": subscribed_keywords,
         "scraps": user.scraps or [],
@@ -201,7 +220,6 @@ def record_article_read(login_id: str, news_id: int, db: Session = Depends(get_d
 
 
 @router.get("/{login_id}/dashboard", response_model=UserDashboardResponse)
-
 def get_user_dashboard(login_id: str, db: Session = Depends(get_db)):
     """
     마이페이지 대시보드 데이터 조회
@@ -252,11 +270,12 @@ def get_user_dashboard(login_id: str, db: Session = Depends(get_db)):
         read_categories=read_categories_map,
         read_keywords=read_keywords_map,
         subscribed_keywords=sub_kws,
-        scraps=user.scraps or []
+        scraps=user.scraps or [],
     )
 
 
 from schemas import ScrapRequest
+
 
 @router.post("/{login_id}/scraps")
 def toggle_scrap(login_id: str, req: ScrapRequest, db: Session = Depends(get_db)):
@@ -267,13 +286,13 @@ def toggle_scrap(login_id: str, req: ScrapRequest, db: Session = Depends(get_db)
     user = get_user_by_login_id(db, login_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-        
+
     current_scraps = list(user.scraps) if user.scraps else []
-    
+
     # Identifier determined by request
     # If report_id is provided, use it (int). Else use url (str).
     target_item = req.report_id if req.report_id is not None else req.url
-    
+
     if not target_item:
         raise HTTPException(status_code=400, detail="report_id or url required")
 
@@ -283,23 +302,24 @@ def toggle_scrap(login_id: str, req: ScrapRequest, db: Session = Depends(get_db)
     for idx, s in enumerate(current_scraps):
         # Strict match or String conversion match
         if s == target_item or str(s) == str(target_item):
-             found_index = idx
-             break
-    
+            found_index = idx
+            break
+
     if found_index != -1:
         current_scraps.pop(found_index)
         action = "removed"
     else:
         current_scraps.append(target_item)
         action = "added"
-        
+
     user.scraps = list(current_scraps)
-    
+
     from sqlalchemy.orm.attributes import flag_modified
+
     flag_modified(user, "scraps")
-    
+
     db.commit()
-    
+
     return {"message": f"Scrap {action}", "scraps": user.scraps}
 
 
@@ -309,6 +329,7 @@ def get_user_liked_news(login_id: str, db: Session = Depends(get_db)):
     사용자가 좋아요(1)를 누른 기사 목록 조회
     """
     from database.models import NewsReaction, Report
+
     user = get_user_by_login_id(db, login_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -322,16 +343,16 @@ def get_user_liked_news(login_id: str, db: Session = Depends(get_db)):
         .order_by(NewsReaction.news_reaction_id.desc())
         .all()
     )
-    
+
     # Inject like count if needed, or Report already has it in cache col.
-    
+
     # Inject category_name and image
     for r in liked_reports:
         if r.category:
             r.category_name = r.category.name
         else:
             r.category_name = None
-            
+
         # Inject Image
         r.image = get_representative_image(db, r.cluster_id)
 
@@ -345,6 +366,7 @@ def get_user_scrapped_news(login_id: str, db: Session = Depends(get_db)):
     report_id(int)로 저장된 스크랩만 조회 가능 (URL은 제외)
     """
     from database.models import Report
+
     user = get_user_by_login_id(db, login_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -354,23 +376,23 @@ def get_user_scrapped_news(login_id: str, db: Session = Depends(get_db)):
 
     # Filter only integer IDs from mixed list
     scrap_ids = [item for item in user.scraps if isinstance(item, int)]
-    
+
     if not scrap_ids:
         return []
 
     # Fetch reports
     reports = (
         db.query(Report)
-        .options(joinedload(Report.category)) # Optimization
+        .options(joinedload(Report.category))  # Optimization
         .filter(Report.report_id.in_(scrap_ids))
         .all()
     )
-    
+
     # Sort by order in scraps list (lifo or fifo?) - DB `IN` doesn't preserve order.
     # To preserve 'recently scrapped first', we can reverse the list map.
     report_map = {r.report_id: r for r in reports}
     ordered_reports = []
-    
+
     # Iterate scraps in reverse (LIFO)
     for sid in reversed(scrap_ids):
         if sid in report_map:
@@ -379,10 +401,10 @@ def get_user_scrapped_news(login_id: str, db: Session = Depends(get_db)):
                 r.category_name = r.category.name
             else:
                 r.category_name = None
-                
+
             # Inject Image
             r.image = get_representative_image(db, r.cluster_id)
-            
+
             ordered_reports.append(r)
-            
+
     return ordered_reports

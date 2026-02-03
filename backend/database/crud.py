@@ -286,10 +286,7 @@ def get_report(db: Session, report_id: int) -> Optional[Report]:
 def list_reports_by_cluster(db: Session, cluster_id: int, limit: int = 50) -> List[Report]:
     return list(
         db.execute(
-            select(Report)
-            .where(Report.cluster_id == cluster_id)
-            .order_by(Report.created_at.desc())
-            .limit(limit)
+            select(Report).where(Report.cluster_id == cluster_id).order_by(Report.created_at.desc()).limit(limit)
         ).scalars()
     )
 
@@ -300,10 +297,7 @@ def list_reports_by_category(db: Session, category_id: int, limit: int = 50) -> 
     """
     return list(
         db.execute(
-            select(Report)
-            .where(Report.category_id == category_id)
-            .order_by(Report.created_at.desc())
-            .limit(limit)
+            select(Report).where(Report.category_id == category_id).order_by(Report.created_at.desc()).limit(limit)
         ).scalars()
     )
 
@@ -321,9 +315,7 @@ def create_report_issue(
     db.flush()  # cluster.cluster_id 확보
 
     # 2. Report 생성
-    issue = Report(
-        cluster_id=cluster.cluster_id, category_id=category_id, title=title, created_at=datetime.utcnow()
-    )
+    issue = Report(cluster_id=cluster.cluster_id, category_id=category_id, title=title, created_at=datetime.utcnow())
     db.add(issue)
     db.flush()
 
@@ -420,6 +412,10 @@ def get_user_by_login_id(db: Session, login_id: str) -> Optional[User]:
     return result
 
 
+def get_user_by_name_and_email(db: Session, username: str, email: str) -> Optional[User]:
+    return db.execute(select(User).where(and_(User.username == username, User.email == email))).scalar_one_or_none()
+
+
 def delete_user_account(db: Session, *, user_id: int) -> bool:
     """
     사용자 계정을 완전히 삭제합니다.
@@ -430,13 +426,13 @@ def delete_user_account(db: Session, *, user_id: int) -> bool:
     - SearchLog
     - UserKeywordSubscription
     - user_category_subscriptions (M:N)
-    
+
     Returns: True if user was deleted, False if user not found
     """
     user = db.get(User, user_id)
     if not user:
         return False
-    
+
     db.delete(user)
     db.flush()
     return True
@@ -474,21 +470,21 @@ def update_user_subscriptions(
         # Validate keyword count (max 20)
         if len(new_keywords) > 20:
             raise ValueError("키워드는 최대 20개까지만 등록할 수 있습니다.")
-        
+
         # Normalize new keywords
         normalized_new = set()
         for k in new_keywords:
             # Validate keyword length (max 60 bytes)
-            if len(k.encode('utf-8')) > 60:
+            if len(k.encode("utf-8")) > 60:
                 raise ValueError(f"키워드 '{k}'는 60바이트를 초과합니다. 더 짧은 키워드를 사용해주세요.")
-            
+
             n = normalize_keyword(k)
             if n:
                 # Double-check normalized keyword length
-                if len(n.encode('utf-8')) > 60:
+                if len(n.encode("utf-8")) > 60:
                     raise ValueError(f"키워드 '{n}'는 60바이트를 초과합니다.")
                 normalized_new.add(n)
-        
+
         # Validate normalized keyword count (max 20)
         if len(normalized_new) > 20:
             raise ValueError("키워드는 최대 20개까지만 등록할 수 있습니다.")
@@ -509,10 +505,8 @@ def update_user_subscriptions(
             # However, modifying the list while iterating is dangerous.
             # Let's rebuild the list or use individual removes.
             # Safe way: keep only those NOT in to_remove
-            user.keyword_subscriptions = [
-                ks for ks in user.keyword_subscriptions if ks.keyword not in to_remove
-            ]
-        
+            user.keyword_subscriptions = [ks for ks in user.keyword_subscriptions if ks.keyword not in to_remove]
+
         # Add
         for kw in to_add:
             user.keyword_subscriptions.append(KwSub(keyword=kw))
@@ -742,18 +736,12 @@ def unsubscribe_keyword(db: Session, *, user_id: int, keyword: str) -> int:
     if not keyword:
         return 0
 
-    res = db.execute(
-        delete(KwSub).where(
-            and_(KwSub.user_id == user_id, KwSub.keyword == keyword)
-        )
-    )
+    res = db.execute(delete(KwSub).where(and_(KwSub.user_id == user_id, KwSub.keyword == keyword)))
     return res.rowcount or 0
 
 
 def list_subscribed_keywords(db: Session, *, user_id: int) -> List[str]:
-    return list(
-        db.execute(select(KwSub.keyword).where(KwSub.user_id == user_id)).scalars()
-    )
+    return list(db.execute(select(KwSub.keyword).where(KwSub.user_id == user_id)).scalars())
 
 
 # -------------------------
@@ -829,7 +817,6 @@ def clear_user_keyword_stats(db: Session, *, user_id: int) -> int:
     return count
 
 
-
 # -------------------------
 # Feed helpers (예시)
 # -------------------------
@@ -893,12 +880,7 @@ def get_user_search_logs(db: Session, *, user_id: int, limit: int = 20) -> List[
     """
     사용자의 최근 검색 기록 조회
     """
-    return (
-        db.query(SearchLog)
-        .filter(SearchLog.user_id == user_id)
-        .order_by(SearchLog.searched_at.desc())
-        .limit(limit)
-    )
+    return db.query(SearchLog).filter(SearchLog.user_id == user_id).order_by(SearchLog.searched_at.desc()).limit(limit)
 
 
 # -------------------------
@@ -909,7 +891,7 @@ def get_representative_image(db: Session, cluster_id: int) -> Optional[str]:
     클러스터에 포함된 뉴스 중 대표 이미지 URL을 하나 가져옵니다.
     """
     import random
-    
+
     # News와 cluster_news_link 조인
     news_list = (
         db.query(News.img_urls)
@@ -918,21 +900,21 @@ def get_representative_image(db: Session, cluster_id: int) -> Optional[str]:
         .limit(10)
         .all()
     )
-    
+
     candidates = []
     for row in news_list:
         imgs = row.img_urls
         if not imgs:
             continue
-            
+
         if isinstance(imgs, list):
             candidates.extend([url for url in imgs if url])
         elif isinstance(imgs, dict):
             candidates.extend([v for v in imgs.values() if v])
-        elif isinstance(imgs, str) and imgs.startswith('http'):
-             candidates.append(imgs)
-            
+        elif isinstance(imgs, str) and imgs.startswith("http"):
+            candidates.append(imgs)
+
     if candidates:
         return random.choice(candidates)
-        
+
     return None

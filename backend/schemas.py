@@ -54,7 +54,7 @@ class ReportResponse(BaseModel):
     created_at: datetime
     analysis_result: Optional[Any]
     keywords: Optional[List[Dict[str, Any]]] = None
-    image: Optional[str] = None # Representative image URL
+    image: Optional[str] = None  # Representative image URL
 
     # 반응/조회수 (옵션)
 
@@ -74,7 +74,7 @@ class IssueResponse(BaseModel):
     report_id: 기사 ID
     title: 기사 제목
     contents: 기사 내용
-    
+
     ...
     """
 
@@ -95,11 +95,13 @@ class IssueResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
 # --- User Schemas (Restored) ---
+
 
 class UserCreateRequest(BaseModel):
     login_id: str
-    password_hash: str # Frontend sends password in this field
+    password_hash: str  # Frontend sends password in this field
     username: str
     email: str
     age_range: str
@@ -107,9 +109,16 @@ class UserCreateRequest(BaseModel):
     subscribed_categories: Optional[List[str]] = []
     subscribed_keywords: Optional[List[str]] = []
 
+
 class UserLoginRequest(BaseModel):
     login_id: str
     password: str
+
+
+class UserFindIdRequest(BaseModel):
+    username: str
+    email: str
+
 
 class UserUpdate(BaseModel):
     password: Optional[str] = None
@@ -119,6 +128,7 @@ class UserUpdate(BaseModel):
     gender: Optional[str] = None
     subscribed_categories: Optional[List[str]] = None
     subscribed_keywords: Optional[List[str]] = None
+
 
 class UserResponse(BaseModel):
     user_id: int
@@ -130,13 +140,15 @@ class UserResponse(BaseModel):
     subscribed_categories: List[str] = []
     subscribed_keywords: List[str] = []
     scraps: Optional[List[str]] = []
-    
+
     class Config:
         from_attributes = True
+
 
 class ScrapRequest(BaseModel):
     url: Optional[str] = None
     report_id: Optional[int] = None
+
 
 class UserDashboardResponse(BaseModel):
     username: Optional[str]
@@ -144,6 +156,7 @@ class UserDashboardResponse(BaseModel):
     read_categories: Dict[str, int]
     read_keywords: Dict[str, int]
     subscribed_keywords: List[str]
+
 
 class LogViewRequest(BaseModel):
     # Placeholder if needed by logging endpoints
