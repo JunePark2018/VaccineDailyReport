@@ -36,10 +36,10 @@ function ArticlePage() {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [selectedSentence, setSelectedSentence] = useState(null);
 
-  // Comparison & Evidence State
+  // Comparison State
   const [mediaNames, setMediaNames] = useState([]);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [evidenceMap, setEvidenceMap] = useState({});
+  // Evidence Map removed
 
   // Like State
   const [likeCount, setLikeCount] = useState(0);
@@ -182,44 +182,7 @@ function ArticlePage() {
     setFontSize(level);
   };
 
-  // Evidence Fetching
-  const fetchEvidence = async (index, text) => {
-    const targetMedia = mediaNames.filter(name => text.includes(name));
-
-    if (targetMedia.length === 0) {
-      setEvidenceMap(prev => ({ ...prev, [index]: { loading: false, data: null, noTarget: true } }));
-      return;
-    }
-
-    setEvidenceMap(prev => ({ ...prev, [index]: { loading: true, data: null } }));
-
-    try {
-      const response = await axios.post(`${API_BASE_URL}/reports/claim-evidence`, {
-        cluster_id: article.cluster_id,
-        claim_text: text,
-        target_media: targetMedia
-      });
-
-      if (response.data.match_found) {
-        setEvidenceMap(prev => ({ ...prev, [index]: { loading: false, data: response.data.evidence } }));
-      } else {
-        setEvidenceMap(prev => ({ ...prev, [index]: { loading: false, data: null } }));
-      }
-    } catch (error) {
-      console.error("근거 찾기 실패:", error);
-      setEvidenceMap(prev => ({ ...prev, [index]: { loading: false, error: true } }));
-    }
-  };
-
-  useEffect(() => {
-    if (isExpanded && article?.analysis_result?.media_comparison_bullets) {
-      article.analysis_result.media_comparison_bullets.forEach((text, idx) => {
-        if (!evidenceMap[idx]) {
-          fetchEvidence(idx, text);
-        }
-      });
-    }
-  }, [isExpanded, article]);
+  // Evidence Fetching Removed
 
   const handleSentenceClick = (sentence) => {
     setSelectedSentence(sentence);
@@ -474,26 +437,34 @@ function ArticlePage() {
                       <h3 className="section-title">비교분석</h3>
                       <div className={`comparison-container ${isExpanded ? 'expanded' : 'collapsed'}`}>
                         <ul className="comparison-list">
-                          {article?.analysis_result?.media_comparison_bullets?.map((text, idx) => (
-                            <li key={idx} className="comparison-item">
-                              {highlightMediaText(text.replace(/^- /, ''))}
-                              {isExpanded && (
-                                <div className="evidence-container" style={{ marginTop: '10px', fontSize: '0.9rem' }}>
-                                  {evidenceMap[idx]?.loading && <div style={{ color: '#888' }}>🔍 관련 기사에서 근거를 찾는 중...</div>}
-                                  {evidenceMap[idx]?.data && (
-                                    <div className="evidence-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
-                                      {evidenceMap[idx].data.map((ev, i) => (
-                                        <div key={i} className="evidence-item" style={{ background: '#f1f3f4', padding: '8px 12px', borderRadius: '6px', borderLeft: '4px solid #007bff' }}>
-                                          <span style={{ fontWeight: 'bold', marginRight: '6px', color: '#333' }}>[{ev.company}]</span>
-                                          <a href={ev.url} target="_blank" rel="noopener noreferrer" style={{ color: '#555', textDecoration: 'none' }}>"{ev.text}"</a>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
+                          {article?.analysis_result?.media_comparison_bullets?.map((item, idx) => {
+                            // Backward compatibility: Handle string items
+                            const isString = typeof item === 'string';
+                            const analysisText = isString ? item : item.analysis;
+                            const summaryText = isString ? null : item.summary;
+
+                            return (
+                              <li key={idx} className="comparison-item">
+                                {summaryText && (
+                                  <div className="summary-badge" style={{
+                                    display: 'inline-block',
+                                    backgroundColor: '#e3f2fd',
+                                    color: '#0d47a1',
+                                    padding: '4px 8px',
+                                    borderRadius: '4px',
+                                    fontSize: '0.9em',
+                                    marginBottom: '6px',
+                                    fontWeight: '600'
+                                  }}>
+                                    {summaryText}
+                                  </div>
+                                )}
+                                <div className="analysis-text">
+                                  {highlightMediaText(analysisText.replace(/^- /, '').replace(/\[/g, '').replace(/\]/g, ''))}
                                 </div>
-                              )}
-                            </li>
-                          ))}
+                              </li>
+                            )
+                          })}
                         </ul>
                       </div>
                       {article?.analysis_result?.media_comparison_bullets?.length > 0 && (

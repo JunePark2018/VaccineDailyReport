@@ -19,14 +19,15 @@ if not api_key:
 
 client = AsyncOpenAI(api_key=api_key)
 
-MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+MODEL = os.getenv("OPENAI_MODEL", "gpt-5.2")
 
 # -------------------------------------------------------------------
 # [비동기 처리] 실제 뉴스 분석 로직
 # -------------------------------------------------------------------
-# from ai_issue_generator import generate_balanced_article
+# from ai_report_generator import generate_balanced_article
 from ai_agentic_generator import generate_agentic_article as generate_balanced_article
-# from article_comparer import (
+
+# from ai_report_comparer import (
 #     get_synthesized_content_by_company,
 #     process_all_companies_async,
 #     generate_final_comparison_report,
@@ -133,11 +134,7 @@ async def process_news_async_internal():
 
     try:
         # 1. 처리되지 않은(Report.contents가 비어있는) 이슈 조회
-        targets = (
-            db.query(Report)
-            .filter((Report.contents == None) | (Report.contents == ""))
-            .all()
-        )
+        targets = db.query(Report).filter((Report.contents == None) | (Report.contents == "")).all()
 
         print(f"🧠 [AI] 분석 대기 중인 이슈: {len(targets)}건")
         if not targets:

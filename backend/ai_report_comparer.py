@@ -20,13 +20,55 @@ if not api_key:
 
 client = AsyncOpenAI(api_key=api_key)
 
-MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+MODEL = os.getenv("OPENAI_MODEL", "gpt-5.2")
 
 # 운영 기본값 (상황에 맞게 조정)
 TOP_N_PER_COMPANY = 3
 MAX_CONCURRENCY = 8
 MAX_RETRIES = 5
 BASE_BACKOFF_SECONDS = 0.6
+
+# 카테고리별 시스템 프롬프트 정의
+CATEGORY_PROMPTS = {
+    "정치": """
+[분석 관점: 정치/이데올로기]
+이 기사들은 **정치적 역학 관계, 정당의 입장, 이데올로기 차이**를 다루고 있습니다.
+- **핵심 인물/정당**의 발언과 행보에 드러난 정치적 의도를 파악하십시오.
+- 특정 정책이나 사안에 대해 **지지(옹호)하는지 비판(공격)하는지** 명확히 구분하십시오.
+- 보수/진보 등 언론사의 전통적 성향이 반영되었는지 분석하십시오.
+""",
+    "경제": """
+[분석 관점: 경제/시장]
+이 기사들은 **시장 동향, 기업 전략, 소비자 영향, 거시 경제 지표**를 다루고 있습니다.
+- **수치(주가, 금리, 실적 등)**와 그 해석에 주목하십시오.
+- 특정 경제 정책이나 기업 활동이 **시장에 긍정적인지 부정적인지** 평가하십시오.
+- 투자자, 소비자, 기업 등 **이해관계자별 유불리**를 어떻게 묘사하는지 분석하십시오.
+""",
+    "사회": """
+[분석 관점: 사회/공공]
+이 기사들은 **사회 문제, 사건/사고, 여론, 공공 안전, 인권**을 다루고 있습니다.
+- 사건의 **원인과 책임 소재**를 어디에 두고 있는지 분석하십시오.
+- **피해자 vs 가해자**, **시스템적 문제 vs 개인적 일탈** 등 프레임을 파악하십시오.
+- 갈등 사안에 대해 **해법을 제시하는지, 갈등을 부각하는지** 확인하십시오.
+""",
+    "국제": """
+[분석 관점: 국제/외교]
+이 기사들은 **국가 간 관계, 지정학적 리스크, 국익**을 다루고 있습니다.
+- **자국의 이익(국익)** 관점에서 타국을 어떻게 묘사하는지 분석하십시오.
+- 외교적 수사(Rhetoric) 뒤에 숨겨진 **실리적 계산**을 파악하십시오.
+""",
+    "IT/과학": """
+[분석 관점: 기술/혁신]
+이 기사들은 **기술 혁신, 산업 트렌드, 윤리적 문제**를 다루고 있습니다.
+- 신기술에 대해 **낙관적(기대)**인지 **비관적(우려)**인지 분석하십시오.
+- 기술의 **실용성과 파급 효과**에 초점을 맞추는지, **부작용과 규제**에 초점을 맞추는지 확인하십시오.
+""",
+    "default": """
+[분석 관점: 일반/객관]
+- 사실 관계를 중심으로 차분하게 분석하십시오.
+- 감정적 어조를 배제하고 객관적인 톤을 유지하십시오.
+""",
+}
 
 # ======================================================
 # 유틸: 안전한 JSON 처리/스키마 보정
@@ -54,10 +96,10 @@ def ensure_reduce_schema(data: dict) -> dict:
     if not isinstance(bullets, list):
         bullets = []
 
-    # 문자열 아닌 항목 제거
-    bullets = [b for b in bullets if isinstance(b, str)]
+    # Filter out invalid items, keep dicts (new) and strs (old/fallback)
+    valid_bullets = [b for b in bullets if isinstance(b, (str, dict))]
 
-    return {"media_comparison_bullets": bullets, "error": data.get("error")}
+    return {"media_comparison_bullets": valid_bullets, "error": data.get("error")}
 
 
 def safe_json_loads(s: str) -> Dict[str, Any]:
@@ -156,17 +198,20 @@ async def call_llm_json(messages: List[Dict[str, str]], temperature: float = 0.2
 # ======================================================
 # Step 2) 개별 분석 (Map Phase) - Async + Semaphore
 # ======================================================
-# ======================================================
-# Step 2) 개별 분석 (Map Phase) - Async + Semaphore
-# ======================================================
-def build_company_system_prompt() -> str:
-    return """
+def build_company_system_prompt(category_name: str = None) -> str:
+    base_prompt = """
 너는 전문 뉴스 편집자(Editor)이자 **데이터 분석가**이다.
 제공된 여러 개의 기사들은 모두 **동일한 언론사**에서 특정 이슈에 대해 보도한 것들이다.
-
 너의 임무는 이 기사들의 내용을 종합하여,
 1. **종합 기사(Comprehensive Article)**를 작성하고,
 2. **지식 그래프(Graph Construction)**를 위한 [핵심 개체(Entity) - 입장(Stance)] 데이터를 추출하는 것이다.
+"""
+    # 카테고리별 추가 지침 삽입
+    category_instruction = CATEGORY_PROMPTS.get(category_name, CATEGORY_PROMPTS["default"])
+
+    return f"""{base_prompt}
+
+{category_instruction}
 
 [작성 규칙]
 1. **관점 유지**: 해당 언론사의 고유한 색채(Tone & Manner)를 유지하라.
@@ -175,18 +220,18 @@ def build_company_system_prompt() -> str:
    - **중요**: 만약 기사가 명확한 호불호 없이 **단순 사실(Fact) 위주**로 보도했다면, 억지로 긍정/부정으로 분류하지 말고 **"사실 전달(Factual)"** 또는 **"객관적(Objective)"**으로 분류하라.
 
 [출력 JSON 형식]
-{
+{{
   "company": "언론사명",
   "title": "대표 제목 (언론사 논조 반영)",
   "body": "종합된 기사 본문 (3문단 내외)",
   "graph_entities": [
-    {
+    {{
       "name": "대상(인물/조직/정책)",
       "stance": "긍정/부정/중립/비판/옹호/사실 전달/객관적",
       "description": "이 대상을 어떻게 묘사하는지 한 줄 요약"
-    }
+    }}
   ]
-}
+}}
 """.strip()
 
 
@@ -195,9 +240,10 @@ async def analyze_company_perspective(
     company_name: str,
     combined_text: str,
     selected_article_ids: List[Any],
+    category_name: str = None,
 ) -> Dict[str, Any]:
     async with sem:
-        system_prompt = build_company_system_prompt()
+        system_prompt = build_company_system_prompt(category_name)
         messages = [
             {"role": "system", "content": system_prompt},
             {
@@ -232,9 +278,12 @@ def ensure_company_schema(company_name: str, data: Dict[str, Any]) -> Dict[str, 
     }
 
 
-async def process_all_companies_async(synthesized_map: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
+async def process_all_companies_async(
+    synthesized_map: Dict[str, Dict[str, Any]], category_name: str = None
+) -> Dict[str, Any]:
     sem = asyncio.Semaphore(MAX_CONCURRENCY)
     tasks = []
+    print(f"   [AI] Category-Specific Analysis: {category_name or 'Default'}")
     for comp, payload in synthesized_map.items():
         tasks.append(
             analyze_company_perspective(
@@ -242,6 +291,7 @@ async def process_all_companies_async(synthesized_map: Dict[str, Dict[str, Any]]
                 company_name=comp,
                 combined_text=payload["combined_text"],
                 selected_article_ids=payload["selected_article_ids"],
+                category_name=category_name,
             )
         )
 
@@ -264,8 +314,14 @@ def build_reduce_system_prompt_ui() -> str:
 [출력 JSON 형식]
 {
   "media_comparison_bullets": [
-    "- [언론사A]는 [대상]에 대해 ...",
-    "- [언론사B]는 [대상]을 ..."
+    {
+      "analysis": "- 언론사A는 [대상]에 대해 ... (기존과 동일)",
+      "summary": "핵심 키워드 요약 (단어+특수기호 위주)"
+    },
+    {
+      "analysis": "- 언론사B는 [대상]을 ...",
+      "summary": "..."
+    }
   ]
 }
 
@@ -274,7 +330,8 @@ def build_reduce_system_prompt_ui() -> str:
 2. **사실 우선**: 만약 'stance'가 "사실 전달"이나 "객관적"이라면, 이를 억지로 긍정/부정으로 해석하지 말고 "차분히 사실 관계를 전했습니다" 또는 "객관적인 태도를 유지했습니다"와 같이 있는 그대로 서술하라.
 3. **표현의 다양성**: 입장 차이를 부각할 때, "반면", "한편", "이와 달리", "대조적으로" 등 다양한 접속사를 활용하거나, 문장을 아예 분리하여 서술하라.
 4. **언어**: 한국어 작성, 어미는 '~니다' 사용.
-5. **포괄성**: 모든 언론사를 한 줄씩 언급.
+5. **포괄성**: 모든 언론사를 한 줄씩 언급. **언론사 이름에는 절대 대괄호([])를 사용하지 마시오.**
+6. **Summary 작성**: 'summary' 필드는 모바일 화면에서도 한눈에 들어오도록, 서술어가 아닌 **키워드와 화살표(->), 등호(=) 등 기호**를 사용하여 매우 짧게 요약하라. (예: "A일보: 성장 긍정 -> 투자 확대")
 """.strip()
 
 

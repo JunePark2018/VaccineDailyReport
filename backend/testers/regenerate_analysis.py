@@ -8,25 +8,28 @@ from sqlalchemy.orm import Session
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Now we can import from backend modules
+# Force correct DB path (backend/sql.db) when running from root
+os.environ["DATABASE_URL"] = "sqlite:///backend/sql.db"
+
 from database.engine import SessionLocal
 import database.models as models
+import database.models as models
 import database.crud as crud
-import article_comparer
+import ai_report_comparer
 
 
 async def regenerate_analysis(news_id: int):
     db: Session = SessionLocal()
     try:
         # 1. Get Target AI News
-        ai_news = (
-            db.query(models.Report).filter(models.Report.report_id == news_id).first()
-        )
+        ai_news = db.query(models.Report).filter(models.Report.report_id == news_id).first()
         if not ai_news:
             print(f"[Error] AI News ID {news_id} not found.")
             return
 
         cluster_id = ai_news.cluster_id
-        print(f"[Info] Found Article {news_id}. Cluster ID: {cluster_id}")
+        category_name = ai_news.category.name if ai_news.category else None
+        print(f"[Info] Found Article {news_id}. Cluster ID: {cluster_id}, Category: {category_name}")
 
         # 2. Get Original News
         original_news_list = crud.get_original_news_details_by_cluster(db, cluster_id)
@@ -44,16 +47,18 @@ async def regenerate_analysis(news_id: int):
         print("[Info] Starting Analysis Pipeline...")
 
         # Step 1: Synthesize (Group by Company)
-        synthesized_map = article_comparer.get_synthesized_content_by_company(original_news_list)
+        synthesized_map = ai_report_comparer.get_synthesized_content_by_company(original_news_list)
         print(f"[Info] Grouped into {len(synthesized_map)} companies.")
 
         # Step 2: Map Phase (Analyze each company)
         print("[Info] Running Map Phase (Company Perspective Analysis)...")
-        company_analyses = await article_comparer.process_all_companies_async(synthesized_map)
+        company_analyses = await ai_report_comparer.process_all_companies_async(
+            synthesized_map, category_name=category_name
+        )
 
         # Step 3: Reduce Phase (Compare)
         print("[Info] Running Reduce Phase (Final Comparison)...")
-        final_report = await article_comparer.generate_final_comparison_report(company_analyses)
+        final_report = await ai_report_comparer.generate_final_comparison_report(company_analyses)
 
         # 5. Update Database
         print("[Info] Updating Database...")

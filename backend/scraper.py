@@ -157,6 +157,10 @@ def run_article_crawler(db_session, target_companies=None):
 
                 # 섹션 정보 주입
                 data["category"] = section_names[sid]
+                # [추가] 생활/문화 -> 사회 로 통합 저장
+                if data["category"] == "생활/문화":
+                    data["category"] = "사회"
+
                 new_news_list.append(data)
 
                 time.sleep(0.1)
@@ -264,6 +268,10 @@ def crawl_n_days(
                     # ---------------------------------------------------------
                     if data.get("category") == "미분류":
                         data["category"] = section_names.get(sid, "미분류")
+
+                    # [추가] 생활/문화 -> 사회 로 통합 저장
+                    if data["category"] == "생활/문화":
+                        data["category"] = "사회"
 
                     if target_companies and not any(tc in data["company_name"] for tc in target_companies):
                         continue
