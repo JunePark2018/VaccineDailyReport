@@ -8,6 +8,9 @@ import chromadb
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sentence_transformers import SentenceTransformer
+import hdbscan
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.preprocessing import normalize
 import json
 from openai import OpenAI
 from kiwipiepy import Kiwi
@@ -19,7 +22,7 @@ load_dotenv(override=True)
 kiwi = Kiwi()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+MODEL = os.getenv("OPENAI_MODEL", "gpt-5.2")
 
 # -------------------------------------------------
 # 1. 초기화 및 ChromaDB 설정
