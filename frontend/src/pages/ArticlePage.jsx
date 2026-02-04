@@ -528,6 +528,11 @@ function ArticlePage() {
                       alignItems: 'flex-start',
                       flexWrap: 'wrap'
                     }}>
+                      {/* 연령대별/성별 차트 */}
+                      <div style={{ flex: '1', minWidth: '500px' }}>
+                        <AgeGenderChart />
+                      </div>
+
                       {/* 워드클라우드 */}
                       <div style={{ flex: '0 0 300px', minWidth: '280px' }}>
                         <h3 className="section-title" style={{ marginBottom: '30px' }}>기사 핵심 키워드</h3>
@@ -541,11 +546,6 @@ function ArticlePage() {
                         }}>
                           <WordCloudComponent keywords={keywords} width={280} height={280} />
                         </div>
-                      </div>
-
-                      {/* 연령대별/성별 차트 */}
-                      <div style={{ flex: '1', minWidth: '500px' }}>
-                        <AgeGenderChart />
                       </div>
                     </div>
                   </div>

@@ -21,3 +21,27 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Global Image Hover Effect */
+img:not(.logo-image) {
+  transition: all 0.3s ease;
+}
+
+/* Global Image Reset: Remove rounded corners */
+img,
+.article-image,
+.grid-image,
+.main-image-column img,
+.cat-box-img,
+.global-img,
+.profile-image,
+.thumbnail,
+.image-placeholder,
+.article-image-center {
+  border-radius: 0 !important;
+}
+
+img:not(.logo-image):hover {
+  opacity: 0.8;
+  filter: grayscale(30%);
+}

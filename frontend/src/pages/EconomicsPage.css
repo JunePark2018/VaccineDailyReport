@@ -368,14 +368,14 @@
 }
 
 /* Hover Effects for Titles */
-.politics-title-side:hover h2,
-.main-article-section:hover h2 {
+.category-page .politics-title-side:hover h2,
+.category-page .main-article-section:hover h2 {
     text-decoration: underline;
 }
 
-.grid-item:hover h3,
-.list-item:hover h3,
-.feed-item:hover h3 {
+.category-page .grid-item:hover h3,
+.category-page .list-item:hover h3,
+.category-page .feed-item:hover h3 {
     text-decoration: underline;
 }
 

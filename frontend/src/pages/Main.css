@@ -476,6 +476,16 @@
 
 
 
+.main-page .highlights-side {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-color: #f9f9f9;
+  border-left: 1px solid #eee;
+  padding: 15px 10px;
+}
+
 .main-page .ai-related-list {
   flex: 1.5;
   display: flex;
@@ -1104,16 +1114,108 @@
   text-decoration: underline;
 }
 
-/* Active State: Black Background, White Text */
+/* Active State: Black Background, White Text, Visual Connection */
 .main-page .analysis-block.active {
-  background-color: #000;
+  background-color: #4b4b4b;
   color: #fff;
+  border-left: 5px solid #68d383;
+  /* Connect with Highlight Color */
+  position: relative;
+  overflow: visible;
+  /* Allow arrow to stick out */
+}
+
+/* Arrow pointing to Main Image */
+.main-page .analysis-block.active::after {
+  content: '';
+  position: absolute;
+  right: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-left: 10px solid #4b4b4b;
+  z-index: 10;
 }
 
 /* Force children to inherit white color in active state */
 .main-page .analysis-block.active h2,
 .main-page .analysis-block.active p {
   color: #fff !important;
+}
+
+/* --- Refactored Inline Styles & Animations --- */
+
+/* Fade Animation */
+@keyframes fadeEffect {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-animate {
+  animation: fadeEffect 0.2s ease-in-out;
+}
+
+/* Refactored Layout Styles */
+.main-page .analysis-title {
+  font-size: 18px;
+  margin-bottom: 5px;
+}
+
+.main-page .analysis-desc {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.main-page .main-image-column {
+  flex: 1.6;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.main-page .article-image-center {
+  cursor: pointer;
+  width: 100%;
+  aspect-ratio: 1.5/1;
+}
+
+.main-page .highlight-list {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: space-between;
+}
+
+.main-page .highlight-item {
+  align-items: flex-start !important;
+  text-align: left !important;
+}
+
+.main-page .highlight-keyword {
+  color: #ff4d4d !important;
+  font-weight: bold !important;
+  font-size: 16px !important;
+  margin-bottom: 5px !important;
+  display: block;
+}
+
+.main-page .highlight-content {
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+  color: #444 !important;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 /* --- Global Article Hover Effects --- */

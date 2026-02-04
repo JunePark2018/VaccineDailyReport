@@ -84,6 +84,12 @@
     object-fit: cover;
 }
 
+/* Article Page Image Hover Disable */
+.ArticlePage .main-content .article-section .article-img img:hover {
+    filter: none !important;
+    opacity: 1 !important;
+}
+
 /* 비교분석 섹션 스타일 */
 .ArticlePage .main-content .article-comparer {
     text-align: left;
@@ -952,7 +958,9 @@
 
 .bg-link {
     background-color: #888;
-}/* =========================================================
+}
+
+/* =========================================================
    New Layout: Metadata Row (Date + Buttons)
    ========================================================= */
 .ArticlePage .article-meta-row {
@@ -1033,6 +1041,7 @@
 .ArticlePage.fs-5 .evidence-item {
     font-size: 1.3rem !important;
 }
+
 /* =========================================================
    Timeline Font Size Overrides (Specific Children)
    ========================================================= */
@@ -1100,6 +1109,7 @@
 .ArticlePage.fs-5 .timeline-summary {
     font-size: 1.15rem !important;
 }
+
 /* =========================================================
    Evidence Container Font Size Overrides (Override Inline)
    ========================================================= */

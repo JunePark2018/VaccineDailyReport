@@ -21,7 +21,7 @@ const AgeGenderChart = () => {
     ];
 
     const maxAgeCount = Math.max(...ageData.map(d => d.count), 1);
-    const maxGenderCount = Math.max(...genderData.map(d => d.count), 1);
+    const totalGenderRaw = genderData[0].count + genderData[1].count;
 
     // 컴포넌트 마운트 시 애니메이션 시작
     React.useEffect(() => {
@@ -30,9 +30,52 @@ const AgeGenderChart = () => {
 
     return (
         <div className="AgeGenderChart">
+            {/* 성별 차트 - 도넛 차트 (New Design) */}
+            <section className="chart-section gender-chart-section">
+                <div className="gender-header">
+                    <div className="chart-title" style={{ borderLeft: 'none', paddingLeft: 0 }}>통계</div>
+                </div>
+
+                <div className="gender-body">
+                    {/* Left: Legend */}
+                    <div className="gender-legend">
+                        {genderData.map((item, index) => {
+                            const percent = Math.round((item.count / totalGenderRaw) * 100);
+                            const colorClass = item.gender === '남성' ? 'male-color' : 'female-color';
+                            const labelEn = item.gender === '남성' ? '남성' : '여성';
+
+                            return (
+                                <div key={item.gender} className="legend-item">
+                                    <div className={`legend-dot ${colorClass}`}></div>
+                                    <div className="legend-text">
+                                        <span className="legend-percent">{labelEn} {percent}% </span>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Right: Donut Chart (SVG) */}
+                    <div className="gender-chart-wrapper">
+                        <div
+                            className="donut-chart"
+                            style={{
+                                background: isActive
+                                    ? `conic-gradient(
+                                        #3b82f6 0deg ${(genderData[0].count / totalGenderRaw) * 360}deg,
+                                        #ff7b98ff ${(genderData[0].count / totalGenderRaw) * 360}deg 360deg
+                                      )`
+                                    : '#f0f0f0'
+                            }}
+                        >
+                            <div className="donut-hole"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* 연령대별 차트 */}
             <section className="chart-section">
-                <h3 className="chart-title">연령대별 조회수</h3>
                 <div className="chart-wrapper">
                     <div className="bars-container age-bars">
                         {ageData.map((item, index) => (
@@ -50,51 +93,8 @@ const AgeGenderChart = () => {
                                     />
                                 </div>
                                 <span className="bar-label">{item.age}</span>
-                                <span className="bar-count">{item.count}명</span>
                             </div>
                         ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* 성별 차트 - 파이 차트 */}
-            <section className="chart-section">
-                <h3 className="chart-title">성별 조회수</h3>
-                <div className="chart-wrapper">
-                    <div className="pie-chart-container">
-                        <div className="pie-chart-wrapper">
-                            <div
-                                className="pie-chart"
-                                style={{
-                                    background: isActive
-                                        ? `conic-gradient(
-                                            #0891b2 0deg ${(genderData[0].count / (genderData[0].count + genderData[1].count)) * 360}deg,
-                                            #ec4899 ${(genderData[0].count / (genderData[0].count + genderData[1].count)) * 360}deg 360deg
-                                          )`
-                                        : '#f0f0f0',
-                                    transition: 'background 1s ease-out'
-                                }}
-                            >
-                                <div className="pie-chart-center">
-                                    <div className="pie-chart-text">
-                                        {genderData.map((item, index) => {
-                                            const total = genderData[0].count + genderData[1].count;
-                                            const percentage = ((item.count / total) * 100).toFixed(1);
-                                            return (
-                                                <div key={item.gender} className="pie-text-item">
-                                                    <span className={`pie-text-label ${item.gender === '남성' ? 'male-text' : 'female-text'}`}>
-                                                        {item.gender}
-                                                    </span>
-                                                    <span className="pie-text-value">
-                                                        {item.count}명 ({percentage}%)
-                                                    </span>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </section>

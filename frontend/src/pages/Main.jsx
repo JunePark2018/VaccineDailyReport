@@ -255,8 +255,8 @@ export const Main = () => {
 
     return (
       <React.Fragment>
-        <section className="main-article-section" style={{ display: 'flex', gap: '40px', marginBottom: '30px' }}>
-          <div className="article-info-side" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+        <section className="main-article-section" style={{ marginBottom: '30px' }}>
+          <div className="article-info-side">
             {slideArticles.map((art, idx) => {
               const isActive = idx === currentSlideIndex;
               return (
@@ -264,30 +264,25 @@ export const Main = () => {
                   <div
                     className={`analysis-block ${isActive ? 'active' : ''}`}
                     onClick={() => setCurrentSlideIndex(idx)}
-                    style={{ cursor: 'pointer' }}
                   >
-                    <h2 style={{ fontSize: '18px', marginBottom: '5px' }}>{art.title}</h2>
-                    <p style={{ fontSize: '12px', lineHeight: '1.4' }}>{art.short_text || "AI 생성 기사 내용"}</p>
+                    <h2 className="analysis-title">{art.title}</h2>
+                    <p className="analysis-desc">{art.short_text || "AI 생성 기사 내용"}</p>
                   </div>
                 </React.Fragment>
               );
             })}
           </div>
-          <div className="main-image-column" style={{ flex: 1.6, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+          <div className="main-image-column">
             <div
-              className="article-image-center"
+              key={`img-${currentSlideIndex}`}
+              className="article-image-center fade-animate"
               onClick={() => activeArticle && navigate(`/article/${activeArticle.report_id}`)}
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
-              style={{ cursor: 'pointer', width: '100%', aspectRatio: '1.5/1' }}
             >
               <img src={activeImage} alt="Main" onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
               <button className="carousel-arrow prev-arrow" onClick={(e) => { e.stopPropagation(); setCurrentSlideIndex(prev => (prev - 1 + 3) % 3); }}>&#10094;</button>
               <button className="carousel-arrow next-arrow" onClick={(e) => { e.stopPropagation(); setCurrentSlideIndex(prev => (prev + 1) % 3); }}>&#10095;</button>
-              <div className="main-image-text">
-                <h3>{activeArticle?.title}</h3>
-                <p className="mobile-carousel-desc">{activeArticle?.short_text}</p>
-              </div>
             </div>
             <div className="carousel-dots-mobile">
               {[0, 1, 2].map(dotIdx => (
@@ -303,13 +298,16 @@ export const Main = () => {
               ))}
             </div>
           </div>
-          <div className="highlights-side" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <div className="highlight-list" style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
+          <div className="highlights-side">
+            <div
+              key={`hl-${currentSlideIndex}`}
+              className="highlight-list fade-animate"
+            >
               {highlights.map((item, hIndex) => (
                 <React.Fragment key={hIndex}>
-                  <div className="highlight-item" style={{ alignItems: 'flex-start', textAlign: 'left' }}>
-                    <span className="highlight-keyword" style={{ color: '#ff4d4d', fontWeight: 'bold', fontSize: '16px', marginBottom: '5px' }}>{item.keyword}</span>
-                    <span className="highlight-content" style={{ fontSize: '13px', lineHeight: '1.5', color: '#444', display: '-webkit-box', overflow: 'hidden', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2 }}>{item.content}</span>
+                  <div className="highlight-item">
+                    <span className="highlight-keyword">{item.keyword}</span>
+                    <span className="highlight-content">{item.content}</span>
                   </div>
                 </React.Fragment>
               ))}
@@ -436,54 +434,7 @@ export const Main = () => {
     );
   };
 
-  const renderAIRecommendedNews = (mainBaseIndex) => {
-    if (!displayArticles || displayArticles.length === 0) return null;
 
-    // AI Rec is independent, but to avoid collision, we might try to filter?
-    // But AI rec relies on specific indices? No, just logic.
-    // Let's assume AI Rec is OK to overlap if it means "You might also like this".
-    // But strictly "No duplication" means we should filter.
-    // The current logic: (mainBaseIndex + 7) % displayArticles.length.
-    // This is weird rotation logic.
-    // I'll keep it as is, because AI Rec logic is separate from category logic.
-    // If strict compliance:
-    const offset = 7;
-    const aiBaseIndex = (mainBaseIndex + offset) % displayArticles.length;
-    const aiMainArticle = displayArticles[aiBaseIndex];
-    const aiRelatedArticles = [
-      displayArticles[(aiBaseIndex + 1) % displayArticles.length],
-      displayArticles[(aiBaseIndex + 2) % displayArticles.length]
-    ];
-    // If any of these appear in usedIds, it's a "duplicate".
-    // But this is "AI Recommended", so repetition might be acceptable.
-    // I will leave this untouced for now unless user complains specifically.
-
-    const mainImage = aiMainArticle ? (imageMap[aiMainArticle.image] || aiMainArticle.image) : null;
-
-    return (
-      <section className="ai-recommended-section">
-        <div className="ai-content-wrapper">
-          <div className="ai-layout-split">
-            <div className="ai-related-list">
-              <h3 style={{ borderLeft: 'none', paddingLeft: '0' }}>AI 추천 뉴스</h3>
-              {aiRelatedArticles.map((art, i) => (
-                <div key={i} className="ai-related-item-wrapper">
-                  <div className="ai-related-item" onClick={() => navigate(`/article/${art.id}`)} style={{ cursor: 'pointer' }}>
-                    <h4>{art?.title || "Title Text Sample"}</h4>
-                    <p>{art?.short_text || "TEXT SAMPLE content description..."}</p>
-                  </div>
-                  {i < aiRelatedArticles.length - 1 && <div className="ai-divider"></div>}
-                </div>
-              ))}
-            </div>
-            <div className="ai-main-image-container">
-              <img src={mainImage} alt="AI Main" onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
-            </div>
-          </div>
-        </div>
-      </section>
-    );
-  };
 
   const totalPages = 5;
 
@@ -555,7 +506,7 @@ export const Main = () => {
 
             <div className="full-width-divider mobile-only-divider"></div>
 
-            {renderAIRecommendedNews(0 + (currentPage - 1) * 5)}
+
 
             {renderScienceSection()}
           </>
