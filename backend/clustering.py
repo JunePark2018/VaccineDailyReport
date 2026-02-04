@@ -338,7 +338,7 @@ def run_issue_clustering(db: Session, days=3):
         final_title = res.get("title", picked[0].title)
 
         # 5. 이슈 생성 및 DB 저장
-        issue = crud.create_report(db, title=final_title, article_ids=[a.news_id for a in picked])
+        issue = crud.create_report_issue(db, title=final_title, article_ids=[a.news_id for a in picked])
 
         # 런타임 객체에 issue_id 마킹 (중복 처리 방지용)
         for a in picked:
