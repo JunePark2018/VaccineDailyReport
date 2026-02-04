@@ -35,7 +35,7 @@
     display: flex;
     align-items: flex-end;
     justify-content: space-around;
-    height: 220px;
+    height: 280px;
     padding: 10px 0;
     gap: 8px;
 }
@@ -90,7 +90,7 @@
 .AgeGenderChart .bar-track {
     width: 100%;
     background: #fcfcfc;
-    height: 140px;
+    height: 180px;
     position: relative;
     overflow: hidden;
     border-radius: 8px;
@@ -100,7 +100,7 @@
 }
 
 .AgeGenderChart .gender-bar-track {
-    height: 160px;
+    height: 200px;
 }
 
 .AgeGenderChart .bar-item:hover .bar-track {
@@ -157,13 +157,15 @@
     flex-direction: column;
     align-items: center;
     gap: 0;
-    padding: 10px 0;
+    padding: 0;
+    height: 280px;
+    justify-content: center;
 }
 
 .AgeGenderChart .pie-chart-wrapper {
     position: relative;
-    width: 220px;
-    height: 220px;
+    width: 250px;
+    height: 250px;
 }
 
 .AgeGenderChart .pie-chart {
