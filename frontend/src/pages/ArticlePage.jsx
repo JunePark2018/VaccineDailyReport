@@ -13,6 +13,7 @@ import axios from 'axios';
 import WordCloudComponent from '../components/WordCloud';
 import Timeline from '../components/Timeline';
 import AI_News_Recommendation from '../components/AI_News_Recommendation';
+import AgeGenderChart from '../components/AgeGenderChart';
 import { HiOutlineSpeakerWave, HiOutlinePrinter, HiOutlineDocumentDuplicate, HiOutlineBookmark, HiMiniBookmark } from 'react-icons/hi2';
 import SkeletonNews from '../components/SkeletonNews'; // Import Skeleton
 
@@ -490,10 +491,33 @@ function ArticlePage() {
                     fontSize={fontSize}
                   />
 
-                  <div className="wordcloud-section" style={{ marginTop: '60px', padding: '20px', backgroundColor: '#f9f9f9', borderRadius: '12px' }}>
-                    <h3 className="section-title" style={{ textAlign: 'center', marginBottom: '30px' }}>기사 핵심 키워드</h3>
-                    <div style={{ display: 'flex', justifyContent: 'center', width: '400px', maxWidth: '100%', margin: '0 auto', aspectRatio: '1/1' }}>
-                      <WordCloudComponent keywords={keywords} width={400} height={400} />
+                  {/* 통계 섹션: 키워드 + 연령대/성별 */}
+                  <div className="statistics-section" style={{ marginTop: '60px' }}>
+                    <div style={{
+                      display: 'flex',
+                      gap: '40px',
+                      alignItems: 'flex-start',
+                      flexWrap: 'wrap'
+                    }}>
+                      {/* 워드클라우드 */}
+                      <div style={{ flex: '0 0 300px', minWidth: '280px' }}>
+                        <h3 className="section-title" style={{ marginBottom: '30px' }}>기사 핵심 키워드</h3>
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          width: '100%',
+                          height: '300px',
+                          margin: '0 auto'
+                        }}>
+                          <WordCloudComponent keywords={keywords} width={280} height={280} />
+                        </div>
+                      </div>
+
+                      {/* 연령대별/성별 차트 */}
+                      <div style={{ flex: '1', minWidth: '500px' }}>
+                        <AgeGenderChart />
+                      </div>
                     </div>
                   </div>
 
