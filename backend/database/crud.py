@@ -918,3 +918,63 @@ def get_representative_image(db: Session, cluster_id: int) -> Optional[str]:
         return random.choice(candidates)
 
     return None
+
+
+# -------------------------
+# Demographics (연령대/성별 통계)
+# -------------------------
+def get_report_demographics(db: Session, report_id: int) -> Dict[str, List[Dict[str, any]]]:
+    """
+    특정 기사(Report)를 조회한 사용자들의 연령대/성별 통계 집계
+    
+    Args:
+        db: Database session
+        report_id: Report ID
+    
+    Returns:
+        {
+            "age_distribution": [{"age": "10대", "count": 15}, ...],
+            "gender_distribution": [{"gender": "남성", "count": 245}, ...]
+        }
+    """
+    # 연령대별 집계
+    age_results = (
+        db.query(User.age_range, func.count(NewsView.news_view_id).label('count'))
+        .join(NewsView, User.user_id == NewsView.user_id)
+        .filter(NewsView.news_id == report_id)
+        .filter(User.age_range.isnot(None))
+        .group_by(User.age_range)
+        .all()
+    )
+    
+    # 성별 집계
+    gender_results = (
+        db.query(User.gender, func.count(NewsView.news_view_id).label('count'))
+        .join(NewsView, User.user_id == NewsView.user_id)
+        .filter(NewsView.news_id == report_id)
+        .filter(User.gender.isnot(None))
+        .group_by(User.gender)
+        .all()
+    )
+    
+    # 연령대 순서 정의 (10대, 20대, 30대, 40대, 50대, 60대+)
+    age_order = ["10대", "20대", "30대", "40대", "50대", "60대+"]
+    age_map = {row.age_range: row.count for row in age_results}
+    
+    # 순서대로 정렬 (없는 연령대는 제외)
+    age_distribution = []
+    for age in age_order:
+        if age in age_map:
+            age_distribution.append({"age": age, "count": age_map[age]})
+    
+    # 성별 결과
+    gender_distribution = [
+        {"gender": row.gender, "count": row.count}
+        for row in gender_results
+    ]
+    
+    return {
+        "age_distribution": age_distribution,
+        "gender_distribution": gender_distribution
+    }
+

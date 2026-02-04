@@ -49,6 +49,9 @@ function ArticlePage() {
   // Scrap State
   const [isScraped, setIsScraped] = useState(false);
 
+  // Demographics State
+  const [demographics, setDemographics] = useState(null);
+
   // Action Button States (Unified Popup State)
   // 'tts', 'font', or null (Share removed)
   const [activePopup, setActivePopup] = useState(null);
@@ -312,17 +315,30 @@ function ArticlePage() {
           const img_number = Math.floor(Math.random() * allImgUrls.length);
           setImgURL(allImgUrls[img_number]);
         }
+
+        // Log view first (if user is logged in)
+        if (login_id) {
+          try {
+            await axios.post(`${API_BASE_URL}/users/${login_id}/read/${id}`);
+          } catch (error) {
+            console.error('View logging error:', error);
+          }
+        }
+
+        // Fetch demographics data (after logging view)
+        try {
+          const demographics_response = await axios.get(`${API_BASE_URL}/reports/${id}/demographics`);
+          setDemographics(demographics_response.data);
+        } catch (error) {
+          console.error('Demographics Fetch Error:', error);
+          setDemographics({ age_distribution: [], gender_distribution: [] });
+        }
       } catch (error) {
         console.error('Data Fetch Error:', error);
       } finally {
         setLoading(false);
       }
     };
-
-    const login_id = localStorage.getItem('login_id');
-    if (login_id) {
-      axios.post(`${API_BASE_URL}/users/${login_id}/read/${id}`).catch(console.error);
-    }
 
     fetchInfo();
   }, [id]);
@@ -545,7 +561,10 @@ function ArticlePage() {
 
                       {/* 연령대별/성별 차트 */}
                       <div style={{ flex: '1', minWidth: '500px' }}>
-                        <AgeGenderChart />
+                        <AgeGenderChart
+                          ageData={demographics?.age_distribution}
+                          genderData={demographics?.gender_distribution}
+                        />
                       </div>
                     </div>
                   </div>

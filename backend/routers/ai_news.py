@@ -161,6 +161,31 @@ def search_reports(
     return []
 
 
+@router.get("/{report_id}/demographics")
+def get_report_demographics_endpoint(report_id: int, db: Session = Depends(get_db)):
+    """
+    특정 기사를 조회한 사용자들의 연령대/성별 통계를 반환합니다.
+    
+    Args:
+        report_id: Report ID
+        
+    Returns:
+        {
+            "age_distribution": [{"age": "10대", "count": 15}, ...],
+            "gender_distribution": [{"gender": "남성", "count": 245}, ...]
+        }
+    """
+    # Report 존재 확인
+    report = db.get(Report, report_id)
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    
+    # 통계 조회
+    result = crud.get_report_demographics(db, report_id)
+    
+    return result
+
+
 @router.get("/{report_id}")
 def get_report_detail(report_id: int, db: Session = Depends(get_db)):
     """
@@ -675,4 +700,8 @@ def check_claim_evidence(req: ClaimEvidenceRequest, db: Session = Depends(get_db
             }
         )
 
-    return {"match_found": len(results) > 0, "evidence": results}
+    return {" match_found": len(results) > 0, "evidence": results}
+
+
+
+

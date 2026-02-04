@@ -161,3 +161,23 @@ class UserDashboardResponse(BaseModel):
 class LogViewRequest(BaseModel):
     # Placeholder if needed by logging endpoints
     log_id: Optional[int] = None
+
+
+# --- Demographics Schemas ---
+class DemographicsData(BaseModel):
+    """연령대별 조회 통계"""
+    age: str
+    count: int
+
+
+class GenderData(BaseModel):
+    """성별 조회 통계"""
+    gender: str
+    count: int
+
+
+class ReaderDemographicsResponse(BaseModel):
+    """기사 조회자 인구통계 응답"""
+    age_distribution: List[DemographicsData]
+    gender_distribution: List[GenderData]
+
