@@ -8,26 +8,19 @@ import chromadb
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sentence_transformers import SentenceTransformer
-import hdbscan
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.preprocessing import normalize
-from ibm_watsonx_ai.foundation_models import ModelInference
+import json
+from openai import OpenAI
 from kiwipiepy import Kiwi
-
-# DB 관련 임포트 (경로는 프로젝트 구조에 맞게 확인 필요)
 from database.engine import SessionLocal, engine
 from database.models import Base, News, Report
 from database import crud
 
 load_dotenv(override=True)
 kiwi = Kiwi()
-WATSONX_API_KEY = os.getenv("WATSONX_API_KEY")
-WATSONX_PROJECT_ID = os.getenv("WATSONX_PROJECT_ID")
-WATSONX_URL = os.getenv("WATSONX_URL")
 
-# -------------------------------------------------
-# 1. 초기화 및 ChromaDB 설정
-# -------------------------------------------------
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+
 # -------------------------------------------------
 # 1. 초기화 및 ChromaDB 설정
 # -------------------------------------------------
@@ -39,10 +32,7 @@ from database.vector_store import get_collection, get_embed_model
 collection = get_collection()
 embed_model = get_embed_model()
 
-credentials = {"apikey": WATSONX_API_KEY, "url": WATSONX_URL}
-llm_model = ModelInference(
-    model_id="meta-llama/llama-3-3-70b-instruct", credentials=credentials, project_id=WATSONX_PROJECT_ID
-)
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 
 # -------------------------------------------------
@@ -207,38 +197,52 @@ def run_stage2_issue_refine(articles):
     """
     summaries = [f"[{i}] 제목: {a.title}\n요약: {(a.contents or '')[:150]}" for i, a in enumerate(articles[:10])]
 
-    prompt = f"""
-역할: 뉴스 통찰력이 뛰어난 베테랑 데스크 기자.
-목표: 제공된 기사 목록에서 '완벽하게 동일한 사건'을 다루는 기사들만 골라내어 그룹화하라.
+    system_prompt = """
+You are a veteran Desk Reporter with keen news insight.
+Your goal is to group only the articles that report on the **"completely identical event"** from the provided list.
 
-[검증 및 필터링 규칙 - 반드시 준수]
-1. **주체(Entity) 일치성:** 기사들의 핵심 주인공(인물, 기업, 기관)이 단 한 명이라도 다르면 절대 같은 이슈가 아닙니다.
-2. **사건(Event)의 단일성:** '제약업계 동향'처럼 여러 사건을 나열한 기사는 제외하십시오.
-3. **불순물 제거:** 목록 중 대다수와 다른 주어를 가진 기사가 있다면 제외하십시오.
-4. **최소 요건:** 결과적으로 3개 이상의 기사가 완벽하게 동일한 사건을 다루지 않는다면 `valid_indices: none`을 반환하십시오.
+[Verification & Filtering Rules]
+1. **Entity Consistency**: If the key main character (person, company, institution) is different, it is strictly NOT the same issue.
+2. **Event Singularity**: Exclude articles that list multiple events, like "Industry Trends".
+3. **Impurity Removal**: Exclude articles that have a different subject from the majority.
+4. **Minimum Requirement**: If fewer than 3 articles cover the exact same event, return `valid_indices: []`.
 
-[목록]
+[Output JSON Format]
+{
+    "valid_indices": [0, 1, 3], 
+    "title": "One sentence summary title of the issue"
+}
+If none, return "valid_indices": []
+"""
+
+    user_prompt = f"""
+[Article List]
 {chr(10).join(summaries)}
 
-[출력 형식]
-valid_indices: 골라낸 기사 번호들 (예: 0, 1, 3 / 없으면 none)
-title: 이 이슈를 관통하는 핵심 제목 (하나의 문장으로 작성)
+Task: Identify the perfect cluster of articles covering the same event.
 """
 
     try:
-        res = llm_model.generate_text(prompt=prompt, params={"max_new_tokens": 500, "temperature": 0.1})
+        response = client.chat.completions.create(
+            model=MODEL,
+            messages=[
+                {"role": "system", "content": system_prompt.strip()},
+                {"role": "user", "content": user_prompt.strip()},
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.1,
+        )
+        content = response.choices[0].message.content
+        parsed = json.loads(content)
 
-        parsed = {}
-        for line in res.splitlines():
-            if "valid_indices" in line.lower() and ":" in line:
-                raw_val = line.split(":", 1)[1].strip().lower()
-                parsed["valid_ids"] = [] if "none" in raw_val else [int(x) for x in re.findall(r"\d+", raw_val)]
-            if "title" in line.lower() and ":" in line:
-                parsed["title"] = line.split(":", 1)[1].strip()
+        # Key validation
+        valid_ids = parsed.get("valid_indices", [])
+        title = parsed.get("title", "")
 
-        return parsed
+        return {"valid_ids": valid_ids, "title": title}
+
     except Exception as e:
-        print(f"LLM 검증 오류: {e}")
+        print(f"LLM 검증 오류 (OpenAI): {e}")
         return {"valid_ids": []}
 
 
