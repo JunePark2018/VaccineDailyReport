@@ -133,8 +133,9 @@ export default function CreateAccount() {
         }
 
         // 4. Password Check (Basic requirement check)
-        if (formData.password.length < 8) {
-            newErrors.password = "비밀번호는 최소 8자 이상이어야 합니다.";
+        if (formData.password.length < 8 || formData.password.length > 64) {
+            newErrors.password = "비밀번호는 8자 이상 64자 이하여야 합니다.";
+
         }
 
         // 4-1. Password Confirmation Check

@@ -1,5 +1,6 @@
 # crud.py
 from __future__ import annotations
+from database.security import hash_password
 
 from dataclasses import dataclass
 from datetime import datetime
@@ -338,66 +339,66 @@ def create_user(
     db: Session,
     *,
     login_id: str,
-    password_hash: str,
+    password_hash: str, # 프론트엔드에서 넘어온 평문 비밀번호
     username: Optional[str] = None,
     email: Optional[str] = None,
     age_range: Optional[str] = None,
     gender: Optional[str] = None,
-    # fcm_token removed
-    # marketing_agree removed
     user_status: int = 1,
     subscribed_categories: Optional[List[str]] = None,
     subscribed_keywords: Optional[List[str]] = None,
 ) -> User:
+    """
+    새 사용자 정보를 생성하고 비밀번호를 해싱하여 저장합니다.
+    """
+    # 1. 전달받은 비밀번호를 해싱 처리합니다.
+    hashed_password = hash_password(password_hash)
+
+    # 2. User 객체를 생성합니다. (비밀번호는 해싱된 값을 저장)
     obj = User(
         login_id=login_id,
-        password_hash=password_hash,
+        password_hash=hashed_password, # 해싱된 비밀번호 저장
         username=username,
         email=email,
         age_range=age_range,
         gender=gender,
-        # fcm_token removed
-        # marketing_agree removed
         user_status=user_status,
         created_at=datetime.utcnow(),
     )
     db.add(obj)
-    db.commit()  # To get obj.user_id
+    db.commit()  # user_id 확보를 위해 먼저 커밋합니다.
 
-    # Handle Subscriptions
+    # 3. 카테고리 구독 처리
     if subscribed_categories:
         for cat_name in subscribed_categories:
             cat_name = cat_name.strip()
             if not cat_name:
                 continue
 
-            # Check if category exists, if not create it
+            # 카테고리 존재 여부 확인 후 없으면 생성
             cat = db.execute(select(Category).where(Category.name == cat_name)).scalar_one_or_none()
             if not cat:
                 cat = Category(name=cat_name)
                 db.add(cat)
-                db.flush()  # Ensure ID is generated and name persistence
+                db.flush() 
 
-            # Now append to user subscriptions
-            # Avoid duplicates if user sends same category twice
+            # 사용자 구독 목록에 추가
             if cat not in obj.subscribed_categories:
                 obj.subscribed_categories.append(cat)
 
+    # 4. 키워드 구독 처리
     if subscribed_keywords:
         for keyword in subscribed_keywords:
-            # Check for existing subscription to avoid duplicates handled by unique constraint or add logic
-            # Since it's a new user, we can just add.
-            # But safer to use the helper or just add manually.
-            # Using normalize_keyword helper if available or just strip.
-            # crud.py has normalize_keyword at top.
             normalized_kw = normalize_keyword(keyword)
             if normalized_kw:
+                # 새로운 사용자의 경우 중복 체크 없이 추가
                 obj.keyword_subscriptions.append(KwSub(keyword=normalized_kw))
 
+    # 5. 구독 정보가 있을 경우 최종 커밋
     if subscribed_categories or subscribed_keywords:
         db.commit()
 
-    db.refresh(obj)  # 최신 상태로 갱신
+    db.refresh(obj)  # DB의 최신 상태로 객체 갱신
     return obj
 
 

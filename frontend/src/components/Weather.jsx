@@ -59,82 +59,69 @@ const Weather = () => {
     const [locationName, setLocationName] = useState("서울");
 
     // 날씨 데이터 가져오는 함수 (재사용 가능)
-    const getWeather = async (lat, lon, name) => {
-        setLoading(true);
-        try {
-            const { x: nx, y: ny } = mapToGrid(lat, lon);
+const getWeather = async (lat, lon, name) => {
+    setLoading(true);
+    try {
+        const { x: nx, y: ny } = mapToGrid(lat, lon);
 
-            // 날짜/시간 계산
-            // 안정적인 데이터 확보를 위해 무조건 1시간 전 데이터를 요청 (초단기실황 특성상 최신 데이터 딜레이 가능성 대비)
-            const now = new Date();
+        // 1. 날짜/시간 계산 로직 개선
+        const now = new Date();
+        const minutes = now.getMinutes();
+
+        // 기상청 초단기실황은 매시 45분에 생성됩니다. 
+        // 45분 이전이라면 '이전 시간' 데이터를 가져와야 에러가 나지 않습니다.
+        if (minutes < 45) {
             now.setHours(now.getHours() - 1);
-            // if (now.getMinutes() < 40) ... 로직 제거하고 보수적으로 접근
-
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const hour = String(now.getHours()).padStart(2, '0');
-
-            const base_date = `${year}${month}${day}`;
-            const base_time = `${hour}00`;
-
-            // package.json의 "proxy": "https://apis.data.go.kr" 설정 사용
-            const PROXY_URL = "/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst";
-
-            // dataType=XML로 설정 (브라우저 성공 사례와 동일하게 맞춤)
-            const url = `${PROXY_URL}?serviceKey=${SERVICE_KEY}&pageNo=1&numOfRows=1000&dataType=XML&base_date=${base_date}&base_time=${base_time}&nx=${nx}&ny=${ny}`;
-
-            console.log("Fetching weather (XML) from:", url);
-
-            const response = await fetch(url);
-            const textData = await response.text();
-            console.log("Weather API Response (XML):", textData);
-
-            // XML 파싱
-            const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(textData, "text/xml");
-
-            // 결과 코드 확인
-            const resultCodeNode = xmlDoc.getElementsByTagName("resultCode")[0];
-            const resultMsgNode = xmlDoc.getElementsByTagName("resultMsg")[0];
-
-            if (resultCodeNode && resultCodeNode.textContent !== '00') {
-                console.error("API Error (XML):", resultCodeNode.textContent, resultMsgNode?.textContent);
-                return;
-            }
-
-            const items = xmlDoc.getElementsByTagName("item");
-            const parsedData = {};
-
-            if (items.length === 0) {
-                console.warn("No item found in XML.");
-                // 데이터가 없을 경우 처리
-            }
-
-            for (let i = 0; i < items.length; i++) {
-                const item = items[i];
-                const category = item.getElementsByTagName("category")[0]?.textContent;
-                const obsrValue = item.getElementsByTagName("obsrValue")[0]?.textContent;
-
-                if (category === 'T1H') parsedData.temp = obsrValue;
-                if (category === 'REH') parsedData.humidity = obsrValue;
-                if (category === 'PTY') parsedData.rainType = obsrValue;
-            }
-
-            // 온도가 있으면 데이터 세팅
-            if (parsedData.temp) {
-                setWeatherData(parsedData);
-                setLocationName(name);
-            } else {
-                console.warn("Parsed data is incomplete:", parsedData);
-            }
-
-        } catch (error) {
-            console.error("날씨 정보를 불러오는 중 오류 발생:", error);
-        } finally {
-            setLoading(false);
         }
-    };
+
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hour = String(now.getHours()).padStart(2, '0');
+
+        const base_date = `${year}${month}${day}`;
+        const base_time = `${hour}00`;
+
+        // 2. dataType을 JSON으로 변경 (XML 파싱보다 훨씬 빠르고 안정적입니다)
+        const PROXY_URL = "/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst";
+        const url = `${PROXY_URL}?serviceKey=${SERVICE_KEY}&pageNo=1&numOfRows=10&dataType=JSON&base_date=${base_date}&base_time=${base_time}&nx=${nx}&ny=${ny}`;
+
+        console.log(`Fetching Weather for ${name}:`, url);
+
+        const response = await fetch(url);
+        const data = await response.json();
+
+        // 3. 응답 결과 확인
+        const header = data.response?.header;
+        if (header?.resultCode !== '00') {
+            console.error("기상청 API 오류:", header?.resultCode, header?.resultMsg);
+            // 03(데이터 없음) 에러 발생 시 한 시간 더 전의 데이터를 시도하는 로직을 추가할 수 있습니다.
+            return;
+        }
+
+        const items = data.response?.body?.items?.item || [];
+        const parsedData = {};
+
+        // 4. 데이터 매핑
+        items.forEach(item => {
+            if (item.category === 'T1H') parsedData.temp = item.obsrValue;   // 기온
+            if (item.category === 'REH') parsedData.humidity = item.obsrValue; // 습도
+            if (item.category === 'PTY') parsedData.rainType = item.obsrValue; // 강수형태
+        });
+
+        if (parsedData.temp) {
+            setWeatherData(parsedData);
+            setLocationName(name);
+        } else {
+            console.warn("필수 날씨 데이터(기온)가 없습니다.");
+        }
+
+    } catch (error) {
+        console.error("날씨 정보를 불러오는 중 오류 발생:", error);
+    } finally {
+        setLoading(false);
+    }
+};
 
     // 1. 초기 로딩: 서울(기본값)
     useEffect(() => {
