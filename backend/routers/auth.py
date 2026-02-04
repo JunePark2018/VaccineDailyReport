@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from routers import get_db
 from database.crud import get_user_by_login_id
 from schemas import UserLoginRequest
+from database.security import verify_password
 
 router = APIRouter(tags=["Users"])
 
@@ -20,7 +21,7 @@ def login(request: UserLoginRequest, db: Session = Depends(get_db)):
     """
     user = get_user_by_login_id(db, request.login_id)
 
-    if not user or user.password_hash != request.password:
+    if not user or not verify_password(request.password, user.password_hash):
         raise HTTPException(status_code=401, detail="아이디 또는 비밀번호가 잘못되었습니다.")
 
     return {

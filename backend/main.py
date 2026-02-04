@@ -36,44 +36,47 @@ from search_agent import (
 def run_background_worker():
     print("🚀 [System] 백그라운드 워커 가동 시작")
 
-    while True:
-        print("\n⏰ [Auto] 뉴스 수집 및 분석 사이클 시작...")
-        db = SessionLocal()
+    # while True:
+    #     print("\n⏰ [Auto] 뉴스 수집 및 분석 사이클 시작...")
+    #     db = SessionLocal()
 
-        try:
-            # --- [Step 1] 국내 뉴스 수집 ---
-            print("🇰🇷 국내 뉴스 수집 중...")
-            target_list = ["조선", "KBS", "MBC", "SBS", "연합", "한겨레", "중앙", "경향", "한국", "JTBC"]
-            # target_list = []  # 테스트용 빈 리스트
+    #     try:
+    #         # --- [Step 1] 국내 뉴스 수집 ---
+    #         print("🇰🇷 국내 뉴스 수집 중...")
+    #         target_list = ["조선", "KBS", "MBC", "SBS", "연합", "한겨레", "중앙", "경향", "한국", "JTBC"]
+    #         # target_list = []  # 테스트용 빈 리스트
 
-            # [연동] 수정된 scraper.py의 함수 호출 (db 세션 전달)
-            news_list = run_article_crawler(db, target_companies=target_list)
+    #         # [연동] 수정된 scraper.py의 함수 호출 (db 세션 전달)
+    #         news_list = run_article_crawler(db, target_companies=target_list)
 
-            for news in news_list:
-                company = get_or_create_company_by_raw_name(db, news["company_name"])
-                create_news(
-                    db,
-                    title=news["title"],
-                    contents=news["contents"],
-                    url=news["url"],
-                    company_id=company.company_id,
-                    is_domestic=True,
-                    # [추가] 수집된 카테고리 정보를 DB에 저장 (중요!)
-                    category=news.get("category"),
-                    img_urls=news.get("img_urls"),
-                    created_at=(
-                        datetime.fromisoformat(news["time"]) if news["time"] != "시간 정보 없음" else datetime.now()
-                    ),
-                )
-            db.commit()
+    #         for news in news_list:
+    #             company = get_or_create_company_by_raw_name(db, news["company_name"])
+    #             create_news(
+    #                 db,
+    #                 title=news["title"],
+    #                 contents=news["contents"],
+    #                 url=news["url"],
+    #                 company_id=company.company_id,
+    #                 is_domestic=True,
+    #                 # [추가] 수집된 카테고리 정보를 DB에 저장 (중요!)
+    #                 category=news.get("category"),
+    #                 img_urls=news.get("img_urls"),
+    #                 created_at=(
+    #                     datetime.fromisoformat(news["time"]) if news["time"] != "시간 정보 없음" else datetime.now()
+    #                 ),
+    #             )
+    #         db.commit()
 
-            # --- [Step 2] 군집화 및 AI 분석 (요약 + 영문 키워드 생성) ---
-            print("🤖 군집화 및 AI 이슈 분석 중...")
-            run_issue_clustering(db, days=3)
+    #         # --- [Step 2] 군집화 및 AI 분석 (요약 + 영문 키워드 생성) ---
+    #         print("🤖 군집화 및 AI 이슈 분석 중...")
+    #         run_issue_clustering(db, days=3)
 
-            # 이 단계에서 AiGeneratedNews 테이블에 search_keyword와 함께 저장되어야 함
-            process_news_pipeline()
-            db.commit()
+    #         # 이 단계에서 AiGeneratedNews 테이블에 search_keyword와 함께 저장되어야 함
+    #         process_news_pipeline()
+    #         db.commit()
+
+
+# 외신--------------------------------------------------------------------------
 
             # --- [Step 3] 지연된 외신 추적  ---
             # if GlobalNewsScraper:
@@ -135,15 +138,17 @@ def run_background_worker():
 
             #         en_scraper.close()  # 브라우저 종료
             #         db.commit()
+#-----------------------------------------------------------------------------
 
-        except Exception as e:
-            print(f"❌ [Error] 백그라운드 워커 오류: {e}")
-            db.rollback()
-        finally:
-            db.close()
 
-        print("💤 [Sleep] 1분 대기 중...")
-        time.sleep(150)
+        # except Exception as e:
+        #     print(f"❌ [Error] 백그라운드 워커 오류: {e}")
+        #     db.rollback()
+        # finally:
+        #     db.close()
+
+        # print("💤 [Sleep] 1분 대기 중...")
+        # time.sleep(150)
 
 
 # --- [FastAPI 앱 설정] ---
@@ -176,7 +181,7 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
