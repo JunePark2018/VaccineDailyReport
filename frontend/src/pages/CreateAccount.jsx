@@ -33,7 +33,7 @@ export default function CreateAccount() {
         .filter(cat => cat.label !== '전체메뉴' && cat.label !== '이슈' && cat.label !== '홈')
         .map(cat => cat.label);
 
-    const ageGroups = ['10세 미만', '10~19세', '20~29세', '30~39세', '40~49세', '50~59세', '60~69세', '70세 이상', '비공개'];
+    const ageGroups = ['10대', '20대', '30대', '40대', '50대', '60대+', '비공개'];
     const genders = ['남성', '여성', '비공개'];
 
     // --- Password Logic ---

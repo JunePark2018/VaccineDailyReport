@@ -50,6 +50,8 @@ def signup(user: UserCreateRequest, db: Session = Depends(get_db)):
         username=user.username,
         password_hash=user.password_hash,
         email=user.email,
+        age_range=user.age_range,
+        gender=user.gender,
         subscribed_categories=user.subscribed_categories,
         subscribed_keywords=user.subscribed_keywords,
     )
@@ -213,7 +215,11 @@ def record_article_read(login_id: str, news_id: int, db: Session = Depends(get_d
     # 이미 본 기사라도 다시 읽으면 관심도가 올라간다고 가정할 수 있음.
     # 단, 너무 루프 도는 것을 방지하려면 has_viewed 체크를 할 수도 있으나,
     # 여기서는 "읽을 때마다 관심도 증가"로 구현.
-    bump_user_keyword_stats_from_report(db, user_id=user.user_id, report_id=news_id, inc=1)
+    try:
+        bump_user_keyword_stats_from_report(db, user_id=user.user_id, report_id=news_id, inc=1)
+    except Exception as e:
+        # 키워드 업데이트 실패해도 view는 기록
+        print(f"[Warning] Keyword stats update failed: {e}")
 
     db.commit()
     return {"message": "Read recorded"}
