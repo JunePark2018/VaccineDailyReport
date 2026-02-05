@@ -1,56 +1,51 @@
-import requests
 import os
 from dotenv import load_dotenv
-from urllib.parse import quote
+
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
-from typing import List, Dict, Any, Optional, Union
+from typing import List, Dict, Any
 from database.models import Report, News
 
-# IBM WatsonX AI Import
-from ibm_watsonx_ai.foundation_models import ModelInference
+# OpenAI Import
+from openai import OpenAI
 
-# Initialize IBM WatsonX Model
+# Initialize OpenAI Client
 # ------------------------------------
 
 load_dotenv(override=True)
 
-credentials = {"apikey": os.getenv("WATSONX_API_KEY"), "url": os.getenv("WATSONX_URL")}
+openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-llm_model = ModelInference(
-    model_id="meta-llama/llama-3-3-70b-instruct", credentials=credentials, project_id=os.getenv("WATSONX_PROJECT_ID")
-)
+# Get model from environment variable, default to gpt-4o-mini
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
 # ------------------------------------
 
 
 def get_llm_summary(prompt: str) -> str:
     """
-    IBM WatsonX ModelInference를 사용하여 요약/분석을 생성합니다.
+    OpenAI API를 사용하여 요약/분석을 생성합니다.
     """
     try:
-        # Llama 3 프롬프트 형식에 맞춰주는 것이 좋음 (System/User)
+        # OpenAI Chat Completions API 호출
+        response = openai_client.chat.completions.create(
+            model=OPENAI_MODEL,
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a helpful assistant that summarizes and analyzes text in Korean accurately and concisely.",
+                },
+                {"role": "user", "content": prompt},
+            ],
+            max_tokens=1000,
+            temperature=0.7,
+        )
 
-        full_prompt = f"""<|begin_of_text|><|start_header_id|>system<|end_header_id|>
-
-You are a helpful assistant that summarizes and analyzes text in Korean accurately and concisely.<|eot_id|><|start_header_id|>user<|end_header_id|>
-
-{prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
-"""
-
-        # 파라미터 설정
-        params = {"decoding_method": "greedy", "max_new_tokens": 1000, "min_new_tokens": 10, "repetition_penalty": 1.1}
-
-        # 텍스트 생성
-        response_text = llm_model.generate_text(prompt=full_prompt, params=params)
-        return response_text.strip()
+        return response.choices[0].message.content.strip()
 
     except Exception as e:
         print(f"LLM Error: {e}")
         return "시스템 오류로 인해 AI 요약을 생성할 수 없습니다."
-
-
-
 
 
 # 2. AI 요약(Issues) 검색 (Section 2)
@@ -64,7 +59,12 @@ def search_issues_by_keyword(db: Session, keyword: str) -> Dict[str, Any]:
     # Report 테이블 검색
     results = (
         db.query(Report)
-        .filter(or_(Report.title.ilike(search_pattern), Report.contents.ilike(search_pattern)))
+        .filter(
+            or_(
+                Report.title.ilike(search_pattern),
+                Report.contents.ilike(search_pattern),
+            )
+        )
         .order_by(Report.created_at.desc())
         .limit(5)
         .all()
@@ -110,7 +110,7 @@ def search_issues_by_keyword(db: Session, keyword: str) -> Dict[str, Any]:
         "불필요한 수식어는 빼고 팩트 위주로 전달합니다. "
         "특수 기호(*, # 등)는 모두 제거하고 평문으로 작성합니다."
     )
-    
+
     analysis_result = get_llm_summary(refined_prompt)
 
     return {"analysis": analysis_result, "issues": issues_list}
@@ -158,7 +158,9 @@ def search_hot_topics_by_keyword(db: Session, keyword: str) -> List[Dict[str, An
 
     articles = (
         db.query(News)
-        .filter(or_(News.title.ilike(search_pattern), News.contents.ilike(search_pattern)))
+        .filter(
+            or_(News.title.ilike(search_pattern), News.contents.ilike(search_pattern))
+        )
         .order_by(News.created_at.desc())
         .limit(100)
         .all()
@@ -192,7 +194,9 @@ def search_articles_by_keyword(db: Session, keyword: str) -> List[Dict[str, Any]
 
     articles = (
         db.query(News)
-        .filter(or_(News.title.ilike(search_pattern), News.contents.ilike(search_pattern)))
+        .filter(
+            or_(News.title.ilike(search_pattern), News.contents.ilike(search_pattern))
+        )
         .order_by(News.created_at.desc())  # time → created_at
         .limit(100)  # 필터링 위해 넉넉히
         .all()
@@ -202,6 +206,12 @@ def search_articles_by_keyword(db: Session, keyword: str) -> List[Dict[str, Any]
     unique_articles = deduplicate_articles(articles, limit=20)
 
     return [
-        {"news_id": art.news_id, "title": art.title, "url": art.url, "company_name": art.company_name, "view_count": 0}
+        {
+            "news_id": art.news_id,
+            "title": art.title,
+            "url": art.url,
+            "company_name": art.company_name,
+            "view_count": 0,
+        }
         for art in unique_articles
     ]
