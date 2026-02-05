@@ -1,5 +1,5 @@
 import React from 'react';
-import LikeButton from './LikeButton';
+
 import './NewsText.css';
 
 /**
@@ -65,16 +65,7 @@ const NewsText = ({ contents, onSentenceClick, articleId, likeCount = 0, isLiked
               </span>
             );
           })}
-          {isLastParagraph && (
-            <span className="news-inline-like">
-              <LikeButton
-                articleId={articleId}
-                initialLiked={isLiked}
-                initialCount={likeCount}
-                onLikeUpdate={onLikeUpdate}
-              />
-            </span>
-          )}
+
         </p>
       );
     });

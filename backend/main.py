@@ -22,7 +22,13 @@ from schemas import (
 
 # [수정] scraper.py에서 run_article_crawler 임포트
 from scraper import run_article_crawler
-from database.crud import create_news, create_user, get_user, get_user_by_login_id, get_or_create_company_by_raw_name
+from database.crud import (
+    create_news,
+    create_user,
+    get_user,
+    get_user_by_login_id,
+    get_or_create_company_by_raw_name,
+)
 from ai_processor import process_news_pipeline
 from clustering import run_issue_clustering
 from search_agent import (
@@ -43,7 +49,18 @@ def run_background_worker():
         try:
             # --- [Step 1] 국내 뉴스 수집 ---
             print("🇰🇷 국내 뉴스 수집 중...")
-            target_list = ["조선", "KBS", "MBC", "SBS", "연합", "한겨레", "중앙", "경향", "한국", "JTBC"]
+            target_list = [
+                "조선",
+                "KBS",
+                "MBC",
+                "SBS",
+                "연합",
+                "한겨레",
+                "중앙",
+                "경향",
+                "한국",
+                "JTBC",
+            ]
             # target_list = []  # 테스트용 빈 리스트
 
             # [연동] 수정된 scraper.py의 함수 호출 (db 세션 전달)
@@ -62,7 +79,9 @@ def run_background_worker():
                     category=news.get("category"),
                     img_urls=news.get("img_urls"),
                     created_at=(
-                        datetime.fromisoformat(news["time"]) if news["time"] != "시간 정보 없음" else datetime.now()
+                        datetime.fromisoformat(news["time"])
+                        if news["time"] != "시간 정보 없음"
+                        else datetime.now()
                     ),
                 )
             db.commit()
@@ -166,7 +185,7 @@ app = FastAPI(lifespan=lifespan)
 #             프론트-백 FastAPI 연결
 from fastapi.middleware.cors import CORSMiddleware
 
-#서버목록
+# 서버목록
 origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
@@ -183,7 +202,17 @@ app.add_middleware(
 )
 
 # 라우터 등록
-from routers import ai_news, news, users, auth, statistics, categories, search_logs, reactions, search
+from routers import (
+    ai_news,
+    news,
+    users,
+    auth,
+    statistics,
+    categories,
+    search_logs,
+    reactions,
+    search,
+)
 
 app.include_router(ai_news.router)
 app.include_router(news.router)
@@ -203,4 +232,3 @@ def get_db():
         yield db
     finally:
         db.close()
-

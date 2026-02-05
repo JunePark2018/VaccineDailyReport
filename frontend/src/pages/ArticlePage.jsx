@@ -12,6 +12,7 @@ import './ArticlePage.css';
 import axios from 'axios';
 import WordCloudComponent from '../components/WordCloud';
 import Timeline from '../components/Timeline';
+import LikeButton from '../components/LikeButton';
 import AI_News_Recommendation from '../components/AI_News_Recommendation';
 import AgeGenderChart from '../components/AgeGenderChart';
 import { HiOutlineSpeakerWave, HiOutlinePrinter, HiOutlineDocumentDuplicate, HiOutlineBookmark, HiMiniBookmark } from 'react-icons/hi2';
@@ -481,15 +482,21 @@ function ArticlePage() {
                   <NewsText
                     contents={article.contents}
                     onSentenceClick={handleSentenceClick}
-                    articleId={id}
-                    likeCount={likeCount}
-                    isLiked={isLiked}
-                    onLikeUpdate={(newCount, newIsLiked) => {
-                      setLikeCount(newCount);
-                      setIsLiked(newIsLiked);
-                    }}
                     fontSize={fontSize}
                   />
+
+                  {/* Centered Like Button */}
+                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: '40px', marginBottom: '20px' }}>
+                    <LikeButton
+                      articleId={id}
+                      initialLiked={isLiked}
+                      initialCount={likeCount}
+                      onLikeUpdate={(newCount, newIsLiked) => {
+                        setLikeCount(newCount);
+                        setIsLiked(newIsLiked);
+                      }}
+                    />
+                  </div>
 
                   {/* 통계 섹션: 키워드 + 연령대/성별 */}
                   <div className="statistics-section" style={{ marginTop: '60px' }}>
