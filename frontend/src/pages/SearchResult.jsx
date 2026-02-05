@@ -135,21 +135,22 @@ export default function SearchResult() {
                                                 }}>AI 요약 리포트</h2>
 
                                                 <div className="Analysis_Contents">
-                                                    {/* LLM 분석 텍스트 표시 */}
-                                                    {searchData.ai_summaries.analysis && (
-                                                        <div className="LLM_Analysis_Text" style={{
-                                                            marginBottom: '25px',
-                                                            whiteSpace: 'pre-wrap',
-                                                            lineHeight: '1.6',
-                                                            fontSize: '15px',
-                                                            color: '#333',
-                                                            background: '#f9f9f9',
-                                                            padding: '20px',
-                                                            borderRadius: '5px'
-                                                        }}>
-                                                            {searchData.ai_summaries.analysis}
-                                                        </div>
-                                                    )}
+                                                    {/* LLM 분석 텍스트 표시 (에러 메시지가 아닐 경우에만 표시) */}
+                                                    {searchData.ai_summaries.analysis &&
+                                                        !searchData.ai_summaries.analysis.includes("시스템 오류로 인해 AI 요약을 생성할 수 없습니다.") && (
+                                                            <div className="LLM_Analysis_Text" style={{
+                                                                marginBottom: '25px',
+                                                                whiteSpace: 'pre-wrap',
+                                                                lineHeight: '1.6',
+                                                                fontSize: '15px',
+                                                                color: '#333',
+                                                                background: '#f9f9f9',
+                                                                padding: '20px',
+                                                                borderRadius: '5px'
+                                                            }}>
+                                                                {searchData.ai_summaries.analysis}
+                                                            </div>
+                                                        )}
 
                                                     {/* 이슈 리스트 표시 */}
                                                     <div className="Summary_List_Wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
@@ -305,7 +306,7 @@ export default function SearchResult() {
                                                     lineHeight: '1',
                                                     color: '#000'
                                                 }}>핫토픽!</h2>
-                                                <div className="Topic_Cards" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+                                                <div className="Topic_Cards" style={{ gridTemplateColumns: '1fr' }}>
                                                     {searchData.hot_topics.slice(0, 4).map(item => (
                                                         <div
                                                             key={item.id}

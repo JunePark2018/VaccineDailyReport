@@ -1,4 +1,4 @@
-/* --- 애니메이션 설정 --- */
+/* --- ?�니메이???�정 --- */
 @keyframes fadeInUp {
     from {
         opacity: 0;
@@ -46,7 +46,7 @@
 .fade-in {
     animation: fadeInUp 0.8s ease-out forwards;
     opacity: 0;
-    /* 초기 상태 */
+    /* 초기 ?�태 */
 }
 
 .hidden {
@@ -54,7 +54,7 @@
     visibility: hidden;
 }
 
-/* --- 레이아웃 --- */
+/* --- ?�이?�웃 --- */
 .SearchResult_Main {
     display: flex;
     flex-direction: column;
@@ -93,10 +93,10 @@
 
 .SearchResult_AI {
     width: 100%;
-    /* 80% -> 100% 꽉 채우기 */
+    /* 80% -> 100% �?채우�?*/
     padding: 10px;
     background: #fff;
-    /* 외각 선 표시 */
+    /* ?�각 ???�시 */
     /* border: 1px solid #e0e0e0; */
     /* border-radius: 10px; */
     /* box-shadow: 0 2px 10px rgba(0,0,0,0.02); */
@@ -106,7 +106,7 @@
     align-items: flex-start;
 }
 
-/* 타이틀 & 스피너 */
+/* ?�?��? & ?�피??*/
 .Title_Wrapper {
     display: flex;
     align-items: center;
@@ -130,7 +130,7 @@
     animation: spin 1s linear infinite;
 }
 
-/* 컨텐츠 배치 */
+/* 컨텐�?배치 */
 .AI_Content_Wrapper {
     display: flex;
     width: 100%;
@@ -139,7 +139,7 @@
 
 .AI_Left_Section {
     flex: 1.8;
-    /* 2.5 -> 1.8 로 줄임 (요약 섹션 너비 축소) */
+    /* 2.5 -> 1.8 �?줄임 (?�약 ?�션 ?�비 축소) */
     display: flex;
     flex-direction: column;
     gap: 30px;
@@ -148,14 +148,14 @@
 
 .AI_Right_Section {
     flex: 1;
-    /* 비율 유지 (상대적으로 좁아짐) */
+    /* 비율 ?��? (?��??�으�?좁아�? */
 }
 
-/* 핫 토픽 카드 */
+/* ???�픽 카드 */
 .Topic_Cards {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    /* 가로 2개 */
+    /* 가�?2�?*/
     gap: 15px;
 }
 
@@ -169,7 +169,7 @@
     display: flex;
     flex-direction: column;
     position: relative;
-    /* [추가] 텍스트 오버레이를 위해 */
+    /* [추�?] ?�스???�버?�이�??�해 */
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -189,7 +189,7 @@
     transform: scale(1.05);
 }
 
-/* height 60% -> 100% 변경 */
+/* height 60% -> 100% 변�?*/
 
 .Card_Text {
     position: absolute;
@@ -197,17 +197,17 @@
     left: 0;
     width: 100%;
     padding: 15px;
-    /* 패딩 약간 증가 */
+    /* ?�딩 ?�간 증�? */
     box-sizing: border-box;
-    /* 패딩 포함 너비 계산 */
+    /* ?�딩 ?�함 ?�비 계산 */
     font-size: 0.9rem;
     color: #fff;
     line-height: 1.4;
     background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.6) 50%, rgba(0, 0, 0, 0) 100%);
-    /* 그라데이션 강화 */
+    /* 그라?�이??강화 */
     font-weight: 500;
 
-    /* 3줄 제한 및 스타일 */
+    /* 3�??�한 �??��???*/
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
@@ -218,14 +218,14 @@
     word-break: keep-all;
 }
 
-/* 텍스트 영역 */
+/* ?�스???�역 */
 .Analysis_Contents {
     line-height: 1.8;
     color: #444;
     margin-top: 10px;
 }
 
-/* 기사 리스트 */
+/* 기사 리스??*/
 .News_List {
     list-style: none;
     padding: 0;
@@ -249,7 +249,7 @@
     color: #4285f4;
 }
 
-/* --- 로딩(스켈레톤) 효과 --- */
+/* --- 로딩(?�켈?�톤) ?�과 --- */
 .Analysis_Big_Box {
     width: 100%;
     min-height: 450px;
@@ -279,16 +279,16 @@
     border-radius: 4px;
 }
 
-/* 섹션 구분선 */
+/* ?�션 구분??*/
 .Section_Divider {
     width: 1px;
     background-color: #e0e0e0;
     margin: 0 40px;
-    /* 기존 gap 80px을 양쪽 마진으로 분배 */
+    /* 기존 gap 80px???�쪽 마진?�로 분배 */
     align-self: stretch;
 }
 
-/* 최적화: 공통 버튼 스타일 */
+/* 최적?? 공통 버튼 ?��???*/
 .Action_Button {
     background-color: #333 !important;
     /* Dark gray for Main page concept */
@@ -308,7 +308,7 @@
     background-color: rgb(104, 104, 104) !important;
 }
 
-/* 최적화: 결과 없음 메시지 스타일 */
+/* 최적?? 결과 ?�음 메시지 ?��???*/
 .No_Result_Container {
     display: flex;
     flex-direction: column;
@@ -555,3 +555,51 @@
         font-size: 1.2rem;
     }
 }
+
+/* Updated Styles for 1-column Hot Topic */
+.Topic_Card {
+    height: 200px !important; /* Slightly bigger but not too big */
+    width: 100%;
+    margin-bottom: 20px;
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.Topic_Card .Image_Wrapper {
+    height: 100%;
+    width: 100%;
+}
+
+.Topic_Card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.Topic_Card:hover img {
+    transform: scale(1.05);
+}
+
+.Topic_Card .Card_Text {
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+    width: 100%;
+    padding: 20px 15px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #fff;
+    background: linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0.6) 50%, transparent);
+    text-align: left;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+    box-sizing: border-box;
+}
+
