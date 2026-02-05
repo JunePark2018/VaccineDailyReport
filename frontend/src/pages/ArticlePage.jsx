@@ -524,16 +524,16 @@ function ArticlePage() {
                     }}>
                       {/* 워드클라우드 */}
                       <div style={{ flex: '0 0 300px', minWidth: '280px' }}>
-                        <h3 className="section-title" style={{ marginBottom: '30px' }}>기사 핵심 키워드</h3>
+                        <h3 className="section-title" style={{ marginBottom: '20px' }}>기사 핵심 키워드</h3>
                         <div style={{
                           display: 'flex',
                           justifyContent: 'center',
                           alignItems: 'center',
                           width: '100%',
-                          height: '300px',
+                          height: '250px',
                           margin: '0 auto'
                         }}>
-                          <WordCloudComponent keywords={keywords} width={280} height={280} />
+                          <WordCloudComponent keywords={keywords} width={280} height={250} />
                         </div>
                       </div>
 

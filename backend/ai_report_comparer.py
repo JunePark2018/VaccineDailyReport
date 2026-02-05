@@ -16,11 +16,13 @@ load_dotenv(override=True)
 
 api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
-    raise RuntimeError("OPENAI_API_KEY가 설정되지 않았습니다. .env 또는 환경변수를 확인하세요.")
+    raise RuntimeError(
+        "OPENAI_API_KEY가 설정되지 않았습니다. .env 또는 환경변수를 확인하세요."
+    )
 
 client = AsyncOpenAI(api_key=api_key)
 
-MODEL = os.getenv("OPENAI_MODEL", "gpt-5.2")
+MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
 # 운영 기본값 (상황에 맞게 조정)
 TOP_N_PER_COMPANY = 3
@@ -158,9 +160,7 @@ def get_synthesized_content_by_company(
             selected_ids.append(art.get("id"))
             title = art.get("title", "")
             contents = art.get("contents", "")
-            combined += (
-                f"\n--- [기사 {idx+1} | id={art.get('id')} | url={art.get('url')} | 제목: {title}] ---\n{contents}"
-            )
+            combined += f"\n--- [기사 {idx + 1} | id={art.get('id')} | url={art.get('url')} | 제목: {title}] ---\n{contents}"
 
         synthesized[company] = {
             "combined_text": combined.strip(),
@@ -173,7 +173,9 @@ def get_synthesized_content_by_company(
 # ======================================================
 # 공통: OpenAI 호출 (재시도 + 백오프)
 # ======================================================
-async def call_llm_json(messages: List[Dict[str, str]], temperature: float = 0.2) -> Dict[str, Any]:
+async def call_llm_json(
+    messages: List[Dict[str, str]], temperature: float = 0.2
+) -> Dict[str, Any]:
     last_err = None
     for attempt in range(1, MAX_RETRIES + 1):
         try:
@@ -189,7 +191,9 @@ async def call_llm_json(messages: List[Dict[str, str]], temperature: float = 0.2
         except Exception as e:
             last_err = e
             # 간단한 지수 백오프 + 지터
-            sleep_s = BASE_BACKOFF_SECONDS * (2 ** (attempt - 1)) + random.random() * 0.25
+            sleep_s = (
+                BASE_BACKOFF_SECONDS * (2 ** (attempt - 1)) + random.random() * 0.25
+            )
             await asyncio.sleep(sleep_s)
 
     return {"error": f"LLM call failed after retries: {last_err}"}
@@ -207,7 +211,9 @@ def build_company_system_prompt(category_name: str = None) -> str:
 2. **지식 그래프(Graph Construction)**를 위한 [핵심 개체(Entity) - 입장(Stance)] 데이터를 추출하는 것이다.
 """
     # 카테고리별 추가 지침 삽입
-    category_instruction = CATEGORY_PROMPTS.get(category_name, CATEGORY_PROMPTS["default"])
+    category_instruction = CATEGORY_PROMPTS.get(
+        category_name, CATEGORY_PROMPTS["default"]
+    )
 
     return f"""{base_prompt}
 
@@ -248,7 +254,11 @@ async def analyze_company_perspective(
             {"role": "system", "content": system_prompt},
             {
                 "role": "user",
-                "content": (f"언론사: {company_name}\n" f"선정 기사 id: {selected_article_ids}\n\n" f"{combined_text}"),
+                "content": (
+                    f"언론사: {company_name}\n"
+                    f"선정 기사 id: {selected_article_ids}\n\n"
+                    f"{combined_text}"
+                ),
             },
         ]
 
@@ -297,7 +307,9 @@ async def process_all_companies_async(
 
     results = await asyncio.gather(*tasks)
     # {company: analysis}
-    return {r["company"]: r for r in results if isinstance(r, dict) and r.get("company")}
+    return {
+        r["company"]: r for r in results if isinstance(r, dict) and r.get("company")
+    }
 
 
 # ======================================================
@@ -335,13 +347,18 @@ def build_reduce_system_prompt_ui() -> str:
 """.strip()
 
 
-async def generate_final_comparison_report(company_analyses: Dict[str, Any]) -> Dict[str, Any]:
+async def generate_final_comparison_report(
+    company_analyses: Dict[str, Any],
+) -> Dict[str, Any]:
     analyses_list = list(company_analyses.values())
 
     system_prompt = build_reduce_system_prompt_ui()
     messages = [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": json.dumps({"analyses": analyses_list}, ensure_ascii=False)},
+        {
+            "role": "user",
+            "content": json.dumps({"analyses": analyses_list}, ensure_ascii=False),
+        },
     ]
 
     data = await call_llm_json(messages, temperature=0.1)

@@ -15,11 +15,13 @@ load_dotenv(override=True)
 
 api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
-    raise RuntimeError("OPENAI_API_KEY가 설정되지 않았습니다. .env 또는 환경변수를 확인하세요.")
+    raise RuntimeError(
+        "OPENAI_API_KEY가 설정되지 않았습니다. .env 또는 환경변수를 확인하세요."
+    )
 
 client = AsyncOpenAI(api_key=api_key)
 
-MODEL = os.getenv("OPENAI_MODEL", "gpt-5.2")
+MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
 # -------------------------------------------------------------------
 # [비동기 처리] 실제 뉴스 분석 로직
@@ -38,7 +40,9 @@ from ai_graph_comparer import compare_articles_with_graph
 from keyword_extractor import KeywordExtractor
 
 
-async def process_single_issue(issue: Report, kw_extractor: KeywordExtractor, db: Session):
+async def process_single_issue(
+    issue: Report, kw_extractor: KeywordExtractor, db: Session
+):
     """단일 이슈 처리 (비동기)"""
     try:
         # 2. 관련 기사 가져오기
@@ -48,7 +52,9 @@ async def process_single_issue(issue: Report, kw_extractor: KeywordExtractor, db
             return
 
         articles = cluster.news
-        print(f"   -> [Processing] 이슈 ID {issue.report_id}: '{issue.title}' (기사 {len(articles)}개)")
+        print(
+            f"   -> [Processing] 이슈 ID {issue.report_id}: '{issue.title}' (기사 {len(articles)}개)"
+        )
 
         # 변환: SQLAlchemy Object -> List[Dict]
         articles_data = []
@@ -70,9 +76,13 @@ async def process_single_issue(issue: Report, kw_extractor: KeywordExtractor, db
             summary_result = generate_balanced_article(
                 model_name=MODEL, cluster_topic=issue.title, articles=articles_data
             )
-            issue.title = summary_result.get("title", issue.title)  # AI가 정한 제목으로 업데이트
+            issue.title = summary_result.get(
+                "title", issue.title
+            )  # AI가 정한 제목으로 업데이트
             issue.contents = summary_result.get("contents", "")
-            issue.search_keyword = summary_result.get("search_keyword", "")  # 외신 검색어 저장
+            issue.search_keyword = summary_result.get(
+                "search_keyword", ""
+            )  # 외신 검색어 저장
 
             if issue.search_keyword:
                 issue.global_search_status = "PENDING"
@@ -134,7 +144,11 @@ async def process_news_async_internal():
 
     try:
         # 1. 처리되지 않은(Report.contents가 비어있는) 이슈 조회
-        targets = db.query(Report).filter((Report.contents == None) | (Report.contents == "")).all()
+        targets = (
+            db.query(Report)
+            .filter((Report.contents == None) | (Report.contents == ""))
+            .all()
+        )
 
         print(f"🧠 [AI] 분석 대기 중인 이슈: {len(targets)}건")
         if not targets:

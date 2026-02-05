@@ -10,7 +10,7 @@ load_dotenv(override=True)
 
 api_key = os.getenv("OPENAI_API_KEY")
 client = AsyncOpenAI(api_key=api_key) if api_key else None
-MODEL = os.getenv("OPENAI_MODEL", "gpt-5.2")
+MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
 # ======================================================================================
 # Core Logic: GraphRAG-Lite Comparator
@@ -39,7 +39,12 @@ async def compare_articles_with_graph(articles: List[Dict[str, Any]]) -> Dict[st
         arts.sort(key=lambda x: len(x.get("contents", "")), reverse=True)
         top_arts = arts[:2]  # Pick Top 2
 
-        combined_text = "\n".join([f"[{i+1}] {a.get('title')}\n{a.get('contents')}" for i, a in enumerate(top_arts)])
+        combined_text = "\n".join(
+            [
+                f"[{i + 1}] {a.get('title')}\n{a.get('contents')}"
+                for i, a in enumerate(top_arts)
+            ]
+        )
         selected_texts[comp] = combined_text
 
     # 2. Parallel Extraction
@@ -61,7 +66,9 @@ async def compare_articles_with_graph(articles: List[Dict[str, Any]]) -> Dict[st
     entity_map = await normalize_entities(list(all_entities))
 
     # Apply normalization
-    normalized_graph = defaultdict(list)  # { "CanonEntity": [ {company, predicate, original_entity} ] }
+    normalized_graph = defaultdict(
+        list
+    )  # { "CanonEntity": [ {company, predicate, original_entity} ] }
 
     for comp, trips in all_triples_map.items():
         for t in trips:
@@ -102,7 +109,10 @@ async def extract_triples(company: str, text: str) -> Dict[str, Any]:
     try:
         resp = await client.chat.completions.create(
             model=MODEL,
-            messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
             response_format={"type": "json_object"},
             temperature=0.0,
         )
@@ -140,7 +150,10 @@ async def normalize_entities(entities: List[str]) -> Dict[str, str]:
     try:
         resp = await client.chat.completions.create(
             model=MODEL,
-            messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
             response_format={"type": "json_object"},
             temperature=0.0,
         )
@@ -153,7 +166,9 @@ async def normalize_entities(entities: List[str]) -> Dict[str, str]:
 # ======================================================================================
 # Step 4: Reporting
 # ======================================================================================
-async def generate_graph_report(graph: Dict[str, List[Dict]], companies: List[str]) -> Dict[str, Any]:
+async def generate_graph_report(
+    graph: Dict[str, List[Dict]], companies: List[str]
+) -> Dict[str, Any]:
     # Select Top 3 most discussed entities (keys with most list items)
     top_entities = sorted(graph.keys(), key=lambda k: len(graph[k]), reverse=True)[:5]
 
@@ -164,7 +179,9 @@ async def generate_graph_report(graph: Dict[str, List[Dict]], companies: List[st
         # Group by press to show contrast
         press_view = defaultdict(list)
         for edge in graph[ent]:
-            press_view[edge["company"]].append(f"{edge['predicate']} -> {edge['object']} ({edge['sentiment']})")
+            press_view[edge["company"]].append(
+                f"{edge['predicate']} -> {edge['object']} ({edge['sentiment']})"
+            )
 
         for press, views in press_view.items():
             graph_summary += f"  - {press}: {'; '.join(views)}\n"
@@ -178,7 +195,7 @@ async def generate_graph_report(graph: Dict[str, List[Dict]], companies: List[st
     )
 
     user_prompt = f"""
-    Media Outlets Involved: {', '.join(companies)}
+    Media Outlets Involved: {", ".join(companies)}
     
     Key Entity Analysis (Graph Data):
     {graph_summary}
@@ -199,7 +216,10 @@ async def generate_graph_report(graph: Dict[str, List[Dict]], companies: List[st
     try:
         resp = await client.chat.completions.create(
             model=MODEL,
-            messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
             response_format={"type": "json_object"},
             temperature=0.2,
         )

@@ -93,12 +93,12 @@
 }
 
 .ArticlePage .main-content .article-comparer .section-title {
-    font-size: 1.4rem;
+    font-size: 1.25rem;
     font-weight: 700;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
     color: #111;
-    border-left: 5px solid #222;
-    padding-left: 12px;
+    border-left: 4px solid #333;
+    padding-left: 10px;
 }
 
 .ArticlePage .main-content .article-comparer .comparison-list {
