@@ -218,8 +218,23 @@ export const Main = () => {
     let highlights = [];
     if (bullets.length > 0) {
       // 1. Map & Filter strict matches only
-      const parsedBullets = bullets.map(text => {
+      // Build a set of known media names from relatedNews for fuzzy matching
+      const mediaCandidates = [...new Set(relatedNews.map(n => n.company_name).filter(Boolean))];
+
+      const parsedBullets = bullets.map(item => {
+        // Handle both string and object items (backward compatibility)
+        let text = "";
+        if (typeof item === 'string') {
+          text = item;
+        } else if (item && item.analysis) {
+          text = item.analysis;
+        } else {
+          return null;
+        }
+
         const cleanText = text.replace(/^- /, '');
+
+        // 1. Try strict regex extraction
         let match = cleanText.match(/^\[(.*?)\]\s*(.*)/);
         if (!match) match = cleanText.match(/^([^:]+):\s*(.*)/);
         if (!match) match = cleanText.match(/^([^-]+)\s-\s*(.*)/);
@@ -228,7 +243,20 @@ export const Main = () => {
           let kw = match[1].trim().replace(/(은|는)$/, '');
           return { keyword: `"${kw}"`, content: match[2].trim() };
         }
-        return null;
+
+        // 2. Try fuzzy matching with known media names
+        for (const media of mediaCandidates) {
+          if (cleanText.includes(media)) {
+            return { keyword: `"${media}"`, content: cleanText };
+          }
+        }
+
+        // 3. Fallback: Use the text as content with a generic keyword or try to guess
+        // To ensure we show the bullet content instead of article body fallback, strictly return something.
+        // If really no match, allow it to pass with a generic tag or just the text.
+        // Let's use a generic '비교 포인트' if no media is found, but it's better than article body.
+        return { keyword: "분석", content: cleanText };
+
       }).filter(Boolean);
 
       // 2. Deduplicate by keyword (media name)
