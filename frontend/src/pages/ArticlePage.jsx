@@ -56,7 +56,10 @@ function ArticlePage() {
   // Action Button States (Unified Popup State)
   // 'tts', 'font', or null (Share removed)
   const [activePopup, setActivePopup] = useState(null);
-  const [fontSize, setFontSize] = useState(3);
+  const [fontSize, setFontSize] = useState(() => {
+    const saved = localStorage.getItem('articleFontSize');
+    return saved ? parseInt(saved, 10) : 3;
+  });
 
   // TTS Specific States
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -111,12 +114,12 @@ function ArticlePage() {
   };
 
   const handleCopy = async () => {
-    if (!article.contents) return;
     try {
-      await navigator.clipboard.writeText(article.contents);
-      alert("기사 내용이 클립보드에 복사되었습니다.");
+      const currentUrl = window.location.href;
+      await navigator.clipboard.writeText(currentUrl);
+      alert("기사 링크가 클립보드에 복사되었습니다.");
     } catch (err) {
-      console.error('Failed to copy text: ', err);
+      console.error('Failed to copy link: ', err);
       alert("복사에 실패했습니다.");
     }
   };
@@ -185,6 +188,7 @@ function ArticlePage() {
 
   const changeFontSize = (level) => {
     setFontSize(level);
+    localStorage.setItem('articleFontSize', level.toString());
   };
 
   // Evidence Fetching Removed
@@ -433,7 +437,7 @@ function ArticlePage() {
                         </div>
 
                         {/* Copy Button */}
-                        <button className="action-btn" onClick={handleCopy} title="원문 복사 (기사 내용)">
+                        <button className="action-btn" onClick={handleCopy} title="기사 링크 복사">
                           <HiOutlineDocumentDuplicate />
                         </button>
 
@@ -452,7 +456,7 @@ function ArticlePage() {
                     <hr className="article-head-divider" /> {/* Keeping HR invisble via CSS or actually keep it? CSS hides it. */}
 
                     <div className="article-comparer" style={{ marginTop: '10px', marginBottom: '40px', borderTop: 'none' }}>
-                      <h3 className="section-title">비교분석</h3>
+                      <h3 className="section-title" style={{ textAlign: 'left' }}>비교분석</h3>
                       <div className={`comparison-container ${isExpanded ? 'expanded' : 'collapsed'}`}>
                         <ul className="comparison-list">
                           {article?.analysis_result?.media_comparison_bullets?.map((item, idx) => {
@@ -515,7 +519,7 @@ function ArticlePage() {
                   </div>
 
                   {/* 통계 섹션: 키워드 + 연령대/성별 */}
-                  <div className="statistics-section" style={{ marginTop: '60px' }}>
+                  <div className="statistics-section" style={{ marginTop: '60px', paddingLeft: '30px', paddingRight: '30px' }}>
                     <div style={{
                       display: 'flex',
                       gap: '40px',
@@ -524,7 +528,7 @@ function ArticlePage() {
                     }}>
                       {/* 워드클라우드 */}
                       <div style={{ flex: '0 0 300px', minWidth: '280px' }}>
-                        <h3 className="section-title" style={{ marginBottom: '20px' }}>기사 핵심 키워드</h3>
+                        <h3 className="section-title" style={{ marginBottom: '20px', borderLeft: '4px solid #333', paddingLeft: '10px', textAlign: 'left' }}>기사 핵심 키워드</h3>
                         <div style={{
                           display: 'flex',
                           justifyContent: 'center',
@@ -546,6 +550,7 @@ function ArticlePage() {
                       </div>
                     </div>
                   </div>
+
 
                   <div className="timeline-section" style={{ marginTop: '40px', padding: '20px' }}>
                     <Timeline currentArticleId={id} />

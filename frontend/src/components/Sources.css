@@ -17,7 +17,7 @@
 
 /* "참조된 원본 기사" 타이틀 스타일 */
 .Sources .sources-header {
-  font-size: 1.4rem;
+  font-size: 1.25rem;
   /* 너무 크지 않게 조정 */
   font-weight: 800;
   margin-bottom: 20px;
