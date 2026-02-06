@@ -19,7 +19,7 @@ if not api_key:
 
 client = AsyncOpenAI(api_key=api_key)
 
-MODEL = os.getenv("OPENAI_MODEL", "gpt-5.2")
+MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
 # -------------------------------------------------------------------
 # [비동기 처리] 실제 뉴스 분석 로직

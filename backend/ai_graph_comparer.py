@@ -10,7 +10,7 @@ load_dotenv(override=True)
 
 api_key = os.getenv("OPENAI_API_KEY")
 client = AsyncOpenAI(api_key=api_key) if api_key else None
-MODEL = os.getenv("OPENAI_MODEL", "gpt-5.2")
+MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
 # ======================================================================================
 # Core Logic: GraphRAG-Lite Comparator

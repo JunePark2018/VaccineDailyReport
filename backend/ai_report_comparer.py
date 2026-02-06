@@ -20,7 +20,7 @@ if not api_key:
 
 client = AsyncOpenAI(api_key=api_key)
 
-MODEL = os.getenv("OPENAI_MODEL", "gpt-5.2")
+MODEL = os.getenv("5.2", "gpt-4o-mini")
 
 # 운영 기본값 (상황에 맞게 조정)
 TOP_N_PER_COMPANY = 3

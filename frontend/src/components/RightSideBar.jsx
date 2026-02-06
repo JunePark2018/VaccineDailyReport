@@ -19,7 +19,7 @@ export default function RightSideBar({ isOpen, onClose, searchKeyword, clusterId
           // 1. 문장이 선택된 경우 -> /citation (유사도 정렬)
           if (searchKeyword) {
             console.log(`[RightSideBar] Fetching related news for sentence: "${searchKeyword}"`);
-            const response = await axios.post(`http://localhost:8000/reports/citation`, {
+            const response = await axios.post(`${API_BASE_URL}/reports/citation`, {
               cluster_id: clusterId,
               target_sentence: searchKeyword
             });
