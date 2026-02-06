@@ -148,22 +148,14 @@ const LivingCulturePage = () => {
             <React.Fragment key={blockIndex}>
 
 
-                <div style={{ padding: isMobile ? '0 20px' : '0 40px' }}>
+                <div className="content-wrapper">
                     {/* Main Article Section */}
-                    <section className="main-article-section" onClick={() => navigate(`/article/${mainData.id}`)} style={{ marginBottom: isMobile ? '30px' : '50px', position: 'relative', cursor: 'pointer' }}>
-                        <div className="main-image" style={{ width: '100%', aspectRatio: isMobile ? '1.5/1' : '2.5/1', position: 'relative', overflow: 'hidden', borderRadius: '4px' }}>
-                            <img src={mainData.image} alt={mainData.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
-                            <div style={{
-                                position: 'absolute',
-                                bottom: 0,
-                                left: 0,
-                                right: 0,
-                                background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
-                                padding: isMobile ? '20px' : '30px',
-                                textAlign: 'left'
-                            }}>
-                                <h2 style={{ fontSize: isMobile ? '24px' : '32px', fontWeight: 'bold', color: '#fff', margin: '0 0 10px 0' }}>{mainData.title}</h2>
-                                {!isMobile && <p style={{ fontSize: '16px', color: '#ddd', margin: 0, maxWidth: '80%' }}>{mainData.description}</p>}
+                    <section className="main-article-conn" onClick={() => navigate(`/article/${mainData.id}`)}>
+                        <div className="main-image-container">
+                            <img src={mainData.image} alt={mainData.title} className="main-image" onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
+                            <div className="main-overlay">
+                                <h2>{mainData.title}</h2>
+                                {!isMobile && <p>{mainData.description}</p>}
                             </div>
                         </div>
                     </section>
@@ -172,47 +164,23 @@ const LivingCulturePage = () => {
                     {/* Grid Section (3 items, Vertical Portrait, Title Overlay) */}
                     {grid.length > 0 && (
                         <>
-                            <section className="bottom-grid-section" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? '20px' : '40px', marginBottom: '50px', textAlign: 'left' }}>
+                            <section className="grid-section">
                                 {grid.map((news, idx) => (
-                                    <div key={`${news.id}-${idx}`} className="grid-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', position: 'relative', overflow: 'hidden', borderRadius: '4px' }}>
+                                    <div key={`${news.id}-${idx}`} className="grid-item" onClick={() => navigate(`/article/${news.id}`)}>
                                         {/* Image Container (Vertical Aspect Ratio 3:4) */}
-                                        <div className="grid-image" style={{ width: '100%', aspectRatio: isMobile ? '2/1' : '3/4', position: 'relative', border: 'none' }}>
-                                            <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
+                                        <div className="grid-image-container">
+                                            <img src={news.image} alt={news.title} className="grid-image" onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
 
                                             {/* Gradient Overlay */}
-                                            <div style={{
-                                                position: 'absolute',
-                                                bottom: 0,
-                                                left: 0,
-                                                width: '100%',
-                                                height: '60%',
-                                                background: 'linear-gradient(to top, #000 0%, rgba(0,0,0,0) 100%)',
-                                                pointerEvents: 'none',
-                                                zIndex: 3
-                                            }}></div>
+                                            <div className="grid-gradient"></div>
 
                                             {/* Title Overlay */}
-                                            <div style={{
-                                                position: 'absolute',
-                                                bottom: isMobile ? '15px' : '20px',
-                                                left: isMobile ? '15px' : '20px',
-                                                right: isMobile ? '15px' : '20px',
-                                                zIndex: 4,
-                                                textAlign: 'center'
-                                            }}>
-                                                <h3 style={{
-                                                    fontSize: isMobile ? '20px' : '30px',
-                                                    fontWeight: 'bold',
-                                                    color: '#fff',
-                                                    margin: 0,
-                                                    lineHeight: '1.4',
-                                                    textShadow: '0px 1px 3px rgba(0,0,0,0.5)'
-                                                }}>
+                                            <div className="grid-title-overlay">
+                                                <h3>
                                                     {news.title}
                                                 </h3>
                                             </div>
                                         </div>
-                                        {/* Description Hidden */}
                                     </div>
                                 ))}
                             </section>
@@ -224,44 +192,30 @@ const LivingCulturePage = () => {
                 {feed.length > 0 && (
                     <>
                         <div className="section-divider"></div>
-                        <section className="bottom-feed-section" style={{ display: 'flex', flexDirection: 'column', gap: '30px', textAlign: 'left', marginTop: '30px', padding: '0 120px' }}>
+                        <section className="feed-section">
                             {feed.slice(0, 5).map((news, i) => (
-                                <div key={i} className="feed-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px', gap: '20px' }}>
+                                <div key={i} className="feed-item" onClick={() => navigate(`/article/${news.id}`)}>
 
                                     {/* Left Container: Like + Text */}
-                                    <div style={{ display: 'flex', flex: 1, paddingRight: '0px', width: '100%' }}>
+                                    <div className="feed-left">
                                         {/* Like Button (Display Only) */}
-                                        <div className="like-icon" style={{
-                                            marginRight: '50px',
-                                            paddingRight: '15px',
-                                            borderRight: '1px solid #ddd',
-                                            marginTop: '5px',
-                                            display: 'flex',
-                                            flexDirection: 'row', // Horizontal
-                                            alignItems: 'center',
-                                            justifyContent: 'center', // Center content in fixed width
-                                            color: '#999',
-                                            minWidth: '100px', // Reserve space for 6 digits
-                                            gap: '8px' // Gap between icon and number
-                                        }}>
+                                        <div className="like-icon">
                                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                 <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 0 0 1-2-2v-7a2 0 0 1 2-2h3" />
                                             </svg>
-                                            <span style={{ fontSize: '14px', fontWeight: '500' }}>{120 + (news.id || 0)}</span>
+                                            <span>{120 + (news.id || 0)}</span>
                                         </div>
 
                                         {/* Text Info */}
                                         <div className="feed-info">
-                                            <h3 style={{ fontSize: '20px', fontWeight: 'bold', margin: '0 0 12px 0', lineHeight: '1.3' }}>{news.title}</h3>
-                                            <p style={{ fontSize: '15px', color: '#666', margin: 0, lineHeight: '1.6', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                                                {news.content}
-                                            </p>
+                                            <h3>{news.title}</h3>
+                                            <p>{news.content}</p>
                                         </div>
                                     </div>
 
                                     {/* Image Right (Reduced Height: aspect-ratio 1.8/1) */}
-                                    <div className="feed-image" style={{ width: '312px', aspectRatio: '1.8/1', flexShrink: 0, overflow: 'hidden', borderRadius: '4px' }}>
-                                        <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
+                                    <div className="feed-image-container">
+                                        <img src={news.image} alt={news.title} className="feed-image" onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                                     </div>
                                 </div>
                             ))}
@@ -269,7 +223,7 @@ const LivingCulturePage = () => {
 
                         {/* Pagination Numbers (Box Style) */}
                         {totalFeedPages > 1 && (
-                            <div style={{ textAlign: 'center', marginTop: '40px', marginBottom: '100px', display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                            <div className="pagination-container">
                                 {Array.from({ length: totalFeedPages }, (_, i) => i + 1).map((pageNum) => (
                                     <button
                                         key={pageNum}
@@ -277,20 +231,7 @@ const LivingCulturePage = () => {
                                             e.stopPropagation();
                                             setFeedPage(pageNum);
                                         }}
-                                        style={{
-                                            width: '36px',
-                                            height: '36px',
-                                            display: 'flex',
-                                            justifyContent: 'center',
-                                            alignItems: 'center',
-                                            fontSize: '14px',
-                                            border: feedPage === pageNum ? '1px solid #333' : '1px solid #eee',
-                                            backgroundColor: feedPage === pageNum ? '#333' : '#fff',
-                                            color: feedPage === pageNum ? '#fff' : '#666',
-                                            cursor: 'pointer',
-                                            fontWeight: feedPage === pageNum ? 'bold' : 'normal',
-                                            borderRadius: '0px'
-                                        }}
+                                        className={`pagination-btn ${feedPage === pageNum ? 'active' : ''}`}
                                     >
                                         {pageNum}
                                     </button>
@@ -314,7 +255,7 @@ const LivingCulturePage = () => {
     }
 
     return (
-        <div className="category-page">
+        <div className="living-culture-page">
             <Header
                 leftChild={null}
                 midChild={<Logo />}

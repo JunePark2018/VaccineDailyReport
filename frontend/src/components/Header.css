@@ -64,6 +64,7 @@
 .Header-Container .header-top-content {
     width: 100%;
     max-width: 1320px;
+    /* 1380px -> 1320px 복구 */
     display: flex;
     justify-content: space-between;
     padding: 0 20px;
@@ -87,6 +88,7 @@
 .Header-Container .Header-Main .header-main-content {
     width: 100%;
     max-width: 1320px;
+    /* 1380px -> 1320px 복구 */
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -126,9 +128,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border-bottom: 1px solid #ddd;
+    border-bottom: none;
+    /* 전체 너비 보더 제거 (초록색 부분 삭제) */
     padding: 12px 0 0 0;
-    /* Removed bottom padding */
 }
 
 /* Category List Container */
@@ -138,14 +140,15 @@
     justify-content: center;
     align-items: center;
     gap: 0px;
-    /* Removed gap to let items fill space */
     margin-top: 15px;
     margin-bottom: 0px;
-    /* Removed bottom margin */
-    /* Reduced from 20px */
     width: 100%;
     max-width: 1320px;
+    /* 1380px -> 1320px 복구 */
     overflow-x: auto;
+    border: none;
+    /* 보더 제거 (사용자 요청 복구) */
+    /* 하단 개방 */
 }
 
 /* Individual Category Item */

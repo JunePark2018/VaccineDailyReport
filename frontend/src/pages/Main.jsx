@@ -197,10 +197,9 @@ export const Main = () => {
     }).slice(0, limit);
   };
 
-  const politicsArticles = getUniqueArticles('정치', 3);
+  const politicsArticles = getUniqueArticles('정치', 6);
   const economyArticles = getUniqueArticles('경제', 3);
-  const societyArticles = getUniqueArticles('사회', 3);
-  const cultureArticles = getUniqueArticles('생활/문화', 2);
+  const societyArticles = getUniqueArticles('사회', 1);
   const scienceArticles = getUniqueArticles('IT/과학', 1);
 
   // Function to render the main content block (Slideshow)
@@ -255,8 +254,8 @@ export const Main = () => {
 
     return (
       <React.Fragment>
-        <h2 className="cat-box-header" style={{ marginBottom: '20px' }}>AI 뉴스</h2>
-        <section className="main-article-section" style={{ marginBottom: '30px' }}>
+        <h2 className="cat-box-header ai-news-header">AI 뉴스</h2>
+        <section className="main-article-section">
           <div className="article-info-side">
             {slideArticles.map((art, idx) => {
               const isActive = idx === currentSlideIndex;
@@ -340,108 +339,105 @@ export const Main = () => {
     );
   };
 
-  const renderPoliticsEconomy = (isSidebar = false, hideBorder = false) => {
-    // Uses pre-calculated lists
-    const politics = politicsArticles;
-    const economy = economyArticles;
-
-    const renderBox = (title, articles, link) => (
-      <div className="cat-box-column">
-        <h2 className="cat-box-header" onClick={() => navigate(link)} style={{ cursor: 'pointer' }}>{title}</h2>
-        {articles.length > 0 && (
-          <div className="cat-box-content">
-            <div className="cat-box-main">
-              <div className="cat-box-img" onClick={() => navigate(`/article/${articles[0].id}`)} style={{ cursor: 'pointer', aspectRatio: '12/9' }}>
-                <img src={imageMap[articles[0].image] || articles[0].image} alt={articles[0].title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
+  const renderPoliticsEconomy = () => {
+    const renderPoliticsSection = () => (
+      <div className="politics-section">
+        <h2 className="cat-box-header" onClick={() => navigate('/politics')}>정치</h2>
+        <div className="politics-grid">
+          {politicsArticles.map((art, i) => (
+            <div key={i} className="politics-card" onClick={() => navigate(`/article/${art.id}`)}>
+              <div className="politics-img">
+                <img
+                  src={imageMap[art.image] || art.image}
+                  alt={art.title}
+                  onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }}
+                  onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }}
+                />
               </div>
-              <div className="cat-box-info">
-                <div className="cat-box-text-group" onClick={() => navigate(`/article/${articles[0].id}`)} style={{ cursor: 'pointer' }}>
-                  <h3 className="cat-box-title">{articles[0].title}</h3>
-                  <p className="cat-box-desc">{articles[0].short_text}</p>
-                </div>
-                {articles.length > 1 && (
-                  <div className="cat-box-list">
-                    {articles.slice(1).map((art, i) => (
-                      <div key={i} className="cat-box-list-item" onClick={(e) => { e.stopPropagation(); navigate(`/article/${art.id}`); }} style={{ cursor: 'pointer' }}>
-                        <h3>"{art.title}"</h3>
-                      </div>
-                    ))}
-                  </div>
-                )}
+              <div className="politics-info">
+                <h3 className="politics-title">{art.title}</h3>
+                <p className="politics-desc">{art.short_text}</p>
               </div>
             </div>
-          </div>
-        )}
+          ))}
+        </div>
       </div>
     );
 
-    return (
-      <section className="category-detailed-section" style={{ marginTop: 0, borderTop: (isSidebar || hideBorder) ? 'none' : '1px solid #eee' }}>
-        <div className="cat-split-row" style={{ flexDirection: isSidebar ? 'column' : 'row', gap: '90px' }}>
-          {renderBox('정치', politics, '/politics')}
-          {renderBox('경제', economy, '/economics')}
-        </div>
-      </section>
-    );
-  };
-
-  const renderSocietySection = () => {
-    const society = societyArticles;
-    if (society.length === 0) return null;
-
-    return (
-      <section className="category-detailed-section" style={{ borderTop: 'none', marginTop: '25px' }}>
-        <div className="cat-global-row">
-          <h2 className="cat-box-header" onClick={() => navigate('/society')} style={{ cursor: 'pointer' }}>사회</h2>
-          <div className="global-grid society-mobile-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-            {society.map((art, i) => (
-              <div key={i} className="global-card" onClick={() => navigate(`/article/${art.id}`)} style={{ cursor: 'pointer' }}>
-                <div className="global-img">
-                  <img src={imageMap[art.image] || art.image} alt={art.title} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
-                </div>
-                <h4 style={{ fontSize: '16px' }}>{art.title}</h4>
+    const renderEconomySection = () => (
+      <div className="economy-section">
+        <h2 className="cat-box-header" onClick={() => navigate('/economics')}>경제</h2>
+        <div className="economy-column-list">
+          {economyArticles.map((art, i) => (
+            <div key={i} className="economy-card" onClick={() => navigate(`/article/${art.id}`)}>
+              <div className="economy-img">
+                <img
+                  src={imageMap[art.image] || art.image}
+                  alt={art.title}
+                  onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }}
+                  onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }}
+                />
               </div>
-            ))}
+              <h3 className="economy-title">{art.title}</h3>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+
+    const renderSocietyLargeSection = () => {
+      const art = societyArticles[0];
+      if (!art) return null;
+      return (
+        <div className="society-large-section">
+          <h2 className="cat-box-header" onClick={() => navigate('/society')}>사회</h2>
+          <div className="society-large-card" onClick={() => navigate(`/article/${art.id}`)}>
+            <div className="society-large-img">
+              <img
+                src={imageMap[art.image] || art.image}
+                alt={art.title}
+                onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }}
+                onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }}
+              />
+            </div>
+            <div className="society-large-info">
+              <h3 className="society-large-title">{art.title}</h3>
+              <p className="society-large-desc">{art.short_text}</p>
+            </div>
           </div>
         </div>
-      </section>
-    );
-  };
-
-  const renderLivingCultureSection = () => {
-    const culture = cultureArticles;
-    if (culture.length === 0) return null;
+      );
+    };
 
     return (
-      <section className="category-detailed-section" style={{ borderTop: 'none' }}>
-        <div className="cat-global-row">
-          <h2 className="cat-box-header" onClick={() => navigate('/culture')} style={{ cursor: 'pointer' }}>생활/문화</h2>
-          <div className="global-grid culture-mobile-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
-            {culture.map((art, i) => (
-              <div key={i} className="global-card" onClick={() => navigate(`/article/${art.id}`)} style={{ cursor: 'pointer' }}>
-                <div className="global-img">
-                  <img src={imageMap[art.image] || art.image} alt={art.title} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
-                </div>
-                <h4 style={{ fontSize: '18px' }}>{art.title}</h4>
-              </div>
-            ))}
-          </div>
+      <section className="complex-grid-section">
+        <div className="complex-left-col">
+          {renderPoliticsSection()}
+          <div className="complex-inner-divider"></div>
+          {renderSocietyLargeSection()}
+          <div className="complex-inner-divider"></div>
+          {renderScienceSection()}
+        </div>
+        <div className="complex-right-col">
+          {renderEconomySection()}
         </div>
       </section>
     );
   };
+
+
 
   const renderScienceSection = () => {
     const science = scienceArticles;
     if (science.length === 0) return null;
 
     return (
-      <section className="category-detailed-section" style={{ borderTop: 'none' }}>
+      <section className="category-detailed-section science-section">
         <div className="cat-global-row">
-          <h2 className="cat-box-header" onClick={() => navigate('/science')} style={{ cursor: 'pointer' }}>IT/과학</h2>
-          <div className="global-grid" style={{ gridTemplateColumns: '1fr' }}>
+          <h2 className="cat-box-header" onClick={() => navigate('/science')}>IT/과학</h2>
+          <div className="global-grid science-grid">
             {science.map((art, i) => (
-              <div key={i} className="global-card science-card" onClick={() => navigate(`/article/${art.id}`)} style={{ cursor: 'pointer' }}>
+              <div key={i} className="global-card science-card" onClick={() => navigate(`/article/${art.id}`)}>
                 <div className="global-img">
                   <img src={imageMap[art.image] || art.image} alt={art.title} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                 </div>
@@ -466,8 +462,8 @@ export const Main = () => {
         leftChild={null}
         midChild={<Logo />}
         rightChild={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', justifyContent: 'flex-end', width: 'auto' }}>
-            <div style={{ position: 'relative' }}>
+          <div className="header-right-wrapper">
+            <div className="search-input-wrapper">
               <Searchbar className="always-open rounded-search" />
             </div>
             <UserMenu className="rounded-user-menu" />
@@ -480,9 +476,9 @@ export const Main = () => {
 
       <main className="category-content">
         {loading ? (
-          <div className="main-skeleton-container" style={{ padding: '20px 0' }}>
+          <div className="main-skeleton-container skeleton-wrapper">
             <SkeletonNews type="main" />
-            <div style={{ display: 'flex', gap: '40px', marginTop: '40px' }}>
+            <div className="skeleton-grid-row">
               <div style={{ flex: 1 }}><SkeletonNews type="grid" /></div>
               <div style={{ flex: 1 }}><SkeletonNews type="grid" /></div>
             </div>
@@ -490,18 +486,12 @@ export const Main = () => {
         ) : (
           <>
             <div className="main-content-split">
-              <div className="main-full-col" style={{ width: '100%', textAlign: 'left' }}>
+              <div className="main-full-col">
                 {displayArticles.length > 0 ? (
                   <React.Fragment>
-                    {/* No mapping needed, just render once since we used 0-3 fixed */}
                     {renderMainContent()}
-
-                    <div className="full-width-divider"></div>
-
-                    <div className="pol-eco-top5-row" style={{ display: 'flex', gap: '0', marginTop: '40px' }}>
-                      <div style={{ flex: 1, borderRight: 'none', paddingRight: '0' }}>
-                        {renderPoliticsEconomy(false, true)}
-                      </div>
+                    <div className="complex-layout-wrapper">
+                      {renderPoliticsEconomy()}
                     </div>
                   </React.Fragment>
                 ) : (
@@ -511,29 +501,10 @@ export const Main = () => {
                 )}
               </div>
             </div>
-
-            {societyArticles.length > 0 && (
-              <>
-                <div className="full-width-divider"></div>
-                {renderSocietySection()}
-              </>
-            )}
-
-            {cultureArticles.length > 0 && (
-              <>
-                <div className="full-width-divider"></div>
-                {renderLivingCultureSection()}
-              </>
-            )}
-
             <div className="full-width-divider mobile-only-divider"></div>
-
-
-
-            {renderScienceSection()}
           </>
         )}
-      </main>
+      </main >
     </div >
   );
 };

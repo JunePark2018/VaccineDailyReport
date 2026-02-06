@@ -1,19 +1,31 @@
-.category-page {
+.living-culture-page {
     width: 100%;
 }
 
-.category-page .category-content {
+.living-culture-page .category-content {
     max-width: 1320px;
     margin: 0 auto;
     padding: 40px 20px;
 }
 
-.category-page .category-header {
+
+.living-culture-page .category-header {
     margin-bottom: 70px;
     border-bottom: 2px solid #333;
     padding-bottom: 15px;
     text-align: left;
 }
+
+.living-culture-page .section-divider {
+    width: calc(100% + 40px);
+    margin-left: -20px;
+    margin-right: -20px;
+    height: 1px;
+    background-color: #ccc;
+    margin-top: 40px;
+    margin-bottom: 40px;
+}
+
 
 .category-page .category-header h1 {
     font-size: px;
@@ -86,119 +98,238 @@
     left: -25%;
 }
 
-.category-page .analysis-x::before {
-    transform: rotate(26deg);
-}
 
-.category-page .analysis-x::after {
-    transform: rotate(-26deg);
-}
 
-.category-page .analysis-text {
+/* --- Refactored Styles for LivingCulturePage --- */
+
+
+.living-culture-page .main-article-conn {
+    margin-bottom: 50px;
     position: relative;
-    z-index: 1;
-    font-size: 24px;
-    background: white;
-    padding: 5px 15px;
+    cursor: pointer;
 }
 
-.category-page .article-image-center {
-    flex: 1.5;
+.living-culture-page .main-image-container {
+    width: 100%;
+    aspect-ratio: 2.5/1;
     position: relative;
-    border: none;
-    aspect-ratio: 1 / 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     overflow: hidden;
-    border-radius: 0px;
+    border-radius: 4px;
 }
 
-.category-page .article-image-center::before,
-.category-page .article-image-center::after {
-    content: '';
-    position: absolute;
-    width: 150%;
-    height: 1px;
-    background: #ccc;
-    z-index: 0;
-}
-
-.category-page .article-image-center::before {
-    transform: rotate(45deg);
-}
-
-.category-page .article-image-center::after {
-    transform: rotate(-45deg);
-}
-
-.category-page .article-image-center img {
+.living-culture-page .main-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    position: relative;
-    z-index: 2;
 }
 
-.category-page .main-image-text {
+.living-culture-page .main-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+    padding: 30px;
+    text-align: left;
+}
+
+.living-culture-page .main-overlay h2 {
+    font-size: 32px;
+    font-weight: bold;
+    color: #fff;
+    margin: 0 0 10px 0;
+}
+
+.living-culture-page .main-overlay p {
+    font-size: 16px;
+    color: #ddd;
+    margin: 0;
+    max-width: 80%;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.living-culture-page .section-divider {
+    width: calc(100% + 40px);
+    margin-left: -20px;
+    margin-right: -20px;
+    height: 1px;
+    background-color: #ccc;
+    margin-top: 40px;
+    margin-bottom: 40px;
+}
+
+.living-culture-page .grid-section {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+    margin-bottom: 50px;
+    text-align: left;
+}
+
+.living-culture-page .grid-item {
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    border-radius: 4px;
+}
+
+.living-culture-page .grid-image-container {
+    width: 100%;
+    aspect-ratio: 3/4;
+    position: relative;
+    border: none;
+}
+
+.living-culture-page .grid-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.living-culture-page .grid-gradient {
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
-    padding: 20px;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
-    color: #fff;
-    z-index: 3;
-    text-align: left;
-    box-sizing: border-box;
-}
-
-.category-page .main-image-text h3 {
-    font-size: 20px;
-    font-weight: 800;
-    margin: 0 0 10px 0;
-    color: #fff;
-    text-align: left;
-}
-
-.category-page .main-image-text p {
-    font-size: 14px;
-    font-weight: 600;
-    color: #fff;
-    line-height: 1.5;
-    margin: 0;
-    text-align: left;
-}
-
-.category-page .image-placeholder-text {
-    position: absolute;
-    font-size: 48px;
-    font-weight: bold;
-    color: #333;
-    z-index: 1;
+    height: 60%;
+    background: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0) 100%);
     pointer-events: none;
+    z-index: 3;
 }
 
-.category-page .highlights-side {
-    flex: 1;
+.living-culture-page .grid-title-overlay {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    z-index: 4;
+    text-align: center;
+}
+
+.living-culture-page .grid-title-overlay h3 {
+    font-size: 30px;
+    font-weight: bold;
+    color: #fff;
+    margin: 0;
+    line-height: 1.4;
+    text-shadow: 0px 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.living-culture-page .feed-section {
     display: flex;
     flex-direction: column;
+    gap: 30px;
+    text-align: left;
+    margin-top: 30px;
+    padding: 0 120px;
+}
+
+.living-culture-page .feed-item {
+    cursor: pointer;
+    display: flex;
+    flex-direction: row;
     justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 20px;
+    gap: 20px;
 }
 
-.category-page .highlight-item {
-    padding: 10px 0;
-    border-bottom: 1px solid #ccc;
+.living-culture-page .feed-left {
     display: flex;
-    flex-direction: column;
-    gap: 5px;
     flex: 1;
-    justify-content: center;
+    padding-right: 0px;
+    width: 100%;
 }
 
-.category-page .highlight-item:first-child {
-    padding-top: 0;
+.living-culture-page .like-icon {
+    margin-right: 50px;
+    padding-right: 15px;
+    border-right: 1px solid #ddd;
+    margin-top: 5px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    min-width: 100px;
+    gap: 8px;
 }
+
+.living-culture-page .like-icon span {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.living-culture-page .feed-info h3 {
+    font-size: 20px;
+    font-weight: bold;
+    margin: 0 0 12px 0;
+    line-height: 1.3;
+}
+
+.living-culture-page .feed-info p {
+    font-size: 15px;
+    color: #666;
+    margin: 0;
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.living-culture-page .feed-image-container {
+    width: 312px;
+    aspect-ratio: 1.8/1;
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: 4px;
+}
+
+.living-culture-page .feed-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Pagination Styles - Standardized */
+.living-culture-page .pagination-container {
+    text-align: center;
+    margin-top: 40px;
+    margin-bottom: 100px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.living-culture-page .pagination-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 14px;
+    border: 1px solid #eee;
+    background-color: #fff;
+    color: #666;
+    cursor: pointer;
+    border-radius: 0px;
+}
+
+.living-culture-page .pagination-btn.active {
+    border: 1px solid #333;
+    background-color: #333;
+    color: #fff;
+    font-weight: bold;
+}
+
 
 .category-page .highlight-keyword {
     color: #ff4d4d;
@@ -281,10 +412,7 @@
     font-weight: bold;
 }
 
-.category-page .section-divider {
-    border-top: 1px solid #ccc;
-    margin: 50px 0;
-}
+
 
 .category-page .divider {
     border-top: 1px solid #000000;
