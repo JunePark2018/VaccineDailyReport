@@ -46,3 +46,9 @@ frontend/out/
 # 로그 파일
 # ------------------------------
 *.log
+
+# Docker 관련 임시 파일
+.docker/
+# OS 관련 (특히 맥 사용자가 섞여 있다면)
+.DS_Store
+Thumbs.db
