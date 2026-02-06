@@ -17,7 +17,22 @@ services:
     networks:
       - finalproject_network
 
-  # 2. Adminer
+  # 2. ChromaDB (이게 있어야 외부에서 접속 가능합니다!)
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: finalproject_chroma
+    restart: always
+    volumes:
+      - ./backend/chroma_db:/chroma/chroma
+    ports:
+      - "9000:8000"
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE
+    networks:
+      - finalproject_network
+
+  # 3. Adminer
   adminer:
     image: adminer
     container_name: finalproject_adminer
@@ -29,7 +44,7 @@ services:
     networks:
       - finalproject_network
 
-  # 3. Redis
+  # 4. Redis
   redis:
     image: redis:alpine
     container_name: finalproject_redis
@@ -39,40 +54,35 @@ services:
     networks:
       - finalproject_network
 
-  # 3. Backend (FastAPI)
+  # 5. Backend (FastAPI)
   backend:
     build: ./backend
     container_name: finalproject_backend
     restart: always
-    # .env 파일 위치 확인 (최상위에 있다면 그대로 유지)
-    env_file: .env 
+    env_file: .env
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       REDIS_HOST: redis
       REDIS_PORT: 6379
-    
-    # 1번 수정 포인트: 볼륨 추가 (데이터 영구 보존)
-    volumes:
-      - ./backend/chroma_db:/app/backend/chroma_db
-    
-    # 2번 수정 포인트: 작업 디렉토리 명시 (경로 꼬임 방지)
+      # 내부에서 크로마 서비스로 연결
+      CHROMA_MODE: remote
+      CHROMA_SERVER_HOST: chromadb
+      CHROMA_SERVER_PORT: 8000
     working_dir: /app
-    
     ports:
       - "8081:8000"
     depends_on:
       - postgres
       - redis
+      - chromadb
     networks:
       - finalproject_network
 
-
-  # 5. Frontend (React + Nginx)
+  # 6. Frontend
   frontend:
     build:
       context: ./frontend
       args:
-        # .env의 SERVER_IP를 사용하여 빌드 타임에 주입
         REACT_APP_API_URL: http://${SERVER_IP}:8081
     container_name: finalproject_frontend
     restart: always
