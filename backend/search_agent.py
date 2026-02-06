@@ -33,7 +33,7 @@ def get_llm_summary(prompt: str) -> str:
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a helpful assistant that summarizes and analyzes text in Korean accurately and concisely.",
+                    "content": "You are a helpful assistant that summarizes and analyzes text in Korean accurately and concisely. Always answer in Korean.",
                 },
                 {"role": "user", "content": prompt},
             ],
@@ -85,16 +85,16 @@ def search_issues_by_keyword(db: Session, keyword: str) -> Dict[str, Any]:
         return {"analysis": None, "issues": []}
 
     # LLM 분석을 위한 컨텍스트 구성
-    prompt = f"사용자가 '{keyword}' 키워드로 검색했습니다. 다음은 관련된 최근 AI 뉴스 요약(Issue)들입니다:\n\n"
+    prompt = f"User searched for keyword: '{keyword}'. Here are recent AI news summaries (Issues):\n\n"
 
     for idx, item in enumerate(issues_list, 1):
-        prompt += f"{idx}. 제목: {item['title']}\n내용: {item['contents'][:200]}...\n\n"
+        prompt += f"{idx}. Title: {item['title']}\nContent: {item['contents'][:200]}...\n\n"
 
     prompt += (
-        "위 내용(Issue)들을 바탕으로 트렌드나 핵심 내용을 종합적으로 분석하여 요약해 주세요. "
-        "각 내용의 출처(제목)를 인용하며 자연스럽게 한국어로 설명해 주세요."
-        "한자는 제외합니다. 포함될 시 한글로 번역합니다."
-        "특수 기호는 제외합니다. 예시) *, #, @, $, %, ^, &, _, /, \, |, ;,{, }, `"
+        "Based on the above Issues, analyze the trends and key points comprehensively in Korean. "
+        "Cite the source (title) for each point. "
+        "Excluding Chinese characters (Hanja)- translate them to Korean if present. "
+        "Remove special characters like *, #, @, $, %, ^, &, _, /, \, |, ;,{, }, `."
     )
 
     analysis_result = get_llm_summary(prompt)
@@ -103,12 +103,12 @@ def search_issues_by_keyword(db: Session, keyword: str) -> Dict[str, Any]:
     # [추가] 300자 내외로 최종 요양 및 최근 트렌드 강조
     # ---------------------------------------------------------
     refined_prompt = (
-        f"다음은 '{keyword}'와 관련된 최근 주요 기사 분석 내용입니다:\n\n{analysis_result}\n\n"
-        "위 내용을 바탕으로 최근 트렌드를 반영하여 **한글 300자 이내**로 아주 간결하게 핵심만 요약해 주세요. "
-        "반드시 **하나의 단락(one paragraph)**으로만 작성해 주세요. 줄바꿈은 하지 않습니다. "
-        "한자(Hanja)는 절대 사용하지 마세요. 모든 한자는 한글로 번역하여 표기해야 합니다. "
-        "불필요한 수식어는 빼고 팩트 위주로 전달합니다. "
-        "특수 기호(*, # 등)는 모두 제거하고 평문으로 작성합니다."
+        f"Here is the analysis of recent major articles related to '{keyword}':\n\n{analysis_result}\n\n"
+        "Based on this, summarize the core points very concisely within **300 Korean characters**, reflecting recent trends. "
+        "It MUST be written as **one single paragraph**. Do not use line breaks. "
+        "Do not use Chinese characters (Hanja); translate all Hanja to Korean. "
+        "Remove unnecessary modifiers and focus on facts. "
+        "Remove all special characters (*, #, etc.) and write in plain text."
     )
 
     analysis_result = get_llm_summary(refined_prompt)
@@ -158,9 +158,7 @@ def search_hot_topics_by_keyword(db: Session, keyword: str) -> List[Dict[str, An
 
     articles = (
         db.query(News)
-        .filter(
-            or_(News.title.ilike(search_pattern), News.contents.ilike(search_pattern))
-        )
+        .filter(or_(News.title.ilike(search_pattern), News.contents.ilike(search_pattern)))
         .order_by(News.created_at.desc())
         .limit(100)
         .all()
@@ -194,9 +192,7 @@ def search_articles_by_keyword(db: Session, keyword: str) -> List[Dict[str, Any]
 
     articles = (
         db.query(News)
-        .filter(
-            or_(News.title.ilike(search_pattern), News.contents.ilike(search_pattern))
-        )
+        .filter(or_(News.title.ilike(search_pattern), News.contents.ilike(search_pattern)))
         .order_by(News.created_at.desc())  # time → created_at
         .limit(100)  # 필터링 위해 넉넉히
         .all()

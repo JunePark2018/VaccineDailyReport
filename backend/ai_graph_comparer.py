@@ -185,17 +185,17 @@ async def generate_graph_report(graph: Dict[str, List[Dict]], companies: List[st
 
     user_prompt = f"""
     Media Outlets Involved: {", ".join(companies)}
-    
+
     Key Entity Analysis (Graph Data):
     {graph_summary}
-    
+
     Task: Write a comparative analysis in Korean.
-    
+
     Formatting Rules:
     1. **Language**: Strictly KOREAN.
     2. **Tone**: Formal polite style (End sentences with '입니다', '합니다', '보입니다').
-    3. **Variety**: Avoid repetitive use of '반면' (on the other hand). Use diverse conjunctions (e.g., '한편', '대조적으로', '이와 달리') or direct contrasts.
-    
+    3. **Variety**: Avoid repetitive use of conjunctions like 'on the other hand'. Use diverse logical connectors (e.g., 'Meanwhile', 'In contrast', 'Unlike') or direct contrasts.
+
     Content Rules:
     1. Identify contradictions, different framings, or causal links (e.g., Press A links X to Y, while Press B links X to Z).
     2. Focus on *why* they differ (e.g., political stance, target audience, emphasis on economy vs security).

@@ -37,27 +37,28 @@ def generate_balanced_article(model_name: str, cluster_topic: str, articles: lis
     context_text = "\n".join(context_parts)
 
     # ------------------------------------------------------------------
-    # [Agent 1] Writer Agent (초안 작성)
+    # [Agent 1] Writer Agent (Drafting)
     # ------------------------------------------------------------------
     def generate_draft():
         system_role = (
-            "당신은 '팩트 중심'의 스트레이트 뉴스를 작성하는 **수석 기자**입니다. "
-            "주어진 기사 소스들의 팩트만을 조합하여, 가장 객관적이고 건조한 문체로 기사를 작성하십시오."
+            "You are a 'fact-based' **Senior Reporter** writing straight news. "
+            "Combine the facts from the provided source articles to write the most objective and dry news report."
         )
         user_prompt = f"""
-주제: {cluster_topic}
-소스로 사용할 기사들:
+Topic: {cluster_topic}
+Source Articles:
 {context_text}
 
-[지침]
-1. 모든 기사의 내용을 종합하되, 중복을 피하십시오.
-2. 특정 언론사의 주관적 해석이나 감정적 표현은 제외하고 팩트 위주로 서술하십시오.
-3. 기사 구조: [헤드라인] -> [리드] -> [본문] -> [마무리]
+[Instructions]
+1. Synthesize all articles, avoiding duplication.
+2. Exclude subjective interpretations or emotional expressions from specific media outlets; focus on facts.
+3. Structure: [Headline] -> [Lead] -> [Body] -> [Conclusion]
+4. **Language**: The articles must be written in **Korean**.
 
-응답은 반드시 아래 JSON 형식으로만 출력하십시오:
+Response must be in JSON format only:
 {{
-    "title": "헤드라인",
-    "contents": "기사 본문"
+    "title": "Headline in Korean",
+    "contents": "Article Body in Korean"
 }}
 """
         return openai_client.chat.completions.create(
@@ -68,29 +69,29 @@ def generate_balanced_article(model_name: str, cluster_topic: str, articles: lis
         )
 
     # ------------------------------------------------------------------
-    # [Agent 2] Critic Agent (비평 및 검증)
+    # [Agent 2] Critic Agent (Critique & Verification)
     # ------------------------------------------------------------------
     def generate_critique(draft_title, draft_contents):
         system_role = (
-            "당신은 까다롭고 날카로운 **뉴스 데스크 에디터(비평가)**입니다. "
-            "작성된 초안을 검토하여 팩트 오류, 편향성, 중복, 문장 호응 등을 지적하십시오."
+            "You are a strict and sharp **News Desk Editor (Critic)**. "
+            "Review the drafted article for factual errors, bias, duplication, and sentence flow."
         )
         user_prompt = f"""
-[검토할 초안]
-제목: {draft_title}
-내용: {draft_contents}
+[Draft to Review]
+Title: {draft_title}
+Content: {draft_contents}
 
-[원본 소스 데이터]
+[Original Source Data]
 {context_text}
 
-[평가 기준]
-1. **팩트 검증**: 원본 소스에 없는 내용이 포함되었는가?
-2. **중립성**: 특정 입장에 치우치진 않았는가?
-3. **가독성**: 문장이 매끄럽고 중복이 없는가?
-4. **구조**: 기사로서 갖춰야 할 형식(리드, 본문 등)이 적절한가?
+[Evaluation Criteria]
+1. **Fact Verification**: Is there any content not found in the source?
+2. **Neutrality**: Is it biased towards a specific stance?
+3. **Readability**: Are the sentences smooth and free of redundancy?
+4. **Structure**: Is the news format (Lead, Body, etc.) appropriate?
 
-위 기준에 따라 **구체적인 수정 지시사항**을 3~5가지 항목으로 정리해 주세요.
-잘못된 점이 없다면 "수정 사항 없음"이라고 하십시오.
+Please provide **specific revision instructions** in English based on the above criteria.
+If there are no issues, say "No specific revisions needed".
 """
         return openai_client.chat.completions.create(
             model=model_name,
@@ -99,30 +100,31 @@ def generate_balanced_article(model_name: str, cluster_topic: str, articles: lis
         )
 
     # ------------------------------------------------------------------
-    # [Agent 3] Refiner Agent (최종 수정)
+    # [Agent 3] Refiner Agent (Final Polish)
     # ------------------------------------------------------------------
     def generate_final(draft_title, draft_contents, critique):
         system_role = (
-            "당신은 **최종 편집장**입니다. "
-            "비평가(Critic)의 지적을 수용하여 기사를 완성도 높게 수정하십시오."
-            "또한 글로벌 독자를 위해 이 이슈의 핵심 영문 검색어(keyword)를 하나 추출하십시오."
+            "You are the **Editor-in-Chief**. "
+            "Refine the article to perfection by accepting the Critic's feedback. "
+            "Also, extract one key English search keyword for global readers."
         )
         user_prompt = f"""
-[초안]
-제목: {draft_title}
-내용: {draft_contents}
+[Draft]
+Title: {draft_title}
+Content: {draft_contents}
 
-[비평가의 지적]
+[Critic's Feedback]
 {critique}
 
-위 지적 사항을 반영하여 기사를 **최종 수정**하십시오.
-특히 "영상에서 보듯", "사진과 같이" 같은 멀티미디어 참조 문구는 모두 삭제하십시오.
+Refine the article by reflecting the above feedback.
+**Language**: The final output must be in **Korean**.
+Especially, remove all multimedia reference phrases like "as seen in the video", "as shown in the photo".
 
-[출력 형식 - JSON]
+[Output Format - JSON]
 {{
-    "title": "최종 수정된 제목",
-    "contents": "최종 수정된 본문",
-    "search_keyword": "영문 검색어 (예: Samsung earnings shock)"
+    "title": "Final Revised Headline (Korean)",
+    "contents": "Final Revised Body (Korean)",
+    "search_keyword": "English Search Keyword (e.g., Samsung earnings shock)"
 }}
 """
         return openai_client.chat.completions.create(

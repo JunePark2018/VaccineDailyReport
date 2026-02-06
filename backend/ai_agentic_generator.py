@@ -60,7 +60,7 @@ Mandatory Requirements:
 2. **Korean Writing**: All content MUST be written in Korean.
 3. **Structure**: Headline -> Lead -> Body (Causes/Progress/Details) -> Conclusion.
 4. **Neutrality**: Exclude emotional expressions; maintain a dry reporting style.
-5. **Remove Multimedia References**: Remove expressions like "Photo above", "Video", "Table", etc.
+5. **Remove Multimedia References**: Remove expressions like "Photo above", "Video", "Table", "As seen in the picture", etc.
 
 Output JSON Format:
 {{
@@ -98,7 +98,7 @@ Evaluation Criteria:
 Output JSON Format:
 {{
     "status": "PASS" or "FAIL",
-    "feedback": "Specific correction instructions (Empty if PASS)"
+    "feedback": "Specific correction instructions in English (Empty if PASS)"
 }}
 """
 
@@ -133,7 +133,7 @@ Task: Rewrite the article incorporating the critic's feedback.
 Output JSON Format:
 {{
     "title": "Revised Korean Headline",
-    "contents": "Revised Full Article Body",
+    "contents": "Revised Full Article Body in Korean",
     "search_keyword": "English Search Keyword"
 }}
 """
