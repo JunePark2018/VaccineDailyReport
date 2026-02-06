@@ -7,13 +7,51 @@
 
 /* Header 1: Top Section */
 .Header-Container .Header-Top {
-    height: 36px;
-    background-color: #0c0c0c;
+    height: 44px;
+    background-color: #fefefd;
     display: flex;
+    justify-content: center;
     align-items: center;
     border-bottom: 1px solid #eee;
     font-size: 12px;
-    color: #dbd7d7;
+    color: #333;
+    padding: 0;
+}
+
+/* News Ticker (Vertical Slide) */
+.Header-Container .news-ticker-wrapper {
+    height: 36px;
+    overflow: hidden;
+    flex: 1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.Header-Container .news-ticker-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.Header-Container .news-ticker-item {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    /* Vertical Center */
+    justify-content: flex-start;
+    /* Left align text */
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 20px;
+    font-size: 13.5px;
+    /* Slightly larger for readability */
+    font-weight: 500;
+}
+
+.Header-Container .news-ticker-item:hover {
+    text-decoration: underline;
 }
 
 /* Hide Hamburger on Desktop by default */
@@ -25,7 +63,7 @@
 
 .Header-Container .header-top-content {
     width: 100%;
-    /* max-width: 1320px;  <-- Removed to allow full width per user request */
+    max-width: 1320px;
     display: flex;
     justify-content: space-between;
     padding: 0 20px;
@@ -41,10 +79,9 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 10px 20px;
+    padding: 10px 0;
     height: 80px;
     background-color: #ffffff;
-    border-bottom: 1px solid #ddd;
 }
 
 .Header-Container .Header-Main .header-main-content {
@@ -53,6 +90,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 0 20px;
 }
 
 /* 1. Left Section: Logo centered to the left */
@@ -83,13 +121,13 @@
 
 /* Header 3: Bottom Section */
 .Header-Container .Header-Bottom {
-    height: 45px;
+    height: auto;
     background-color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
     border-bottom: 1px solid #ddd;
-    padding: 2px 0;
+    padding: 12px 0 2px 0;
 }
 
 /* Category List Container */
@@ -98,7 +136,9 @@
     flex-direction: row;
     justify-content: center;
     align-items: center;
-    gap: 10px;
+    gap: 30px;
+    margin-top: 15px;
+    margin-bottom: 15px;
     /* Reduced from 20px */
     width: 100%;
     max-width: 1320px;
@@ -114,11 +154,10 @@
     cursor: pointer;
     padding: 2px 12px;
     position: relative;
-    transition: transform 0.2s ease, color 0.2s ease;
+    transition: color 0.2s ease;
 }
 
 .Header-Container .Header-Bottom .category-item:hover {
-    transform: translateY(-2px);
     color: #282828;
 }
 
@@ -170,6 +209,11 @@
    ========================================= */
 @media screen and (max-width: 768px) {
 
+    /* Hide Weather on Mobile */
+    .Header-Container .weather {
+        display: none !important;
+    }
+
     /* Stack Header Main Content */
     .Header-Container .Header-Main {
         height: auto;
@@ -210,8 +254,8 @@
         padding-left: 5px;
     }
 
-    /* 2. Logo (Grid Column 2) */
-    .Header-Container .Header-Main .left-child {
+    /* 2. Logo (Grid Column 2) - Now mapping midChild to this slot */
+    .Header-Container .Header-Main .mid-child {
         grid-column: 2;
         position: relative;
         left: auto;
@@ -219,7 +263,6 @@
         right: auto;
         bottom: auto;
         transform: scale(0.7);
-        /* Scale only */
         transform-origin: center center;
         display: flex;
         justify-content: center;
@@ -227,6 +270,11 @@
         width: 100%;
         z-index: 10;
         margin: 0;
+    }
+
+    /* Left Child is Empty or Hidden */
+    .Header-Container .Header-Main .left-child {
+        display: none;
     }
 
     /* 3. Login/User (Grid Column 3) */
@@ -257,11 +305,6 @@
         right: auto;
         top: auto;
         z-index: 101;
-    }
-
-    /* Mid Child is Empty (Hidden/Collapsed) */
-    .Header-Container .Header-Main .mid-child {
-        display: none;
     }
 
     /* Searchbar Wrapper - Absolute Bottom of Main Content */

@@ -255,6 +255,7 @@ export const Main = () => {
 
     return (
       <React.Fragment>
+        <h2 className="cat-box-header" style={{ marginBottom: '20px' }}>AI 뉴스</h2>
         <section className="main-article-section" style={{ marginBottom: '30px' }}>
           <div className="article-info-side">
             {slideArticles.map((art, idx) => {
@@ -370,7 +371,7 @@ export const Main = () => {
     return (
       <section className="category-detailed-section" style={{ borderTop: 'none', marginTop: '25px' }}>
         <div className="cat-global-row">
-          <h2 className="cat-box-header" onClick={() => navigate('/society')} style={{ cursor: 'pointer', borderLeft: '5px solid #000', paddingLeft: '10px', paddingBottom: '2px', lineHeight: '1' }}>사회</h2>
+          <h2 className="cat-box-header" onClick={() => navigate('/society')} style={{ cursor: 'pointer' }}>사회</h2>
           <div className="global-grid society-mobile-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
             {society.map((art, i) => (
               <div key={i} className="global-card" onClick={() => navigate(`/article/${art.id}`)} style={{ cursor: 'pointer' }}>
@@ -393,7 +394,7 @@ export const Main = () => {
     return (
       <section className="category-detailed-section" style={{ borderTop: 'none' }}>
         <div className="cat-global-row">
-          <h2 className="cat-box-header" onClick={() => navigate('/culture')} style={{ cursor: 'pointer', borderLeft: '5px solid #000', paddingLeft: '10px', paddingBottom: '2px', lineHeight: '1' }}>생활/문화</h2>
+          <h2 className="cat-box-header" onClick={() => navigate('/culture')} style={{ cursor: 'pointer' }}>생활/문화</h2>
           <div className="global-grid culture-mobile-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
             {culture.map((art, i) => (
               <div key={i} className="global-card" onClick={() => navigate(`/article/${art.id}`)} style={{ cursor: 'pointer' }}>
@@ -441,14 +442,14 @@ export const Main = () => {
   return (
     <div className="main-page">
       <Header
-        leftChild={<Logo />}
-        midChild={null}
+        leftChild={null}
+        midChild={<Logo />}
         rightChild={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', justifyContent: 'flex-end', width: 'auto' }}>
             <div style={{ position: 'relative' }}>
-              <Searchbar className="always-open" />
+              <Searchbar className="always-open rounded-search" />
             </div>
-            <UserMenu />
+            <UserMenu className="rounded-user-menu" />
           </div>
         }
         headerTop="on"
@@ -468,7 +469,7 @@ export const Main = () => {
         ) : (
           <>
             <div className="main-content-split">
-              <div className="main-full-col" style={{ width: '100%' }}>
+              <div className="main-full-col" style={{ width: '100%', textAlign: 'left' }}>
                 {displayArticles.length > 0 ? (
                   <React.Fragment>
                     {/* No mapping needed, just render once since we used 0-3 fixed */}

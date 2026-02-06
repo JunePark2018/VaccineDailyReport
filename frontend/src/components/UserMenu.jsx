@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import loginIcon from '../login_icon/login.png';
 import './UserMenu.css';
 
-const UserMenu = () => {
+const UserMenu = ({ className = "" }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -72,7 +72,7 @@ const UserMenu = () => {
   };
 
   return (
-    <div className="user-menu-container" ref={menuRef}>
+    <div className={`user-menu-container ${className}`} ref={menuRef}>
       <div className="user-info-wrapper" onClick={handleIconClick}>
         <div className="user-icon-box">
           <img

@@ -92,3 +92,18 @@
     display: none !important;
   }
 }
+
+/* Rounded User Menu (Standard on all pages) - Enforces circle shape and size */
+.user-menu-container.rounded-user-menu .user-icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid #6d6d6d;
+  background-color: #ffffff;
+  overflow: hidden;
+}
+
+.user-menu-container.rounded-user-menu .user-icon {
+  width: 24px;
+  height: 24px;
+}

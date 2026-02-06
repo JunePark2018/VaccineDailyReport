@@ -12,14 +12,14 @@ const Issues = () => {
   return (
     <div className="Issues">
       <Header
-        leftChild={<div />}
+        leftChild={null}
         midChild={<Logo />}
         rightChild={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', justifyContent: 'flex-end', width: 'auto' }}>
             <div style={{ position: 'relative' }}>
-              <Searchbar />
+              <Searchbar className="always-open rounded-search" />
             </div>
-            <UserMenu />
+            <UserMenu className="rounded-user-menu" />
           </div>
         }
         headerTop="on"
