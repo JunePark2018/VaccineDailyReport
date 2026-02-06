@@ -22,7 +22,21 @@ const Header = ({
 }) => {
   const nav = useNavigate();
   const location = useLocation();
-  const { name: activeCategory } = useParams();
+  const { name: paramName } = useParams();
+
+  // Custom logic to determine active category based on path
+  const getActiveCategory = (pathname) => {
+    if (pathname === '/') return '홈'; // Optional: if you want Home to be active
+    if (pathname.includes('/politics')) return '정치';
+    if (pathname.includes('/economy')) return '경제';
+    if (pathname.includes('/society')) return '사회';
+    if (pathname.includes('/living-culture')) return '생활/문화';
+    if (pathname.includes('/science')) return 'IT/과학';
+    if (pathname.includes('/world')) return '세계';
+    return paramName || ''; // Fallback to param if exists
+  };
+
+  const activeCategory = getActiveCategory(location.pathname);
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentArticleIndex, setCurrentArticleIndex] = useState(0);

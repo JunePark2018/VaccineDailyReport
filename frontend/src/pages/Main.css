@@ -13,9 +13,38 @@
 .main-page .main-article-section {
   display: flex;
   gap: 16px;
-  /* Balanced gap */
+  /* Reduced from 20px */
+  margin-bottom: 40px;
+  /* Reduced from 50px */
   align-items: stretch;
+  /* Match height */
 }
+
+/* Carousel Track (Global - Desktop Default: Single Image, No Slide) */
+.main-page .carousel-track {
+  width: 100%;
+  height: 100%;
+  /* No transform on desktop */
+}
+
+.main-page .carousel-slide {
+  /* Hide all by default */
+  display: none;
+  width: 100%;
+  height: 100%;
+}
+
+.main-page .carousel-slide.active {
+  /* Show only active */
+  display: block;
+}
+
+.main-page .carousel-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 
 .main-page .article-info-side {
   flex: 1;
@@ -83,7 +112,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border-radius: 5px;
+  border-radius: 0px;
 }
 
 .main-page .article-image-center::before,
@@ -661,7 +690,7 @@
   /* Increased size */
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  border-radius: 5px;
+  border-radius: 0px;
   flex: none;
   /* Prevent shrinking */
 }
@@ -755,7 +784,7 @@
   aspect-ratio: 16 / 9;
   /* border: 1px solid #000; Removed */
   overflow: hidden;
-  border-radius: 5px;
+  border-radius: 0px;
   /* Added roundness */
 }
 
@@ -833,11 +862,31 @@
   }
 
   /* Show Carousel Controls on Mobile */
+  /* Show Carousel Controls on Mobile - HIDDEN as per request */
   .main-page .carousel-arrow {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: none !important;
   }
+
+  /* Carousel Track for Slide Animation (Mobile Only) */
+  .main-page .carousel-track {
+    display: flex;
+    flex-direction: row;
+    /* Ensure side-by-side */
+    width: 100%;
+    height: 100%;
+    transform: var(--slide-transform, none);
+    /* Use CSS var from JSX */
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .main-page .carousel-slide {
+    display: block;
+    /* Show all slides for sliding */
+    min-width: 100%;
+    flex: 0 0 100%;
+    height: 100%;
+  }
+
 
   .main-page .carousel-dots-mobile {
     display: flex;
@@ -1064,7 +1113,9 @@
   }
 
   .main-page .global-img {
-    width: 100%;
+    width: calc(100% + 30px);
+    margin-left: -15px;
+    border-radius: 0;
   }
 
   /* Society Mobile Grid: Default Category Layout (Vertical) */
@@ -1088,10 +1139,18 @@
     flex-direction: column;
     gap: 15px;
     text-align: center;
+    align-items: stretch;
+    /* Ensure child can expand */
   }
 
   .main-page .science-card .global-img {
-    width: 100%;
+    width: calc(100% + 30px);
+    margin-left: -15px;
+  }
+
+  .main-page .global-card {
+    align-items: stretch;
+    /* Ensure negative margins work reliably */
   }
 
   .main-page .science-card h5 {
@@ -1101,10 +1160,20 @@
 
 /* --- Analysis Block Interactive Styles --- */
 .main-page .analysis-block {
+  flex: 1;
+  /* Stretch to fill available height */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  /* Center content vertically */
   padding: 15px;
   cursor: pointer;
   border-bottom: 1px solid #eee;
   transition: background-color 0.2s ease, color 0.2s ease;
+  position: relative;
+  /* Ensure positioning context for pseudo-element */
+  overflow: hidden;
+  /* Hide the bookmark element when it slides in/out */
 }
 
 /* Hover: Underline ONLY the title of the hovered block */
@@ -1112,15 +1181,23 @@
   text-decoration: underline;
 }
 
+
+/* Active State: Black Background, White Text, Visual Connection */
 /* Active State: Black Background, White Text, Visual Connection */
 .main-page .analysis-block.active {
-  background-color: #4b4b4b;
+  background-color: #292929;
   color: #fff;
   border-left: 5px solid #68d383;
   /* Connect with Highlight Color */
   position: relative;
   overflow: visible;
   /* Allow arrow to stick out */
+}
+
+/* Force children to inherit white color in active state */
+.main-page .analysis-block.active h2,
+.main-page .analysis-block.active p {
+  color: #fff !important;
 }
 
 /* Arrow pointing to Main Image */
@@ -1134,15 +1211,11 @@
   height: 0;
   border-top: 10px solid transparent;
   border-bottom: 10px solid transparent;
-  border-left: 10px solid #4b4b4b;
+  border-left: 10px solid #292929;
   z-index: 10;
+  filter: drop-shadow(1px 0px 0px white);
 }
 
-/* Force children to inherit white color in active state */
-.main-page .analysis-block.active h2,
-.main-page .analysis-block.active p {
-  color: #fff !important;
-}
 
 /* --- Refactored Inline Styles & Animations --- */
 
@@ -1172,48 +1245,104 @@
   line-height: 1.4;
 }
 
+.main-page .article-info-side {
+  flex: 0.8;
+  /* Increased from 0.4 for balance */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Main Image Column */
 .main-page .main-image-column {
-  flex: 1.6;
+  flex: 1.4;
+  /* Reduced from 1.6 */
   display: flex;
   flex-direction: column;
   position: relative;
+  /* Allow height to match neighbors (flex stretch default) */
 }
 
+/* Image styling to fill height */
+/* Image styling to fill height */
 .main-page .article-image-center {
   cursor: pointer;
-  width: 100%;
-  aspect-ratio: 1.5/1;
+  width: calc(100% + 30px);
+  /* Full width on mobile */
+  margin-left: -15px;
+  /* Counteract padding */
+  object-fit: cover;
+  aspect-ratio: 16 / 9 !important;
+  display: block;
+  position: relative;
+  overflow: hidden;
+  border-radius: 0;
+  /* No rounded corners on mobile */
+}
+
+.main-page .highlights-side {
+  flex: 0.8;
+  /* Match article-info-side */
+  display: flex;
+  flex-direction: column;
+}
+
+.main-page .highlights-title {
+  font-size: 18px;
+  /* Original size */
+  font-weight: bold;
+  margin-bottom: 15px;
+  /* Original margin */
+  padding-bottom: 10px;
+  border-bottom: 2px solid #333;
+  text-align: left;
 }
 
 .main-page .highlight-list {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
+  /* Occupy remaining space instead of fixed 100% */
   justify-content: space-between;
+  overflow: hidden;
+  /* Prevent overflow */
 }
 
 .main-page .highlight-item {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 10px;
+  /* Reverted to 12px 10px */
+  border-bottom: 1px solid #eee;
   align-items: flex-start !important;
   text-align: left !important;
+  margin-bottom: 5px;
 }
 
 .main-page .highlight-keyword {
-  color: #ff4d4d !important;
+  color: #fff !important;
+  background-color: #000 !important;
+  /* Changed to Black */
   font-weight: bold !important;
-  font-size: 16px !important;
-  margin-bottom: 5px !important;
-  display: block;
+  font-size: 14px !important;
+  /* Changed to 14px */
+  margin-bottom: 6px !important;
+  display: inline-block;
+  padding: 4px 8px;
+  /* Reverted padding */
+  border-radius: 0px;
 }
 
 .main-page .highlight-content {
-  font-size: 13px !important;
+  font-size: 12px !important;
+  /* Changed to 12px */
   line-height: 1.5 !important;
   color: #444 !important;
   display: -webkit-box;
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
-  line-clamp: 2;
+  /* Show only 2 lines */
+  margin: 0;
 }
 
 /* --- Global Article Hover Effects --- */

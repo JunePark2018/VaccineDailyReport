@@ -111,7 +111,7 @@
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    border-radius: 10px;
+    border-radius: 0px;
 }
 
 .category-page .article-image-center::before,
@@ -431,7 +431,6 @@
     .category-page .article-image-center {
         width: 100% !important;
         aspect-ratio: 16 / 9 !important;
-        /* Standard mobile ratio */
         height: auto !important;
     }
 
@@ -497,7 +496,7 @@
         width: 100% !important;
         margin-left: 0 !important;
         aspect-ratio: 16/9 !important;
-        border-radius: 4px !important;
+        border-radius: 0px !important;
     }
 
     /* Container for text info in feed */

@@ -111,7 +111,7 @@
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    border-radius: 10px;
+    border-radius: 0px;
 }
 
 .category-page .article-image-center::before,
@@ -374,4 +374,32 @@
 .category-page .list-item:hover h3,
 .category-page .feed-item:hover h3 {
     text-decoration: underline;
+}
+
+/* ========================================
+   📱 MOBILE RESPONSIVE STYLES
+   ======================================== */
+
+/* Mobile (Max 768px) */
+@media (max-width: 768px) {
+    .category-page .category-content {
+        padding: 20px 12px;
+    }
+
+    /* Stack main section */
+    .category-page .main-article-section {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .category-page .article-info-side,
+    .category-page .highlights-side {
+        width: 100%;
+    }
+
+    /* Stack grid section */
+    .category-page .bottom-grid-section {
+        flex-direction: column;
+        gap: 20px;
+    }
 }

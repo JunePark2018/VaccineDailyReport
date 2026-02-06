@@ -127,7 +127,8 @@
     align-items: center;
     justify-content: center;
     border-bottom: 1px solid #ddd;
-    padding: 12px 0 2px 0;
+    padding: 12px 0 0 0;
+    /* Removed bottom padding */
 }
 
 /* Category List Container */
@@ -136,9 +137,11 @@
     flex-direction: row;
     justify-content: center;
     align-items: center;
-    gap: 30px;
+    gap: 0px;
+    /* Removed gap to let items fill space */
     margin-top: 15px;
-    margin-bottom: 15px;
+    margin-bottom: 0px;
+    /* Removed bottom margin */
     /* Reduced from 20px */
     width: 100%;
     max-width: 1320px;
@@ -152,7 +155,11 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    padding: 2px 12px;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 12px 20px;
+    /* Increased padding to fill the gap area */
     position: relative;
     transition: color 0.2s ease;
 }
@@ -161,15 +168,24 @@
     color: #282828;
 }
 
-/* Active state with underbar */
-.Header-Container .Header-Bottom .category-item.active::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 12px;
-    right: 12px;
-    height: 2px;
+/* Active state with black background */
+/* Active state with black background */
+.Header-Container .Header-Bottom .category-item.active {
     background-color: #000;
+    color: #fff !important;
+    border-radius: 0px;
+    /* removed rounding */
+    font-weight: 700;
+}
+
+/* Ensure span inherits color in active state */
+.Header-Container .Header-Bottom .category-item.active span {
+    color: #fff !important;
+}
+
+/* Remove old underline style */
+.Header-Container .Header-Bottom .category-item.active::after {
+    display: none;
 }
 
 /* Icon Wrapper */
@@ -362,8 +378,8 @@
     .mobile-side-menu {
         position: fixed;
         top: 0;
-        left: -280px;
-        width: 250px;
+        left: -230px;
+        width: 200px;
         height: 100vh;
         background-color: white;
         z-index: 999;
@@ -379,8 +395,8 @@
 
     .mobile-menu-header {
         height: 50px;
-        background-color: #000;
-        border-bottom: 1px solid #333;
+        background-color: #fff;
+        border-bottom: 1px solid #e0e0e0;
         display: flex;
         align-items: center;
         justify-content: flex-end;
@@ -389,7 +405,7 @@
 
     .close-btn {
         font-size: 28px;
-        color: #fff;
+        color: #000;
         cursor: pointer;
         line-height: 1;
     }
@@ -401,12 +417,13 @@
     }
 
     .mobile-menu-item {
-        padding: 15px 20px;
+        padding: 15px 20px 15px 30px;
         font-size: 16px;
         font-weight: 500;
         color: #333;
-        border-bottom: 1px solid #f9f9f9;
+        border-bottom: 1px solid #e0e0e0;
         cursor: pointer;
+        text-align: left;
     }
 
     .mobile-menu-item:hover {

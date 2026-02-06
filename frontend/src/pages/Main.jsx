@@ -275,13 +275,33 @@ export const Main = () => {
           </div>
           <div className="main-image-column">
             <div
-              key={`img-${currentSlideIndex}`}
-              className="article-image-center fade-animate"
-              onClick={() => activeArticle && navigate(`/article/${activeArticle.report_id}`)}
+              className="article-image-center"
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
             >
-              <img src={activeImage} alt="Main" onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
+              <div
+                className="carousel-track"
+                style={{ '--slide-transform': `translateX(-${currentSlideIndex * 100}%)` }}
+              >
+                {slideArticles.map((art, idx) => {
+                  const imgUrl = imageMap[art.image] || art.image;
+                  const isActive = idx === currentSlideIndex;
+                  return (
+                    <div
+                      key={art.id || idx}
+                      className={`carousel-slide ${isActive ? 'active' : ''}`}
+                      onClick={() => navigate(`/article/${art.report_id}`)}
+                    >
+                      <img
+                        src={imgUrl}
+                        alt={art.title}
+                        onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }}
+                        onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
               <button className="carousel-arrow prev-arrow" onClick={(e) => { e.stopPropagation(); setCurrentSlideIndex(prev => (prev - 1 + 3) % 3); }}>&#10094;</button>
               <button className="carousel-arrow next-arrow" onClick={(e) => { e.stopPropagation(); setCurrentSlideIndex(prev => (prev + 1) % 3); }}>&#10095;</button>
             </div>
@@ -300,11 +320,12 @@ export const Main = () => {
             </div>
           </div>
           <div className="highlights-side">
+            <h3 className="highlights-title">언론사 비교분석</h3>
             <div
               key={`hl-${currentSlideIndex}`}
               className="highlight-list fade-animate"
             >
-              {highlights.map((item, hIndex) => (
+              {highlights.slice(0, 3).map((item, hIndex) => (
                 <React.Fragment key={hIndex}>
                   <div className="highlight-item">
                     <span className="highlight-keyword">{item.keyword}</span>
