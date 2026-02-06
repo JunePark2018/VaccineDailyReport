@@ -39,12 +39,7 @@ async def compare_articles_with_graph(articles: List[Dict[str, Any]]) -> Dict[st
         arts.sort(key=lambda x: len(x.get("contents", "")), reverse=True)
         top_arts = arts[:2]  # Pick Top 2
 
-        combined_text = "\n".join(
-            [
-                f"[{i + 1}] {a.get('title')}\n{a.get('contents')}"
-                for i, a in enumerate(top_arts)
-            ]
-        )
+        combined_text = "\n".join([f"[{i + 1}] {a.get('title')}\n{a.get('contents')}" for i, a in enumerate(top_arts)])
         selected_texts[comp] = combined_text
 
     # 2. Parallel Extraction
@@ -66,9 +61,7 @@ async def compare_articles_with_graph(articles: List[Dict[str, Any]]) -> Dict[st
     entity_map = await normalize_entities(list(all_entities))
 
     # Apply normalization
-    normalized_graph = defaultdict(
-        list
-    )  # { "CanonEntity": [ {company, predicate, original_entity} ] }
+    normalized_graph = defaultdict(list)  # { "CanonEntity": [ {company, predicate, original_entity} ] }
 
     for comp, trips in all_triples_map.items():
         for t in trips:
@@ -166,9 +159,7 @@ async def normalize_entities(entities: List[str]) -> Dict[str, str]:
 # ======================================================================================
 # Step 4: Reporting
 # ======================================================================================
-async def generate_graph_report(
-    graph: Dict[str, List[Dict]], companies: List[str]
-) -> Dict[str, Any]:
+async def generate_graph_report(graph: Dict[str, List[Dict]], companies: List[str]) -> Dict[str, Any]:
     # Select Top 3 most discussed entities (keys with most list items)
     top_entities = sorted(graph.keys(), key=lambda k: len(graph[k]), reverse=True)[:5]
 
@@ -179,9 +170,7 @@ async def generate_graph_report(
         # Group by press to show contrast
         press_view = defaultdict(list)
         for edge in graph[ent]:
-            press_view[edge["company"]].append(
-                f"{edge['predicate']} -> {edge['object']} ({edge['sentiment']})"
-            )
+            press_view[edge["company"]].append(f"{edge['predicate']} -> {edge['object']} ({edge['sentiment']})")
 
         for press, views in press_view.items():
             graph_summary += f"  - {press}: {'; '.join(views)}\n"
@@ -190,7 +179,7 @@ async def generate_graph_report(
     system_prompt = (
         "You are a News Analyst. Compare the viewpoints of different media outlets based on the provided Knowledge Graph data. "
         "Generate 3-5 sharp, insightful bullet points highlighting the differences in tone, focus, or interpretation."
-        "Output MUST be in Korean."
+        "The output MUST be in Korean."
         'Output JSON: { "media_comparison_bullets": [ "Bullet 1", "Bullet 2" ... ] }'
     )
 
@@ -204,7 +193,7 @@ async def generate_graph_report(
     
     Formatting Rules:
     1. **Language**: Strictly KOREAN.
-    2. **Tone**: Formal polite style (Ends with '입니다', '합니다', '보입니다').
+    2. **Tone**: Formal polite style (End sentences with '입니다', '합니다', '보입니다').
     3. **Variety**: Avoid repetitive use of '반면' (on the other hand). Use diverse conjunctions (e.g., '한편', '대조적으로', '이와 달리') or direct contrasts.
     
     Content Rules:
