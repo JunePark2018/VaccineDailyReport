@@ -55,7 +55,7 @@ function ArticlePage() {
   const [demographics, setDemographics] = useState(null);
 
   // Media Focus State
-  const [focusData, setFocusData] = useState([]);
+  const [focusData, setFocusData] = useState(null);
 
   // Action Button States (Unified Popup State)
   // 'tts', 'font', or null (Share removed)
@@ -309,10 +309,10 @@ function ArticlePage() {
         // Fetch Media Focus Data
         try {
           const focus_response = await axios.get(`${API_BASE_URL}/reports/${id}/media-focus`);
-          setFocusData(focus_response.data.media_focus || []);
+          setFocusData(focus_response.data || {});
         } catch (error) {
           console.error('Media Focus Fetch Error:', error);
-          setFocusData([]);
+          setFocusData({});
         }
 
       } catch (error) {
@@ -563,7 +563,7 @@ function ArticlePage() {
                       </div>
 
                       {/* 언론사 집중도 분석 차트 */}
-                      {focusData.length > 0 && (
+                      {focusData && (
                         <div style={{ flex: '1', minWidth: '300px' }}>
                           <MediaFocusChart data={focusData} />
                         </div>

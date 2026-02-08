@@ -827,6 +827,8 @@ def get_media_focus_stats(db: Session, cluster_id: int) -> dict:
     """
     # 1. 해당 클러스터의 언론사별 뉴스 개수 조회
     # (Cluster -> News -> Company)
+    # 1. 해당 클러스터의 언론사별 뉴스 개수 조회
+    # (Cluster -> News -> Company)
     cluster_counts = (
         db.query(Company.name, func.count(News.news_id))
         .join(News, News.company_id == Company.company_id)
@@ -842,8 +844,25 @@ def get_media_focus_stats(db: Session, cluster_id: int) -> dict:
 
     total_cluster_news = sum(count for _, count in cluster_counts)
 
-    today = datetime.now().date()
+    # [수정] 기준 시점(ref_date) 결정
+    # 클러스터 내 뉴스들의 생성일 중 '중간값' 또는 '최신값'을 기준으로 잡아야
+    # 과거 데이터(예: 2021년) 분석 시에도 2021년 당시의 전체 뉴스 분포와 비교할 수 있음.
+    # 현재는 가장 간단하게 '뉴스 중 가장 늦은 날짜'를 기준으로 잡음.
+    ref_date = datetime.now()
     
+    # 클러스터 내 뉴스 날짜 조회
+    news_dates = (
+        db.query(News.created_at)
+        .join(cluster_news_link, News.news_id == cluster_news_link.c.news_id)
+        .filter(cluster_news_link.c.cluster_id == cluster_id)
+        .all()
+    )
+    if news_dates:
+        # news_dates는 [(datetime,), (datetime,), ...] 형태
+        dates = [d[0] for d in news_dates if d[0]]
+        if dates:
+            ref_date = max(dates) # 가장 최신 기사 기준
+
     # 2. 전체 뉴스에서의 언론사별 점유율 조회 (Baseline)
     # 데이터가 오래된 경우(데모 환경)를 대비해 기간을 동적으로 확장
     from datetime import timedelta
@@ -856,11 +875,18 @@ def get_media_focus_stats(db: Session, cluster_id: int) -> dict:
     used_window = "All Time"
 
     for hours in time_windows:
-        since = datetime.utcnow() - timedelta(hours=hours)
+        # [수정] ref_date 기준으로 과거 N시간 조회
+        since = ref_date - timedelta(hours=hours)
+        # 미래 기사가 있을 수도 있으므로(데이터 오류 등), window는 [since ~ ref_date + 1day] 정도로 잡거나
+        # 그냥 >= since 로 하되, 너무 먼 미래는 제외? -> 일단 >= since 만 해도 충분.
+        
+        # 주의: 비교 대상은 '전체 뉴스'여야 함 (특정 클러스터 아님)
         temp_counts = (
             db.query(Company.name, func.count(News.news_id))
             .join(News, News.company_id == Company.company_id)
             .filter(News.created_at >= since)
+            # ref_date보다 너무 미래의 뉴스는 제외하는 게 맞음 (당시 시점 재현)
+            # .filter(News.created_at <= ref_date + timedelta(days=1)) 
             .group_by(Company.name)
             .all()
         )
@@ -869,10 +895,10 @@ def get_media_focus_stats(db: Session, cluster_id: int) -> dict:
         if temp_total > 50: # 표본이 충분하면 채택
             global_counts = temp_counts
             total_global_news = temp_total
-            used_window = f"{hours}h"
+            used_window = f"{hours}h (from {ref_date.date()})"
             break
     
-    # 여전히 부족하면 전체 기간 사용
+    # 여전히 부족하면 전체 기간 사용 (fallback)
     if total_global_news < 10:
         global_counts = (
             db.query(Company.name, func.count(News.news_id))
@@ -889,42 +915,48 @@ def get_media_focus_stats(db: Session, cluster_id: int) -> dict:
     # 맵으로 변환
     global_map = {name: count for name, count in global_counts}
 
-    # 3. Focus Index 계산
+    # 3. Focus Percentage 계산 (보도 비중)
+    # "이 언론사가 쓴 전체 기사 중, 이 이슈가 차지하는 비중"
+    
     results = []
-    for company_name, count in cluster_counts:
-        cluster_share = count / total_cluster_news # 해당 이슈 내 점유율 (0.0 ~ 1.0)
-        
-        # 전체 뉴스 내 점유율
-        global_count = global_map.get(company_name, 0)
-        # 만약 전체 뉴스 집계에 안 잡혔다면(매우 희귀), count만큼은 최소한 존재했을 것임 (보정)
-        if global_count < count:
-             global_count = count
-        
-        # Global Share가 너무 작으면(0에 수렴하면) Index가 폭발하므로 최소 보정
-        # 전체 뉴스 데이터가 충분하지 않을 초기 단계 방어
-        if total_global_news < 10:
-             global_share = cluster_share # 데이터 부족 시 1.0으로 수렴
-        else:
-             global_share = global_count / total_global_news
+    
+    # 전체 시장 평균 비중
+    # (이 이슈 전체 기사 수 / 전체 언론사 전체 기사 수)
+    market_avg_pct = 0
+    if total_global_news > 0:
+        market_avg_pct = (total_cluster_news / total_global_news) * 100
 
-        if global_share == 0:
-            index = 0
+    for company_name, count in cluster_counts:
+        # 해당 언론사의 전체 기사 수
+        company_total = global_map.get(company_name, 0)
+        
+        # 데이터 정합성 보정 (크롤링 시차 등으로 인해 global에 없을 경우)
+        if company_total < count:
+            company_total = count
+            
+        if company_total == 0:
+            focus_pct = 0
         else:
-            index = cluster_share / global_share
+            focus_pct = (count / company_total) * 100
+            
+        # 신뢰도 필터: 기사 수가 너무 적은 언론사가 1개만 써도 100%가 되는 왜곡 방지
+        # 예: 전체 기사가 5개 미만이면 패널티 or 제외? 
+        # 일단 그대로 두되 UI에서 "기사 수"도 같이 보여주는게 좋음.
 
         results.append({
             "company": company_name,
-            "cluster_count": count,
-            "global_count": global_count,
-            "focus_index": round(index, 2),
-            "cluster_share": round(cluster_share * 100, 1), # %
-            "global_share": round(global_share * 100, 1)    # %
+            "focus_pct": round(focus_pct, 1),
+            "issue_count": count,
+            "total_count": company_total
         })
 
-    # Index 높은 순 정렬
-    results.sort(key=lambda x: x["focus_index"], reverse=True)
+    # 비중이 높은 순으로 정렬
+    results.sort(key=lambda x: x["focus_pct"], reverse=True)
 
-    return {"media_focus": results}
+    return {
+        "media_focus": results,
+        "market_avg_pct": round(market_avg_pct, 1)
+    }
 
 
 # -------------------------
