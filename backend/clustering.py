@@ -264,12 +264,28 @@ Task: Identify the perfect cluster of articles covering the same event.
 # -------------------------------------------------
 # 4. 메인 파이프라인
 # -------------------------------------------------
-def run_issue_clustering(db: Session, days=3):
+def run_issue_clustering(db: Session, days=3, ref_date=None):
     Base.metadata.create_all(bind=engine)
-    since = datetime.now() - timedelta(days=days)
+    
+    if ref_date is None:
+        ref_date = datetime.now()
+        
+    # ref_date 기준 과거 days일 동안의 기사를 조회
+    since = ref_date - timedelta(days=days)
 
     # 1. 기사 조회
+    # [수정] get_recent_news가 since 이후의 기사를 가져오는데, 
+    # 과거 시점 크롤링의 경우 미래의 기사(ref_date 이후)가 포함되면 안될 수도 있음.
+    # 하지만 여기서는 'since' 부터 'ref_date' 사이의 기사만 가져오는게 정확함.
+    # 기존 crud.get_recent_news는 >= since 만 체크함.
+    # 따라서 여기서 필터링을 추가하거나 crud를 수정해야 함.
+    # 여기서는 간단히 가져온 후 필터링.
+    
     articles = crud.get_recent_news(db, since)
+    # ref_date보다 미래의 기사는 제외 (과거 시점 재현)
+    articles = [a for a in articles if a.created_at <= ref_date + timedelta(days=1)] # 하루 정도 여유
+    
+    articles = [a for a in articles if not a.clusters]
     articles = [a for a in articles if not a.clusters]
     print(f"🔍 [DEBUG] 조회된 기사 수: {len(articles) if articles else 0}개")
 
@@ -287,6 +303,7 @@ def run_issue_clustering(db: Session, days=3):
     # 3. [복구됨] 기존 이슈에 새 기사 병합 (Absorption)
     #    - 기존 이슈와 유사도가 매우 높으면(0.85 이상) 해당 이슈로 편입시킵니다.
     print("🔄 [DEBUG] 기존 이슈와의 병합 검사 시작...")
+    # [수정] recent_issues도 since 이후에 생성된 것들만 조회
     recent_issues = db.query(Report).filter(Report.created_at >= since).all()
 
     for issue in recent_issues:

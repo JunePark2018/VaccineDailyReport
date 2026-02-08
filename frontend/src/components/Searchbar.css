@@ -138,12 +138,18 @@
     /* 선 색상을 어두운 회색으로 변경 */
 }
 
-/* Always Open Style (e.g. for Main Page) */
-.Searchbar.always-open .search-box {
-    width: 270px;
+/* Always Open Style - Mobile Only */
+@media screen and (max-width: 768px) {
+    .Searchbar.always-open .search-box {
+        width: 270px;
+    }
+
+    .Searchbar.always-open .search-box input {
+        opacity: 1;
+        pointer-events: auto;
+    }
 }
 
-.Searchbar.always-open .search-box input {
-    opacity: 1;
-    pointer-events: auto;
+.Searchbar.rounded-search .search-box {
+    border-radius: 20px;
 }

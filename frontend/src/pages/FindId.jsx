@@ -59,20 +59,19 @@ export default function FindId() {
     return (
         <div className="find-id-container">
             <Header
-                headerTop="on"
-                headerMain="on"
-                headerBottom="off"
-                leftChild={<Logo />}
-                midChild={null}
+                leftChild={null}
+                midChild={<Logo />}
                 rightChild={
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
-                        <div className="mobile-hidden" style={{ position: 'relative' }}>
-                            <Searchbar className="always-open" />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', justifyContent: 'flex-end', width: 'auto' }}>
+                        <div style={{ position: 'relative' }}>
+                            <Searchbar className="always-open rounded-search" />
                         </div>
-                        <UserMenu />
+                        <UserMenu className="rounded-user-menu" />
                     </div>
                 }
-                noSearchMobile={true}
+                headerTop="on"
+                headerMain="on"
+                headerBottom="on"
             />
 
             <div className="find-id-wrapper">

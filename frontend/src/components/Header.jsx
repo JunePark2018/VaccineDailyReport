@@ -22,11 +22,25 @@ const Header = ({
 }) => {
   const nav = useNavigate();
   const location = useLocation();
-  const { name: activeCategory } = useParams();
+  const { name: paramName } = useParams();
+
+  // Custom logic to determine active category based on path
+  const getActiveCategory = (pathname) => {
+    if (pathname === '/') return '홈'; // Optional: if you want Home to be active
+    if (pathname.includes('/politics')) return '정치';
+    if (pathname.includes('/economy')) return '경제';
+    if (pathname.includes('/society')) return '사회';
+    if (pathname.includes('/living-culture')) return '생활/문화';
+    if (pathname.includes('/science')) return 'IT/과학';
+    if (pathname.includes('/world')) return '세계';
+    return paramName || ''; // Fallback to param if exists
+  };
+
+  const activeCategory = getActiveCategory(location.pathname);
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentArticleIndex, setCurrentArticleIndex] = useState(0);
-
+  const [isTransitioning, setIsTransitioning] = useState(true);
   const [articles, setArticles] = useState([]);
 
   useEffect(() => {
@@ -48,14 +62,39 @@ const Header = ({
     fetchNews();
   }, []);
 
+  // Use extended articles for infinite loop (clone first item at the end)
+  const extendedArticles = articles.length > 0 ? [...articles, articles[0]] : [];
+
   useEffect(() => {
     const timer = setInterval(() => {
       if (articles.length > 0) {
-        setCurrentArticleIndex((prevIndex) => (prevIndex + 1) % articles.length);
+        setCurrentArticleIndex((prevIndex) => prevIndex + 1);
       }
     }, 3000); // 3초 간격
     return () => clearInterval(timer);
   }, [articles]);
+
+  useEffect(() => {
+    // If we reached the cloned item (last index)
+    if (currentArticleIndex === articles.length && articles.length > 0) {
+      // Wait for the slide transition to finish (e.g. 500ms), then snap back to 0 without transition
+      const timeout = setTimeout(() => {
+        setIsTransitioning(false);
+        setCurrentArticleIndex(0);
+      }, 500);
+      return () => clearTimeout(timeout);
+    }
+  }, [currentArticleIndex, articles]);
+
+  useEffect(() => {
+    // If we snapped back to 0 and transition is off, turn it back on shortly after
+    if (currentArticleIndex === 0 && !isTransitioning) {
+      const timeout = setTimeout(() => {
+        setIsTransitioning(true);
+      }, 50);
+      return () => clearTimeout(timeout);
+    }
+  }, [currentArticleIndex, isTransitioning]);
 
   return (
     <div className={"Header-Container " + className}>
@@ -90,16 +129,31 @@ const Header = ({
       {headerTop === "on" && (
         <div className="Header-Top">
           <div className="header-top-content">
-            <span
-              className="updated-articles"
-              onClick={() => {
-                const articleId = articles[currentArticleIndex]?.report_id;
-                if (articleId) nav(`/article/${articleId}`);
-              }}
-              style={{ cursor: 'pointer' }}
-            >
-              {articles.length > 0 ? (articles[currentArticleIndex]?.title || "로딩 중...") : "최신 AI 뉴스 로딩 중..."}
-            </span>
+            <div className="news-ticker-wrapper">
+              <div
+                className="news-ticker-list"
+                style={{
+                  transform: `translateY(-${currentArticleIndex * 36}px)`,
+                  transition: isTransitioning ? 'transform 0.5s ease-in-out' : 'none'
+                }}
+              >
+                {extendedArticles.length > 0 ? (
+                  extendedArticles.map((article, index) => (
+                    <div
+                      key={index}
+                      className="news-ticker-item"
+                      onClick={() => {
+                        if (article.report_id) nav(`/article/${article.report_id}`);
+                      }}
+                    >
+                      {article.title || "로딩 중..."}
+                    </div>
+                  ))
+                ) : (
+                  <div className="news-ticker-item">최신 AI 뉴스 로딩 중...</div>
+                )}
+              </div>
+            </div>
             <Weather />
           </div>
         </div>

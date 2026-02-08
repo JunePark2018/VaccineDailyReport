@@ -15,6 +15,7 @@ import Timeline from '../components/Timeline';
 import LikeButton from '../components/LikeButton';
 import AI_News_Recommendation from '../components/AI_News_Recommendation';
 import AgeGenderChart from '../components/AgeGenderChart';
+import MediaFocusChart from '../components/MediaFocusChart'; // Import Chart
 import { HiOutlineSpeakerWave, HiOutlinePrinter, HiOutlineDocumentDuplicate, HiOutlineBookmark, HiMiniBookmark } from 'react-icons/hi2';
 import SkeletonNews from '../components/SkeletonNews'; // Import Skeleton
 
@@ -52,6 +53,9 @@ function ArticlePage() {
 
   // Demographics State
   const [demographics, setDemographics] = useState(null);
+
+  // Media Focus State
+  const [focusData, setFocusData] = useState([]);
 
   // Action Button States (Unified Popup State)
   // 'tts', 'font', or null (Share removed)
@@ -301,6 +305,16 @@ function ArticlePage() {
           console.error('Demographics Fetch Error:', error);
           setDemographics({ age_distribution: [], gender_distribution: [] });
         }
+
+        // Fetch Media Focus Data
+        try {
+          const focus_response = await axios.get(`${API_BASE_URL}/reports/${id}/media-focus`);
+          setFocusData(focus_response.data.media_focus || []);
+        } catch (error) {
+          console.error('Media Focus Fetch Error:', error);
+          setFocusData([]);
+        }
+
       } catch (error) {
         console.error('Data Fetch Error:', error);
       } finally {
@@ -518,12 +532,11 @@ function ArticlePage() {
                     />
                   </div>
 
-                  {/* 통계 섹션: 키워드 + 연령대/성별 */}
+                  {/* 통계 섹션: 키워드 + 연령대/성별 + 집중도 분석 */}
                   <div className="statistics-section" style={{ marginTop: '60px', paddingLeft: '30px', paddingRight: '30px' }}>
-                    <div style={{
+                    <div className="statistics-content-wrapper" style={{
                       display: 'flex',
                       gap: '40px',
-                      alignItems: 'flex-start',
                       flexWrap: 'wrap'
                     }}>
                       {/* 워드클라우드 */}
@@ -542,12 +555,19 @@ function ArticlePage() {
                       </div>
 
                       {/* 연령대별/성별 차트 */}
-                      <div style={{ flex: '1', minWidth: '500px' }}>
+                      <div style={{ flex: '1', minWidth: '300px' }}>
                         <AgeGenderChart
                           ageData={demographics?.age_distribution}
                           genderData={demographics?.gender_distribution}
                         />
                       </div>
+
+                      {/* 언론사 집중도 분석 차트 */}
+                      {focusData.length > 0 && (
+                        <div style={{ flex: '1', minWidth: '300px' }}>
+                          <MediaFocusChart data={focusData} />
+                        </div>
+                      )}
                     </div>
                   </div>
 

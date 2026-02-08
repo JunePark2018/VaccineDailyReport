@@ -41,10 +41,10 @@
 }
 
 .mypage-content-wrapper {
-  max-width: 1200px;
+  max-width: 1320px;
   margin: 0 auto;
   width: 100%;
-  padding: 20px;
+  padding: 40px 20px;
   display: flex;
   gap: 30px;
   flex: 1;

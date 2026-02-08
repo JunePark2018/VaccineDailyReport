@@ -818,6 +818,116 @@ def clear_user_keyword_stats(db: Session, *, user_id: int) -> int:
 
 
 # -------------------------
+# Media Focus Analysis
+# -------------------------
+def get_media_focus_stats(db: Session, cluster_id: int) -> dict:
+    """
+    특정 이슈(Cluster)에 대해 각 언론사가 얼마나 집중하고 있는지 분석합니다.
+    Focus Index = (해당 이슈 내 언론사 점유율) / (전체 뉴스 내 언론사 점유율)
+    """
+    # 1. 해당 클러스터의 언론사별 뉴스 개수 조회
+    # (Cluster -> News -> Company)
+    cluster_counts = (
+        db.query(Company.name, func.count(News.news_id))
+        .join(News, News.company_id == Company.company_id)
+        .join(cluster_news_link, News.news_id == cluster_news_link.c.news_id)
+        .filter(cluster_news_link.c.cluster_id == cluster_id)
+        .group_by(Company.name)
+        .all()
+    )
+    # e.g., [('조선일보', 5), ('한겨레', 2), ...]
+
+    if not cluster_counts:
+        return {"media_focus": []}
+
+    total_cluster_news = sum(count for _, count in cluster_counts)
+
+    today = datetime.now().date()
+    
+    # 2. 전체 뉴스에서의 언론사별 점유율 조회 (Baseline)
+    # 데이터가 오래된 경우(데모 환경)를 대비해 기간을 동적으로 확장
+    from datetime import timedelta
+    
+    # 시도할 기간: 24시간 -> 3일 -> 7일 -> 30일 -> 전체
+    time_windows = [24, 72, 168, 720] 
+    
+    global_counts = []
+    total_global_news = 0
+    used_window = "All Time"
+
+    for hours in time_windows:
+        since = datetime.utcnow() - timedelta(hours=hours)
+        temp_counts = (
+            db.query(Company.name, func.count(News.news_id))
+            .join(News, News.company_id == Company.company_id)
+            .filter(News.created_at >= since)
+            .group_by(Company.name)
+            .all()
+        )
+        temp_total = sum(count for _, count in temp_counts)
+        
+        if temp_total > 50: # 표본이 충분하면 채택
+            global_counts = temp_counts
+            total_global_news = temp_total
+            used_window = f"{hours}h"
+            break
+    
+    # 여전히 부족하면 전체 기간 사용
+    if total_global_news < 10:
+        global_counts = (
+            db.query(Company.name, func.count(News.news_id))
+            .join(News, News.company_id == Company.company_id)
+            .group_by(Company.name)
+            .all()
+        )
+        total_global_news = sum(count for _, count in global_counts)
+        used_window = "All Time (Fallback)"
+
+    if total_global_news == 0:
+        return {"media_focus": []}
+
+    # 맵으로 변환
+    global_map = {name: count for name, count in global_counts}
+
+    # 3. Focus Index 계산
+    results = []
+    for company_name, count in cluster_counts:
+        cluster_share = count / total_cluster_news # 해당 이슈 내 점유율 (0.0 ~ 1.0)
+        
+        # 전체 뉴스 내 점유율
+        global_count = global_map.get(company_name, 0)
+        # 만약 전체 뉴스 집계에 안 잡혔다면(매우 희귀), count만큼은 최소한 존재했을 것임 (보정)
+        if global_count < count:
+             global_count = count
+        
+        # Global Share가 너무 작으면(0에 수렴하면) Index가 폭발하므로 최소 보정
+        # 전체 뉴스 데이터가 충분하지 않을 초기 단계 방어
+        if total_global_news < 10:
+             global_share = cluster_share # 데이터 부족 시 1.0으로 수렴
+        else:
+             global_share = global_count / total_global_news
+
+        if global_share == 0:
+            index = 0
+        else:
+            index = cluster_share / global_share
+
+        results.append({
+            "company": company_name,
+            "cluster_count": count,
+            "global_count": global_count,
+            "focus_index": round(index, 2),
+            "cluster_share": round(cluster_share * 100, 1), # %
+            "global_share": round(global_share * 100, 1)    # %
+        })
+
+    # Index 높은 순 정렬
+    results.sort(key=lambda x: x["focus_index"], reverse=True)
+
+    return {"media_focus": results}
+
+
+# -------------------------
 # Feed helpers (예시)
 # -------------------------
 def list_reports_feed_for_user(

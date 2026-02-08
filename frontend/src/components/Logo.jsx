@@ -15,15 +15,14 @@ function Logo({ className = "" }) {
     };
 
     return (
-        <div 
-            className={`Logo ${className}`} 
+        <div
+            className={`Logo ${className}`}
             onClick={handleLogoClick}
             role="button"
             tabIndex="0"
             onKeyDown={(e) => e.key === 'Enter' && handleLogoClick()}
         >
-            {/* 텍스트 없이 이미지만 출력 */}
-            <img src={logoImg} alt="백신일보 로고" className="logo-image" />
+            <span className="logo-text">백신일보</span>
         </div>
     );
 }

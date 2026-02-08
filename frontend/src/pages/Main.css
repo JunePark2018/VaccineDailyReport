@@ -1,22 +1,53 @@
 .main-page {
   width: 100%;
-  font-family: 'Noto Sans KR', sans-serif;
 }
 
 .main-page .category-content {
   max-width: 1320px;
+  /* 1320px -> 1380px */
   margin: 0 auto;
-  padding: 40px 20px;
-  /* Reduced from 80px */
+  padding: 40px 30px;
+  /* 하단 패딩 40px 복구 */
+  border: 1px solid #ccc;
+  /* 전체 보더 적용 (상단 포함) */
 }
 
 /* Main Article Section (3-Column) */
 .main-page .main-article-section {
   display: flex;
   gap: 16px;
-  /* Balanced gap */
+  /* Reduced from 20px */
+  margin-bottom: 40px;
+  /* Reduced from 50px */
   align-items: stretch;
+  /* Match height */
 }
+
+/* Carousel Track (Global - Desktop Default: Single Image, No Slide) */
+.main-page .carousel-track {
+  width: 100%;
+  height: 100%;
+  /* No transform on desktop */
+}
+
+.main-page .carousel-slide {
+  /* Hide all by default */
+  display: none;
+  width: 100%;
+  height: 100%;
+}
+
+.main-page .carousel-slide.active {
+  /* Show only active */
+  display: block;
+}
+
+.main-page .carousel-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 
 .main-page .article-info-side {
   flex: 1;
@@ -73,18 +104,18 @@
 
 .main-page .article-image-center {
   /* flex: 1.44; Removed */
-  width: 90%;
-  margin: 0 auto;
+  width: 100%;
+  height: 100%;
+  margin: 0;
   position: relative;
   border: none;
-  aspect-ratio: 1.8 / 1;
-  /* align-self: flex-start; Removed */
-  align-self: center;
+  /* aspect-ratio: 1.8 / 1; Removed to fill height */
+  align-self: stretch;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border-radius: 5px;
+  border-radius: 0px;
 }
 
 .main-page .article-image-center::before,
@@ -361,7 +392,7 @@
   right: 50%;
   margin-left: -50vw;
   margin-right: -50vw;
-  border-top: 1px solid #d9d9d9;
+  border-top: px solid #d9d9d9;
   /* Slightly darker gray for visibility */
   margin-top: 50px;
   margin-bottom: 40px;
@@ -475,6 +506,16 @@
 }
 
 
+
+.main-page .highlights-side {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-color: #f9f9f9;
+  border-left: 1px solid #eee;
+  padding: 15px 10px;
+}
 
 .main-page .ai-related-list {
   flex: 1.5;
@@ -597,73 +638,59 @@
 
 /* Category Box Section (Politics & Economy) */
 .main-page .category-detailed-section {
-  margin-top: 37px;
-  /* Reduced by 3px */
+  margin-top: 50px;
   border-top: 1px solid #eee;
-  padding-top: 37px;
-  /* Reduced by 3px */
-  padding-bottom: 37px;
-  /* Added spacing below */
+  padding-top: 50px;
+  padding-bottom: 30px;
 }
 
 .main-page .cat-split-row {
   display: flex;
-  gap: 30px;
-  margin-bottom: 50px;
+  flex-direction: column;
+  /* 세로 나열 */
+  gap: 60px;
 }
 
 .main-page .cat-box-column {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+  width: 100%;
 }
 
 .main-page .cat-box-header {
-  font-size: 24px;
-  /* Standardize */
+  font-size: 22px;
+  /* 헤더 크기 약간 조정 */
   font-weight: 800;
   margin: 0 0 20px 0;
-  padding: 0 0 2px 10px;
-  /* Left padding for border */
-  border-left: 5px solid #000;
-  border-bottom: none;
-  line-height: 1;
-  /* Match border height to text */
-  display: inline-block;
-  width: fit-content;
+  position: relative;
+  /* padding-bottom: 15px; Removed */
+  /* border-bottom: 1px solid #eee; Removed */
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
 }
 
-.main-page .cat-box-content {
-  display: flex;
-  flex-direction: column;
+.main-page .cat-box-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  /* 1x4 그리드 */
   gap: 20px;
 }
 
-.main-page .cat-box-main {
+.main-page .cat-box-card {
   display: flex;
-  flex-direction: row;
-  /* Horizontal layout */
+  flex-direction: column;
   gap: 15px;
-  text-align: left;
-  align-items: flex-start;
+  transition: transform 0.2s ease;
+}
+
+.main-page .cat-box-card:hover {
+  transform: translateY(-5px);
 }
 
 .main-page .cat-box-img {
-  width: 45%;
-  /* Increased size */
+  width: 100%;
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  border-radius: 5px;
-  flex: none;
-  /* Prevent shrinking */
-}
-
-/* Wrapper for Title/Desc (will add in JSX) */
-.main-page .cat-box-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
+  border-radius: 0px;
 }
 
 .main-page .cat-box-img img {
@@ -672,39 +699,45 @@
   object-fit: cover;
 }
 
-.main-page .cat-box-title {
-  font-size: 18px;
-  /* Increased by 2px */
-  font-weight: 800;
-  margin: 0 0 5px 0;
-  line-height: 1.3;
+.main-page .cat-box-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.main-page .cat-box-list-item h3 {
+.main-page .cat-box-title {
   font-size: 16px;
+  /* 1x4 환경에 맞춰 약간 축소 */
   font-weight: 800;
-  margin: 0 0 5px 0;
-  line-height: 1.3;
+  margin: 0;
+  line-height: 1.4;
+  color: #000;
 }
 
 .main-page .cat-box-desc {
   font-size: 13px;
-  /* Increased from 12px */
+  /* 1x4 환경에 맞춰 약간 축소 */
   color: #666;
   margin: 0;
-  line-height: 1.4;
+  line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  /* 두 줄로 제한하여 깔끔하게 표시 */
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.main-page .cat-box-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 15px;
+@media screen and (max-width: 768px) {
+  .main-page .cat-box-grid {
+    grid-template-columns: 1fr;
+    /* 모바일은 1개씩 */
+    gap: 40px;
+  }
+
+  .main-page .cat-box-header {
+    font-size: 22px;
+  }
 }
 
 .main-page .cat-box-list-item p {
@@ -725,12 +758,20 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  text-align: left;
+  /* 내부 요소 왼쪽 정렬 기본값 */
+  align-items: flex-start;
 }
 
 .main-page .global-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 20px;
+  width: 100%;
+}
+
+.main-page .global-grid.science-grid {
+  grid-template-columns: 1fr;
 }
 
 .main-page .global-card {
@@ -747,7 +788,7 @@
   aspect-ratio: 16 / 9;
   /* border: 1px solid #000; Removed */
   overflow: hidden;
-  border-radius: 5px;
+  border-radius: 0px;
   /* Added roundness */
 }
 
@@ -782,10 +823,286 @@
 }
 
 .main-page .science-card h5 {
-  font-size: 30px;
+  font-size: 24px;
+  /* IT/과학 섹션 타이틀 크기 조정 */
   margin: 0;
   font-weight: 800;
   line-height: 1.4;
+}
+
+/* 추가 스타일 병합 */
+.main-page .ai-news-header {
+  margin-bottom: 20px;
+}
+
+.main-page .main-article-section {
+  margin-bottom: 30px;
+}
+
+.main-page .society-section {
+  border-top: none;
+  margin-top: 25px;
+}
+
+.main-page .science-section {
+  border-top: none;
+  margin-top: 0;
+  padding-top: 30px;
+  /* 상단 여백 추가 */
+  padding-left: 30px;
+  /* 좌측 패딩 추가 */
+  padding-right: 30px;
+  /* 우측 패딩 추가 */
+  padding-bottom: 30px;
+  /* 하단 여백 추가 */
+}
+
+.main-page .header-right-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  justify-content: flex-end;
+  width: auto;
+}
+
+.main-page .search-input-wrapper {
+  position: relative;
+}
+
+.main-page .skeleton-wrapper {
+  padding: 20px 0;
+}
+
+.main-page .skeleton-grid-row {
+  display: flex;
+  gap: 40px;
+  margin-top: 40px;
+}
+
+.main-page .main-full-col {
+  width: 100%;
+  text-align: left;
+}
+
+.main-page .pol-eco-wrapper {
+  display: flex;
+  gap: 0;
+  margin-top: 40px;
+}
+
+.main-page .pol-eco-column {
+  flex: 1;
+  border-right: none;
+  padding-right: 0;
+}
+
+
+/* Complex Grid Layout (Politics, Economy, Society) */
+.main-page .complex-grid-section {
+  display: flex;
+  margin-top: 40px;
+  border-top: 1px solid #ccc;
+  /* 회색으로 변경 */
+  margin-left: -30px;
+  /* 부모 패딩 상쇄 */
+  margin-right: -30px;
+  /* 부모 패딩 상쇄 */
+  width: calc(100% + 60px);
+  /* 전체 너비 확장 */
+  border-bottom: 1px solid #ccc;
+  /* 하단 보더 추가 (박스 닫기) */
+}
+
+.main-page .complex-left-col {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #ccc;
+  padding-right: 0;
+  /* 패딩 제거 (구분선 연결을 위해) */
+  padding-top: 0;
+  /* 내부 섹션에서 처리 */
+}
+
+.main-page .complex-right-col {
+  flex: 1;
+  padding-left: 30px;
+  padding-right: 30px;
+  /* 우측 패딩 추가 */
+  padding-top: 30px;
+}
+
+/* New divider contained within the column */
+.main-page .complex-inner-divider {
+  width: 100%;
+  border-top: 1px solid #ccc;
+  margin: 0;
+  /* 마진 초기화 */
+}
+
+/* Mobile specific styling for dividers will be handled in media query */
+
+/* Politics Section (3x2 Grid) */
+.main-page .politics-section {
+  padding-left: 30px;
+  /* 좌측 패딩 추가 */
+  padding-right: 30px;
+  padding-top: 30px;
+  padding-bottom: 30px;
+  /* 40px -> 30px 조정 */
+}
+
+.main-page .politics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 25px;
+  padding-top: 10px;
+}
+
+.main-page .politics-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.main-page .politics-img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+
+.main-page .politics-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.main-page .politics-title {
+  font-size: 16px;
+  font-weight: 800;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.main-page .politics-desc {
+  font-size: 13px;
+  color: #666;
+  margin: 0;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Economy Section (Vertical 1 Column) */
+.main-page .economy-column-list {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.main-page .economy-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.main-page .economy-img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+
+.main-page .economy-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.main-page .economy-title {
+  font-size: 15px;
+  font-weight: 800;
+  margin: 0;
+  line-height: 1.3;
+}
+
+/* Society Large Section (Horizontal) */
+.main-page .society-large-section {
+  padding-top: 40px;
+}
+
+.main-page .society-large-card {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+  padding-top: 10px;
+  cursor: pointer;
+}
+
+.main-page .society-large-img {
+  flex: 1;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+
+.main-page .society-large-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.main-page .society-large-info {
+  flex: 1.5;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.main-page .society-large-title {
+  font-size: 24px;
+  font-weight: 800;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.main-page .society-large-desc {
+  font-size: 15px;
+  color: #555;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Mobile Responsive Adjustments (Max 768px) */
+@media screen and (max-width: 768px) {
+  .main-page .complex-grid-section {
+    flex-direction: column;
+    gap: 30px;
+  }
+
+  .main-page .complex-right-col {
+    border-left: none;
+    padding-left: 0;
+    border-top: 1px solid #eee;
+    padding-top: 30px;
+  }
+
+  .main-page .politics-grid {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+
+  .main-page .society-large-card {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .main-page .society-large-title {
+    font-size: 20px;
+  }
 }
 
 /* =========================================
@@ -805,10 +1122,9 @@
 
   /* --- Main Article Section (Top 3 Columns) --- */
   .main-page .main-article-section {
-    flex-direction: column;
+    display: flex;
     gap: 30px;
     margin-bottom: 20px;
-    touch-action: pan-y;
   }
 
   /* Hide Side Columns on Mobile to focus on Carousel */
@@ -825,11 +1141,31 @@
   }
 
   /* Show Carousel Controls on Mobile */
+  /* Show Carousel Controls on Mobile - HIDDEN as per request */
   .main-page .carousel-arrow {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: none !important;
   }
+
+  /* Carousel Track for Slide Animation (Mobile Only) */
+  .main-page .carousel-track {
+    display: flex;
+    flex-direction: row;
+    /* Ensure side-by-side */
+    width: 100%;
+    height: 100%;
+    transform: var(--slide-transform, none);
+    /* Use CSS var from JSX */
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .main-page .carousel-slide {
+    display: block;
+    /* Show all slides for sliding */
+    min-width: 100%;
+    flex: 0 0 100%;
+    height: 100%;
+  }
+
 
   .main-page .carousel-dots-mobile {
     display: flex;
@@ -901,14 +1237,14 @@
     font-size: 18px;
   }
 
-  /* 3. Highlights (Right - originally part of left/right flow or separate?) 
-     Wait, .article-info-side was the left column. 
+  /* 3. Highlights (Right - originally part of left/right flow or separate?)
+     Wait, .article-info-side was the left column.
      .highlights-container is inside .article-info-side? No, let's check structure.
      Structure seems to be: info-side | image-column | (maybe another side? No, it's 3-column usually but CSS showed 2 main flex items: info-side, main-image-column)
      Wait, lines 14-19: .main-article-section { display: flex; gap: 16px; align-items: stretch; }
      .article-info-side { flex: 1; }
      .main-image-column { flex: 2.7; }
-     So it's 2 columns. 
+     So it's 2 columns.
   */
 
   /* 3. Highlights (Right) - Now moved to bottom */
@@ -1056,7 +1392,9 @@
   }
 
   .main-page .global-img {
-    width: 100%;
+    width: calc(100% + 30px);
+    margin-left: -15px;
+    border-radius: 0;
   }
 
   /* Society Mobile Grid: Default Category Layout (Vertical) */
@@ -1080,23 +1418,126 @@
     flex-direction: column;
     gap: 15px;
     text-align: center;
+    align-items: stretch;
+    /* Ensure child can expand */
   }
 
   .main-page .science-card .global-img {
-    width: 100%;
+    width: calc(100% + 30px);
+    margin-left: -15px;
+  }
+
+  .main-page .global-card {
+    align-items: stretch;
+    /* Ensure negative margins work reliably */
   }
 
   .main-page .science-card h5 {
     font-size: 16px;
   }
+
+  /* --- Mobile Border Optimizations (Hide Desktop Borders) --- */
+  .main-page .category-content {
+    border: none !important;
+    /* 모바일 전체 테두리 제거 */
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .main-page .complex-grid-section {
+    border-top: none !important;
+    border-bottom: none !important;
+    /* 모바일 하단 보더 제거 */
+    margin-left: 0 !important;
+    /* 네거티브 마진 해제 */
+    margin-right: 0 !important;
+    /* 네거티브 마진 해제 */
+    width: 100% !important;
+    /* 너비 원복 */
+  }
+
+  .main-page .complex-left-col {
+    border-right: none !important;
+    padding-right: 0 !important;
+    /* 모바일 우측 패딩 제거 */
+  }
+
+  .main-page .complex-right-col {
+    padding-left: 20px !important;
+    /* 모바일 전용: 가독성 여백 */
+    padding-right: 20px !important;
+    /* 모바일 전용: 가독성 여백 */
+    padding-top: 0 !important;
+  }
+
+  .main-page .politics-section,
+  .main-page .society-large-section,
+  .main-page .science-section {
+    padding-left: 20px !important;
+    /* 모바일 전용: 가독성 여백 */
+    padding-right: 20px !important;
+    /* 모바일 전용: 가독성 여백 */
+    padding-top: 0 !important;
+    padding-bottom: 30px !important;
+  }
+
+  .main-page .complex-inner-divider {
+    display: none !important;
+    /* 섹션 사이 구분선 다시 숨김 */
+    border-top: none !important;
+  }
+
+  /* Create a divider for Economy section as well */
+  .main-page .complex-right-col {
+    border-top: none !important;
+    /* 경제 섹션 위 구분선 제거 */
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
+
+  /* --- Category Title Black Dividers (Mobile) - REMOVED to match Politics Page --- */
+  /* Reverting to simple style */
+
+  /* Article Separators (Mobile) - Standard Border */
+  .main-page .politics-card:not(:last-child),
+  .main-page .society-mobile-grid div:not(:last-child),
+  .main-page .culture-mobile-grid div:not(:last-child),
+  .main-page .science-section .science-card:not(:last-child) {
+    border-bottom: 1px solid #eee;
+    /* Light grey like standard list */
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+  }
 }
 
 /* --- Analysis Block Interactive Styles --- */
 .main-page .analysis-block {
+  flex: 1;
+  /* Stretch to fill available height */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  /* Center content vertically */
   padding: 15px;
   cursor: pointer;
   border-bottom: 1px solid #eee;
   transition: background-color 0.2s ease, color 0.2s ease;
+  position: relative;
+  /* Ensure positioning context for pseudo-element */
+  overflow: hidden;
+  /* Hide the bookmark element when it slides in/out */
+}
+
+/* Society Large Block */
+.main-page .society-large-section {
+  padding-left: 30px;
+  /* 좌측 패딩 추가 */
+  padding-right: 30px;
+  /* 우측 패딩 추가 */
+  padding-top: 30px;
+  /* 상단 여백 추가 */
+  padding-bottom: 30px;
+  /* 하단 여백 추가 */
 }
 
 /* Hover: Underline ONLY the title of the hovered block */
@@ -1104,16 +1545,168 @@
   text-decoration: underline;
 }
 
-/* Active State: Black Background, White Text */
+
+/* Active State: Black Background, White Text, Visual Connection */
+/* Active State: Black Background, White Text, Visual Connection */
 .main-page .analysis-block.active {
-  background-color: #000;
+  background-color: #1d1d1d;
   color: #fff;
+  border-left: 5px solid #be68d3;
+  /* Connect with Highlight Color */
+  position: relative;
+  overflow: visible;
+  /* Allow arrow to stick out */
 }
 
 /* Force children to inherit white color in active state */
 .main-page .analysis-block.active h2,
 .main-page .analysis-block.active p {
   color: #fff !important;
+}
+
+/* Arrow pointing to Main Image */
+.main-page .analysis-block.active::after {
+  content: '';
+  position: absolute;
+  right: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-left: 10px solid #1d1d1d;
+  z-index: 10;
+  filter: drop-shadow(1px 0px 0px white);
+}
+
+
+/* --- Refactored Inline Styles & Animations --- */
+
+/* Fade Animation */
+@keyframes fadeEffect {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-animate {
+  animation: fadeEffect 0.2s ease-in-out;
+}
+
+/* Refactored Layout Styles */
+.main-page .analysis-title {
+  font-size: 18px;
+  margin-bottom: 5px;
+}
+
+.main-page .analysis-desc {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.main-page .article-info-side {
+  flex: 0.8;
+  /* Increased from 0.4 for balance */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Main Image Column */
+.main-page .main-image-column {
+  flex: 1.3;
+  /* Reduced from 1.6 */
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  /* Allow height to match neighbors (flex stretch default) */
+}
+
+/* Image styling to fill height */
+/* Image styling to fill height */
+.main-page .article-image-center {
+  cursor: pointer;
+  width: calc(100%);
+  /* Full width on mobile */
+  margin-left: 0px;
+  /* Counteract padding */
+  object-fit: cover;
+  aspect-ratio: 16 / 9 !important;
+  display: block;
+  position: relative;
+  overflow: hidden;
+  border-radius: 0;
+  /* No rounded corners on mobile */
+}
+
+.main-page .highlights-side {
+  flex: 0.8;
+  /* Match article-info-side */
+  display: flex;
+  flex-direction: column;
+}
+
+.main-page .highlights-title {
+  font-size: 18px;
+  /* Original size */
+  font-weight: bold;
+  margin-bottom: 15px;
+  /* Original margin */
+  padding-bottom: 10px;
+  border-bottom: 2px solid #333;
+  text-align: left;
+}
+
+.main-page .highlight-list {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  /* Occupy remaining space instead of fixed 100% */
+  justify-content: space-between;
+  overflow: hidden;
+  /* Prevent overflow */
+}
+
+.main-page .highlight-item {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 10px;
+  /* Reverted to 12px 10px */
+  border-bottom: 1px solid #eee;
+  align-items: flex-start !important;
+  text-align: left !important;
+  margin-bottom: 5px;
+}
+
+.main-page .highlight-keyword {
+  color: #fff !important;
+  background-color: #000 !important;
+  /* Changed to Black */
+  font-weight: bold !important;
+  font-size: 14px !important;
+  /* Changed to 14px */
+  margin-bottom: 6px !important;
+  display: inline-block;
+  padding: 4px 8px;
+  /* Reverted padding */
+  border-radius: 0px;
+}
+
+.main-page .highlight-content {
+  font-size: 12px !important;
+  /* Changed to 12px */
+  line-height: 1.5 !important;
+  color: #444 !important;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  /* Show only 2 lines */
+  margin: 0;
 }
 
 /* --- Global Article Hover Effects --- */

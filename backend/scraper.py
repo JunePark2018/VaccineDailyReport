@@ -288,3 +288,163 @@ def crawl_n_days(
                 continue
 
     return all_news_data
+
+def crawl_news_by_period(
+    db_session,
+    start_date_str: str,
+    end_date_str: str,
+    sections=("100", "101", "102", "103", "104", "105"),
+    pages_per_day=5,
+    sleep_sec=0.1
+):
+    """
+    특정 기간 (start_date ~ end_date) 동안의 뉴스를 수집합니다.
+    Format: 'YYYYMMDD'
+    """
+    try:
+        start_dt = datetime.strptime(start_date_str, "%Y%m%d")
+        end_dt = datetime.strptime(end_date_str, "%Y%m%d")
+    except ValueError:
+        print("❌ 날짜 형식 오류 (YYYYMMDD 포맷 필요)")
+        return []
+
+    if start_dt > end_dt:
+        print("❌ 시작일이 종료일보다 늦습니다.")
+        return []
+
+    # 날짜 리스트 생성
+    date_list = []
+    curr = start_dt
+    while curr <= end_dt:
+        date_list.append(curr)
+        curr += timedelta(days=1)
+    
+    # 최신 날짜부터 수집 역순? 혹은 순서대로? -> 보통 과거 데이터 채우기면 최신순이 나을수도 있으나
+    # 여기서는 입력된 순서대로 (과거 -> 미래) 진행하거나 역순으로 진행
+    # run_past_crawler 취지상 상관없음.
+    
+    total_collected = []
+    
+    section_names = {
+        "100": "정치",
+        "101": "경제",
+        "102": "사회",
+        "103": "생활/문화",
+        "104": "세계",
+        "105": "IT/과학",
+    }
+    
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
+    }
+    
+    # 메모리 중복 방지
+    collected_titles = set()
+
+    print(f"🚀 기간 수집 시작: {start_date_str} ~ {end_date_str} (총 {len(date_list)}일)")
+
+    for target_date in date_list:
+        ymd = target_date.strftime("%Y%m%d")
+        print(f"\n📅 [Target] {ymd}")
+
+        for sid in sections:
+            # print(f"   └─ [{section_names.get(sid, sid)}] ...")
+            
+            for page in range(1, pages_per_day + 1):
+                list_url = (
+                    "https://news.naver.com/main/list.naver" f"?mode=LSD&mid=sec&sid1={sid}&date={ymd}&page={page}"
+                )
+
+                try:
+                    resp = requests.get(list_url, headers=headers, timeout=10)
+                    resp.raise_for_status()
+                    soup = BeautifulSoup(resp.text, "html.parser")
+
+                    atags = soup.select(".list_body a, .sa_text_title, a[href*='article']")
+                    urls = [a.get("href") for a in atags if a.get("href") and "article" in a.get("href")]
+                    urls = list(set(urls))
+
+                    if not urls:
+                        break
+
+                    for url in urls:
+                        # DB URL 중복 체크
+                        if db_session.query(News.news_id).filter(News.url == url).first():
+                            continue
+
+                        data = get_news_data(url)
+                        if not data:
+                            continue
+
+                        clean_title = data["title"].strip()
+                        title_key = (data["company_name"], clean_title)
+
+                        if title_key in collected_titles:
+                            continue
+
+                        # DB 제목+언론사 중복 체크
+                        exists = (
+                            db_session.query(News)
+                            .join(Company)
+                            .filter(News.title == data["title"], Company.name == data["company_name"])
+                            .first()
+                        )
+                        if exists:
+                            collected_titles.add(title_key)
+                            continue
+
+                        # 카테고리 매핑
+                        if data.get("category") == "미분류":
+                            data["category"] = section_names.get(sid, "미분류")
+                        if data["category"] == "생활/문화":
+                            data["category"] = "사회"
+
+                        # 저장 (여기서는 리스트에 담아서 리턴하지 않고 바로 DB 저장해도 되지만, 
+                        # 기존 구조를 따라 리스트 반환 후 외부에서 저장하거나, 
+                        # 여기서는 run_past_crawler에서 바로 저장 로직을 수행하도록 
+                        # News 객체를 생성해 DB에 add 하는게 낫다. 
+                        # 하지만 기존 run_article_crawler 패턴을 보면 리스트 반환임.
+                        # -> 메모리 문제 있을 수 있으니 바로바로 저장하자.)
+                        
+                        # 회사 찾기/생성
+                        from database.crud import get_or_create_company_by_raw_name, create_news
+                        
+                        company = get_or_create_company_by_raw_name(db_session, data["company_name"])
+                        
+                        # 날짜 파싱 (data['time']) -> datetime
+                        # data['time'] 예: "2024-01-01 10:00:00" or "시간 정보 없음"
+                        # 네이버 상세 파싱에서 'data-date-time' 속성은 "2024-02-08 22:00:01" 포맷임
+                        created_at = datetime.now()
+                        if data["time"] != "시간 정보 없음":
+                            try:
+                                created_at = datetime.strptime(data["time"], "%Y-%m-%d %H:%M:%S")
+                            except:
+                                pass
+                        
+                        create_news(
+                            db_session,
+                            title=data["title"],
+                            contents=data["contents"],
+                            url=data["url"],
+                            company_id=company.company_id,
+                            is_domestic=True,
+                            category=data["category"],
+                            img_urls=data["img_urls"],
+                            created_at=created_at
+                        )
+                        # 커밋은 페이지 단위 or 하루 단위
+                        
+                        collected_titles.add(title_key)
+                        total_collected.append(data)
+                        print(f"     ✅ [Saved] {data['company_name']} | {clean_title[:15]}...")
+                        
+                        time.sleep(sleep_sec)
+                    
+                    # 페이지 단위 커밋
+                    db_session.commit()
+
+                except Exception as e:
+                    print(f"     ❌ [Error] {ymd} {sid} p{page}: {e}")
+                    continue
+
+    return total_collected

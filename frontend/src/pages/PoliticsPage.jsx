@@ -178,8 +178,8 @@ const PoliticsPage = () => {
 
                     {/* Right Column: Active Image Display */}
                     <div className="politics-image-side" onClick={() => activeSlide && navigate(`/article/${activeSlide.id}`)}>
-                        <div className="article-image-center" style={{ width: '100%', aspectRatio: '16/9', borderRadius: '1px', overflow: 'hidden', position: 'relative' }}>
-                            <img src={activeSlide?.image} alt="Main" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        <div className="article-image-center">
+                            <img src={activeSlide?.image} alt="Main"
                                 onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }}
                                 onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
 
@@ -307,16 +307,16 @@ const PoliticsPage = () => {
     }
 
     return (
-        <div className="category-page politics-page">
+        <div className="politics-page">
             <Header
-                leftChild={<Logo />}
-                midChild={null}
+                leftChild={null}
+                midChild={<Logo />}
                 rightChild={
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', justifyContent: 'flex-end', width: 'auto' }}>
                         <div style={{ position: 'relative' }}>
-                            <Searchbar className="always-open" />
+                            <Searchbar className="always-open rounded-search" />
                         </div>
-                        <UserMenu />
+                        <UserMenu className="rounded-user-menu" />
                     </div>
                 }
                 headerTop="on"

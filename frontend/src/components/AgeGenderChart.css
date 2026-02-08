@@ -5,6 +5,7 @@
     margin-top: 0;
     padding-top: 0;
     border-top: none;
+    height: 100%;
 }
 
 .AgeGenderChart .chart-section {
@@ -14,6 +15,10 @@
     border-radius: 0;
     box-shadow: none;
     border: none;
+    display: flex;
+    /* Added */
+    flex-direction: column;
+    /* Added */
 }
 
 .AgeGenderChart .chart-title {
@@ -30,6 +35,14 @@
 
 .AgeGenderChart .chart-wrapper {
     position: relative;
+    flex: 1;
+    /* Added */
+    display: flex;
+    /* Added */
+    flex-direction: column;
+    /* Added */
+    justify-content: flex-end;
+    /* Added */
 }
 
 .AgeGenderChart .bars-container {

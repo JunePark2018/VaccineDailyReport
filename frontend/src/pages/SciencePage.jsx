@@ -138,22 +138,18 @@ const SciencePage = () => {
 
         return (
             <React.Fragment key={blockIndex}>
-                <section className="main-article-section" style={{ display: 'flex', alignItems: 'center', gap: '40px', marginBottom: '30px', minHeight: '300px', textAlign: 'left' }}>
+                <section className="main-article-section">
 
                     {/* Left: Article Title */}
-                    <div className="politics-title-side" onClick={() => navigate(`/article/${mainData.id}`)} style={{ flex: 1.47, cursor: 'pointer' }}>
-                        <h2 style={{ fontSize: '36px', fontWeight: 'bold', lineHeight: '1.3', color: '#000', margin: 0 }}>
-                            {mainData.title}
-                        </h2>
-                        <p style={{ fontSize: '16px', color: '#666', marginTop: '15px', lineHeight: '1.6' }}>
-                            {mainData.description}
-                        </p>
+                    <div className="title-side" onClick={() => navigate(`/article/${mainData.id}`)}>
+                        <h2>{mainData.title}</h2>
+                        <p>{mainData.description}</p>
                     </div>
 
                     {/* Right: Article Photo */}
-                    <div className="politics-image-side" onClick={() => navigate(`/article/${mainData.id}`)} style={{ flex: 1.53, cursor: 'pointer' }}>
-                        <div className="article-image-center" style={{ width: '100%', aspectRatio: '2.4 / 1', borderRadius: '1px' }}>
-                            <img src={mainData.image} alt="Main" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
+                    <div className="image-side" onClick={() => navigate(`/article/${mainData.id}`)}>
+                        <div className="article-image-center">
+                            <img src={mainData.image} alt="Main" onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                         </div>
                     </div>
                 </section>
@@ -162,17 +158,15 @@ const SciencePage = () => {
                 {/* Grid Section (2 items) */}
                 {grid.length > 0 && (
                     <>
-                        <section className="bottom-grid-section" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '40px', marginBottom: '50px', textAlign: 'left' }}>
+                        <section className="grid-section">
                             {grid.slice(0, 2).map((news, i) => (
-                                <div key={i} className="grid-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                    <div className="grid-image" style={{ width: '100%', aspectRatio: '1.5/1', border: '1px solid #eee', position: 'relative', overflow: 'hidden' }}>
-                                        <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
+                                <div key={i} className="grid-item" onClick={() => navigate(`/article/${news.id}`)}>
+                                    <div className="grid-image">
+                                        <img src={news.image} alt={news.title} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                                     </div>
                                     <div className="grid-info">
-                                        <h3 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 5px 0', lineHeight: '1.4' }}>{news.title}</h3>
-                                        <p style={{ fontSize: '13px', color: '#666', margin: 0, lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                                            {news.content}
-                                        </p>
+                                        <h3>{news.title}</h3>
+                                        <p>{news.content}</p>
                                     </div>
                                 </div>
                             ))}
@@ -184,17 +178,15 @@ const SciencePage = () => {
                 {list.length > 0 && (
                     <>
                         <div className="section-divider"></div>
-                        <section className="bottom-list-section" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', columnGap: '20px', rowGap: '30px', textAlign: 'left' }}>
+                        <section className="list-section">
                             {list.slice(0, 8).map((news, i) => (
-                                <div key={i} className="list-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
-                                    <div className="list-image" style={{ width: '120px', height: '76px', flexShrink: 0, border: '1px solid #eee', overflow: 'hidden' }}>
-                                        <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
+                                <div key={i} className="list-item" onClick={() => navigate(`/article/${news.id}`)}>
+                                    <div className="list-image">
+                                        <img src={news.image} alt={news.title} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                                     </div>
-                                    <div className="list-info" style={{ flex: 1 }}>
-                                        <h3 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 8px 0', lineHeight: '1.3' }}>{news.title}</h3>
-                                        <p style={{ fontSize: '13px', color: '#666', margin: 0, lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                                            {news.content}
-                                        </p>
+                                    <div className="list-info">
+                                        <h3>{news.title}</h3>
+                                        <p>{news.content}</p>
                                     </div>
                                 </div>
                             ))}
@@ -206,87 +198,50 @@ const SciencePage = () => {
                 {feed.length > 0 && (
                     <>
                         <div className="section-divider"></div>
-                        <section className="bottom-feed-section" style={{ display: 'flex', flexDirection: 'column', gap: '30px', textAlign: 'left', marginTop: '30px', padding: '0 120px' }}>
+                        <section className="feed-section">
                             {feed.slice(0, 5).map((news, i) => (
-                                <div key={i} className="feed-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px', gap: '20px' }}>
+                                <div key={i} className="feed-item" onClick={() => navigate(`/article/${news.id}`)}>
 
                                     {/* Left Container: Like + Text */}
-                                    <div style={{ display: 'flex', flex: 1, paddingRight: '0px' }}>
+                                    <div className="feed-left-container">
                                         {/* Like Button (Display Only) */}
-                                        <div className="like-icon" style={{
-                                            marginRight: '50px',
-                                            paddingRight: '15px',
-                                            borderRight: '1px solid #ddd',
-                                            marginTop: '5px',
-                                            display: 'flex',
-                                            flexDirection: 'row', // Horizontal
-                                            alignItems: 'center',
-                                            justifyContent: 'center', // Center content in fixed width
-                                            color: '#999',
-                                            minWidth: '100px', // Reserve space for 6 digits
-                                            gap: '8px' // Gap between icon and number
-                                        }}>
+                                        <div className="like-icon">
                                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+                                                <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 0 0 1-2-2v-7a2 0 0 1 2-2h3" />
                                             </svg>
-                                            <span style={{ fontSize: '14px', fontWeight: '500' }}>{120 + (news.id || 0)}</span>
+                                            <span>{120 + (news.id || 0)}</span>
                                         </div>
 
                                         {/* Text Info */}
                                         <div className="feed-info">
-                                            <h3 style={{ fontSize: '20px', fontWeight: 'bold', margin: '0 0 12px 0', lineHeight: '1.3' }}>{news.title}</h3>
-                                            <p style={{ fontSize: '15px', color: '#666', margin: 0, lineHeight: '1.6', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                                                {news.content}
-                                            </p>
+                                            <h3>{news.title}</h3>
+                                            <p>{news.content}</p>
                                         </div>
                                     </div>
 
                                     {/* Image Right (Reduced Height: aspect-ratio 1.8/1) */}
-                                    <div className="feed-image" style={{ width: '312px', aspectRatio: '1.8/1', flexShrink: 0, overflow: 'hidden', borderRadius: '4px' }}>
-                                        <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
+                                    <div className="feed-image">
+                                        <img src={news.image} alt={news.title} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                                     </div>
                                 </div>
                             ))}
                         </section>
 
-                        {/* Pagination Numbers (Box Style) - Max 5 */}
+                        {/* Pagination Numbers (Box Style) */}
                         {totalFeedPages > 1 && (
-                            <div style={{ textAlign: 'center', marginTop: '40px', marginBottom: '100px', display: 'flex', justifyContent: 'center', gap: '10px' }}>
-                                {(() => {
-                                    const maxButtons = 5;
-                                    let startPage = Math.max(1, feedPage - 2);
-                                    let endPage = Math.min(totalFeedPages, startPage + maxButtons - 1);
-
-                                    if (endPage - startPage + 1 < maxButtons) {
-                                        startPage = Math.max(1, endPage - maxButtons + 1);
-                                    }
-
-                                    return Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i).map((pageNum) => (
-                                        <button
-                                            key={pageNum}
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setFeedPage(pageNum);
-                                            }}
-                                            style={{
-                                                width: '36px',
-                                                height: '36px',
-                                                display: 'flex',
-                                                justifyContent: 'center',
-                                                alignItems: 'center',
-                                                fontSize: '14px',
-                                                border: feedPage === pageNum ? '1px solid #333' : '1px solid #eee',
-                                                backgroundColor: feedPage === pageNum ? '#333' : '#fff',
-                                                color: feedPage === pageNum ? '#fff' : '#666',
-                                                cursor: 'pointer',
-                                                fontWeight: feedPage === pageNum ? 'bold' : 'normal',
-                                                borderRadius: '0px'
-                                            }}
-                                        >
-                                            {pageNum}
-                                        </button>
-                                    ));
-                                })()}
+                            <div className="pagination-container">
+                                {Array.from({ length: totalFeedPages }, (_, i) => i + 1).map((pageNum) => (
+                                    <button
+                                        key={pageNum}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setFeedPage(pageNum);
+                                        }}
+                                        className={`pagination-btn ${feedPage === pageNum ? 'active' : ''}`}
+                                    >
+                                        {pageNum}
+                                    </button>
+                                ))}
                             </div>
                         )}
                     </>
@@ -306,16 +261,16 @@ const SciencePage = () => {
     }
 
     return (
-        <div className="category-page">
+        <div className="science-page">
             <Header
-                leftChild={<Logo />}
-                midChild={null}
+                leftChild={null}
+                midChild={<Logo />}
                 rightChild={
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', justifyContent: 'flex-end', width: 'auto' }}>
                         <div style={{ position: 'relative' }}>
-                            <Searchbar className="always-open" />
+                            <Searchbar className="always-open rounded-search" />
                         </div>
-                        <UserMenu />
+                        <UserMenu className="rounded-user-menu" />
                     </div>
                 }
                 headerTop="on"

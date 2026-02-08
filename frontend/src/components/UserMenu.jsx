@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import loginIcon from '../login_icon/login.png';
 import './UserMenu.css';
 
-const UserMenu = () => {
+const UserMenu = ({ className = "" }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -72,7 +72,7 @@ const UserMenu = () => {
   };
 
   return (
-    <div className="user-menu-container" ref={menuRef}>
+    <div className={`user-menu-container ${className}`} ref={menuRef}>
       <div className="user-info-wrapper" onClick={handleIconClick}>
         <div className="user-icon-box">
           <img
@@ -81,12 +81,13 @@ const UserMenu = () => {
             className="user-icon"
           />
         </div>
-        {isLoggedIn && (
-          <span className="user-name">{(userName || "회원") + "님"}</span>
-        )}
+        {/* User Name removed from here */}
       </div>
       {isLoggedIn && showMenu && (
         <div className="dropdown-menu">
+          <div className="menu-header">
+            <span className="user-name-dropdown">{(userName || "회원") + "님"}</span>
+          </div>
           {!location.pathname.startsWith('/mypage') && (
             <div className="menu-item" onClick={handleMyPage}>마이페이지</div>
           )}

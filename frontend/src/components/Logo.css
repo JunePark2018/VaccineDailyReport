@@ -14,14 +14,13 @@
     opacity: 0.8;
 }
 
-/* 로고 이미지 스타일 */
-.Logo .logo-image {
-    /* 헤더 높이에 맞춰 이미지 크기를 조절 (가장 중요) */
-    height: 60px;
-    width: auto;
-    display: block;
-    object-fit: contain;
-
-    /* 만약 이미지의 흰색 배경을 검은 헤더에서 없애고 싶다면 아래 주석 해제 */
-    /* mix-blend-mode: screen; */
+/* 로고 텍스트 스타일 */
+.Logo .logo-text {
+    font-size: 40px;
+    font-weight: 800;
+    color: #000;
+    letter-spacing: -1px;
+    font-family: 'Pretendard', sans-serif;
+    /* Or appropriate serif if requested, but user didn't specify font details yet */
+    line-height: 1;
 }

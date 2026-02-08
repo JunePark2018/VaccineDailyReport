@@ -703,5 +703,19 @@ def check_claim_evidence(req: ClaimEvidenceRequest, db: Session = Depends(get_db
     return {" match_found": len(results) > 0, "evidence": results}
 
 
+@router.get("/{report_id}/media-focus")
+def get_media_focus_analysis(report_id: int, db: Session = Depends(get_db)):
+    """
+    특정 리포트(이슈)에 대한 언론사별 집중도 지수를 반환합니다.
+    """
+    report = db.get(Report, report_id)
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    
+    # cluster_id로 분석
+    result = crud.get_media_focus_stats(db, report.cluster_id)
+    return result
+
+
 
 

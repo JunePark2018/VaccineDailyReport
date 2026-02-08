@@ -79,14 +79,14 @@ export default function SearchResult() {
     return (
         <div className="SearchResult_Main">
             <Header
-                leftChild={<Logo />}
-                midChild={null}
+                leftChild={null}
+                midChild={<Logo />}
                 rightChild={
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', justifyContent: 'flex-end', width: 'auto' }}>
                         <div style={{ position: 'relative' }}>
-                            <Searchbar className="always-open" />
+                            <Searchbar className="always-open rounded-search" />
                         </div>
-                        <UserMenu />
+                        <UserMenu className="rounded-user-menu" />
                     </div>
                 }
                 headerTop="on"

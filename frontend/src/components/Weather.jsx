@@ -136,10 +136,17 @@ const Weather = () => {
         }
     };
 
-    // 1. 초기 로딩: 서울(기본값)
+    // 1. 초기 로딩: 저장된 위치가 있으면 불러오고, 없으면 서울(기본값)
     useEffect(() => {
-        // 서울 영등포구 여의도동 좌표
-        getWeather(37.52487, 126.92723, "서울");
+        // Check localStorage
+        const savedLocation = localStorage.getItem('savedWeatherLocation');
+        if (savedLocation) {
+            const { lat, lon, name } = JSON.parse(savedLocation);
+            getWeather(lat, lon, name);
+        } else {
+            // 서울 영등포구 여의도동 좌표
+            getWeather(37.52487, 126.92723, "서울");
+        }
     }, []);
 
     // 3. 역지오코딩 (위경도 -> 주소 변환)
@@ -179,6 +186,13 @@ const Weather = () => {
                 // 주소 가져오기
                 const addressName = await getAddress(lat, lon);
                 getWeather(lat, lon, addressName);
+
+                // Save to localStorage
+                localStorage.setItem('savedWeatherLocation', JSON.stringify({
+                    lat,
+                    lon,
+                    name: addressName
+                }));
             },
             (err) => {
                 console.warn("위치 정보 접근 실패:", err);
