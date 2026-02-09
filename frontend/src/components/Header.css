@@ -174,21 +174,33 @@
 /* Active state with black background */
 /* Active state with black background */
 .Header-Container .Header-Bottom .category-item.active {
-    background-color: #000;
-    color: #fff !important;
-    border-radius: 0px;
-    /* removed rounding */
-    font-weight: 700;
+    background-color: transparent;
+    color: #000 !important;
+    font-weight: 800;
+    border-bottom: none;
+    /* Remove direct border */
+    position: relative;
+    /* For pseudo-element positioning */
 }
 
 /* Ensure span inherits color in active state */
 .Header-Container .Header-Bottom .category-item.active span {
-    color: #fff !important;
+    color: #000 !important;
 }
 
-/* Remove old underline style */
+/* New underline style with reduced width */
 .Header-Container .Header-Bottom .category-item.active::after {
-    display: none;
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 70%;
+    /* Reduced width (100% - 30%) */
+    height: 3px;
+    background-color: #000;
+    display: block;
+    /* Ensure it's displayed */
 }
 
 /* Icon Wrapper */
@@ -443,4 +455,8 @@
     .mobile-hidden {
         display: none !important;
     }
+}
+
+.Header-Container .news-ticker-list.no-transition {
+    transition: none !important;
 }

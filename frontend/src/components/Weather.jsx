@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import './Weather.css';
 
 // =================================================
 // 1. 설정 (Service Key는 본인 키로 변경 필요)
@@ -203,22 +204,13 @@ const Weather = () => {
     };
 
     return (
-        <span className="weather" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+        <span className="weather">
             {loading ? "날씨 로딩중..." :
                 (weatherData ? `${locationName} ${weatherData.temp}℃ (습도 ${weatherData.humidity}%)` : "날씨 정보 없음")
             }
             <button
                 onClick={handleCurrentLocation}
-                style={{
-                    background: 'none',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '10px',
-                    padding: '2px 5px',
-                    color: '#666',
-                    marginLeft: '5px'
-                }}
+                className="refresh-location-btn"
                 title="현재 위치로 갱신"
             >
                 📍 내 위치

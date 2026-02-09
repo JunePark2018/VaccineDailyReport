@@ -131,10 +131,9 @@ const Header = ({
           <div className="header-top-content">
             <div className="news-ticker-wrapper">
               <div
-                className="news-ticker-list"
+                className={`news-ticker-list ${!isTransitioning ? 'no-transition' : ''}`}
                 style={{
                   transform: `translateY(-${currentArticleIndex * 36}px)`,
-                  transition: isTransitioning ? 'transform 0.5s ease-in-out' : 'none'
                 }}
               >
                 {extendedArticles.length > 0 ? (

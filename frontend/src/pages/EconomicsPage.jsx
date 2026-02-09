@@ -220,7 +220,7 @@ const EconomicsPage = () => {
                                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                 <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
                                             </svg>
-                                            <span>{120 + (news.id || 0)}</span>
+                                            <span className="like-text">{120 + (news.id || 0)}</span>
                                         </div>
 
                                         {/* Text Info */}
@@ -277,8 +277,8 @@ const EconomicsPage = () => {
                 leftChild={null}
                 midChild={<Logo />}
                 rightChild={
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', justifyContent: 'flex-end', width: 'auto' }}>
-                        <div style={{ position: 'relative' }}>
+                    <div className="header-right-group">
+                        <div className="header-search-wrapper">
                             <Searchbar className="always-open rounded-search" />
                         </div>
                         <UserMenu className="rounded-user-menu" />
@@ -295,9 +295,9 @@ const EconomicsPage = () => {
                 </div>
 
                 {loading ? (
-                    <div style={{ marginTop: '40px' }}>
+                    <div className="skeleton-container">
                         <SkeletonNews type="main" />
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '40px' }}>
+                        <div className="skeleton-grid">
                             <SkeletonNews type="grid" />
                             <SkeletonNews type="grid" />
                             <SkeletonNews type="grid" />

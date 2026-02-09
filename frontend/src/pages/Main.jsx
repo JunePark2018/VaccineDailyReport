@@ -170,12 +170,13 @@ export const Main = () => {
   };
 
   // Auto-rotate slideshow
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentSlideIndex(prev => (prev + 1) % 3);
-    }, 10000); // 10 seconds per slide
-    return () => clearInterval(interval);
-  }, []);
+  // Auto-rotate slideshow (Disabled as per request)
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     setCurrentSlideIndex(prev => (prev + 1) % 3);
+  //   }, 10000); // 10 seconds per slide
+  //   return () => clearInterval(interval);
+  // }, []);
 
   // --- Deduplication Logic ---
   // Pre-calculate lists to ensure no duplicates across sections
@@ -285,24 +286,9 @@ export const Main = () => {
 
     return (
       <React.Fragment>
-        <h2 className="cat-box-header ai-news-header">AI 뉴스</h2>
+        <h2 className="cat-box-header ai-news-header">AI 분석 뉴스</h2>
         <section className="main-article-section">
-          <div className="article-info-side">
-            {slideArticles.map((art, idx) => {
-              const isActive = idx === currentSlideIndex;
-              return (
-                <React.Fragment key={art.id || idx}>
-                  <div
-                    className={`analysis-block ${isActive ? 'active' : ''}`}
-                    onClick={() => setCurrentSlideIndex(idx)}
-                  >
-                    <h2 className="analysis-title">{art.title}</h2>
-                    <p className="analysis-desc">{art.short_text || "AI 생성 기사 내용"}</p>
-                  </div>
-                </React.Fragment>
-              );
-            })}
-          </div>
+          <button className="carousel-arrow prev-arrow" onClick={(e) => { e.stopPropagation(); setCurrentSlideIndex(prev => (prev - 1 + 3) % 3); }}>&#x2039;</button>
           <div className="main-image-column">
             <div
               className="article-image-center"
@@ -332,13 +318,6 @@ export const Main = () => {
                   );
                 })}
               </div>
-              <button className="carousel-arrow prev-arrow" onClick={(e) => { e.stopPropagation(); setCurrentSlideIndex(prev => (prev - 1 + 3) % 3); }}>&#10094;</button>
-              <button className="carousel-arrow next-arrow" onClick={(e) => { e.stopPropagation(); setCurrentSlideIndex(prev => (prev + 1) % 3); }}>&#10095;</button>
-            </div>
-            <div className="carousel-dots-mobile">
-              {[0, 1, 2].map(dotIdx => (
-                <span key={dotIdx} className={`carousel-dot ${dotIdx === currentSlideIndex ? 'active' : ''}`} onClick={() => setCurrentSlideIndex(dotIdx)} />
-              ))}
             </div>
             <div className="carousel-highlights-mobile">
               {highlights.slice(0, 2).map((item, midx) => (
@@ -349,24 +328,49 @@ export const Main = () => {
               ))}
             </div>
           </div>
-          <div className="highlights-side">
-            <h3 className="highlights-title">언론사 비교분석</h3>
-            <div
-              key={`hl-${currentSlideIndex}`}
-              className="highlight-list fade-animate"
-            >
-              {highlights.slice(0, 3).map((item, hIndex) => (
-                <React.Fragment key={hIndex}>
-                  <div className="highlight-item">
-                    <span className="highlight-keyword">{item.keyword}</span>
-                    <span className="highlight-content">{item.content}</span>
+          <div className="main-right-col">
+            <div className="article-info-side">
+              {slideArticles.map((art, idx) => {
+                const isActive = idx === currentSlideIndex;
+                if (!isActive) return null; // Show only active for now, or use CSS for transition
+                return (
+                  <div
+                    key={art.id || idx}
+                    className={`analysis-block ${isActive ? 'active fade-animate' : ''}`}
+                    onClick={() => navigate(`/article/${art.report_id}`)}
+                  >
+                    <h2 className="analysis-title">{art.title}</h2>
+                    <p className="analysis-desc">{art.short_text || "AI 생성 기사 내용"}</p>
                   </div>
-                </React.Fragment>
-              ))}
+                );
+              })}
+            </div>
+            <div className="highlights-side">
+              <h3 className="highlights-title">언론사별 비교분석</h3>
+              <div
+                key={`hl-${currentSlideIndex}`}
+                className="highlight-list fade-animate"
+              >
+                {highlights.slice(0, 2).map((item, hIndex) => (
+                  <React.Fragment key={hIndex}>
+                    <div className="highlight-item">
+                      <span className="highlight-keyword">{item.keyword}</span>
+                      <span className="highlight-content">{item.content}</span>
+                    </div>
+                  </React.Fragment>
+                ))}
+              </div>
             </div>
           </div>
+
+          <button className="carousel-arrow next-arrow" onClick={(e) => { e.stopPropagation(); setCurrentSlideIndex(prev => (prev + 1) % 3); }}>&#x203A;</button>
+          <div className="carousel-dots-mobile">
+            {[0, 1, 2].map(dotIdx => (
+              <span key={dotIdx} className={`carousel-dot ${dotIdx === currentSlideIndex ? 'active' : ''}`} onClick={() => setCurrentSlideIndex(dotIdx)} />
+            ))}
+          </div>
         </section>
-      </React.Fragment>
+      </React.Fragment >
     );
   };
 
@@ -510,8 +514,8 @@ export const Main = () => {
           <div className="main-skeleton-container skeleton-wrapper">
             <SkeletonNews type="main" />
             <div className="skeleton-grid-row">
-              <div style={{ flex: 1 }}><SkeletonNews type="grid" /></div>
-              <div style={{ flex: 1 }}><SkeletonNews type="grid" /></div>
+              <div className="skeleton-grid-item"><SkeletonNews type="grid" /></div>
+              <div className="skeleton-grid-item"><SkeletonNews type="grid" /></div>
             </div>
           </div>
         ) : (

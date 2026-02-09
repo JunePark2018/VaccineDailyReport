@@ -163,3 +163,25 @@
     font-size: 12px;
     cursor: default;
 }
+
+/* Refactored Inline Styles */
+.Login .header-right-group {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    justify-content: flex-end;
+    width: auto;
+}
+
+.Login .header-search-wrapper {
+    position: relative;
+}
+
+.Login .find-id-link {
+    cursor: pointer;
+}
+
+.Login .create-account-link {
+    cursor: pointer;
+    font-weight: bold;
+}

@@ -75,24 +75,7 @@
     cursor: pointer;
 }
 
-.category-page .analysis-x::before,
-.category-page .analysis-x::after {
-    content: '';
-    position: absolute;
-    width: 150%;
-    height: 1px;
-    background: #ccc;
-    top: 50%;
-    left: -25%;
-}
 
-.category-page .analysis-x::before {
-    transform: rotate(26deg);
-}
-
-.category-page .analysis-x::after {
-    transform: rotate(-26deg);
-}
 
 .category-page .analysis-text {
     position: relative;
@@ -114,23 +97,7 @@
     border-radius: 0px;
 }
 
-.category-page .article-image-center::before,
-.category-page .article-image-center::after {
-    content: '';
-    position: absolute;
-    width: 150%;
-    height: 1px;
-    background: #ccc;
-    z-index: 0;
-}
 
-.category-page .article-image-center::before {
-    transform: rotate(45deg);
-}
-
-.category-page .article-image-center::after {
-    transform: rotate(-45deg);
-}
 
 .category-page .article-image-center img {
     width: 100%;
@@ -236,23 +203,7 @@
     overflow: hidden;
 }
 
-.category-page .grid-image::before,
-.category-page .grid-image::after {
-    content: '';
-    position: absolute;
-    width: 150%;
-    height: 1px;
-    background: #ccc;
-    z-index: 0;
-}
 
-.category-page .grid-image::before {
-    transform: rotate(45deg);
-}
-
-.category-page .grid-image::after {
-    transform: rotate(-45deg);
-}
 
 .category-page .grid-image img {
     width: 100%;
@@ -390,4 +341,112 @@
         flex-direction: column;
         gap: 20px;
     }
+}
+
+/* Refactored Inline Styles for TotalMenuPage */
+.total-menu-page .header-right-group {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    justify-content: flex-end;
+    width: auto;
+}
+
+.total-menu-page .header-search-wrapper {
+    position: relative;
+}
+
+.total-menu-page .main-article-section {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    margin-bottom: 30px;
+    min-height: 300px;
+}
+
+.total-menu-page .politics-title-side {
+    flex: 1.47;
+    cursor: pointer;
+}
+
+.total-menu-page .politics-title-side h2 {
+    font-size: 36px;
+    font-weight: bold;
+    line-height: 1.3;
+    color: #000;
+    margin: 0;
+}
+
+.total-menu-page .politics-title-side p {
+    font-size: 16px;
+    color: #666;
+    margin-top: 15px;
+    line-height: 1.6;
+}
+
+.total-menu-page .politics-image-side {
+    flex: 1.53;
+    cursor: pointer;
+}
+
+.total-menu-page .article-image-center {
+    width: 100%;
+    aspect-ratio: 2.4 / 1;
+    border-radius: 1px;
+}
+
+.total-menu-page .article-image-center img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.total-menu-page .bottom-grid-section {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 40px !important;
+}
+
+.total-menu-page .grid-item {
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.total-menu-page .grid-image {
+    width: 100%;
+    aspect-ratio: 1.5/1;
+    border: 1px solid #eee;
+    position: relative;
+    overflow: hidden;
+}
+
+.total-menu-page .grid-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.total-menu-page .grid-info h3 {
+    font-size: 16px;
+    font-weight: bold;
+    margin: 0 0 5px 0;
+    line-height: 1.4;
+}
+
+.total-menu-page .grid-info p {
+    font-size: 13px;
+    color: #666;
+    margin: 0;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.total-menu-page .pagination-arrow {
+    cursor: pointer;
 }

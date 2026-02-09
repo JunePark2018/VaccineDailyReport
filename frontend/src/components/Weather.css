@@ -1,0 +1,16 @@
+.weather {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.weather .refresh-location-btn {
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 10px;
+    padding: 2px 5px;
+    color: #666;
+    margin-left: 5px;
+}

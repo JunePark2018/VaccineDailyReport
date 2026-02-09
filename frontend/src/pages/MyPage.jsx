@@ -230,8 +230,8 @@ const MyPage = () => {
         leftChild={null}
         midChild={<Logo />}
         rightChild={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', justifyContent: 'flex-end', width: 'auto' }}>
-            <div style={{ position: 'relative' }}>
+          <div className="header-right-group">
+            <div className="header-search-wrapper">
               <Searchbar className="always-open rounded-search" />
             </div>
             <UserMenu className="rounded-user-menu" />

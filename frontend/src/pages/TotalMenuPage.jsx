@@ -72,22 +72,21 @@ const TotalMenuPage = () => {
 
         return (
             <React.Fragment key={blockIndex}>
-                <section className="main-article-section" style={{ display: 'flex', alignItems: 'center', gap: '40px', marginBottom: '30px', minHeight: '300px' }}>
-
+                <section className="main-article-section">
                     {/* Left: Article Title */}
-                    <div className="politics-title-side" onClick={() => navigate('/article')} style={{ flex: 1.47, cursor: 'pointer' }}>
-                        <h2 style={{ fontSize: '36px', fontWeight: 'bold', lineHeight: '1.3', color: '#000', margin: 0 }}>
+                    <div className="politics-title-side" onClick={() => navigate('/article')}>
+                        <h2>
                             {mainData.title}
                         </h2>
-                        <p style={{ fontSize: '16px', color: '#666', marginTop: '15px', lineHeight: '1.6' }}>
+                        <p>
                             {mainData.description}
                         </p>
                     </div>
 
                     {/* Right: Article Photo */}
-                    <div className="politics-image-side" onClick={() => navigate('/article')} style={{ flex: 1.53, cursor: 'pointer' }}>
-                        <div className="article-image-center" style={{ width: '100%', aspectRatio: '2.4 / 1', borderRadius: '1px' }}>
-                            <img src={mainData.image} alt="Main" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <div className="politics-image-side" onClick={() => navigate('/article')}>
+                        <div className="article-image-center">
+                            <img src={mainData.image} alt="Main" />
                         </div>
                     </div>
                 </section>
@@ -95,15 +94,15 @@ const TotalMenuPage = () => {
 
                 {grid.length > 0 && (
                     <>
-                        <section className="bottom-grid-section" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '40px' }}>
+                        <section className="bottom-grid-section">
                             {grid.map((news) => (
-                                <div key={news.id} className="grid-item" onClick={() => navigate('/article')} style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                    <div className="grid-image" style={{ width: '100%', aspectRatio: '1.5/1', border: '1px solid #eee', position: 'relative', overflow: 'hidden' }}>
-                                        <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                <div key={news.id} className="grid-item" onClick={() => navigate('/article')}>
+                                    <div className="grid-image">
+                                        <img src={news.image} alt={news.title} />
                                     </div>
                                     <div className="grid-info">
-                                        <h3 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 5px 0', lineHeight: '1.4' }}>{news.title}</h3>
-                                        <p style={{ fontSize: '13px', color: '#666', margin: 0, lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                        <h3>{news.title}</h3>
+                                        <p>
                                             {news.content}
                                         </p>
                                     </div>
@@ -127,13 +126,13 @@ const TotalMenuPage = () => {
     }
 
     return (
-        <div className="category-page">
+        <div className="category-page total-menu-page">
             <Header
                 leftChild={null}
                 midChild={<Logo />}
                 rightChild={
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', justifyContent: 'flex-end', width: 'auto' }}>
-                        <div style={{ position: 'relative' }}>
+                    <div className="header-right-group">
+                        <div className="header-search-wrapper">
                             <Searchbar className="always-open rounded-search" />
                         </div>
                         <UserMenu className="rounded-user-menu" />
@@ -158,7 +157,7 @@ const TotalMenuPage = () => {
                 )}
 
                 <div className="pagination">
-                    <span onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} style={{ cursor: 'pointer' }}>{"<"}</span>
+                    <span onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} className="pagination-arrow">{"<"}</span>
                     {[...Array(totalPages)].map((_, i) => (
                         <React.Fragment key={i + 1}>
                             <span
@@ -170,7 +169,7 @@ const TotalMenuPage = () => {
                             {i < totalPages - 1 && <span className="separator">|</span>}
                         </React.Fragment>
                     ))}
-                    <span onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} style={{ cursor: 'pointer' }}>{">"}</span>
+                    <span onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} className="pagination-arrow">{">"}</span>
                 </div>
             </main>
         </div>

@@ -8,8 +8,8 @@
   margin: 0 auto;
   padding: 40px 30px;
   /* 하단 패딩 40px 복구 */
-  border: 1px solid #ccc;
-  /* 전체 보더 적용 (상단 포함) */
+  border: none;
+  /* Removed outer border */
 }
 
 /* Main Article Section (3-Column) */
@@ -19,8 +19,16 @@
   /* Reduced from 20px */
   margin-bottom: 40px;
   /* Reduced from 50px */
-  align-items: stretch;
+  /* Reduced from 50px */
   /* Match height */
+  position: relative;
+  /* For arrow positioning */
+  padding-left: 60px;
+  padding-right: 60px;
+  box-sizing: border-box;
+  /* Compress content inside arrows */
+  min-height: 450px;
+  /* Fix height to prevent jumping */
 }
 
 /* Carousel Track (Global - Desktop Default: Single Image, No Slide) */
@@ -67,7 +75,7 @@
 
 
 .main-page .article-info-side h2 {
-  font-size: 18px;
+  font-size: 32px;
   margin-top: 0;
   margin-bottom: 5px;
   line-height: 1.2;
@@ -80,7 +88,7 @@
 }
 
 .main-page .article-info-side p {
-  font-size: 12px;
+  font-size: 15px;
   color: #333;
   line-height: 1.6;
   margin-bottom: 5px;
@@ -94,8 +102,8 @@
 
 
 .main-page .main-image-column {
-  flex: 2.7;
-  /* Increased from 2.2 by ~20% */
+  flex: 2.1;
+  /* Reduced from 2.7 by ~20% */
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -118,23 +126,7 @@
   border-radius: 0px;
 }
 
-.main-page .article-image-center::before,
-.main-page .article-image-center::after {
-  content: '';
-  position: absolute;
-  width: 150%;
-  height: 1px;
-  background: #ccc;
-  z-index: 0;
-}
 
-.main-page .article-image-center::before {
-  transform: rotate(45deg);
-}
-
-.main-page .article-image-center::after {
-  transform: rotate(-45deg);
-}
 
 .main-page .article-image-center img {
   width: 100%;
@@ -179,37 +171,55 @@
 
 /* Carousel Controls (Hidden by default) */
 .main-page .carousel-arrow {
-  display: none;
+  display: block;
+  /* Show arrows */
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(0, 0, 0, 0.5);
-  color: white;
+  background: transparent;
+  /* Remove background */
+  color: #000;
+  /* Black color */
   border: none;
   padding: 15px 10px;
   cursor: pointer;
   z-index: 10;
-  font-size: 20px;
-  transition: background 0.2s;
+  font-size: 40px;
+  /* Increase size for thin character */
+  font-weight: 100;
+  /* Thin weight */
+  line-height: 1;
+  transition: opacity 0.2s;
 }
 
 .main-page .carousel-arrow:hover {
-  background: rgba(0, 0, 0, 0.8);
+  background: transparent;
+  opacity: 0.6;
 }
 
 .main-page .prev-arrow {
   left: 0;
+  /* Move inside padding */
 }
 
 .main-page .next-arrow {
   right: 0;
+  /* Move inside padding */
 }
 
 .main-page .carousel-dots-mobile {
-  display: none;
+  display: flex !important;
+  /* Force display */
   justify-content: center;
   gap: 8px;
-  margin-top: 15px;
+  position: absolute;
+  bottom: -30px;
+  /* Position below content */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  z-index: 10;
+  margin-top: 0;
 }
 
 .main-page .carousel-dot {
@@ -333,23 +343,7 @@
   width: 50%;
 }
 
-.main-page .grid-image::before,
-.main-page .grid-image::after {
-  content: '';
-  position: absolute;
-  width: 150%;
-  height: 1px;
-  background: #ccc;
-  z-index: 0;
-}
 
-.main-page .grid-image::before {
-  transform: rotate(45deg);
-}
-
-.main-page .grid-image::after {
-  transform: rotate(-45deg);
-}
 
 .main-page .grid-image img {
   width: 100%;
@@ -512,9 +506,9 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  background-color: #f9f9f9;
-  border-left: 1px solid #eee;
-  padding: 15px 10px;
+  background-color: none;
+  border-left: none;
+  padding: 5px 10px;
 }
 
 .main-page .ai-related-list {
@@ -917,11 +911,26 @@
   flex: 3;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid #ccc;
+  position: relative;
+  /* border-right moved to pseudo-element for spacing */
   padding-right: 0;
   /* 패딩 제거 (구분선 연결을 위해) */
   padding-top: 0;
   /* 내부 섹션에서 처리 */
+}
+
+/* Vertical Divider with Spacing */
+.main-page .complex-left-col::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 30px;
+  /* Top spacing */
+  bottom: 30px;
+  /* Bottom spacing */
+  width: 1px;
+  background-color: #ccc;
+  /* Match original border color */
 }
 
 .main-page .complex-right-col {
@@ -934,7 +943,8 @@
 
 /* New divider contained within the column */
 .main-page .complex-inner-divider {
-  width: 100%;
+  width: calc(100% - 30px);
+  /* Leave 30px gap on the right */
   border-top: 1px solid #ccc;
   margin: 0;
   /* 마진 초기화 */
@@ -1520,7 +1530,8 @@
   /* Center content vertically */
   padding: 15px;
   cursor: pointer;
-  border-bottom: 1px solid #eee;
+  border-bottom: none;
+  /* Removed divider */
   transition: background-color 0.2s ease, color 0.2s ease;
   position: relative;
   /* Ensure positioning context for pseudo-element */
@@ -1549,35 +1560,44 @@
 /* Active State: Black Background, White Text, Visual Connection */
 /* Active State: Black Background, White Text, Visual Connection */
 .main-page .analysis-block.active {
-  background-color: #1d1d1d;
-  color: #fff;
-  border-left: 5px solid #be68d3;
-  /* Connect with Highlight Color */
+  background-color: #ffffff;
+  color: #000;
+  border: none;
+  /* Border removed */
+  /* Border removed */
   position: relative;
   overflow: visible;
   /* Allow arrow to stick out */
+  padding-top: 0 !important;
+  /* Align title with image top */
+  justify-content: flex-start;
+  /* Ensure content starts at top */
 }
 
 /* Force children to inherit white color in active state */
 .main-page .analysis-block.active h2,
-.main-page .analysis-block.active p {
-  color: #fff !important;
+.main-page .analysis-block.active p,
+.main-page .analysis-block.active .analysis-title,
+.main-page .analysis-block.active .analysis-desc {
+  color: #000 !important;
+  /* Ensure text is black */
 }
 
 /* Arrow pointing to Main Image */
+/* Arrow pointing to Main Image - Restored and colored black */
+/* Bidirectional Arrows for Active State */
+
+/* Right Arrow (::after) - unchanged position */
+/* Bidirectional Arrows for Active State - REMOVED */
+
+/* Right Arrow (::after) */
 .main-page .analysis-block.active::after {
-  content: '';
-  position: absolute;
-  right: -10px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 0;
-  height: 0;
-  border-top: 10px solid transparent;
-  border-bottom: 10px solid transparent;
-  border-left: 10px solid #1d1d1d;
-  z-index: 10;
-  filter: drop-shadow(1px 0px 0px white);
+  display: none;
+}
+
+/* Left Arrow (::before) */
+.main-page .analysis-block.active::before {
+  display: none;
 }
 
 
@@ -1601,6 +1621,8 @@
 /* Refactored Layout Styles */
 .main-page .analysis-title {
   font-size: 18px;
+  margin-top: 0;
+  /* Align to top */
   margin-bottom: 5px;
 }
 
@@ -1609,17 +1631,13 @@
   line-height: 1.4;
 }
 
-.main-page .article-info-side {
-  flex: 0.8;
-  /* Increased from 0.4 for balance */
-  display: flex;
-  flex-direction: column;
-}
+/* Re-purposed article-info-side inside right col */
+/* Styles moved to .main-right-col block */
 
 /* Main Image Column */
 .main-page .main-image-column {
-  flex: 1.3;
-  /* Reduced from 1.6 */
+  flex: 0.56;
+  /* Reduced from 0.7 by 20% */
   display: flex;
   flex-direction: column;
   position: relative;
@@ -1628,37 +1646,95 @@
 
 /* Image styling to fill height */
 /* Image styling to fill height */
+/* Image styling to fill height */
 .main-page .article-image-center {
-  cursor: pointer;
-  width: calc(100%);
-  /* Full width on mobile */
-  margin-left: 0px;
-  /* Counteract padding */
+  /* Force height reduction by setting max-height */
+  max-height: 360px;
+  /* Adjust this value as needed or use percentage if parent has height */
+  width: 100%;
   object-fit: cover;
-  aspect-ratio: 16 / 9 !important;
+  aspect-ratio: 20 / 9 !important;
   display: block;
   position: relative;
   overflow: hidden;
   border-radius: 0;
-  /* No rounded corners on mobile */
+  margin: 0 auto;
+  /* Center it if width < 100% */
+}
+
+/* Main Right Column (Wraps Info & Highlights) */
+.main-page .main-right-col {
+  flex: 0.9;
+  /* Balance with Image Column (2.1 vs 0.9) */
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  /* Gap between Info and Highlights */
+  padding-left: 20px;
+}
+
+.main-page .article-info-side {
+  flex: 0 0 auto;
+  /* Do not stretch, just take needed space */
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
 
 .main-page .highlights-side {
-  flex: 0.8;
-  /* Match article-info-side */
+  flex: 1;
+  /* Fill remaining vertical space */
   display: flex;
   flex-direction: column;
+  width: 100%;
 }
 
 .main-page .highlights-title {
   font-size: 18px;
   /* Original size */
   font-weight: bold;
-  margin-bottom: 15px;
+  margin-bottom: 5px;
   /* Original margin */
-  padding-bottom: 10px;
-  border-bottom: 2px solid #333;
+  /* Original margin */
+  /* Original margin */
+  padding-bottom: 5px;
+  border-bottom: none;
+  /* Removed divider */
   text-align: left;
+  display: inline-flex;
+  /* Use flex for vertical centering */
+  align-items: center;
+  /* Vertically center stars and text */
+  background: linear-gradient(to top, #ffeeba 40%, transparent 40%);
+  /* Soft yellow highlight */
+  padding-left: 5px;
+  padding-right: 5px;
+  /* Add padding for highlight */
+  color: #333;
+}
+
+.main-page .highlights-title::before {
+  content: "☆";
+  color: red;
+  margin-right: 4px;
+  font-family: 'Comic Sans MS', cursive, sans-serif;
+  display: inline-block;
+  transform: rotate(-20deg);
+  vertical-align: middle;
+  font-weight: normal;
+  font-size: 1.3em;
+}
+
+.main-page .highlights-title::after {
+  content: "☆";
+  color: red;
+  margin-left: 4px;
+  font-family: 'Comic Sans MS', cursive, sans-serif;
+  display: inline-block;
+  transform: rotate(10deg);
+  vertical-align: middle;
+  font-weight: normal;
+  font-size: 1.2em;
 }
 
 .main-page .highlight-list {
@@ -1674,12 +1750,14 @@
 .main-page .highlight-item {
   width: 100%;
   box-sizing: border-box;
-  padding: 12px 10px;
-  /* Reverted to 12px 10px */
-  border-bottom: 1px solid #eee;
+  padding: 5px 10px;
+  /* Reduced from 12px 10px */
+  border-bottom: none;
+  /* Removed divider */
   align-items: flex-start !important;
   text-align: left !important;
-  margin-bottom: 5px;
+  /* Reduced from 5px */
+  text-align: left !important;
 }
 
 .main-page .highlight-keyword {
@@ -1705,6 +1783,7 @@
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   /* Show only 2 lines */
   margin: 0;
 }
@@ -1799,4 +1878,9 @@
 /* C. List Item Hover */
 .main-page .cat-box-column .cat-box-list-item:hover h3 {
   text-decoration: underline !important;
+}
+
+/* Refactored Inline Styles */
+.main-page .skeleton-grid-item {
+  flex: 1;
 }

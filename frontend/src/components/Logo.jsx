@@ -22,7 +22,7 @@ function Logo({ className = "" }) {
             tabIndex="0"
             onKeyDown={(e) => e.key === 'Enter' && handleLogoClick()}
         >
-            <span className="logo-text">백신일보</span>
+            <img src={logoImg} alt="백신일보" className="logo-image" />
         </div>
     );
 }
