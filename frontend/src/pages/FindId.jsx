@@ -62,8 +62,8 @@ export default function FindId() {
                 leftChild={null}
                 midChild={<Logo />}
                 rightChild={
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', justifyContent: 'flex-end', width: 'auto' }}>
-                        <div style={{ position: 'relative' }}>
+                    <div className="header-right-group">
+                        <div className="header-search-wrapper">
                             <Searchbar className="always-open rounded-search" />
                         </div>
                         <UserMenu className="rounded-user-menu" />
@@ -111,8 +111,7 @@ export default function FindId() {
                             <p>회원님의 아이디는 아래와 같습니다.</p>
                             <span className="found-id">{resultId}</span>
                             <button
-                                className="find-id-btn"
-                                style={{ marginTop: '15px', height: '40px', fontSize: '14px', backgroundColor: '#03c75a' }}
+                                className="find-id-btn login-btn-link"
                                 onClick={() => navigate('/login')}
                             >
                                 로그인하러 가기

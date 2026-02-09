@@ -83,8 +83,8 @@ const Login = () => {
                 leftChild={null}
                 midChild={<Logo />}
                 rightChild={
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', justifyContent: 'flex-end', width: 'auto' }}>
-                        <div style={{ position: 'relative' }}>
+                    <div className="header-right-group">
+                        <div className="header-search-wrapper">
                             <Searchbar className="always-open rounded-search" />
                         </div>
                         <UserMenu className="rounded-user-menu" />
@@ -156,9 +156,9 @@ const Login = () => {
                     <div className="login-footer-links">
                         <span>비밀번호 찾기</span>
                         <span className="divider">|</span>
-                        <span onClick={() => nav('/find-id')} style={{ cursor: 'pointer' }}>아이디 찾기</span>
+                        <span onClick={() => nav('/find-id')} className="find-id-link">아이디 찾기</span>
                         <span className="divider">|</span>
-                        <span onClick={() => nav('/CreateAccount')} style={{ cursor: 'pointer', fontWeight: 'bold' }}>회원가입</span>
+                        <span onClick={() => nav('/CreateAccount')} className="create-account-link">회원가입</span>
                     </div>
                 </div>
             </div>

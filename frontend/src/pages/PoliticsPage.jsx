@@ -198,13 +198,13 @@ const PoliticsPage = () => {
                 {grid.length > 0 && (
                     <section className="bottom-grid-section">
                         {grid.map((news, i) => (
-                            <div key={i} className="grid-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                <div className="grid-image" style={{ width: '100%', aspectRatio: '1.5/1', border: '1px solid #eee', position: 'relative', overflow: 'hidden' }}>
-                                    <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
+                            <div key={i} className="grid-item" onClick={() => navigate(`/article/${news.id}`)}>
+                                <div className="grid-image">
+                                    <img src={news.image} alt={news.title} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                                 </div>
                                 <div className="grid-info">
-                                    <h3 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 5px 0', lineHeight: '1.4' }}>{news.title}</h3>
-                                    <p style={{ fontSize: '13px', color: '#666', margin: 0, lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                    <h3>{news.title}</h3>
+                                    <p>
                                         {news.content}
                                     </p>
                                 </div>
@@ -217,44 +217,32 @@ const PoliticsPage = () => {
                 {feed.length > 0 && (
                     <>
                         <div className="section-divider"></div>
-                        <section className="bottom-feed-section" style={{ display: 'flex', flexDirection: 'column', gap: '30px', textAlign: 'left', marginTop: '30px', padding: '0 120px' }}>
+                        <section className="bottom-feed-section">
                             {feed.slice(0, 5).map((news, i) => (
-                                <div key={i} className="feed-item" onClick={() => navigate(`/article/${news.id}`)} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #eee', paddingBottom: '20px', gap: '20px' }}>
+                                <div key={i} className="feed-item" onClick={() => navigate(`/article/${news.id}`)}>
 
                                     {/* Left Container: Like + Text */}
-                                    <div style={{ display: 'flex', flex: 1, paddingRight: '0px' }}>
+                                    <div className="feed-left-container">
                                         {/* Like Button (Display Only) */}
-                                        <div className="like-icon" style={{
-                                            marginRight: '50px',
-                                            paddingRight: '15px',
-                                            borderRight: '1px solid #ddd',
-                                            marginTop: '5px',
-                                            display: 'flex',
-                                            flexDirection: 'row', // Horizontal
-                                            alignItems: 'center',
-                                            justifyContent: 'center', // Center content in fixed width
-                                            color: '#999',
-                                            minWidth: '100px', // Reserve space for 6 digits
-                                            gap: '8px' // Gap between icon and number
-                                        }}>
+                                        <div className="like-icon">
                                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                 <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
                                             </svg>
-                                            <span style={{ fontSize: '14px', fontWeight: '500' }}>{120 + (news.id || 0)}</span>
+                                            <span className="like-text">{120 + (news.id || 0)}</span>
                                         </div>
 
                                         {/* Text Info */}
                                         <div className="feed-info">
-                                            <h3 style={{ fontSize: '20px', fontWeight: 'bold', margin: '0 0 12px 0', lineHeight: '1.3' }}>{news.title}</h3>
-                                            <p style={{ fontSize: '15px', color: '#666', margin: 0, lineHeight: '1.6', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                            <h3>{news.title}</h3>
+                                            <p>
                                                 {news.content}
                                             </p>
                                         </div>
                                     </div>
 
                                     {/* Image Right (Reduced Height: aspect-ratio 1.8/1) */}
-                                    <div className="feed-image" style={{ width: '312px', aspectRatio: '1.8/1', flexShrink: 0, overflow: 'hidden', borderRadius: '4px' }}>
-                                        <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
+                                    <div className="feed-image">
+                                        <img src={news.image} alt={news.title} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                                     </div>
                                 </div>
                             ))}
@@ -262,7 +250,7 @@ const PoliticsPage = () => {
 
                         {/* Pagination Numbers (Box Style) */}
                         {totalFeedPages > 1 && (
-                            <div style={{ textAlign: 'center', marginTop: '40px', marginBottom: '100px', display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                            <div className="pagination-container">
                                 {Array.from({ length: totalFeedPages }, (_, i) => i + 1).map((pageNum) => (
                                     <button
                                         key={pageNum}
@@ -270,20 +258,7 @@ const PoliticsPage = () => {
                                             e.stopPropagation();
                                             setFeedPage(pageNum);
                                         }}
-                                        style={{
-                                            width: '36px',
-                                            height: '36px',
-                                            display: 'flex',
-                                            justifyContent: 'center',
-                                            alignItems: 'center',
-                                            fontSize: '14px',
-                                            border: feedPage === pageNum ? '1px solid #333' : '1px solid #eee',
-                                            backgroundColor: feedPage === pageNum ? '#333' : '#fff',
-                                            color: feedPage === pageNum ? '#fff' : '#666',
-                                            cursor: 'pointer',
-                                            fontWeight: feedPage === pageNum ? 'bold' : 'normal',
-                                            borderRadius: '0px'
-                                        }}
+                                        className={`pagination-btn ${feedPage === pageNum ? 'active' : ''}`}
                                     >
                                         {pageNum}
                                     </button>
@@ -312,8 +287,8 @@ const PoliticsPage = () => {
                 leftChild={null}
                 midChild={<Logo />}
                 rightChild={
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', justifyContent: 'flex-end', width: 'auto' }}>
-                        <div style={{ position: 'relative' }}>
+                    <div className="header-right-group">
+                        <div className="header-search-wrapper">
                             <Searchbar className="always-open rounded-search" />
                         </div>
                         <UserMenu className="rounded-user-menu" />
@@ -330,9 +305,9 @@ const PoliticsPage = () => {
                 </div>
 
                 {loading ? (
-                    <div style={{ marginTop: '40px' }}>
+                    <div className="skeleton-container">
                         <SkeletonNews type="main" />
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '40px' }}>
+                        <div className="skeleton-grid">
                             <SkeletonNews type="grid" />
                             <SkeletonNews type="grid" />
                             <SkeletonNews type="grid" />

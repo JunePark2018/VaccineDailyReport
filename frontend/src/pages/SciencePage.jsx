@@ -266,8 +266,8 @@ const SciencePage = () => {
                 leftChild={null}
                 midChild={<Logo />}
                 rightChild={
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', justifyContent: 'flex-end', width: 'auto' }}>
-                        <div style={{ position: 'relative' }}>
+                    <div className="header-right-group">
+                        <div className="header-search-wrapper">
                             <Searchbar className="always-open rounded-search" />
                         </div>
                         <UserMenu className="rounded-user-menu" />
@@ -284,9 +284,9 @@ const SciencePage = () => {
                 </div>
 
                 {loading ? (
-                    <div style={{ marginTop: '40px' }}>
+                    <div className="skeleton-container">
                         <SkeletonNews type="main" />
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px', marginBottom: '40px' }}>
+                        <div className="skeleton-grid">
                             <SkeletonNews type="grid" />
                             <SkeletonNews type="grid" />
                         </div>

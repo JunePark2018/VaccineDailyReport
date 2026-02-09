@@ -15,12 +15,11 @@
 }
 
 /* 로고 텍스트 스타일 */
-.Logo .logo-text {
-    font-size: 40px;
-    font-weight: 800;
-    color: #000;
-    letter-spacing: -1px;
-    font-family: 'Pretendard', sans-serif;
-    /* Or appropriate serif if requested, but user didn't specify font details yet */
-    line-height: 1;
+/* 로고 이미지 스타일 */
+.Logo .logo-image {
+    height: 60px;
+    /* Increased from 40px */
+    width: auto;
+    object-fit: contain;
+    display: block;
 }

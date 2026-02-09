@@ -12,7 +12,7 @@ const SkeletonNews = ({ type = 'list' }) => {
                     {[1, 2, 3, 4].map(i => (
                         <div key={i} className="skeleton-item-row">
                             <div className="skeleton-text-half shimmer"></div>
-                            <div className="skeleton-text-full shimmer" style={{ marginTop: '8px' }}></div>
+                            <div className="skeleton-text-full shimmer skeleton-mt-8"></div>
                         </div>
                     ))}
                 </div>
@@ -26,8 +26,8 @@ const SkeletonNews = ({ type = 'list' }) => {
         return (
             <div className="skeleton-grid-item">
                 <div className="skeleton-rect shimmer"></div>
-                <div className="skeleton-text-full shimmer" style={{ marginTop: '10px' }}></div>
-                <div className="skeleton-text-half shimmer" style={{ marginTop: '6px' }}></div>
+                <div className="skeleton-text-full shimmer skeleton-mt-10"></div>
+                <div className="skeleton-text-half shimmer skeleton-mt-6"></div>
             </div>
         );
     }
@@ -37,8 +37,8 @@ const SkeletonNews = ({ type = 'list' }) => {
             <div className="skeleton-feed-item">
                 <div className="skeleton-feed-content">
                     <div className="skeleton-text-title shimmer"></div>
-                    <div className="skeleton-text-full shimmer" style={{ marginTop: '10px' }}></div>
-                    <div className="skeleton-text-full shimmer" style={{ marginTop: '6px' }}></div>
+                    <div className="skeleton-text-full shimmer skeleton-mt-10"></div>
+                    <div className="skeleton-text-full shimmer skeleton-mt-6"></div>
                 </div>
                 <div className="skeleton-feed-image shimmer"></div>
             </div>
@@ -53,13 +53,13 @@ const SkeletonNews = ({ type = 'list' }) => {
                 <div className="skeleton-article-image shimmer"></div>
                 <div className="skeleton-article-text shimmer"></div>
                 <div className="skeleton-article-text shimmer"></div>
-                <div className="skeleton-article-text shimmer" style={{ width: '90%' }}></div>
-                <div className="skeleton-article-text shimmer" style={{ width: '95%' }}></div>
-                <div className="skeleton-article-text shimmer" style={{ width: '80%' }}></div>
+                <div className="skeleton-article-text shimmer skeleton-w-90"></div>
+                <div className="skeleton-article-text shimmer skeleton-w-95"></div>
+                <div className="skeleton-article-text shimmer skeleton-w-80"></div>
                 <br />
                 <div className="skeleton-article-text shimmer"></div>
                 <div className="skeleton-article-text shimmer"></div>
-                <div className="skeleton-article-text shimmer" style={{ width: '70%' }}></div>
+                <div className="skeleton-article-text shimmer skeleton-w-70"></div>
             </div>
         );
     }

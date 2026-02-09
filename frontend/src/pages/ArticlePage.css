@@ -952,7 +952,9 @@
 
 .bg-link {
     background-color: #888;
-}/* =========================================================
+}
+
+/* =========================================================
    New Layout: Metadata Row (Date + Buttons)
    ========================================================= */
 .ArticlePage .article-meta-row {
@@ -1033,6 +1035,7 @@
 .ArticlePage.fs-5 .evidence-item {
     font-size: 1.3rem !important;
 }
+
 /* =========================================================
    Timeline Font Size Overrides (Specific Children)
    ========================================================= */
@@ -1100,6 +1103,7 @@
 .ArticlePage.fs-5 .timeline-summary {
     font-size: 1.15rem !important;
 }
+
 /* =========================================================
    Evidence Container Font Size Overrides (Override Inline)
    ========================================================= */
@@ -1121,4 +1125,20 @@
 
 .ArticlePage.fs-5 .evidence-container {
     font-size: 1.3rem !important;
+}
+
+/* =========================================================
+   Header Right Group Alignment (Copied from Main.css / Login.css)
+   ========================================================= */
+.ArticlePage .header-right-group {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    justify-content: flex-end;
+    width: auto;
+}
+
+.ArticlePage .header-search-wrapper {
+    position: relative;
+    /* Optional: Add dimensions if needed */
 }

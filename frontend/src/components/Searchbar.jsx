@@ -36,26 +36,25 @@ function Searchbar({ maxWidth, fontSize, className, onSearch }) {
         }
     };
 
-    // Props로 받은 maxWidth와 fontSize를 인라인 스타일에 적용
-    // maxWidth가 전달되지 않으면 CSS의 기본값이 적용됩니다.
-    const boxStyle = maxWidth ? { maxWidth: maxWidth } : {};
-
-    const inputStyle = {
-        fontSize: fontSize
-    };
+    // Props로 받은 maxWidth와 fontSize를 CSS 변수로 적용
+    const style = {};
+    if (maxWidth) style['--search-max-width'] = maxWidth;
+    if (fontSize) {
+        style['--search-font-size'] = fontSize;
+        style['--search-icon-size'] = `calc(${fontSize} + 6px)`;
+    }
 
     return (
         // 외부에서 전달받은 className을 기본 클래스와 결합
-        <div className={`Searchbar ${className}`}>
+        <div className={`Searchbar ${className}`} style={style}>
             {/* maxWidth 스타일 적용 */}
-            <div className="search-box" style={boxStyle}>
+            <div className="search-box">
                 <input
                     type="text"
                     placeholder=""
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     onKeyDown={onKeyPress}
-                    style={inputStyle} // fontSize 스타일 적용
                 />
 
                 <button onClick={handleSearch} aria-label="search">
@@ -64,8 +63,6 @@ function Searchbar({ maxWidth, fontSize, className, onSearch }) {
                         viewBox="0 0 24 24"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        // 아이콘 크기도 폰트 크기에 비례하게 조절하고 싶다면 style 추가 가능
-                        style={{ width: `calc(${fontSize} + 6px)`, height: `calc(${fontSize} + 6px)` }}
                     >
                         <circle cx="11" cy="11" r="8"></circle>
                         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>

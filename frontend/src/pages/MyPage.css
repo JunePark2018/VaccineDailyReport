@@ -134,9 +134,7 @@
   background-color: #fce8e6;
 }
 
-.sidebar-item.logout .sidebar-icon {
-  /* Log out icon color */
-}
+
 
 /* Main Area */
 .mypage-main-area {
@@ -228,6 +226,7 @@
   /* Multiline ellipsis */
   display: -webkit-box;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -402,4 +401,17 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Refactored Inline Styles */
+.mypage-container-new .header-right-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  justify-content: flex-end;
+  width: auto;
+}
+
+.mypage-container-new .header-search-wrapper {
+  position: relative;
 }

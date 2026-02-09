@@ -190,7 +190,7 @@ const SocietyPage = () => {
                             {list.slice(0, 8).map((news, i) => (
                                 <div key={i} className="list-item" onClick={() => navigate(`/article/${news.id}`)}>
                                     <div className="list-image">
-                                        <img src={news.image} alt={news.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
+                                        <img src={news.image} alt={news.title} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                                     </div>
                                     <div className="list-info">
                                         <h3>{news.title}</h3>
@@ -274,8 +274,8 @@ const SocietyPage = () => {
                 leftChild={null}
                 midChild={<Logo />}
                 rightChild={
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', justifyContent: 'flex-end', width: 'auto' }}>
-                        <div style={{ position: 'relative' }}>
+                    <div className="header-right-group">
+                        <div className="header-search-wrapper">
                             <Searchbar className="always-open rounded-search" />
                         </div>
                         <UserMenu className="rounded-user-menu" />
@@ -292,10 +292,10 @@ const SocietyPage = () => {
                 </div>
 
                 {loading ? (
-                    <div style={{ marginTop: '40px' }}>
+                    <div className="skeleton-container">
                         <SkeletonNews type="main" />
                         {/* Society uses 2x2 grid on right? or flat? Layout varies but skeleton can be generic */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '40px' }}>
+                        <div className="skeleton-grid">
                             <SkeletonNews type="grid" />
                             <SkeletonNews type="grid" />
                             <SkeletonNews type="grid" />

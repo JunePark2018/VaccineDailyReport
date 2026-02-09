@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import SubArticle from './SubArticle'; // 조원들과 약속한 Article(SubArticle) 컴포넌트
+import './TodayNews.css';
 
 /**
  * [TodayNews 컴포넌트 개요]
@@ -18,20 +19,20 @@ const TodayNews = () => {
    * - 형식: 조원들과 협의한 Article 컴포넌트의 props 구조를 따름.
    */
   const mockData = [
-    { 
-      "id": 1, 
-      "title": "[MOCK] 의대 증원 갈등, 의료계 현장 리포트", 
-      "imageUrl": "https://image.ichannela.com/images/channela/2026/01/02/000002924491/00000292449120260102113532802.webp" 
+    {
+      "id": 1,
+      "title": "[MOCK] 의대 증원 갈등, 의료계 현장 리포트",
+      "imageUrl": "https://image.ichannela.com/images/channela/2026/01/02/000002924491/00000292449120260102113532802.webp"
     },
-    { 
-      "id": 2, 
-      "title": "[MOCK] 정부, 필수의료 패키지 지원책 발표", 
-      "imageUrl": "https://via.placeholder.com/300x180/444/fff?text=News2" 
+    {
+      "id": 2,
+      "title": "[MOCK] 정부, 필수의료 패키지 지원책 발표",
+      "imageUrl": "https://via.placeholder.com/300x180/444/fff?text=News2"
     },
-    { 
-      "id": 3, 
-      "title": "[MOCK] 지역 의사제 도입에 대한 찬반 논란", 
-      "imageUrl": "https://via.placeholder.com/300x180/444/fff?text=News3" 
+    {
+      "id": 3,
+      "title": "[MOCK] 지역 의사제 도입에 대한 찬반 논란",
+      "imageUrl": "https://via.placeholder.com/300x180/444/fff?text=News3"
     }
   ];
 
@@ -46,7 +47,7 @@ const TodayNews = () => {
         setLoading(true);
         // [수정 포인트] 조원들이 배포한 실제 FastAPI 엔드포인트 URL로 교체 필요
         const response = await fetch('http://127.0.0.1:8000/api/news');
-        
+
         if (response.ok) {
           const data = await response.json();
           setNewsList(data);
@@ -75,17 +76,17 @@ const TodayNews = () => {
   return (
     <section className="today-news-section">
       <h3 className="section-header">오늘의 소식</h3>
-      
+
       {/* [가로 스크롤 레이아웃 가이드]
         - news-grid-wrapper: Flex를 통해 자식들을 가로로 나열.
         - overflowX: 'auto': 아이템이 많아지면 사용자가 마우스나 터치로 가로 스크롤 가능.
       */}
-      <div className="news-grid-wrapper" style={{ display: 'flex', gap: '20px', overflowX: 'auto' }}>
+      <div className="news-grid-wrapper">
         {newsList.map((news) => (
           /**
            * - 유연성: 부모에서 width/height를 조절함으로써 카드 크기를 즉시 변경 가능.
            */
-          <SubArticle 
+          <SubArticle
             key={news.id}       // 리액트 효율성을 위한 고유 키값
             id={news.id}        // 상세 페이지 이동을 위한 ID
             title={news.title}  // 기사 제목

@@ -339,3 +339,23 @@
     text-align: left;
     width: 100%;
 }
+
+/* Refactored Inline Styles */
+.find-id-container .header-right-group {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    justify-content: flex-end;
+    width: auto;
+}
+
+.find-id-container .header-search-wrapper {
+    position: relative;
+}
+
+.find-id-container .login-btn-link {
+    margin-top: 15px;
+    height: 40px;
+    font-size: 14px;
+    background-color: #03c75a;
+}

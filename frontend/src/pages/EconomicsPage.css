@@ -762,3 +762,247 @@
 .category-page .related-article-link:hover {
     text-decoration: underline !important;
 }
+
+/* Refactored Inline Styles */
+.economics-page .header-right-group {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    justify-content: flex-end;
+    width: auto;
+}
+
+.economics-page .header-search-wrapper {
+    position: relative;
+}
+
+.economics-page .skeleton-container {
+    margin-top: 40px;
+}
+
+.economics-page .skeleton-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+/* Bottom Grid Section Items */
+.economics-page .grid-item-container {
+    /* Container for grid item + related links if needed */
+}
+
+.economics-page .bottom-grid-section {
+    /* Existing class, just ensuring items are styled */
+}
+
+.economics-page .bottom-grid-section .grid-item {
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.economics-page .bottom-grid-section .grid-image {
+    width: 100%;
+    aspect-ratio: 1.5/1;
+    border: 1px solid #eee;
+    position: relative;
+    overflow: hidden;
+}
+
+.economics-page .bottom-grid-section .grid-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.economics-page .bottom-grid-section .grid-info h3 {
+    font-size: 16px;
+    font-weight: bold;
+    margin: 0 0 5px 0;
+    line-height: 1.4;
+}
+
+.economics-page .bottom-grid-section .grid-info p {
+    font-size: 13px;
+    color: #666;
+    margin: 0;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Related Articles in Grid */
+.economics-page .related-articles {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.economics-page .related-article-link {
+    font-size: 13px;
+    color: #555;
+    cursor: pointer;
+}
+
+/* List Section Items */
+.economics-page .list-section-container {
+    /* If needed */
+}
+
+.economics-page .list-item {
+    cursor: pointer;
+    display: flex;
+    gap: 20px;
+    border-bottom: 1px solid #eee;
+    padding: 20px 0;
+    align-items: flex-start;
+}
+
+.economics-page .list-item .list-image {
+    width: 200px;
+    aspect-ratio: 1.6/1;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.economics-page .list-item .list-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.economics-page .list-item .list-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.economics-page .list-item .list-info h3 {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.economics-page .list-item .list-info p {
+    font-size: 14px;
+    color: #666;
+    margin: 0;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+
+/* Feed Section */
+.economics-page .bottom-feed-section {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    text-align: left;
+    margin-top: 30px;
+    padding: 0 120px;
+}
+
+.economics-page .feed-item {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 20px;
+    gap: 20px;
+}
+
+.economics-page .feed-left-container {
+    display: flex;
+    flex: 1;
+    padding-right: 0px;
+}
+
+.economics-page .like-icon {
+    margin-right: 50px;
+    padding-right: 15px;
+    border-right: 1px solid #ddd;
+    margin-top: 5px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    min-width: 100px;
+    gap: 8px;
+}
+
+.economics-page .like-text {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.economics-page .feed-info h3 {
+    font-size: 20px;
+    font-weight: bold;
+    margin: 0 0 12px 0;
+    line-height: 1.3;
+}
+
+.economics-page .feed-info p {
+    font-size: 15px;
+    color: #666;
+    margin: 0;
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.economics-page .feed-image {
+    width: 312px;
+    aspect-ratio: 1.8/1;
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: 4px;
+}
+
+.economics-page .pagination-container {
+    text-align: center;
+    margin-top: 40px;
+    margin-bottom: 100px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.economics-page .pagination-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 14px;
+    border: 1px solid #eee;
+    background-color: #fff;
+    color: #666;
+    cursor: pointer;
+    font-weight: normal;
+    border-radius: 0px;
+}
+
+.economics-page .pagination-btn.active {
+    border: 1px solid #333;
+    background-color: #333;
+    color: #fff;
+    font-weight: bold;
+}

@@ -332,14 +332,14 @@ function ArticlePage() {
 
         {/* Header */}
         <Header
-          leftChild={<Logo />}
-          midChild={null}
+          leftChild={null}
+          midChild={<Logo />}
           rightChild={
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0', justifyContent: 'flex-end', width: 'auto' }}>
-              <div style={{ position: 'relative' }}>
-                <Searchbar className="always-open" />
+            <div className="header-right-group">
+              <div className="header-search-wrapper">
+                <Searchbar className="always-open rounded-search" />
               </div>
-              <UserMenu />
+              <UserMenu className="rounded-user-menu" />
             </div>
           }
           headerTop="on" headerMain="on" headerBottom="on"
