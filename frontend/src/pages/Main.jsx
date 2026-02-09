@@ -217,29 +217,60 @@ export const Main = () => {
     let highlights = [];
     if (bullets.length > 0) {
       // 1. Map & Filter strict matches only
-      const parsedBullets = bullets.map(text => {
+      // Gather known company names for fallback extraction
+      const knownCompanies = [...new Set(relatedNews.map(n => n.company_name).filter(Boolean))];
+
+      // 1. Map & Filter matches
+      const parsedBullets = bullets.map(item => {
+        const text = typeof item === 'string' ? item : item.analysis;
+        if (!text) return null;
+
         const cleanText = text.replace(/^- /, '');
-        let match = cleanText.match(/^\[(.*?)\]\s*(.*)/);
-        if (!match) match = cleanText.match(/^([^:]+):\s*(.*)/);
-        if (!match) match = cleanText.match(/^([^-]+)\s-\s*(.*)/);
+
+        // Strategy A: Explicit Formats
+        let match = cleanText.match(/^\[(.*?)\]\s*(.*)/); // [Media]
+        if (!match) match = cleanText.match(/^([^:]{1,15}):\s*(.*)/); // Media: (limit length)
+        if (!match) match = cleanText.match(/^([^-]{1,15})\s-\s*(.*)/); // Media - (limit length)
 
         if (match) {
           let kw = match[1].trim().replace(/(은|는)$/, '');
           return { keyword: `"${kw}"`, content: match[2].trim() };
         }
-        return null;
+
+        // Strategy B: Known Company Name Verification
+        // Check if the sentence starts with any company name present in the related news
+        for (const comp of knownCompanies) {
+          if (cleanText.startsWith(comp)) {
+            return { keyword: comp, content: cleanText };
+          }
+        }
+
+        // Strategy C: Fallback (Search inside text)
+        // User Request: If title is just 'Comparison', try to find media name in text
+        for (const comp of knownCompanies) {
+          if (cleanText.includes(comp)) {
+            return { keyword: comp, content: cleanText };
+          }
+        }
+
+        // Strategy D: Fallback (Use first word if short, or generic label)
+        // If we can't extract a media name, return standard text but with a generic label
+        return { keyword: "비교", content: cleanText };
       }).filter(Boolean);
 
-      // 2. Deduplicate by keyword (media name)
+      // 2. Deduplicate
       const seenKeywords = new Set();
       const uniqueHighlights = [];
 
       for (const item of parsedBullets) {
-        if (!seenKeywords.has(item.keyword)) {
-          seenKeywords.add(item.keyword);
+        // Allow multiple "비교" entries, but dedupe specific media
+        const key = item.keyword === "비교" ? `비교_${item.content}` : item.keyword;
+
+        if (!seenKeywords.has(key)) {
+          seenKeywords.add(key);
           uniqueHighlights.push(item);
         }
-        if (uniqueHighlights.length >= 4) break; // Limit to 4
+        if (uniqueHighlights.length >= 4) break;
       }
 
       highlights = uniqueHighlights;
