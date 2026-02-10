@@ -11,7 +11,9 @@ COPY . .
 
 # CRA 환경변수 (빌드 타임)
 ARG REACT_APP_API_URL
-ENV REACT_APP_API_URL=${REACT_APP_API_URL}
+ARG REACT_APP_API_URL
+# Nginx Proxy will handle /api requests
+ENV REACT_APP_API_URL=/api
 
 # 빌드
 RUN npm run build
