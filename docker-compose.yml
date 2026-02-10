@@ -88,8 +88,22 @@ services:
     restart: always
     ports:
       - "80:80"
+      - "443:443"
+    volumes:
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
     depends_on:
       - backend
+    networks:
+      - finalproject_network
+
+  # 7. Certbot (SSL 인증서 발급용)
+  certbot:
+    image: certbot/certbot
+    container_name: finalproject_certbot
+    volumes:
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
     networks:
       - finalproject_network
 
