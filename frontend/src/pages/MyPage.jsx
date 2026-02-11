@@ -13,6 +13,7 @@ import CategoryRadarChart from '../components/CategoryRadarChart';
 import KeywordBarChart from '../components/KeywordBarChart';
 import SubscribedKeywords from '../components/SubscribedKeywords';
 import EditAccountForm from '../components/EditAccountForm';
+import MobileBottomNav from '../components/MobileBottomNav';
 import './MyPage.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
@@ -417,6 +418,7 @@ const MyPage = () => {
           )}
         </section>
       </main>
+      <MobileBottomNav />
     </div>
   );
 };

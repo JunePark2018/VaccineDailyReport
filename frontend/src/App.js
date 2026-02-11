@@ -15,7 +15,7 @@ import EconomicsPage from './pages/EconomicsPage.jsx';
 import SocietyPage from './pages/SocietyPage.jsx';
 import SciencePage from './pages/SciencePage.jsx';
 import WorldPage from './pages/WorldPage.jsx';
-import TotalMenuPage from './pages/TotalMenuPage.jsx';
+import ScrollToTop from './components/ScrollToTop.jsx';
 
 function App() {
   return (
@@ -23,6 +23,7 @@ function App() {
       v7_startTransition: true,
       v7_relativeSplatPath: true,
     }}>
+      <ScrollToTop />
       <div className="App">
         <Routes>
           <Route path="/" element={<Main />} />
@@ -32,7 +33,7 @@ function App() {
           <Route path="/society" element={<SocietyPage />} />
           <Route path="/science" element={<SciencePage />} />
           <Route path="/world" element={<WorldPage />} />
-          <Route path="/total" element={<TotalMenuPage />} />
+
           <Route path='/login' element={<Login />} />
           <Route path='/CreateAccount' element={<CreateAccount />} />
           <Route path='/mypage/:login_id' element={<MyPage />} />

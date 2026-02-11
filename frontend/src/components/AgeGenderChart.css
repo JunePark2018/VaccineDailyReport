@@ -26,8 +26,8 @@
     font-weight: 700;
     margin-bottom: 20px;
     color: #111;
-    border-left: 4px solid #333;
-    padding-left: 10px;
+    border-left: none;
+    padding-left: 0;
     text-align: left;
     font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     letter-spacing: -0.5px;
@@ -285,5 +285,11 @@
 
     .AgeGenderChart .pie-text-value {
         font-size: 11px;
+    }
+
+    /* Remove divider line on mobile */
+    .AgeGenderChart .chart-title {
+        border-left: none !important;
+        padding-left: 0 !important;
     }
 }

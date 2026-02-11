@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../components/Header';
@@ -7,6 +7,8 @@ import logoImg from '../components/Logo.png';
 import Searchbar from '../components/Searchbar';
 import UserMenu from '../components/UserMenu';
 import SkeletonNews from '../components/SkeletonNews';
+import { formatDate } from '../utils/dateUtils';
+import MobileBottomNav from '../components/MobileBottomNav';
 import './SciencePage.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
@@ -19,6 +21,29 @@ const SciencePage = () => {
     const [imageMap, setImageMap] = useState({});
     const [feedPage, setFeedPage] = useState(1);
     const [loading, setLoading] = useState(true);
+    const feedSectionRef = useRef(null);
+
+    // Slideshow State (Mobile Whole Section)
+    const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+    const [touchStart, setTouchStart] = useState(0);
+
+    const handleTouchStart = (e) => {
+        setTouchStart(e.targetTouches[0].clientX);
+    };
+
+    const handleTouchEnd = (e) => {
+        const touchEnd = e.changedTouches[0].clientX;
+        const distance = touchStart - touchEnd;
+
+        // Swipe threshold (e.g., 50px)
+        if (distance > 50) {
+            // Swipe Left -> Next (Top 3 articles)
+            setCurrentSlideIndex(prev => (prev + 1) % 3);
+        } else if (distance < -50) {
+            // Swipe Right -> Prev
+            setCurrentSlideIndex(prev => (prev - 1 + 3) % 3);
+        }
+    };
 
     useEffect(() => {
         setCurrentPage(1);
@@ -27,7 +52,7 @@ const SciencePage = () => {
         const loadData = async () => {
             try {
                 // 1. Fetch AI Generated News
-                const response = await axios.get(`${API_BASE_URL}/reports?limit=100`);
+                const response = await axios.get(`${API_BASE_URL}/reports?limit=1000`);
                 const realArticles = response.data;
 
                 // 2. Map Backend Data to Frontend Structure
@@ -36,6 +61,7 @@ const SciencePage = () => {
                     id: art.report_id, // [Fix] Map native ID to 'id'
                     category: art.category_name,
                     image: `cluster_${art.cluster_id}`,
+                    created_at: art.created_at,
                     short_text: art.contents ? (art.contents.substring(0, 100) + "...") : "내용 없음"
                 }));
 
@@ -46,9 +72,9 @@ const SciencePage = () => {
                 });
 
                 if (filtered.length > 0) {
-                    // [Fix] Remove duplication loop to prevent duplicates
-                    const shuffled = [...filtered].sort(() => Math.random() - 0.5);
-                    setDisplayArticles(shuffled);
+                    // 3. Sort by creation date (Latest First)
+                    const sorted = [...filtered].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                    setDisplayArticles(sorted);
 
                     // 4. Fetch Images
                     const uniqueClusters = [...new Set(filtered.map(a => a.cluster_id))];
@@ -61,8 +87,8 @@ const SciencePage = () => {
                             const allImgUrls = newsList.flatMap(news => news.img_urls ?? []).filter(Boolean);
 
                             if (allImgUrls.length > 0) {
-                                const randomImg = allImgUrls[Math.floor(Math.random() * allImgUrls.length)];
-                                newImageMap[`cluster_${clusterId}`] = randomImg;
+                                const selectedImg = allImgUrls[0]; // Deterministic selection
+                                newImageMap[`cluster_${clusterId}`] = selectedImg;
                             }
                         } catch (err) {
                             console.warn(`Failed to fetch image for cluster ${clusterId}`, err);
@@ -98,8 +124,8 @@ const SciencePage = () => {
 
         // Ensure subsequent sections DO NOT contain the Main article
         const remainingArticles = blockArticles.slice(1).filter(art => art.id !== mainArticle.id);
-        const gridArticles = remainingArticles.slice(0, 2);
-        const listArticles = remainingArticles.slice(2, 10);
+        const gridArticles = remainingArticles.slice(0, 4);
+        const listArticles = remainingArticles.slice(4, 12);
 
         // Feed Logic
         // Feed Logic: Exclude articles already shown in top sections (1 main, 2 grid, 8 list)
@@ -107,6 +133,7 @@ const SciencePage = () => {
         const feedPageSize = 5;
         const totalFeedPages = Math.ceil(allFeedArticles.length / 5);
         const currentFeedArticles = allFeedArticles.slice((feedPage - 1) * 5, feedPage * 5);
+        const carouselArticles = blockArticles.slice(0, 3);
 
         const mainData = {
             id: mainArticle?.id,
@@ -133,15 +160,17 @@ const SciencePage = () => {
             id: art?.id,
             title: art?.title || "Title Sample Text",
             content: art?.short_text || "text sample...",
-            image: art ? (imageMap[art.image] || art.image) : null
+            image: art ? (imageMap[art.image] || art.image) : null,
+            date: art?.created_at
         }));
 
         return (
             <React.Fragment key={blockIndex}>
-                <section className="main-article-section">
+                <section className="main-article-section desktop-only-section">
 
                     {/* Left: Article Title */}
                     <div className="title-side" onClick={() => navigate(`/article/${mainData.id}`)}>
+                        <div className="hot-badge">최신</div>
                         <h2>{mainData.title}</h2>
                         <p>{mainData.description}</p>
                     </div>
@@ -153,20 +182,59 @@ const SciencePage = () => {
                         </div>
                     </div>
                 </section>
+
+                {/* --- MOBILE VIEW (Whole Section Slide) --- */}
+                <section className="main-article-section-mobile mobile-only-section">
+                    <div
+                        className="mobile-full-slider"
+                        onTouchStart={handleTouchStart}
+                        onTouchEnd={handleTouchEnd}
+                    >
+                        <div
+                            className="mobile-slide-track"
+                            style={{ transform: `translateX(-${currentSlideIndex * 100}%)` }}
+                        >
+                            {carouselArticles.map((art, idx) => {
+                                const imgUrl = imageMap[art.image] || art.image;
+                                return (
+                                    <div key={idx} className="mobile-whole-slide">
+                                        {/* Image + Title Part */}
+                                        <div className="mobile-slide-top" onClick={() => navigate(`/article/${art.report_id}`)}>
+                                            <img
+                                                src={imgUrl}
+                                                alt={art.title}
+                                                onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }}
+                                            />
+                                            <div className="main-image-text">
+                                                <div className="hot-badge-overlay">최신</div>
+                                                <h3>{art.title}</h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <div className="carousel-dots-mobile">
+                        {[0, 1, 2].map(dotIdx => (
+                            <span key={dotIdx} className={`carousel-dot ${dotIdx === currentSlideIndex ? 'active' : ''}`} onClick={() => setCurrentSlideIndex(dotIdx)} />
+                        ))}
+                    </div>
+                </section>
                 <div className="section-divider"></div>
 
                 {/* Grid Section (2 items) */}
                 {grid.length > 0 && (
                     <>
                         <section className="grid-section">
-                            {grid.slice(0, 2).map((news, i) => (
-                                <div key={i} className="grid-item" onClick={() => navigate(`/article/${news.id}`)}>
+                            {grid.slice(0, 4).map((news, i) => (
+                                <div key={i} className={`grid-item ${i < 2 ? 'mobile-hidden' : ''}`} onClick={() => navigate(`/article/${news.id}`)}>
                                     <div className="grid-image">
                                         <img src={news.image} alt={news.title} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                                     </div>
                                     <div className="grid-info">
                                         <h3>{news.title}</h3>
-                                        <p>{news.content}</p>
                                     </div>
                                 </div>
                             ))}
@@ -198,18 +266,15 @@ const SciencePage = () => {
                 {feed.length > 0 && (
                     <>
                         <div className="section-divider"></div>
-                        <section className="feed-section">
+                        <section className="bottom-feed-section" ref={feedSectionRef}>
                             {feed.slice(0, 5).map((news, i) => (
                                 <div key={i} className="feed-item" onClick={() => navigate(`/article/${news.id}`)}>
 
                                     {/* Left Container: Like + Text */}
                                     <div className="feed-left-container">
-                                        {/* Like Button (Display Only) */}
-                                        <div className="like-icon">
-                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 0 0 1-2-2v-7a2 0 0 1 2-2h3" />
-                                            </svg>
-                                            <span>{120 + (news.id || 0)}</span>
+                                        {/* Article Date */}
+                                        <div className="feed-date">
+                                            {formatDate(news.date)}
                                         </div>
 
                                         {/* Text Info */}
@@ -236,6 +301,11 @@ const SciencePage = () => {
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             setFeedPage(pageNum);
+                                            if (feedSectionRef.current) {
+                                                const yOffset = -70;
+                                                const y = feedSectionRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                                                window.scrollTo({ top: y, behavior: 'auto' });
+                                            }
                                         }}
                                         className={`pagination-btn ${feedPage === pageNum ? 'active' : ''}`}
                                     >
@@ -261,7 +331,7 @@ const SciencePage = () => {
     }
 
     return (
-        <div className="science-page">
+        <div className="science-page category-page">
             <Header
                 leftChild={null}
                 midChild={<Logo />}
@@ -302,6 +372,7 @@ const SciencePage = () => {
 
                 {/* Pagination Removed */}
             </main>
+            <MobileBottomNav />
         </div>
     );
 };

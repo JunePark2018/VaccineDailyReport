@@ -53,18 +53,9 @@ const MediaFocusChart = ({ data }) => {
     };
 
     return (
+
         <div className="media-focus-chart-container" style={{ width: '100%', height: '100%', padding: '0' }}>
-            <h3 style={{
-                fontSize: '1.25rem',
-                fontWeight: '700',
-                marginBottom: '20px',
-                color: '#111',
-                borderLeft: '4px solid #333',
-                paddingLeft: '10px',
-                textAlign: 'left',
-                fontFamily: "'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-                marginTop: '0'
-            }}>
+            <h3 className="section-title" style={{ textAlign: 'left', marginTop: '0' }}>
                 언론사별 보도 비중 (관심도)
             </h3>
             {/* <p style={{ margin: '0 0 15px 0', fontSize: '0.85rem', color: '#666' }}>

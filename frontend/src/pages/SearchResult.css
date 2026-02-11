@@ -1,231 +1,49 @@
-/* --- ?†ÎãàÎ©îÏù¥???§Ï†ï --- */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-@keyframes skeleton-shimmer {
-    0% {
-        background-position: -200% 0;
-    }
-
-    100% {
-        background-position: 200% 0;
-    }
-}
-
-@keyframes blurIn {
-    from {
-        filter: blur(10px);
-        opacity: 0;
-    }
-
-    to {
-        filter: blur(0);
-        opacity: 1;
-    }
-}
-
-.blur-in {
-    animation: blurIn 1.5s ease-out forwards;
-}
-
-.fade-in {
-    animation: fadeInUp 0.8s ease-out forwards;
-    opacity: 0;
-    /* Ï¥àÍ∏∞ ?ÅÌÉú */
-}
-
-.hidden {
-    opacity: 0;
-    visibility: hidden;
-}
-
-/* --- ?àÏù¥?ÑÏõÉ --- */
-.SearchResult_Main {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-}
-
-.Header_Container {
-    width: 100%;
-    margin-bottom: 20px;
-}
-
-.Content_Section {
-    width: 100%;
-    max-width: 1150px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    /* Changed from center to flex-start */
-    padding: 20px;
-}
-
-.Searchbar_Wrapper {
-    width: 100%;
-    margin-bottom: 10px;
-    display: flex;
-    justify-content: center;
-}
-
-/* AI Î∞ïÏä§ Î≥∏Ï≤¥ */
-.SearchResult_Content {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-.SearchResult_AI {
-    width: 100%;
-    /* 80% -> 100% ÍΩ?Ï±ÑÏö∞Í∏?*/
-    padding: 10px;
-    background: #fff;
-    /* ?∏Í∞Å ???úÏãú */
-    /* border: 1px solid #e0e0e0; */
-    /* border-radius: 10px; */
-    /* box-shadow: 0 2px 10px rgba(0,0,0,0.02); */
-    animation: fadeInUp 0.6s ease-out forwards;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-}
-
-/* ?Ä?¥Ì? & ?§Ìîº??*/
-.Title_Wrapper {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 30px;
-}
-
-.AI_Title {
-    font-size: 1.6rem;
-    color: #000;
-    font-weight: 800;
-    /* Extra Bold like Main page */
-}
-
-.Loading_Spinner {
-    width: 22px;
-    height: 22px;
-    border: 3px solid rgba(0, 0, 0, 0.1);
-    border-top: 3px solid #000;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-/* Ïª®ÌÖêÏ∏?Î∞∞Ïπò */
-.AI_Content_Wrapper {
-    display: flex;
-    width: 100%;
-    gap: 40px;
-}
-
-.AI_Left_Section {
-    flex: 1.8;
-    /* 2.5 -> 1.8 Î°?Ï§ÑÏûÑ (?îÏïΩ ?πÏÖò ?àÎπÑ Ï∂ïÏÜå) */
-    display: flex;
-    flex-direction: column;
-    gap: 30px;
-    text-align: left;
-}
-
-.AI_Right_Section {
-    flex: 1;
-    /* ÎπÑÏú® ?†Ï? (?ÅÎ??ÅÏúºÎ°?Ï¢ÅÏïÑÏß? */
-}
-
-/* ???†ÌîΩ Ïπ¥Îìú */
-.Topic_Cards {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    /* Í∞ÄÎ°?2Í∞?*/
-    gap: 15px;
-}
-
-.Topic_Card {
-    flex: 1;
-    aspect-ratio: 4/3;
-    border-radius: 12px;
-    background: #fcfcfc;
-    border: 1px solid #eee;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    /* [Ï∂îÍ?] ?çÏä§???§Î≤Ñ?àÏù¥Î•??ÑÌï¥ */
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.Topic_Card:hover {
-    transform: translateY(-7px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
-}
-
-.Topic_Card img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
-}
-
-.Topic_Card:hover img {
-    transform: scale(1.05);
-}
-
-/* height 60% -> 100% Î≥ÄÍ≤?*/
-
-.Card_Text {
+.Article_Core_Contents {
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
     padding: 15px;
-    /* ?®Îî© ?ΩÍ∞Ñ Ï¶ùÍ? */
     box-sizing: border-box;
-    /* ?®Îî© ?¨Ìï® ?àÎπÑ Í≥ÑÏÇ∞ */
     font-size: 0.9rem;
     color: #fff;
     line-height: 1.4;
     background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.6) 50%, rgba(0, 0, 0, 0) 100%);
-    /* Í∑∏Îùº?∞Ïù¥??Í∞ïÌôî */
     font-weight: 500;
-
-    /* 3Ï§??úÌïú Î∞??§Ì???*/
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
-
     text-align: left;
     word-break: keep-all;
 }
 
-/* ?çÏä§???ÅÏó≠ */
 .Analysis_Contents {
     line-height: 1.8;
     color: #444;
     margin-top: 10px;
 }
 
-/* Í∏∞ÏÇ¨ Î¶¨Ïä§??*/
+.SearchResult_Content {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 20px;
+    width: 100%;
+    box-sizing: border-box;
+    /* Center content on desktop */
+    text-align: left;
+}
+
+.AI_Title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    text-align: left;
+    color: #333;
+}
+
 .News_List {
     list-style: none;
     padding: 0;
@@ -249,7 +67,6 @@
     color: #4285f4;
 }
 
-/* --- Î°úÎî©(?§Ïºà?àÌÜ§) ?®Í≥º --- */
 .Analysis_Big_Box {
     width: 100%;
     min-height: 450px;
@@ -279,24 +96,19 @@
     border-radius: 4px;
 }
 
-/* ?πÏÖò Íµ¨Î∂Ñ??*/
 .Section_Divider {
     width: 1px;
     background-color: #e0e0e0;
     margin: 0 40px;
-    /* Í∏∞Ï°¥ gap 80px???ëÏ™Ω ÎßàÏßÑ?ºÎ°ú Î∂ÑÎ∞∞ */
     align-self: stretch;
 }
 
-/* ÏµúÏ†Å?? Í≥µÌÜµ Î≤ÑÌäº ?§Ì???*/
 .Action_Button {
     background-color: #333 !important;
-    /* Dark gray for Main page concept */
     color: #fff !important;
     font-size: 0.85rem !important;
     padding: 8px 20px !important;
     border-radius: 4px !important;
-    /* Squarer like Main page */
     border: none;
     cursor: pointer;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
@@ -308,7 +120,6 @@
     background-color: rgb(104, 104, 104) !important;
 }
 
-/* ÏµúÏ†Å?? Í≤∞Í≥º ?ÜÏùå Î©îÏãúÏßÄ ?§Ì???*/
 .No_Result_Container {
     display: flex;
     flex-direction: column;
@@ -318,11 +129,27 @@
     width: 100%;
     color: #666;
     text-align: center;
-    /* Ensure text alignment is center */
 }
 
+.Loading_Spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #333;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
 
-/* --- New Integrated Search Styles --- */
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
 
 .Result_Container {
     width: 100%;
@@ -332,7 +159,6 @@
     animation: fadeInUp 0.5s ease-out;
 }
 
-/* Wikipedia Section */
 .Wiki_Section {
     background: #f9f9f9;
     border-left: 5px solid #000;
@@ -381,7 +207,6 @@
     text-decoration: underline;
 }
 
-/* AI Summary Section */
 .AI_Summary_Section {
     width: 100%;
 }
@@ -453,22 +278,17 @@
     line-height: 1.6;
 }
 
-
-
-
-
-/* Hot Topic Section */
 .Hot_Topic_Section {
     width: 100%;
 }
 
-.Topic_Grid {
+.Topic_Cards {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    grid-template-columns: repeat(2, 1fr) !important;
+    /* Force 2 columns to create 2 rows */
     gap: 20px;
 }
 
-/* Reuse & Override Topic_Card */
 .Topic_Card {
     background: #fff;
     border-radius: 12px;
@@ -479,6 +299,11 @@
     border: 1px solid #eee;
     display: flex;
     flex-direction: column;
+    position: relative;
+    /* For absolute positioning text */
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    /* Smoother hover */
 }
 
 .Topic_Card:hover {
@@ -486,9 +311,33 @@
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
 }
 
+.Topic_Card .Card_Text {
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+    width: 100%;
+    padding: 20px 10px 10px 10px;
+    /* Reduced padding for 21:9 ratio */
+    font-size: 14px;
+    font-weight: bold;
+    color: #fff;
+    line-height: 1.4;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.6) 50%, transparent);
+    text-align: left;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    box-sizing: border-box;
+}
+
 .Image_Wrapper {
     width: 100%;
-    aspect-ratio: 16/9;
+    aspect-ratio: 16 / 9 !important;
+    /* 16:9 aspect ratio as requested */
     overflow: hidden;
 }
 
@@ -523,6 +372,7 @@
     line-height: 1.4;
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -535,11 +385,17 @@
     background: #f9f9f9;
     border-radius: 8px;
 }
-/* --- ∏πŸ¿œ ¥Î¿¿ (768px ¿Ã«œ) --- */
+
 @media (max-width: 768px) {
     .AI_Content_Wrapper {
         flex-direction: column;
         gap: 20px;
+    }
+
+    .SearchResult_Content {
+        padding: 0 20px;
+        /* Added side padding */
+        text-align: left;
     }
 
     .AI_Right_Section {
@@ -553,53 +409,57 @@
 
     .AI_Title {
         font-size: 1.2rem;
+        padding: 0 20px;
+        /* Match content padding */
+        margin-top: 20px;
+        text-align: left;
+    }
+
+    .Topic_Cards {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px;
+        /* Reduced gap for more width */
+    }
+
+    .Topic_Card {
+        height: auto !important;
+        margin-bottom: 0;
+        /* Handled by grid gap */
+        position: relative;
+        overflow: hidden;
+        /* Ensure overlay stays inside rounded corners */
+        border-radius: 8px;
+        /* Smaller corner radius */
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        /* Subtle shadow */
+    }
+
+    .Topic_Card .Image_Wrapper {
+        aspect-ratio: 14 / 9 !important;
+        /* Shorter ratio for 20% size reduction */
+    }
+
+    .Topic_Card .Card_Text {
+        position: absolute;
+        bottom: 0px;
+        left: 0px;
+        width: 100%;
+        padding: 30px 8px 8px 8px !important;
+        /* Reduced padding for wider text range */
+        font-size: 13px;
+        /* Slightly smaller font to fit more */
+        font-weight: bold;
+        color: #fff;
+        line-height: 1.3;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.6) 50%, transparent);
+        text-align: left;
+        white-space: normal;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+        box-sizing: border-box;
     }
 }
-
-/* Updated Styles for 1-column Hot Topic */
-.Topic_Card {
-    height: 200px !important; /* Slightly bigger but not too big */
-    width: 100%;
-    margin-bottom: 20px;
-    position: relative;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.Topic_Card .Image_Wrapper {
-    height: 100%;
-    width: 100%;
-}
-
-.Topic_Card img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
-}
-
-.Topic_Card:hover img {
-    transform: scale(1.05);
-}
-
-.Topic_Card .Card_Text {
-    position: absolute;
-    bottom: 0px;
-    left: 0px;
-    width: 100%;
-    padding: 20px 15px;
-    font-size: 18px;
-    font-weight: bold;
-    color: #fff;
-    background: linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0.6) 50%, transparent);
-    text-align: left;
-    white-space: normal;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-    box-sizing: border-box;
-}
-

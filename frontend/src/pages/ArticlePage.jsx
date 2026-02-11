@@ -9,7 +9,9 @@ import Logo from '../components/Logo';
 import logoImg from '../components/Logo.png';
 import UserMenu from '../components/UserMenu';
 import './ArticlePage.css';
+import MobileBottomNav from '../components/MobileBottomNav';
 import axios from 'axios';
+import { formatDate } from '../utils/dateUtils';
 import WordCloudComponent from '../components/WordCloud';
 import Timeline from '../components/Timeline';
 import LikeButton from '../components/LikeButton';
@@ -369,9 +371,7 @@ function ArticlePage() {
                           <>
                             <span style={{ padding: '4px 10px', backgroundColor: '#f0f0f0', borderRadius: '4px', fontSize: '0.85rem', color: '#666', fontWeight: '500' }}>AI 생성</span>
                             <span>
-                              {new Date(article.created_at).getFullYear()}.
-                              {String(new Date(article.created_at).getMonth() + 1).padStart(2, '0')}.
-                              {String(new Date(article.created_at).getDate()).padStart(2, '0')}
+                              {formatDate(article.created_at)}
                             </span>
                           </>
                         )}
@@ -541,7 +541,7 @@ function ArticlePage() {
                     }}>
                       {/* 워드클라우드 */}
                       <div style={{ flex: '0 0 300px', minWidth: '280px' }}>
-                        <h3 className="section-title" style={{ marginBottom: '20px', borderLeft: '4px solid #333', paddingLeft: '10px', textAlign: 'left' }}>기사 핵심 키워드</h3>
+                        <h3 className="section-title" style={{ marginBottom: '20px', textAlign: 'left' }}>기사 핵심 키워드</h3>
                         <div style={{
                           display: 'flex',
                           justifyContent: 'center',
@@ -592,6 +592,7 @@ function ArticlePage() {
           clusterId={article.cluster_id}
         />
       </div >
+      <MobileBottomNav />
     </div >
   );
 }

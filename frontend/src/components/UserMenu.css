@@ -18,7 +18,7 @@
   border: 1px solid #6d6d6d;
   border-left: none;
   /* Merge with adjacent element */
-  border-radius: 0px;
+  border-radius: 5px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -100,22 +100,7 @@
 
 /* Mobile Responsive */
 @media screen and (max-width: 768px) {
-  .user-menu-container .user-icon-box {
-    border: none;
-    background-color: transparent;
-    width: auto;
-    height: auto;
-  }
-
-  .user-menu-container .user-icon {
-    width: 28px;
-    height: 28px;
-    /* Slightly larger icon on mobile since box is gone */
-  }
-
-  .user-menu-container .user-name {
+  .user-menu-container {
     display: none !important;
   }
-
-
 }
