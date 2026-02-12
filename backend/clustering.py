@@ -50,14 +50,11 @@ def get_embeddings_with_cache(articles):
     # 1. ChromaDB 조회
     existing_data = collection.get(ids=article_ids, include=["embeddings"])
     id_to_embedding = {
-        aid: np.array(emb, dtype=np.float32)
-        for aid, emb in zip(existing_data["ids"], existing_data["embeddings"])
+        aid: np.array(emb, dtype=np.float32) for aid, emb in zip(existing_data["ids"], existing_data["embeddings"])
     }
 
     # 2. 없는 데이터 확인 및 생성
-    to_embed_indices = [
-        i for i, a in enumerate(articles) if str(a.news_id) not in id_to_embedding
-    ]
+    to_embed_indices = [i for i, a in enumerate(articles) if str(a.news_id) not in id_to_embedding]
 
     if to_embed_indices:
         print(f"    [ChromaDB] {len(to_embed_indices)}건 신규 임베딩 생성 중...")
@@ -83,9 +80,7 @@ def get_embeddings_with_cache(articles):
             id_to_embedding[aid] = emb
 
     # 3. 입력 순서대로 정렬하여 반환
-    return np.array(
-        [id_to_embedding[str(a.news_id)] for a in articles], dtype=np.float32
-    )
+    return np.array([id_to_embedding[str(a.news_id)] for a in articles], dtype=np.float32)
 
 
 # -------------------------------------------------
@@ -186,11 +181,7 @@ def simple_kg_check(articles):
 
     def extract_nouns(text):
         tokens = kiwi.tokenize(text)
-        return set(
-            t.form
-            for t in tokens
-            if t.tag in ["NNG", "NNP"] and t.form not in stopwords and len(t.form) > 1
-        )
+        return set(t.form for t in tokens if t.tag in ["NNG", "NNP"] and t.form not in stopwords and len(t.form) > 1)
 
     docs_nouns = [extract_nouns(a.title) for a in articles]
 
@@ -207,10 +198,7 @@ def run_stage2_issue_refine(articles):
     """
     LLM을 사용하여 실제로 동일한 이슈인지 최종 검증
     """
-    summaries = [
-        f"[{i}] 제목: {a.title}\n요약: {(a.contents or '')[:150]}"
-        for i, a in enumerate(articles[:10])
-    ]
+    summaries = [f"[{i}] 제목: {a.title}\n요약: {(a.contents or '')[:150]}" for i, a in enumerate(articles[:10])]
 
     system_prompt = """
 You are a veteran Desk Reporter with keen news insight.
@@ -266,26 +254,25 @@ Task: Identify the perfect cluster of articles covering the same event.
 # -------------------------------------------------
 def run_issue_clustering(db: Session, days=3, ref_date=None):
     Base.metadata.create_all(bind=engine)
-    
+
     if ref_date is None:
         ref_date = datetime.now()
-        
+
     # ref_date 기준 과거 days일 동안의 기사를 조회
     since = ref_date - timedelta(days=days)
 
     # 1. 기사 조회
-    # [수정] get_recent_news가 since 이후의 기사를 가져오는데, 
+    # [수정] get_recent_news가 since 이후의 기사를 가져오는데,
     # 과거 시점 크롤링의 경우 미래의 기사(ref_date 이후)가 포함되면 안될 수도 있음.
     # 하지만 여기서는 'since' 부터 'ref_date' 사이의 기사만 가져오는게 정확함.
     # 기존 crud.get_recent_news는 >= since 만 체크함.
     # 따라서 여기서 필터링을 추가하거나 crud를 수정해야 함.
     # 여기서는 간단히 가져온 후 필터링.
-    
+
     articles = crud.get_recent_news(db, since)
     # ref_date보다 미래의 기사는 제외 (과거 시점 재현)
-    articles = [a for a in articles if a.created_at <= ref_date + timedelta(days=1)] # 하루 정도 여유
-    
-    articles = [a for a in articles if not a.clusters]
+    articles = [a for a in articles if a.created_at <= ref_date + timedelta(days=1)]  # 하루 정도 여유
+
     articles = [a for a in articles if not a.clusters]
     print(f"🔍 [DEBUG] 조회된 기사 수: {len(articles) if articles else 0}개")
 
@@ -330,20 +317,14 @@ def run_issue_clustering(db: Session, days=3, ref_date=None):
             if sim >= 0.85:
                 a.issue_id = issue.report_id
                 # DB 연결: Cluster에 뉴스 추가
-                crud.add_news_to_cluster(
-                    db, cluster_id=issue.cluster_id, news_id=a.news_id
-                )
-                print(
-                    f"  🔗 [병합] '{a.title}' -> 기존 이슈 '{issue.title}' (유사도: {sim:.2f})"
-                )
+                crud.add_news_to_cluster(db, cluster_id=issue.cluster_id, news_id=a.news_id)
+                print(f"  🔗 [병합] '{a.title}' -> 기존 이슈 '{issue.title}' (유사도: {sim:.2f})")
 
     # 4. 신규 클러스터링 (HDBSCAN)
     print("🚀 [DEBUG] 신규 클러스터링 시작...")
 
     # 이슈가 할당되지 않은 기사들만 필터링
-    rem = [
-        (i, a) for i, a in enumerate(articles) if getattr(a, "issue_id", None) is None
-    ]
+    rem = [(i, a) for i, a in enumerate(articles) if getattr(a, "issue_id", None) is None]
 
     if len(rem) < 3:
         print("⚠️ 남은 기사가 부족하여 신규 클러스터링을 생략합니다.")
@@ -385,9 +366,7 @@ def run_issue_clustering(db: Session, days=3, ref_date=None):
         final_title = res.get("title", picked[0].title)
 
         # 5. 이슈 생성 및 DB 저장
-        issue = crud.create_report_issue(
-            db, title=final_title, article_ids=[a.news_id for a in picked]
-        )
+        issue = crud.create_report_issue(db, title=final_title, article_ids=[a.news_id for a in picked])
 
         # 런타임 객체에 issue_id 마킹 (중복 처리 방지용)
         for a in picked:
