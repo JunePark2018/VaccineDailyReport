@@ -1,3 +1,13 @@
+/* Default: Hide Mobile Section on Desktop */
+.main-article-section-mobile {
+  display: none;
+}
+
+/* Default: Show Desktop Section */
+.main-article-section {
+  display: flex;
+}
+
 .main-page {
   width: 100%;
 }
@@ -6,20 +16,49 @@
   max-width: 1320px;
   /* 1320px -> 1380px */
   margin: 0 auto;
-  padding: 40px 30px;
+  padding: 10px 30px 40px 30px;
+  /* Reduced top padding to 10px */
   /* 하단 패딩 40px 복구 */
   border: none;
   /* Removed outer border */
+}
+
+/* Main Wrapper for Carousel (Outer) */
+.main-carousel-outer {
+  width: 100%;
+}
+
+@media screen and (max-width: 768px) {
+  .main-carousel-outer {
+    display: block;
+  }
+}
+
+@media screen and (min-width: 769px) {
+  .main-carousel-outer {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 50px 30px 0 30px;
+    /* added 50px top padding */
+    box-sizing: border-box;
+  }
+}
+
+/* Visibility Toggles - Responsive behavior defined below in media queries */
+.desktop-only-section {
+  display: flex !important;
+}
+
+.mobile-only-section {
+  display: none !important;
 }
 
 /* Main Article Section (3-Column) */
 .main-page .main-article-section {
   display: flex;
   gap: 16px;
-  /* Reduced from 20px */
+  margin-top: 40px;
   margin-bottom: 40px;
-  /* Reduced from 50px */
-  /* Reduced from 50px */
   /* Match height */
   position: relative;
   /* For arrow positioning */
@@ -43,6 +82,8 @@
   display: none;
   width: 100%;
   height: 100%;
+  position: relative;
+  /* Ensure absolute children (title) stay inside slide */
 }
 
 .main-page .carousel-slide.active {
@@ -88,8 +129,8 @@
 }
 
 .main-page .article-info-side p {
-  font-size: 15px;
-  color: #333;
+  font-size: 16px;
+  font-weight: 500;
   line-height: 1.6;
   margin-bottom: 5px;
   display: -webkit-box;
@@ -102,12 +143,14 @@
 
 
 .main-page .main-image-column {
-  flex: 2.1;
+  flex: 2.31;
+  /* Increased from 2.1 by 10% */
   /* Reduced from 2.7 by ~20% */
   display: flex;
   flex-direction: column;
   gap: 10px;
   /* Reduced from 15px */
+  position: relative;
 }
 
 .main-page .article-image-center {
@@ -123,7 +166,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border-radius: 0px;
+  border-radius: 5px;
 }
 
 
@@ -159,6 +202,8 @@
   z-index: 3;
   text-align: left;
   box-sizing: border-box;
+  display: none;
+  /* Hidden by default (Desktop) */
 }
 
 .main-page .main-image-text h3 {
@@ -174,37 +219,40 @@
   display: block;
   /* Show arrows */
   position: absolute;
-  top: 50%;
+  top: 195px;
+  /* Half of 390px (max-height of image) to center on image */
   transform: translateY(-50%);
   background: transparent;
   /* Remove background */
-  color: #000;
-  /* Black color */
+  color: #333 !important;
+  /* Dark grey color for visibility outside photo */
+  text-shadow: none !important;
   border: none;
   padding: 15px 10px;
   cursor: pointer;
   z-index: 10;
-  font-size: 40px;
-  /* Increase size for thin character */
-  font-weight: 100;
-  /* Thin weight */
+  font-size: 80px;
+  /* Greatly increased size */
+  font-weight: 200;
+  /* Slightly thicker than 100 for visibility */
   line-height: 1;
-  transition: opacity 0.2s;
+  transition: all 0.2s;
 }
 
 .main-page .carousel-arrow:hover {
   background: transparent;
-  opacity: 0.6;
+  opacity: 1;
+  transform: translateY(-50%) scale(1.1);
 }
 
 .main-page .prev-arrow {
-  left: 0;
-  /* Move inside padding */
+  left: -70px;
+  /* Move outside image to the left */
 }
 
 .main-page .next-arrow {
-  right: 0;
-  /* Move inside padding */
+  right: -5px;
+  /* Positioned at the far right of the entire section */
 }
 
 .main-page .carousel-dots-mobile {
@@ -213,7 +261,7 @@
   justify-content: center;
   gap: 8px;
   position: absolute;
-  bottom: -30px;
+  bottom: 0px;
   /* Position below content */
   left: 50%;
   transform: translateX(-50%);
@@ -273,50 +321,12 @@
 
 
 
-.main-page .highlights-container {
-  display: flex;
-  gap: 20px;
-  margin-top: 15px;
-  border-top: 1px solid #eee;
-  padding-top: 15px;
-  align-items: center;
-  justify-content: flex-start;
-  /* Aligned to left */
-  /* Added for centering */
-  /* Align items vertically center */
-}
 
-.main-page .highlight-divider {
-  width: 1px;
-  height: 40px;
-  /* Adjust height as needed */
-  background-color: #eee;
-}
 
-.main-page .highlight-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  align-items: center;
-  /* Changed from flex-start */
-  text-align: center;
-  /* Changed from left */
-}
 
-.main-page .highlight-keyword {
-  color: #ff4d4d;
-  font-weight: bold;
-  font-size: 14px;
-}
 
-.main-page .highlight-content {
-  font-size: 13px;
-  color: #333;
-  line-height: 1.4;
-}
 
-/* Bottom Grid Section (3 items) */
+
 .main-page .bottom-grid-section {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -684,7 +694,7 @@
   width: 100%;
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  border-radius: 0px;
+  border-radius: 5px;
 }
 
 .main-page .cat-box-img img {
@@ -782,7 +792,7 @@
   aspect-ratio: 16 / 9;
   /* border: 1px solid #000; Removed */
   overflow: hidden;
-  border-radius: 0px;
+  border-radius: 5px;
   /* Added roundness */
 }
 
@@ -1073,7 +1083,8 @@
 }
 
 .main-page .society-large-title {
-  font-size: 24px;
+  font-size: 34px;
+  /* Increased by 10px from 24px */
   font-weight: 800;
   margin: 0;
   line-height: 1.3;
@@ -1084,36 +1095,14 @@
   color: #555;
   margin: 0;
   line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-/* Mobile Responsive Adjustments (Max 768px) */
-@media screen and (max-width: 768px) {
-  .main-page .complex-grid-section {
-    flex-direction: column;
-    gap: 30px;
-  }
 
-  .main-page .complex-right-col {
-    border-left: none;
-    padding-left: 0;
-    border-top: 1px solid #eee;
-    padding-top: 30px;
-  }
-
-  .main-page .politics-grid {
-    grid-template-columns: 1fr;
-    gap: 30px;
-  }
-
-  .main-page .society-large-card {
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  .main-page .society-large-title {
-    font-size: 20px;
-  }
-}
 
 /* =========================================
    Mobile Responsive Adjustments (Max 768px)
@@ -1131,16 +1120,177 @@
   }
 
   /* --- Main Article Section (Top 3 Columns) --- */
-  .main-page .main-article-section {
-    display: flex;
-    gap: 30px;
-    margin-bottom: 20px;
+  /* --- Main Article Section (Top 3 Columns) --- */
+  /* This section is Desktop Only so it should be hidden on Mobile.
+     The .main-article-section rule below was causing it to display.
+     REMOVED to prevent duplication. */
+
+  /* --- Mobile Visibility Toggles --- */
+  .desktop-only-section {
+    display: none !important;
   }
 
+  .mobile-only-section {
+    display: block !important;
+    width: 100%;
+    margin-bottom: 30px;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  /* Force hide AI News Header */
+  /* Force hide AI News Header - REMOVED for new mobile requirement */
+  /* .ai-news-header { display: none !important; } */
+
+  /* --- Mobile Full Slider Styling --- */
+  .mobile-full-slider {
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .mobile-slide-track {
+    display: flex;
+    transition: transform 0.3s ease-in-out;
+    width: 100%;
+  }
+
+  .mobile-whole-slide {
+    min-width: 100%;
+    flex: 0 0 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    /* Separation between Image Part and Highlights Part */
+  }
+
+  .mobile-slide-top {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1.2 / 1;
+    /* Approved ratio */
+    overflow: hidden;
+  }
+
+  .mobile-slide-top img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Ensure Overlay Title is Visible */
+  /* --- Mobile Tab Bar (Text Tabs) --- */
+  .mobile-tab-bar {
+    display: flex;
+    overflow-x: auto;
+    white-space: nowrap;
+    background: #fff;
+    border-bottom: 1px solid #eee;
+    padding: 0 10px;
+    margin-bottom: 20px;
+    scrollbar-width: none;
+    /* Hide scrollbar */
+  }
+
+  .mobile-tab-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobile-tab-item {
+    padding: 15px 15px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #888;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .mobile-tab-item.active {
+    color: #000;
+    font-weight: bold;
+    border-bottom: 2px solid #000;
+  }
+
+  .mobile-slide-top .main-image-text {
+    display: block !important;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 20px !important;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+    color: #fff;
+    z-index: 3;
+    text-align: left;
+    box-sizing: border-box;
+  }
+
+  .mobile-slide-bottom {
+    width: 100%;
+  }
+
+  /* Fix for Carousel Dots overlapping content */
+  .main-page .carousel-dots-mobile {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 40px;
+    /* Push dots below content */
+    padding-bottom: 20px;
+    position: relative;
+    z-index: 5;
+  }
+
+  .main-page .carousel-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #ddd;
+    transition: background-color 0.3s;
+  }
+
+  .main-page .carousel-dot.active {
+    background-color: #333 !important;
+    /* Darker active dot */
+  }
+
+
   /* Hide Side Columns on Mobile to focus on Carousel */
-  .main-page .article-info-side,
+  /* Re-showing components for Mobile Layout (User Request) */
   .main-page .highlights-side {
+    display: flex !important;
+    order: 3;
+    width: 100%;
+    margin-top: 15px;
+    padding: 0;
+    /* Removing padding to match image width */
+  }
+
+  /* --- VISIBILITY CONTROL --- */
+  .main-article-section {
     display: none !important;
+  }
+
+  .main-article-section-mobile {
+    display: block !important;
+  }
+
+  /* ------------------------- */
+
+  .main-page .article-info-side {
+    display: none !important;
+    /* Hide external title container on mobile */
+  }
+
+  /* Hide Description on Mobile */
+
+  .main-page .main-article-section .main-right-col {
+    display: flex !important;
+    flex-direction: column;
+    width: 100%;
+    order: 2;
+    /* margin-top: 15px; */
+    padding: 0 !important;
+    /* User correction: remove padding, not margin */
   }
 
   /* 2. Main Image (Center) -> Primary Carousel */
@@ -1201,45 +1351,22 @@
     padding: 0 5px;
   }
 
-  .main-page .highlight-item-mobile {
-    display: flex;
-    flex-direction: column;
-    text-align: left;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #eee;
-  }
 
-  .main-page .highlight-item-mobile:last-child {
-    border-bottom: none;
-  }
-
-  .main-page .highlight-item-mobile .hl-keyword {
-    color: #ff4d4d;
-    font-weight: bold;
-    font-size: 15px;
-    margin-bottom: 4px;
-  }
-
-  .main-page .highlight-item-mobile .hl-content {
-    font-size: 13px;
-    line-height: 1.5;
-    color: #444;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
 
   .main-page .article-image-center {
     width: 100%;
     /* Full width */
-    aspect-ratio: 16 / 9;
-    /* More standard video ratio for mobile */
+    height: 110vh !important;
+    /* Force full viewport height + extra */
+    aspect-ratio: auto !important;
+    /* Override explicit aspect ratio */
+    max-height: none !important;
+    /* Unlock height limit */
   }
 
-  .main-page .main-image-text h3 {
-    font-size: 18px;
+  .main-page .main-image-text {
+    display: block !important;
+    /* Show overlay title on mobile */
   }
 
   .main-page .ai-news-badge {
@@ -1285,6 +1412,86 @@
     border-bottom: none;
   }
 
+  .main-page .cat-box-header.ai-news-header {
+    position: static;
+    color: #000;
+    text-shadow: none;
+    font-size: 22px;
+    margin: 25px 0 15px 0;
+    /* Added top margin for gap */
+    width: 100%;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    padding-left: 20px;
+    /* Added left padding for gap */
+    text-align: left;
+    font-weight: 800;
+    transform: none !important;
+    box-sizing: border-box;
+  }
+
+  /* --- Global Container --- */
+  .main-page .category-content {
+    padding: 10px 15px !important;
+  }
+
+  /* Main Article Section - Standard Flow */
+  .main-page .main-article-section-mobile {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin-top: 20px !important;
+    margin-bottom: 20px !important;
+    padding: 0 15px !important;
+  }
+
+  .main-page .main-image-column {
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  .main-page .article-image-center {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 1.5 / 1 !important;
+  }
+
+  .main-page .main-image-text {
+    position: relative !important;
+    background: #fff !important;
+    color: #000 !important;
+    padding: 15px 0 !important;
+    display: block !important;
+  }
+
+  .main-page .main-image-text h3 {
+    color: #000 !important;
+    font-size: 20px !important;
+    font-weight: 700 !important;
+  }
+
+  /* Target all primary article titles to be 20px on mobile */
+  .main-page .politics-title,
+  .main-page .economy-title,
+  .main-page .cat-box-title,
+  .main-page .grid-info h3,
+  .main-page .society-large-title {
+    font-size: 20px !important;
+    line-height: 1.3 !important;
+    font-weight: 700 !important;
+  }
+
+  .main-page p {
+    font-size: 15px !important;
+    line-height: 1.5 !important;
+  }
+
+  .main-page .carousel-dots-mobile {
+    margin-top: 10px !important;
+    padding-bottom: 10px !important;
+  }
+
   /* --- Bottom Grid Section (2 items) --- */
   .main-page .bottom-grid-section {
     grid-template-columns: 1fr;
@@ -1324,7 +1531,7 @@
 
   .main-page .ai-main-image-container {
     width: 100%;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 1.5 / 1;
   }
 
   .main-page .ai-related-list {
@@ -1376,7 +1583,7 @@
   .main-page .cat-box-img {
     width: calc(100% + 30px);
     margin-left: -15px;
-    border-radius: 0;
+    border-radius: 5px;
   }
 
   .main-page .cat-box-info {
@@ -1404,7 +1611,7 @@
   .main-page .global-img {
     width: calc(100% + 30px);
     margin-left: -15px;
-    border-radius: 0;
+    border-radius: 5px;
   }
 
   /* Society Mobile Grid: Default Category Layout (Vertical) */
@@ -1415,6 +1622,9 @@
   .main-page .culture-mobile-grid {
     grid-template-columns: repeat(1, 1fr) !important;
   }
+
+  /* Fix for Title alignment and gap on Mobile - REMOVED redundant hidden block */
+  /* .main-page .cat-box-header.ai-news-header { ... } */
 
   /* Force divider to show on mobile */
   .main-page .mobile-only-divider {
@@ -1443,7 +1653,7 @@
   }
 
   .main-page .science-card h5 {
-    font-size: 16px;
+    font-size: 20px;
   }
 
   /* --- Mobile Border Optimizations (Hide Desktop Borders) --- */
@@ -1464,6 +1674,18 @@
     /* 네거티브 마진 해제 */
     width: 100% !important;
     /* 너비 원복 */
+    flex-direction: column;
+    gap: 30px;
+  }
+
+  .main-page .politics-grid {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+
+  .main-page .society-large-card {
+    flex-direction: column;
+    gap: 15px;
   }
 
   .main-page .complex-left-col {
@@ -1513,10 +1735,22 @@
   .main-page .society-mobile-grid div:not(:last-child),
   .main-page .culture-mobile-grid div:not(:last-child),
   .main-page .science-section .science-card:not(:last-child) {
-    border-bottom: 1px solid #eee;
     /* Light grey like standard list */
     padding-bottom: 20px;
     margin-bottom: 20px;
+  }
+
+  /* --- VISIBILITY CONTROL (Consolidated) --- */
+  /* Ensure Desktop Section is HIDDEN on Mobile */
+  .main-page .main-article-section,
+  .desktop-only-section {
+    display: none !important;
+  }
+
+  /* Ensure Mobile Section is SHOWN on Mobile */
+  .main-page .main-article-section-mobile,
+  .mobile-only-section {
+    display: block !important;
   }
 }
 
@@ -1574,13 +1808,11 @@
   /* Ensure content starts at top */
 }
 
-/* Force children to inherit white color in active state */
+/* Force title to inherit black color in active state. Description should follow its own style (grey). */
 .main-page .analysis-block.active h2,
-.main-page .analysis-block.active p,
-.main-page .analysis-block.active .analysis-title,
-.main-page .analysis-block.active .analysis-desc {
+.main-page .analysis-block.active .analysis-title {
   color: #000 !important;
-  /* Ensure text is black */
+  /* Ensure title is black */
 }
 
 /* Arrow pointing to Main Image */
@@ -1621,45 +1853,61 @@
 /* Refactored Layout Styles */
 .main-page .analysis-title {
   font-size: 18px;
+  line-height: 1.3;
+  height: 2.6em;
+  /* Fixed height for 2 lines to stabilize container height */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   margin-top: 0;
-  /* Align to top */
   margin-bottom: 5px;
+  /* Fixed gap between title and desc */
 }
 
 .main-page .analysis-desc {
   font-size: 12px;
   line-height: 1.4;
+  color: #575757 !important;
+  margin-top: 0;
+  /* Reset default margin */
 }
 
 /* Re-purposed article-info-side inside right col */
 /* Styles moved to .main-right-col block */
 
-/* Main Image Column */
-.main-page .main-image-column {
-  flex: 0.56;
-  /* Reduced from 0.7 by 20% */
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  /* Allow height to match neighbors (flex stretch default) */
-}
+/* Main Image Column (Desktop) */
+@media screen and (min-width: 769px) {
 
-/* Image styling to fill height */
-/* Image styling to fill height */
-/* Image styling to fill height */
-.main-page .article-image-center {
-  /* Force height reduction by setting max-height */
-  max-height: 360px;
-  /* Adjust this value as needed or use percentage if parent has height */
-  width: 100%;
-  object-fit: cover;
-  aspect-ratio: 20 / 9 !important;
-  display: block;
-  position: relative;
-  overflow: hidden;
-  border-radius: 0;
-  margin: 0 auto;
-  /* Center it if width < 100% */
+  /* Main Image Column */
+  .main-page .main-image-column {
+    flex: 0.62;
+    /* Increased from 0.56 by 10% */
+    /* Reduced from 0.7 by 20% */
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    /* Allow height to match neighbors (flex stretch default) */
+  }
+
+  /* Image styling to fill height */
+  /* Image styling to fill height */
+  /* Image styling to fill height */
+  .main-page .article-image-center {
+    /* Force height reduction by setting max-height */
+    max-height: 390px;
+    /* Adjust this value as needed or use percentage if parent has height */
+    width: 100%;
+    object-fit: cover;
+    aspect-ratio: 21 / 9 !important;
+    display: block;
+    position: relative;
+    overflow: hidden;
+    border-radius: 5px;
+    margin: 0 auto;
+    /* Center it if width < 100% */
+  }
 }
 
 /* Main Right Column (Wraps Info & Highlights) */
@@ -1668,7 +1916,7 @@
   /* Balance with Image Column (2.1 vs 0.9) */
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0px;
   /* Gap between Info and Highlights */
   padding-left: 20px;
 }
@@ -1690,14 +1938,11 @@
 }
 
 .main-page .highlights-title {
-  font-size: 18px;
-  /* Original size */
+  font-size: 26px;
   font-weight: bold;
+  margin-top: 0px;
   margin-bottom: 5px;
-  /* Original margin */
-  /* Original margin */
-  /* Original margin */
-  padding-bottom: 5px;
+  padding-bottom: 0px;
   border-bottom: none;
   /* Removed divider */
   text-align: left;
@@ -1714,27 +1959,31 @@
 }
 
 .main-page .highlights-title::before {
-  content: "☆";
-  color: red;
-  margin-right: 4px;
-  font-family: 'Comic Sans MS', cursive, sans-serif;
+  content: "";
   display: inline-block;
-  transform: rotate(-20deg);
+  width: 30px;
+  height: 30px;
+  background-image: url('../components/star.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  margin-right: 0px;
   vertical-align: middle;
-  font-weight: normal;
-  font-size: 1.3em;
+  transform: rotate(30deg);
 }
 
 .main-page .highlights-title::after {
-  content: "☆";
-  color: red;
-  margin-left: 4px;
-  font-family: 'Comic Sans MS', cursive, sans-serif;
+  content: "";
   display: inline-block;
-  transform: rotate(10deg);
+  width: 30px;
+  height: 30px;
+  background-image: url('../components/star.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  margin-left: 5px;
   vertical-align: middle;
-  font-weight: normal;
-  font-size: 1.2em;
+  transform: rotate(-10deg);
 }
 
 .main-page .highlight-list {
@@ -1742,48 +1991,109 @@
   flex-direction: column;
   flex: 1;
   /* Occupy remaining space instead of fixed 100% */
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 0px;
   overflow: hidden;
   /* Prevent overflow */
+}
+
+.main-page .highlight-items-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+  /* Reduced gap since we use padding and borders */
 }
 
 .main-page .highlight-item {
   width: 100%;
   box-sizing: border-box;
-  padding: 5px 10px;
-  /* Reduced from 12px 10px */
-  border-bottom: none;
-  /* Removed divider */
+  padding: 10px 5px;
+  /* Slightly increased padding */
+  margin-top: 0px;
+  margin-bottom: 0px;
+  border-bottom: 1px solid #eee;
+  /* Added divider */
   align-items: flex-start !important;
   text-align: left !important;
-  /* Reduced from 5px */
-  text-align: left !important;
+}
+
+.main-page .highlight-item:last-child {
+  border-bottom: none;
+}
+
+.main-page .highlight-keyword-row {
+  display: flex;
+  align-items: center;
+  /* Centered vertically */
+  width: 100%;
+  margin-bottom: 15px;
+  /* Push content down */
+}
+
+.main-page .highlight-check-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 2px;
+  /* Reduced gap */
+  margin-bottom: 0px;
+  /* Restored bottom margin */
+  object-fit: contain;
 }
 
 .main-page .highlight-keyword {
-  color: #fff !important;
-  background-color: #000 !important;
+  color: #303030 !important;
+  background-color: transparent !important;
   /* Changed to Black */
-  font-weight: bold !important;
-  font-size: 14px !important;
-  /* Changed to 14px */
-  margin-bottom: 6px !important;
+  font-weight: 700 !important;
+  font-size: 19px !important;
+  margin-top: 0px !important;
+  /* Remove top margin for center alignment */
+  margin-bottom: 0px !important;
+  /* Handled by row */
   display: inline-block;
-  padding: 4px 8px;
-  /* Reverted padding */
-  border-radius: 0px;
+  /* Ensure relative positioning for potential future use */
+  position: relative;
+  z-index: 5;
+  /* Ensure text is above line */
 }
 
+/* New Container for Text + Line Image */
+.main-page .highlight-text-container {
+  display: inline-block;
+  /* Changed to inline-block for tight wrapping */
+  position: relative;
+}
+
+.main-page .highlight-line-img {
+  position: absolute;
+  /* Force overlap */
+  bottom: -22px;
+  /* Position slightly up from bottom */
+  left: 0;
+  width: 100%;
+  height: 40px;
+  /* Fixed height for consistent look */
+  opacity: 0.7;
+  z-index: 30;
+  /* Behind text */
+  pointer-events: none;
+  /* Click-through */
+}
+
+
+
 .main-page .highlight-content {
-  font-size: 12px !important;
+  font-size: 16px !important;
+  font-weight: 400;
+  color: #414141 !important;
   /* Changed to 12px */
   line-height: 1.5 !important;
-  color: #444 !important;
+  margin-top: -5px !important;
   display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   /* Show only 2 lines */
   margin: 0;
 }
@@ -1840,12 +2150,10 @@
   text-decoration: underline !important;
 }
 
-/* 3. Ensure Active State Text Color persists (White) even if container is hovered */
-.main-page .analysis-block.active h2,
-.main-page .analysis-block.active p {
+/* 3. Ensure Active State title persists (White) even if container is hovered. Description should follow its own style (grey). */
+.main-page .analysis-block.active h2 {
   color: #fff !important;
   text-decoration: none !important;
-  /* Active item usually shouldn't underline? Or maybe it should. User didn't specify. Assuming underline on hover is fine, but color must be white. */
 }
 
 /* Allow underline on hover even if active */

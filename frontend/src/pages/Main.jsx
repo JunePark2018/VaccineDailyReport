@@ -3,12 +3,16 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Logo from '../components/Logo';
 import logoImg from '../components/Logo.png';
+import checkImg from '../components/check.png';
+import lineImg from '../components/line.png';
 import Searchbar from '../components/Searchbar';
 import UserMenu from '../components/UserMenu';
 import SkeletonNews from '../components/SkeletonNews';
 
 
 import './Main.css';
+import MobileBottomNav from '../components/MobileBottomNav';
+import '../components/MobileBottomNav.css';
 
 import axios from 'axios'; // axios imported
 
@@ -42,7 +46,7 @@ export const Main = () => {
       setLoading(true);
       try {
         // 1. Fetch AI Generated News (Limit 50 for main page coverage)
-        const response = await axios.get(`${API_BASE_URL}/reports?limit=100`); // Fetch enough to cover all sections
+        const response = await axios.get(`${API_BASE_URL}/reports?limit=1000`); // Fetch enough to cover all sections
         const realArticles = response.data;
 
         // 2. Map Backend Data to Frontend Structure
@@ -51,12 +55,13 @@ export const Main = () => {
           id: art.report_id, // [Fix] Map native ID to 'id' for widespread usage
           category: art.category_name, // Map category_name ('정치', '경제'...) to category
           image: `cluster_${art.cluster_id}`, // Placeholder ID for image map
-          short_text: art.contents ? (art.contents.substring(0, 100) + "...") : "내용 없음"
+          short_text: art.contents ? (art.contents.substring(0, 150) + "···") : "내용 없음"
         }));
 
         // 3. Filter by category (if name param exists)
         const decodedName = decodeURIComponent(name || '');
-        let filtered = (decodedName === '전체메뉴' || !decodedName)
+        let filtered = !decodedName
+
           ? formattedArticles
           : formattedArticles.filter(a => {
             if (!a.category) return false;
@@ -121,8 +126,8 @@ export const Main = () => {
               .filter(Boolean);
 
             if (allImgUrls.length > 0) {
-              const randomImg = allImgUrls[Math.floor(Math.random() * allImgUrls.length)];
-              newImageMap[`cluster_${art.cluster_id}`] = randomImg;
+              const selectedImg = allImgUrls[1] || allImgUrls[0]; // Use 2nd image if available, else 1st
+              newImageMap[`cluster_${art.cluster_id}`] = selectedImg;
             }
           } catch (err) {
             console.warn(`Failed to fetch image/details for cluster ${art.cluster_id}`, err);
@@ -207,94 +212,76 @@ export const Main = () => {
   const renderMainContent = () => {
     if (!carouselArticles || carouselArticles.length === 0) return null;
 
-    const slideArticles = carouselArticles;
-    const activeArticle = slideArticles[currentSlideIndex];
-    const activeImage = activeArticle ? (imageMap[activeArticle.image] || activeArticle.image) : null;
-    const relatedNews = articleDetailsMap[activeArticle?.image] || [];
+    // Helper: Parse highlights for any article
+    const getHighlights = (article) => {
+      const bullets = article?.analysis_result?.media_comparison_bullets || [];
+      const related = articleDetailsMap[article?.image] || [];
+      let hls = [];
 
-    // Parse 'media_comparison_bullets' for highlights
-    const bullets = activeArticle?.analysis_result?.media_comparison_bullets || [];
+      if (bullets.length > 0) {
+        const parsedBullets = bullets.map(text => {
+          const cleanText = text.replace(/^- /, '');
+          let match = cleanText.match(/^\[(.*?)\]\s*(.*)/);
+          if (!match) match = cleanText.match(/^([^:]+):\s*(.*)/);
+          if (!match) match = cleanText.match(/^([^-]+)\s-\s*(.*)/);
 
-    let highlights = [];
-    if (bullets.length > 0) {
-      // 1. Map & Filter strict matches only
-      // Gather known company names for fallback extraction
-      const knownCompanies = [...new Set(relatedNews.map(n => n.company_name).filter(Boolean))];
-
-      // 1. Map & Filter matches
-      const parsedBullets = bullets.map(item => {
-        const text = typeof item === 'string' ? item : item.analysis;
-        if (!text) return null;
-
-        const cleanText = text.replace(/^- /, '');
-
-        // Strategy A: Explicit Formats
-        let match = cleanText.match(/^\[(.*?)\]\s*(.*)/); // [Media]
-        if (!match) match = cleanText.match(/^([^:]{1,15}):\s*(.*)/); // Media: (limit length)
-        if (!match) match = cleanText.match(/^([^-]{1,15})\s-\s*(.*)/); // Media - (limit length)
-
-        if (match) {
-          let kw = match[1].trim().replace(/(은|는)$/, '');
-          return { keyword: `"${kw}"`, content: match[2].trim() };
-        }
-
-        // Strategy B: Known Company Name Verification
-        // Check if the sentence starts with any company name present in the related news
-        for (const comp of knownCompanies) {
-          if (cleanText.startsWith(comp)) {
-            return { keyword: comp, content: cleanText };
+          if (match) {
+            let kw = match[1].trim().replace(/(은|는)$/, '');
+            return { keyword: `"${kw}"`, content: match[2].trim() };
           }
-        }
+          return null;
+        }).filter(Boolean);
 
-        // Strategy C: Fallback (Search inside text)
-        // User Request: If title is just 'Comparison', try to find media name in text
-        for (const comp of knownCompanies) {
-          if (cleanText.includes(comp)) {
-            return { keyword: comp, content: cleanText };
+        const seenKeywords = new Set();
+        const seenContents = new Set();
+        const uniqueHighlights = [];
+        for (const item of parsedBullets) {
+          // Check for both keyword and content uniqueness
+          if (!seenKeywords.has(item.keyword) && !seenContents.has(item.content)) {
+            seenKeywords.add(item.keyword);
+            seenContents.add(item.content);
+            uniqueHighlights.push(item);
           }
+          if (uniqueHighlights.length >= 4) break;
         }
-
-        // Strategy D: Fallback (Use first word if short, or generic label)
-        // If we can't extract a media name, return standard text but with a generic label
-        return { keyword: "비교", content: cleanText };
-      }).filter(Boolean);
-
-      // 2. Deduplicate
-      const seenKeywords = new Set();
-      const uniqueHighlights = [];
-
-      for (const item of parsedBullets) {
-        // Allow multiple "비교" entries, but dedupe specific media
-        const key = item.keyword === "비교" ? `비교_${item.content}` : item.keyword;
-
-        if (!seenKeywords.has(key)) {
-          seenKeywords.add(key);
-          uniqueHighlights.push(item);
-        }
-        if (uniqueHighlights.length >= 4) break;
+        hls = uniqueHighlights;
       }
 
-      highlights = uniqueHighlights;
-    }
+      if (hls.length === 0 && related.length > 0) {
+        const seenCompanies = new Set();
+        const seenContents = new Set();
+        const uniqueRelated = [];
 
-    if (highlights.length === 0 && relatedNews.length > 0) {
-      highlights = relatedNews.slice(0, 4).map(news => ({
-        keyword: news.company_name || '언론사',
-        content: news.contents ? (news.contents.substring(0, 80) + '...') : '내용 없음'
-      }));
-    }
+        for (const news of related) {
+          const company = news.company_name || '언론사';
+          const content = news.contents ? (news.contents.substring(0, 120) + '···') : '내용 없음';
+
+          if (!seenCompanies.has(company) && !seenContents.has(content)) {
+            seenCompanies.add(company);
+            seenContents.add(content);
+            uniqueRelated.push({ keyword: company, content: content });
+          }
+          if (uniqueRelated.length >= 4) break;
+        }
+        hls = uniqueRelated;
+      }
+      return hls;
+    };
+
+    const slideArticles = carouselArticles;
+    const activeArticle = slideArticles[currentSlideIndex];
+    // Desktop uses active highlights
+    const activeHighlights = getHighlights(activeArticle);
 
     return (
       <React.Fragment>
-        <h2 className="cat-box-header ai-news-header">AI 분석 뉴스</h2>
-        <section className="main-article-section">
-          <button className="carousel-arrow prev-arrow" onClick={(e) => { e.stopPropagation(); setCurrentSlideIndex(prev => (prev - 1 + 3) % 3); }}>&#x2039;</button>
+        <h2 className="cat-box-header ai-news-header desktop-only-section">AI 분석 뉴스</h2>
+
+        {/* --- DESKTOP VIEW --- */}
+        <section className="main-article-section desktop-only-section">
           <div className="main-image-column">
-            <div
-              className="article-image-center"
-              onTouchStart={handleTouchStart}
-              onTouchEnd={handleTouchEnd}
-            >
+            <button className="carousel-arrow prev-arrow" onClick={(e) => { e.stopPropagation(); setCurrentSlideIndex(prev => (prev - 1 + 3) % 3); }}>&#x2039;</button>
+            <div className="article-image-center">
               <div
                 className="carousel-track"
                 style={{ '--slide-transform': `translateX(-${currentSlideIndex * 100}%)` }}
@@ -314,25 +301,18 @@ export const Main = () => {
                         onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }}
                         onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }}
                       />
+                      <div className="main-image-text"><h3>{art.title}</h3></div>
                     </div>
                   );
                 })}
               </div>
-            </div>
-            <div className="carousel-highlights-mobile">
-              {highlights.slice(0, 2).map((item, midx) => (
-                <div key={midx} className="highlight-item-mobile">
-                  <span className="hl-keyword">{item.keyword}</span>
-                  <span className="hl-content">{item.content}</span>
-                </div>
-              ))}
             </div>
           </div>
           <div className="main-right-col">
             <div className="article-info-side">
               {slideArticles.map((art, idx) => {
                 const isActive = idx === currentSlideIndex;
-                if (!isActive) return null; // Show only active for now, or use CSS for transition
+                if (!isActive) return null;
                 return (
                   <div
                     key={art.id || idx}
@@ -347,28 +327,85 @@ export const Main = () => {
             </div>
             <div className="highlights-side">
               <h3 className="highlights-title">언론사별 비교분석</h3>
-              <div
-                key={`hl-${currentSlideIndex}`}
-                className="highlight-list fade-animate"
-              >
-                {highlights.slice(0, 2).map((item, hIndex) => (
-                  <React.Fragment key={hIndex}>
-                    <div className="highlight-item">
-                      <span className="highlight-keyword">{item.keyword}</span>
+              <div key={`hl-${currentSlideIndex}`} className="highlight-list fade-animate">
+                <div className="highlight-items-container">
+                  {activeHighlights.slice(0, 2).map((item, hIndex) => (
+                    <div key={hIndex} className="highlight-item">
+                      <div className="highlight-keyword-row">
+                        <img src={checkImg} alt="check" className="highlight-check-icon" />
+                        <div className="highlight-text-container">
+                          <span className="highlight-keyword">{item.keyword}</span>
+                          <img src={lineImg} alt="line" className="highlight-line-img" />
+                        </div>
+                      </div>
                       <span className="highlight-content">{item.content}</span>
                     </div>
-                  </React.Fragment>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           </div>
-
           <button className="carousel-arrow next-arrow" onClick={(e) => { e.stopPropagation(); setCurrentSlideIndex(prev => (prev + 1) % 3); }}>&#x203A;</button>
+        </section>
+
+        {/* --- MOBILE VIEW (Whole Section Slide) --- */}
+        <section className="main-article-section-mobile mobile-only-section">
+          {/* Duplicate Header Removed */}
+          <div
+            className="mobile-full-slider"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
+            <div
+              className="mobile-slide-track"
+              style={{ transform: `translateX(-${currentSlideIndex * 100}%)` }}
+            >
+              {slideArticles.map((art, idx) => {
+                const imgUrl = imageMap[art.image] || art.image;
+                const hls = getHighlights(art);
+                return (
+                  <div key={idx} className="mobile-whole-slide">
+                    {/* Image + Title Part */}
+                    <div className="mobile-slide-top" onClick={() => navigate(`/article/${art.report_id}`)}>
+                      <img
+                        src={imgUrl}
+                        alt={art.title}
+                        onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }}
+                      />
+                      <div className="main-image-text"><h3>{art.title}</h3></div>
+                    </div>
+                    {/* Highlights Part */}
+                    <div className="mobile-slide-bottom">
+                      <h3 className="highlights-title">언론사별 비교분석</h3>
+                      <div className="highlight-items-container">
+                        {hls.slice(0, 2).map((item, hIndex) => (
+                          <div key={hIndex} className="highlight-item">
+                            <div className="highlight-keyword-row">
+                              <img src={checkImg} alt="check" className="highlight-check-icon" />
+                              <div className="highlight-text-container">
+                                <span className="highlight-keyword">{item.keyword}</span>
+                                <img src={lineImg} alt="line" className="highlight-line-img" />
+                              </div>
+                            </div>
+                            <span className="highlight-content">{item.content}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="carousel-dots-mobile">
             {[0, 1, 2].map(dotIdx => (
               <span key={dotIdx} className={`carousel-dot ${dotIdx === currentSlideIndex ? 'active' : ''}`} onClick={() => setCurrentSlideIndex(dotIdx)} />
             ))}
           </div>
+
+
+
         </section>
       </React.Fragment >
     );
@@ -509,6 +546,13 @@ export const Main = () => {
         headerBottom="on"
       />
 
+      {/* Main Content (Carousel) - Outside Category Content for Full Bleed */}
+      {!loading && displayArticles.length > 0 && (
+        <div className="main-carousel-outer">
+          {renderMainContent()}
+        </div>
+      )}
+
       <main className="category-content">
         {loading ? (
           <div className="main-skeleton-container skeleton-wrapper">
@@ -524,7 +568,7 @@ export const Main = () => {
               <div className="main-full-col">
                 {displayArticles.length > 0 ? (
                   <React.Fragment>
-                    {renderMainContent()}
+                    {/* Carousel moved out */}
                     <div className="complex-layout-wrapper">
                       {renderPoliticsEconomy()}
                     </div>
@@ -540,6 +584,7 @@ export const Main = () => {
           </>
         )}
       </main >
+      <MobileBottomNav />
     </div >
   );
 };

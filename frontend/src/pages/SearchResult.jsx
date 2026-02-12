@@ -8,6 +8,8 @@ import UserMenu from "../components/UserMenu";
 import Searchbar from "../components/Searchbar";
 import Button from "../components/Button";
 
+import MobileBottomNav from '../components/MobileBottomNav';
+
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 export default function SearchResult() {
     const location = useLocation();
@@ -39,6 +41,85 @@ export default function SearchResult() {
             const res = await axios.get(`${API_BASE_URL}/api/comprehensive-search`, {
                 params: { keyword: keyword }
             });
+
+            // 추가 요청: 핫토픽에 검색 키워드가 포함된 기사 표시 (/reports/search 호출)
+            try {
+                const reportsRes = await axios.get(`${API_BASE_URL}/reports/search`, {
+                    params: { keyword: keyword, limit: 100 }
+                });
+                const filteredReports = reportsRes.data;
+
+                if (filteredReports.length > 0) {
+                    // Hot Topics 데이터 덮어쓰기 (기존 comprehensive-search 결과 대신 사용)
+                    // 데이터 구조 매핑: id, title, url, img_urls, report_id
+
+                    // 이미지도 함께 로딩하기 위해 비동기 처리
+                    // 이미지도 함께 로딩하기 위해 처리 (동기적 순차 처리 요청)
+                    const mappedHotTopics = [];
+                    for (const report of filteredReports) {
+                        let imgUrl = [];
+                        try {
+                            if (report.cluster_id) {
+                                // 순차적으로 API 호출 (await)
+                                const imgRes = await axios.get(`${API_BASE_URL}/reports/clusters/${report.cluster_id}/news`);
+                                const newsList = imgRes.data;
+
+                                // console.log(`[HotTopic Debug] Cluster ${report.cluster_id} News List:`, newsList);
+
+                                if (newsList && newsList.length > 0) {
+                                    // 뉴스 리스트를 순회하며 유효한 이미지가 있는지 확인
+                                    for (const newsItem of newsList) {
+                                        if (newsItem.img_urls) {
+                                            let parsedUrls = newsItem.img_urls;
+
+                                            // JSON 문자열인 경우 파싱
+                                            if (typeof parsedUrls === 'string') {
+                                                try {
+                                                    parsedUrls = JSON.parse(parsedUrls);
+                                                } catch (e) {
+                                                    // 파싱 실패 시 원본 문자열을 배열로 감싸서 시도 (단일 URL일 수도 있음)
+                                                    // 하지만 보통 JSON 배열 문자열임. 실패하면 빈 배열 처리.
+                                                    // console.warn("Image URL parse failed:", e);
+                                                    parsedUrls = [];
+                                                }
+                                            }
+
+                                            // 배열이고 이미지가 존재하면 사용
+                                            if (Array.isArray(parsedUrls) && parsedUrls.length > 0) {
+                                                // 첫 번째 이미지 사용 (요청대로 1번째가 없으면 다음 루프에서 다른 뉴스 기사의 이미지를 찾거나,
+                                                // 여기서는 한 기사 내의 이미지 목록 중 첫번째를 씀.
+                                                // 만약 1번째가 깨진 이미지라면? 프론트에서 onError 처리 필요. 
+                                                // 여기서는 유효한 URL 문자열이 있는지만 확인.
+                                                const validUrl = parsedUrls.find(url => url && imgUrl.length === 0);
+                                                if (validUrl) {
+                                                    imgUrl = [validUrl];
+                                                    // console.log(`[HotTopic Debug] Found Image: ${validUrl}`);
+                                                    break; // 이미지를 찾았으면 루프 종료
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (err) {
+                            // console.error("이미지 로딩 실패:", err);
+                        }
+
+                        mappedHotTopics.push({
+                            id: report.report_id,
+                            report_id: report.report_id,
+                            title: report.title,
+                            url: report.url || `/article/${report.report_id}`,
+                            img_urls: imgUrl
+                        });
+                    }
+
+                    res.data.hot_topics = mappedHotTopics;
+                }
+            } catch (reportError) {
+                console.error("핫토픽 검색(Reports) 중 오류 발생:", reportError);
+                // 실패해도 기존 comprehensive-search 결과는 유지
+            }
 
             const data = res.data;
             setSearchData(data);
@@ -100,13 +181,13 @@ export default function SearchResult() {
                         <h3 className="AI_Title">
                             {isLoading ? (
                                 <>
-                                    <span>'{searchTerm}'</span>
-                                    <span style={{ fontWeight: 'normal', fontSize: '1.1rem', marginLeft: '5px' }}> 을(를) 조회중입니다...</span>
+                                    <span style={{ fontWeight: '800', fontSize: '1.5rem' }}>'{searchTerm}'</span>
+                                    <span style={{ fontWeight: 'normal', fontSize: '1.3rem', marginLeft: '5px' }}> 을(를) 조회중입니다...</span>
                                 </>
                             ) : (
                                 <>
-                                    <span>'{searchTerm}'</span>
-                                    <span style={{ fontWeight: 'normal', fontSize: '1.1rem', marginLeft: '5px' }}> 검색 결과</span>
+                                    <span style={{ fontWeight: '800', fontSize: '1.5rem' }}>'{searchTerm}'</span>
+                                    <span style={{ fontWeight: 'normal', fontSize: '1.3rem', marginLeft: '5px' }}> 검색 결과</span>
                                 </>
                             )}
                         </h3>
@@ -127,7 +208,7 @@ export default function SearchResult() {
                                         {searchData.ai_summaries && searchData.ai_summaries.issues && searchData.ai_summaries.issues.length > 0 && (
                                             <div className="Analysis_Text_Section" style={{ paddingBottom: '30px' }}>
                                                 <h2 className="Section_Title_Main" style={{
-                                                    fontSize: '24px',
+                                                    fontSize: '26px',
                                                     fontWeight: '800',
                                                     marginBottom: '25px',
                                                     lineHeight: '1',
@@ -142,7 +223,7 @@ export default function SearchResult() {
                                                                 marginBottom: '25px',
                                                                 whiteSpace: 'pre-wrap',
                                                                 lineHeight: '1.6',
-                                                                fontSize: '15px',
+                                                                fontSize: '16px',
                                                                 color: '#333',
                                                                 background: '#f9f9f9',
                                                                 padding: '20px',
@@ -160,14 +241,14 @@ export default function SearchResult() {
 
                                                             return (
                                                                 <div key={issue.id} className="Summary_Item_Modern" style={{ paddingBottom: '15px' }}>
-                                                                    <strong style={{ fontSize: '16px', display: 'block', marginBottom: '10px' }}>• {issue.title}</strong>
+                                                                    <strong style={{ fontSize: '20px', display: 'block', marginBottom: '10px' }}>• {issue.title}</strong>
                                                                     <div className={`Issue_Content_Container ${isExpanded ? 'expanded' : 'collapsed'}`} style={{
                                                                         position: 'relative',
                                                                         maxHeight: isExpanded ? 'none' : '200px',
                                                                         overflow: isExpanded ? 'visible' : 'hidden',
                                                                         transition: 'max-height 0.3s ease-out'
                                                                     }}>
-                                                                        <p style={{ fontSize: '14px', color: '#333', margin: 0, whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+                                                                        <p style={{ fontSize: '16px', color: '#333', margin: 0, whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
                                                                             {issue.contents}
                                                                         </p>
                                                                         {isTextLong && !isExpanded && (
@@ -306,12 +387,18 @@ export default function SearchResult() {
                                                     lineHeight: '1',
                                                     color: '#000'
                                                 }}>핫토픽!</h2>
-                                                <div className="Topic_Cards" style={{ gridTemplateColumns: '1fr' }}>
+                                                <div className="Topic_Cards">
                                                     {searchData.hot_topics.slice(0, 4).map(item => (
                                                         <div
                                                             key={item.id}
                                                             className="Topic_Card"
-                                                            onClick={() => window.open(item.url)}
+                                                            onClick={() => {
+                                                                if (item.report_id) {
+                                                                    window.location.href = `/article/${item.report_id}`;
+                                                                } else {
+                                                                    window.open(item.url);
+                                                                }
+                                                            }}
                                                         >
                                                             <div className="Image_Wrapper">
                                                                 <img
@@ -341,6 +428,7 @@ export default function SearchResult() {
                     </div>
                 </div>
             </div >
+            <MobileBottomNav />
         </div >
     );
 }

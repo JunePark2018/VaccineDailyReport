@@ -30,7 +30,7 @@ img:not(.logo-image) {
   transition: all 0.3s ease;
 }
 
-/* Global Image Reset: Remove rounded corners */
+/* Global Image Reset: Apply 5px rounded corners */
 img,
 .article-image,
 .grid-image,
@@ -41,7 +41,7 @@ img,
 .thumbnail,
 .image-placeholder,
 .article-image-center {
-  border-radius: 0 !important;
+  border-radius: 5px !important;
 }
 
 img:not(.logo-image):hover {

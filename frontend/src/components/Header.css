@@ -37,16 +37,13 @@
     height: 36px;
     display: flex;
     align-items: center;
-    /* Vertical Center */
     justify-content: flex-start;
-    /* Left align text */
     cursor: pointer;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     padding-right: 20px;
     font-size: 13.5px;
-    /* Slightly larger for readability */
     font-weight: 500;
 }
 
@@ -54,7 +51,7 @@
     text-decoration: underline;
 }
 
-/* Hide Hamburger on Desktop by default */
+/* --- Visibility Logic: Hide Mobile Elements on Desktop --- */
 .hamburger-icon,
 .mobile-side-menu,
 .mobile-side-menu-overlay {
@@ -64,7 +61,6 @@
 .Header-Container .header-top-content {
     width: 100%;
     max-width: 1320px;
-    /* 1380px -> 1320px 복구 */
     display: flex;
     justify-content: space-between;
     padding: 0 20px;
@@ -75,65 +71,56 @@
     font-weight: 600;
 }
 
-/* Header 2: Main Section (Original Header) */
+/* Header 2: Main Section */
 .Header-Container .Header-Main {
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 10px 0;
     height: 80px;
-    background-color: #ffffff;
+    background-color: #fefefd;
 }
 
 .Header-Container .Header-Main .header-main-content {
     width: 100%;
     max-width: 1320px;
-    /* 1380px -> 1320px 복구 */
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 20px;
 }
 
-/* 1. Left Section: Logo centered to the left */
 .Header-Container .Header-Main .left-child {
     flex: 1;
     display: flex;
     justify-content: flex-start;
-    align-items: left;
 }
 
-/* 2. Middle Section: Searchbar centered on all sides */
 .Header-Container .Header-Main .mid-child {
     flex: 2;
-    /* Increased territory to 200% compared to side children */
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-/* 3. Right Section: Login button aligned to the far right */
 .Header-Container .Header-Main .right-child {
     flex: 1;
     display: flex;
     justify-content: flex-end;
-    /* Aligns button to the far right */
     align-items: center;
 }
 
 /* Header 3: Bottom Section */
 .Header-Container .Header-Bottom {
     height: auto;
-    background-color: #ffffff;
+    background-color: #fefefd;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-bottom: none;
-    /* 전체 너비 보더 제거 (초록색 부분 삭제) */
     padding: 12px 0 0 0;
+    border-bottom: 1px solid #e0e0e0;
 }
 
-/* Category List Container */
 .Header-Container .Header-Bottom .category-list {
     display: flex;
     flex-direction: row;
@@ -144,25 +131,15 @@
     margin-bottom: 0px;
     width: 100%;
     max-width: 1320px;
-    /* 1380px -> 1320px 복구 */
-    overflow-x: auto;
-    border: none;
-    /* 보더 제거 (사용자 요청 복구) */
-    /* 하단 개방 */
 }
 
-/* Individual Category Item */
 .Header-Container .Header-Bottom .category-item {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
     padding: 12px 20px;
-    /* Increased padding to fill the gap area */
     position: relative;
     transition: color 0.2s ease;
 }
@@ -171,62 +148,27 @@
     color: #282828;
 }
 
-/* Active state with black background */
-/* Active state with black background */
 .Header-Container .Header-Bottom .category-item.active {
     background-color: transparent;
     color: #000 !important;
     font-weight: 800;
-    border-bottom: none;
-    /* Remove direct border */
-    position: relative;
-    /* For pseudo-element positioning */
 }
 
-/* Ensure span inherits color in active state */
-.Header-Container .Header-Bottom .category-item.active span {
-    color: #000 !important;
-}
-
-/* New underline style with reduced width */
 .Header-Container .Header-Bottom .category-item.active::after {
     content: '';
     position: absolute;
-    bottom: 0;
+    bottom: -1px;
     left: 50%;
     transform: translateX(-50%);
     width: 70%;
-    /* Reduced width (100% - 30%) */
     height: 3px;
     background-color: #000;
     display: block;
-    /* Ensure it's displayed */
 }
 
-/* Icon Wrapper */
-.Header-Container .Header-Bottom .icon-wrapper {
-    width: 32px;
-    height: 32px;
-    margin-bottom: 6px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-/* Icon Image */
-.Header-Container .Header-Bottom .category-icon {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
-
-/* Text Label */
 .Header-Container .Header-Bottom .category-item span {
     font-size: 16.5px;
     font-weight: 500;
-    text-align: center;
-    word-break: keep-all;
-    color: #333;
     transition: color 0.2s ease, font-weight 0.2s ease;
 }
 
@@ -240,218 +182,118 @@
    ========================================= */
 @media screen and (max-width: 768px) {
 
-    /* Hide Weather on Mobile */
-    .Header-Container .weather {
+    /* Hide Main Sections on Mobile */
+    .Header-Container .Header-Top,
+    .Header-Container .weather,
+    .Header-Container .Header-Main,
+    .Header-Container .Header-Bottom {
         display: none !important;
     }
 
-    /* Stack Header Main Content */
-    .Header-Container .Header-Main {
-        height: auto;
-        padding: 15px 10px;
-    }
-
-    /* GRID LAYOUT for Mobile Header: [Hamburger] [Logo] [Login] */
-    .Header-Container .Header-Main .header-main-content {
-        display: grid;
-        grid-template-columns: 40px 1fr 40px;
-        /* Left | Center | Right */
-        align-items: center;
-        position: relative;
-        padding-bottom: 70px;
-        /* Space for searchbar */
-        min-height: 50px;
-        width: 100%;
-        justify-content: normal;
-        /* Override default */
-    }
-
-    .Header-Container .Header-Main.no-search-mobile .header-main-content {
-        padding-bottom: 0px;
-        min-height: 60px;
-    }
-
-    /* 1. Hamburger Icon (Grid Column 1) */
-    .hamburger-icon {
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        width: 100%;
-        height: 100%;
-        cursor: pointer;
-        position: relative;
-        z-index: 100;
-        margin: 0;
-        padding-left: 5px;
-    }
-
-    /* 2. Logo (Grid Column 2) - Now mapping midChild to this slot */
-    .Header-Container .Header-Main .mid-child {
-        grid-column: 2;
-        position: relative;
-        left: auto;
-        top: auto;
-        right: auto;
-        bottom: auto;
-        transform: scale(0.7);
-        transform-origin: center center;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-        z-index: 10;
-        margin: 0;
-    }
-
-    /* Left Child is Empty or Hidden */
-    .Header-Container .Header-Main .left-child {
-        display: none;
-    }
-
-    /* 3. Login/User (Grid Column 3) */
-    .Header-Container .Header-Main .right-child {
-        grid-column: 3;
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        position: static;
-        /* IMPORTANT: Static so child absolute looks to parent */
-        margin: 0;
-        padding: 0;
-        z-index: 101;
-        width: 100%;
-    }
-
-    /* Ensure internal flex wrapper is also static */
-    .Header-Container .Header-Main .right-child>div {
-        position: static;
-        width: auto;
-        display: flex;
-        justify-content: flex-end;
-    }
-
-    /* Reset internal positioning for UserMenu container */
-    .Header-Container .Header-Main .right-child .user-menu-container {
-        position: relative !important;
-        right: auto;
-        top: auto;
-        z-index: 101;
-    }
-
-    /* Searchbar Wrapper - Absolute Bottom of Main Content */
-    /* Targeting: right-child > flex div > wrapper div > Searchbar */
-    .Header-Container .Header-Main .right-child>div>div {
-        position: absolute !important;
-        bottom: 0px;
-        left: 0;
-        width: 100%;
-        display: flex;
-        justify-content: center;
-        height: 40px;
-        z-index: 50;
-    }
-
-    /* Force Searchbar to fill the width on mobile */
-    .Searchbar.always-open .search-box {
-        width: 100% !important;
-        max-width: none !important;
-        position: relative;
-        right: auto !important;
-        top: auto !important;
-    }
-
-    .Searchbar {
-        width: 100% !important;
-        justify-content: center !important;
-        padding: 0 10px;
-    }
-
-    /* Ensure Bottom Nav scrolls nicely - HIDDEN ON MOBILE NOW */
-    .Header-Container .Header-Bottom {
-        display: none;
-    }
-
-    /* Mobile Menu Styles */
-    .mobile-side-menu-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100vh;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 998;
-        display: none;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-
-    .mobile-side-menu-overlay.open {
-        display: block;
-        opacity: 1;
+    /* Standard Mobile Header Container (Top Bar) */
+    .Header-Container {
+        padding-top: 60px;
     }
 
     .mobile-side-menu {
+        display: flex !important;
         position: fixed;
         top: 0;
-        left: -230px;
-        width: 200px;
-        height: 100vh;
-        background-color: white;
-        z-index: 999;
-        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
-        transition: left 0.3s ease;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .mobile-side-menu.open {
         left: 0;
+        width: 100%;
+        height: auto;
+        z-index: 1020;
+        transform: translateY(0);
+        flex-direction: column;
+        pointer-events: none;
     }
 
     .mobile-menu-header {
-        height: 50px;
-        background-color: #fff;
-        border-bottom: 1px solid #e0e0e0;
+        height: 60px;
+        background-color: #fff !important;
         display: flex;
         align-items: center;
-        justify-content: flex-end;
+        justify-content: space-between;
+        /* Space between logo and hamburger */
         padding: 0 15px;
+        pointer-events: auto;
+        transition: background-color 0.3s ease;
+        z-index: 10;
+        position: relative;
+        border-bottom: 1px solid #f0f0f0;
     }
 
-    .close-btn {
-        font-size: 28px;
-        color: #000;
+    /* Mobile Logo Styling */
+    .mobile-logo {
+        transform: none !important;
+    }
+
+    .mobile-logo .logo-image {
+        height: 40px !important;
+        /* Smaller logo for mobile bar */
+        width: auto;
+    }
+
+    /* Hamburger Toggle Button */
+    .hamburger-icon {
+        display: flex !important;
         cursor: pointer;
-        line-height: 1;
+        z-index: 11;
+        position: relative;
+        min-width: 40px;
+        min-height: 40px;
+        align-items: center;
+        justify-content: center;
     }
 
+    /* Hamburger Color Logic - Black by default */
+    .mobile-menu-header .hamburger-icon svg {
+        stroke: black !important;
+        filter: none !important;
+    }
+
+    /* Mobile Category List (Slide Down) */
     .mobile-menu-list {
+        background-color: white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        transform: translateY(-100%);
+        /* Start from behind header */
+        margin-top: -2px;
+        /* Push up to avoid gap with header */
+        transition: transform 0.3s ease;
         display: flex;
         flex-direction: column;
         padding: 10px 0;
+        pointer-events: auto;
+        z-index: 5;
+        /* Behind header */
+    }
+
+    .mobile-side-menu.open .mobile-menu-list {
+        transform: translateY(0);
     }
 
     .mobile-menu-item {
-        padding: 15px 20px 15px 30px;
+        padding: 18px 25px;
         font-size: 16px;
         font-weight: 500;
         color: #333;
-        border-bottom: 1px solid #e0e0e0;
+        border-bottom: 1px solid #f0f0f0;
         cursor: pointer;
         text-align: left;
     }
 
     .mobile-menu-item:hover {
-        background-color: #f5f5f5;
+        background-color: #f9f9f9;
+        color: #000;
     }
 
     .mobile-menu-item.active {
         color: #000;
         font-weight: 700;
-        background-color: #f0f0f0;
+        background-color: #f5f5f5;
     }
 
-    /* Support for mobile-hidden utility */
     .mobile-hidden {
         display: none !important;
     }

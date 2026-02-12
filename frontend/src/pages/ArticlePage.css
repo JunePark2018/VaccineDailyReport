@@ -55,14 +55,7 @@
 }
 
 /* On mobile (max-width: 768px), we use the Modal view, so we disable the push effect. */
-@media screen and (max-width: 768px) {
-    .ArticlePage.sidebar-open .main-content {
-        margin-right: 0;
-        transform: none;
-        /* [BF] Reset max-width so content doesn't shrink on mobile */
-        max-width: 100%;
-    }
-}
+/* Mobile responsive styles moved to consolidated block below */
 
 .ArticlePage .main-content .article-content-wrapper {
     display: flex;
@@ -97,8 +90,18 @@
     font-weight: 700;
     margin-bottom: 20px;
     color: #111;
-    border-left: 4px solid #333;
-    padding-left: 10px;
+    border-left: none;
+    padding-left: 0;
+}
+
+/* Generic Section Title (Matches previous inline styles) */
+.ArticlePage .section-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #111;
+    border-left: none;
+    padding-left: 0;
 }
 
 .ArticlePage .main-content .article-comparer .comparison-list {
@@ -158,20 +161,30 @@
 /* =========================================
    Mobile Responsive Adjustments (Max 768px)
    ========================================= */
+/* =========================================
+   Mobile Responsive Adjustments (Max 768px)
+   [Consolidated Block]
+   ========================================= */
 @media screen and (max-width: 768px) {
 
-    /* Remove fixed constraints */
+    /* 1. Sidebar Push Reset */
+    .ArticlePage.sidebar-open .main-content {
+        margin-right: 0;
+        transform: none;
+        max-width: 100%;
+    }
+
+    /* 2. Main Content Layout */
     .ArticlePage .main-content {
         padding: 20px 15px;
         width: 100%;
     }
 
-    /* Stack main article and sidebar */
     .ArticlePage .main-content .article-content-wrapper {
         flex-direction: column;
     }
 
-    /* Reset separate section (Keywords/WordCloud) positioning */
+    /* 3. Additional Section (Keywords/WordCloud) */
     .ArticlePage .main-content .additional-section {
         width: 100%;
         margin-left: 0;
@@ -180,19 +193,65 @@
         border-top: 1px solid #eee;
     }
 
-    /* Adjust image height for mobile */
+    /* 4. Adjust image height & spacing for mobile */
     .ArticlePage .main-content .article-section .article-img {
         height: auto;
         max-height: 300px;
+        width: 100%;
     }
 
     .ArticlePage .main-content .article-section .article-img img {
         height: auto;
         object-fit: contain;
+        width: 100%;
+        /* Ensure image uses the container width */
     }
 
+    /* 5. Title Adjustment */
     .ArticlePage .article-head-title {
         font-size: 2rem;
+    }
+
+    /* 6. Action Button Bar */
+    .ArticlePage .action-button-bar {
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+
+    /* 7. Meta Row Stacking (Left Top, Right Bottom) */
+    .ArticlePage .article-meta-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .ArticlePage .meta-left {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+
+    .ArticlePage .meta-right {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    /* 8. Remove Divider Lines on Titles (Mobile) */
+    .ArticlePage .section-title,
+    .ArticlePage .main-content .article-comparer .section-title,
+    .ArticlePage .statistics-section .section-title {
+        border-left: none !important;
+        padding-left: 0 !important;
+    }
+
+    .ArticlePage .meta-left {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+
+    .ArticlePage .meta-right {
+        width: 100%;
+        justify-content: flex-start;
+        /* Left align buttons */
     }
 }
 
@@ -407,13 +466,7 @@
     line-height: 1.9;
 }
 
-/* Mobile Adjustment */
-@media screen and (max-width: 768px) {
-    .ArticlePage .action-button-bar {
-        justify-content: center;
-        margin-bottom: 20px;
-    }
-}
+/* Mobile Action Button Bar styles moved to consolidated block above */
 
 /* =========================================================
    Global Font Size Styles (Applied to .ArticlePage container or similar)
