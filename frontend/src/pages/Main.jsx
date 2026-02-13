@@ -212,66 +212,32 @@ export const Main = () => {
   const renderMainContent = () => {
     if (!carouselArticles || carouselArticles.length === 0) return null;
 
-    // Helper: Parse highlights for any article
-    const getHighlights = (article) => {
-      const bullets = article?.analysis_result?.media_comparison_bullets || [];
-      const related = articleDetailsMap[article?.image] || [];
-      let hls = [];
-
-      if (bullets.length > 0) {
-        const parsedBullets = bullets.map(text => {
-          const cleanText = text.replace(/^- /, '');
-          let match = cleanText.match(/^\[(.*?)\]\s*(.*)/);
-          if (!match) match = cleanText.match(/^([^:]+):\s*(.*)/);
-          if (!match) match = cleanText.match(/^([^-]+)\s-\s*(.*)/);
-
-          if (match) {
-            let kw = match[1].trim().replace(/(은|는)$/, '');
-            return { keyword: `"${kw}"`, content: match[2].trim() };
-          }
-          return null;
-        }).filter(Boolean);
-
-        const seenKeywords = new Set();
-        const seenContents = new Set();
-        const uniqueHighlights = [];
-        for (const item of parsedBullets) {
-          // Check for both keyword and content uniqueness
-          if (!seenKeywords.has(item.keyword) && !seenContents.has(item.content)) {
-            seenKeywords.add(item.keyword);
-            seenContents.add(item.content);
-            uniqueHighlights.push(item);
-          }
-          if (uniqueHighlights.length >= 4) break;
+    // Helper: Highlight media names in text
+    const highlightMediaText = (text, mediaNames) => {
+      if (!text || !mediaNames || mediaNames.length === 0) return text;
+      // Sort by length desc to match longest first
+      const sortedNames = [...mediaNames].sort((a, b) => b.length - a.length);
+      const regex = new RegExp(`(${sortedNames.join('|')})`, 'g');
+      const parts = text.split(regex);
+      return parts.map((part, index) => {
+        if (mediaNames.includes(part)) {
+          return (
+            <span key={index} className="highlighted-media"><img src={lineImg} alt="line" className="highlight-line-icon" />{part}</span>
+          );
         }
-        hls = uniqueHighlights;
-      }
-
-      if (hls.length === 0 && related.length > 0) {
-        const seenCompanies = new Set();
-        const seenContents = new Set();
-        const uniqueRelated = [];
-
-        for (const news of related) {
-          const company = news.company_name || '언론사';
-          const content = news.contents ? (news.contents.substring(0, 120) + '···') : '내용 없음';
-
-          if (!seenCompanies.has(company) && !seenContents.has(content)) {
-            seenCompanies.add(company);
-            seenContents.add(content);
-            uniqueRelated.push({ keyword: company, content: content });
-          }
-          if (uniqueRelated.length >= 4) break;
-        }
-        hls = uniqueRelated;
-      }
-      return hls;
+        return part;
+      });
     };
 
     const slideArticles = carouselArticles;
     const activeArticle = slideArticles[currentSlideIndex];
-    // Desktop uses active highlights
-    const activeHighlights = getHighlights(activeArticle);
+
+    // Get media names for the active article for highlighting
+    const activeRelatedNews = articleDetailsMap[`cluster_${activeArticle?.cluster_id}`] || [];
+    const activeMediaNames = [...new Set(activeRelatedNews.map(n => n.company_name).filter(Boolean))];
+
+    // Prepare bullets for the active article (Desktop)
+    const activeBullets = activeArticle?.analysis_result?.media_comparison_bullets || [];
 
     return (
       <React.Fragment>
@@ -328,19 +294,30 @@ export const Main = () => {
             <div className="highlights-side">
               <h3 className="highlights-title">언론사별 비교분석</h3>
               <div key={`hl-${currentSlideIndex}`} className="highlight-list fade-animate">
-                <div className="highlight-items-container">
-                  {activeHighlights.slice(0, 2).map((item, hIndex) => (
-                    <div key={hIndex} className="highlight-item">
-                      <div className="highlight-keyword-row">
-                        <img src={checkImg} alt="check" className="highlight-check-icon" />
-                        <div className="highlight-text-container">
-                          <span className="highlight-keyword">{item.keyword}</span>
-                          <img src={lineImg} alt="line" className="highlight-line-img" />
-                        </div>
-                      </div>
-                      <span className="highlight-content">{item.content}</span>
-                    </div>
-                  ))}
+                <div className="main-comparison-container">
+                  <ul className="main-comparison-list">
+                    {activeBullets.slice(0, 1).map((item, idx) => {
+                      const isString = typeof item === 'string';
+                      const analysisText = isString ? item : item.analysis;
+                      const summaryText = isString ? null : item.summary;
+
+                      return (
+                        <li key={idx} className="main-comparison-item">
+                          {summaryText && (
+                            <div className="main-summary-badge">
+                              {summaryText}
+                            </div>
+                          )}
+                          <div className="main-analysis-text">
+                            {highlightMediaText(analysisText.replace(/^- /, '').replace(/\[/g, '').replace(/\]/g, ''), activeMediaNames)}
+                          </div>
+                        </li>
+                      );
+                    })}
+                    {activeBullets.length === 0 && (
+                      <li className="main-comparison-item">분석된 결과가 없습니다.</li>
+                    )}
+                  </ul>
                 </div>
               </div>
             </div>
@@ -362,7 +339,7 @@ export const Main = () => {
             >
               {slideArticles.map((art, idx) => {
                 const imgUrl = imageMap[art.image] || art.image;
-                const hls = getHighlights(art);
+                // const hls = getHighlights(art); // Unused now
                 return (
                   <div key={idx} className="mobile-whole-slide">
                     {/* Image + Title Part */}
@@ -377,19 +354,33 @@ export const Main = () => {
                     {/* Highlights Part */}
                     <div className="mobile-slide-bottom">
                       <h3 className="highlights-title">언론사별 비교분석</h3>
-                      <div className="highlight-items-container">
-                        {hls.slice(0, 2).map((item, hIndex) => (
-                          <div key={hIndex} className="highlight-item">
-                            <div className="highlight-keyword-row">
-                              <img src={checkImg} alt="check" className="highlight-check-icon" />
-                              <div className="highlight-text-container">
-                                <span className="highlight-keyword">{item.keyword}</span>
-                                <img src={lineImg} alt="line" className="highlight-line-img" />
-                              </div>
-                            </div>
-                            <span className="highlight-content">{item.content}</span>
-                          </div>
-                        ))}
+                      <div className="main-comparison-container">
+                        <ul className="main-comparison-list">
+                          {(art?.analysis_result?.media_comparison_bullets || []).slice(0, 1).map((item, idx) => {
+                            const relatedNews = articleDetailsMap[`cluster_${art.cluster_id}`] || [];
+                            const articleMediaNames = [...new Set(relatedNews.map(n => n.company_name).filter(Boolean))];
+
+                            const isString = typeof item === 'string';
+                            const analysisText = isString ? item : item.analysis;
+                            const summaryText = isString ? null : item.summary;
+
+                            return (
+                              <li key={idx} className="main-comparison-item">
+                                {summaryText && (
+                                  <div className="main-summary-badge">
+                                    {summaryText}
+                                  </div>
+                                )}
+                                <div className="main-analysis-text">
+                                  {highlightMediaText(analysisText.replace(/^- /, '').replace(/\[/g, '').replace(/\]/g, ''), articleMediaNames)}
+                                </div>
+                              </li>
+                            );
+                          })}
+                          {(!art?.analysis_result?.media_comparison_bullets || art.analysis_result.media_comparison_bullets.length === 0) && (
+                            <li className="main-comparison-item">분석된 결과가 없습니다.</li>
+                          )}
+                        </ul>
                       </div>
                     </div>
                   </div>
