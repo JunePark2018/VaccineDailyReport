@@ -208,13 +208,7 @@ const Weather = () => {
             {loading ? "날씨 로딩중..." :
                 (weatherData ? `${locationName} ${weatherData.temp}℃ (습도 ${weatherData.humidity}%)` : "날씨 정보 없음")
             }
-            <button
-                onClick={handleCurrentLocation}
-                className="refresh-location-btn"
-                title="현재 위치로 갱신"
-            >
-                📍 내 위치
-            </button>
+
         </span>
     );
 };
