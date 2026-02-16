@@ -7,19 +7,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_, and_, desc
 
-# ... (other imports are fine, but I need to make sure I match the file content structure.
-# The previous `from sqlalchemy import or_` was on line 8.
-# I will edit the import line separately or include it in the replace if I can span that far, but the file is large.
-# Better to do two edits or use multi_replace.
-# I will use multi_replace to handle both the import and the function body safely.
-
-# actually I will just use replace_file_content for the import first, then the function.
-# Wait, I can do it in one multi_replace.
-
-
 from routers import get_db
 from database.models import Report, Cluster
 from database import crud
+from ai_graph_comparer import analyze_opinion_articles
 
 # schemas import 제거 - dict 반환으로 충분
 from pydantic import BaseModel
@@ -444,6 +435,32 @@ def get_related_reports(report_id: int, limit: int = 3, db: Session = Depends(ge
         )
 
     return response_data
+
+
+@router.get("/{report_id}/opinions")
+async def get_report_opinions(report_id: int, limit: int = 10, db: Session = Depends(get_db)):
+    """
+    특정 리포트와 관련된 오피니언/사설/칼럼을 구조화된 형태로 반환합니다.
+    ai_processor에서 미리 생성한 캐시가 있으면 사용하고, 없으면 실시간 분석합니다.
+    반환: [{"company", "hashtags", "summary", "evidence"}]
+    """
+    report = db.get(Report, report_id)
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+
+    # 1. 캐시된 분석결과 확인 (ai_processor에서 저장한 것)
+    if report.analysis_result and isinstance(report.analysis_result, dict):
+        cached = report.analysis_result.get("opinion_bullets")
+        if cached:
+            return cached
+
+    # 2. 캐시가 없으면 클러스터에서 오피니언 조회 후 실시간 분석
+    opinions = crud.get_opinions_for_report(db, report_id, limit=limit)
+    if not opinions:
+        return []
+
+    result = await analyze_opinion_articles(opinions, report.title or "")
+    return result
 
 
 @router.get("/{report_id}/timeline")

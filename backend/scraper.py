@@ -448,3 +448,154 @@ def crawl_news_by_period(
                     continue
 
     return total_collected
+
+
+# ---------------------------------------------------------
+# 4. 오피니언 크롤러 (사설, 칼럼, 기자의 시각)
+# ---------------------------------------------------------
+def get_opinion_data(url):
+    """
+    오피니언 기사 파싱. get_news_data()와 동일한 로직 + 작성자(author) 추출.
+    """
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
+    }
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        title_el = soup.select_one("h2#title_area span")
+        raw_title = title_el.get_text(strip=True) if title_el else "제목 없음"
+
+        content_area = soup.select_one("#newsct_article")
+        if not content_area:
+            return None
+
+        for extra in content_area.select(".img_desc, .article_caption, em, script, style, .sidebar, .ad"):
+            extra.decompose()
+
+        contents = content_area.get_text(separator=" ", strip=True)
+
+        # 본문 정제 로직 (get_news_data와 동일)
+        contents = re.sub(r"^[가-힣]{2,4}\s?=\s?[가-힣]{2,5}뉴스\)", "", contents)
+        contents = re.sub(r".*?기자\s?=", "", contents)
+        contents = re.sub(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", "", contents)
+        contents = re.sub(r"[^\w\s가-힣.?!,]", " ", contents)
+
+        stop_phrases = ["무단전재", "재배포 금지", "저작권자", "Copyrights"]
+        for phrase in stop_phrases:
+            if phrase in contents:
+                contents = contents.split(phrase)[0].strip()
+
+        contents = re.sub(r"\s+", " ", contents).strip()
+
+        # 오피니언은 일반 뉴스보다 짧을 수 있으므로 100자 기준
+        if not is_korean_article(contents) or len(contents) < 100:
+            return None
+
+        # 작성자(author) 추출
+        author = None
+        journalist_el = soup.select_one(".media_end_head_journalist_name")
+        if journalist_el:
+            author = journalist_el.get_text(strip=True)
+        if not author:
+            byline_el = soup.select_one(".byline, .journalist, .article_writer")
+            if byline_el:
+                author = byline_el.get_text(strip=True)
+
+        img_urls = [img.get("data-src") or img.get("src") for img in soup.select("#newsct_article img")]
+
+        return {
+            "title": raw_title,
+            "contents": contents,
+            "time": (
+                soup.select_one("._ARTICLE_DATE_TIME")["data-date-time"]
+                if soup.select_one("._ARTICLE_DATE_TIME")
+                else "시간 정보 없음"
+            ),
+            "company_name": (
+                soup.select_one(".media_end_head_top_logo img")["title"]
+                if soup.select_one(".media_end_head_top_logo img")
+                else "언론사 미상"
+            ),
+            "img_urls": img_urls,
+            "url": url,
+            "category": "오피니언",
+            "author": author,
+            "is_opinion": True,
+        }
+    except Exception as e:
+        return None
+
+
+def run_opinion_crawler(db_session, target_companies=None):
+    """
+    네이버 뉴스 오피니언 섹션(사설, 칼럼, 기자의 시각)에서 기사를 수집합니다.
+    run_article_crawler()와 동일한 3중 중복 체크 적용.
+    """
+    opinion_sections = {
+        "263": "사설",
+        "264": "칼럼",
+        "265": "기자의 시각",
+    }
+    new_opinions = []
+    collected_titles = set()
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
+    }
+
+    for sid2, section_name in opinion_sections.items():
+        print(f"\n--- [오피니언 / {section_name}] 섹션 스캔 중... ---")
+        list_url = f"https://news.naver.com/main/list.naver?mode=LSD&mid=sec&sid1=110&sid2={sid2}"
+
+        try:
+            res = requests.get(list_url, headers=headers, timeout=10)
+            soup = BeautifulSoup(res.text, "html.parser")
+
+            atags = soup.select(".list_body a, .sa_text_title, a[href*='article']")
+            urls = list(set([a.get("href") for a in atags if a.get("href") and "article" in a.get("href")]))
+
+            for url in urls:
+                # 1. DB URL 중복 체크
+                if db_session.query(News.news_id).filter(News.url == url).first():
+                    continue
+
+                data = get_opinion_data(url)
+                if not data:
+                    continue
+
+                # 2. 제목+언론사 중복 체크
+                clean_title = data["title"].strip()
+                title_key = (data["company_name"], clean_title)
+
+                if title_key in collected_titles:
+                    continue
+
+                exists_content = (
+                    db_session.query(News)
+                    .join(Company)
+                    .filter(News.title == data["title"], Company.name == data["company_name"])
+                    .first()
+                )
+
+                if exists_content:
+                    collected_titles.add(title_key)
+                    continue
+
+                # 3. 언론사 필터링
+                if target_companies:
+                    if not any(tc in data["company_name"] for tc in target_companies):
+                        continue
+
+                print(f"  ✅ [OPINION] {data['company_name']} | {clean_title[:30]}...")
+                collected_titles.add(title_key)
+                new_opinions.append(data)
+
+                time.sleep(0.1)
+
+        except Exception as e:
+            print(f"  ❌ [오피니언/{section_name}] 오류: {e}")
+            continue
+
+    return new_opinions

@@ -81,6 +81,8 @@ class News(Base):
     deleted_at = Column(DateTime, nullable=True)
 
     is_domestic = Column(Boolean, default=True, index=True)
+    is_opinion = Column(Boolean, default=False, index=True)
+    author = Column(String(100), nullable=True)
     category_id = Column(Integer, ForeignKey("categories.category_id", ondelete="SET NULL"), nullable=True, index=True)
     category = relationship("Category")
 

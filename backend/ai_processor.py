@@ -34,7 +34,7 @@ from ai_agentic_generator import generate_agentic_article as generate_balanced_a
 #     process_all_companies_async,
 #     generate_final_comparison_report,
 # )
-from ai_graph_comparer import compare_articles_with_graph
+from ai_graph_comparer import compare_articles_with_graph, analyze_opinion_articles
 
 
 from keyword_extractor import KeywordExtractor
@@ -51,14 +51,23 @@ async def process_single_issue(
             print(f"   -> [Skip] 이슈 ID {issue.report_id}: 연결된 기사가 없습니다.")
             return
 
-        articles = cluster.news
+        all_articles = cluster.news
+
+        # 팩트 뉴스와 오피니언 분리
+        news_articles = [a for a in all_articles if not a.is_opinion]
+        opinion_articles = [a for a in all_articles if a.is_opinion]
+
         print(
-            f"   -> [Processing] 이슈 ID {issue.report_id}: '{issue.title}' (기사 {len(articles)}개)"
+            f"   -> [Processing] 이슈 ID {issue.report_id}: '{issue.title}' (뉴스 {len(news_articles)}개, 오피니언 {len(opinion_articles)}개)"
         )
 
-        # 변환: SQLAlchemy Object -> List[Dict]
+        if not news_articles:
+            print(f"   -> [Skip] 팩트 뉴스가 없어 건너뜁니다.")
+            return
+
+        # 변환: SQLAlchemy Object -> List[Dict] (팩트 뉴스만)
         articles_data = []
-        for art in articles:
+        for art in news_articles:
             articles_data.append(
                 {
                     "news_id": art.news_id,
@@ -71,7 +80,7 @@ async def process_single_issue(
 
         try:
             # -------------------------------------------------
-            # 3-1. 종합 기사 작성 (Sync Call)
+            # 3-1. 종합 기사 작성 (Sync Call) — 팩트 뉴스만 사용
             # -------------------------------------------------
             summary_result = generate_balanced_article(
                 model_name=MODEL, cluster_topic=issue.title, articles=articles_data
@@ -90,10 +99,28 @@ async def process_single_issue(
                 print(f"      🌍 외신 검색어 추출: {issue.search_keyword}")
 
             # -------------------------------------------------
-            # 3-2. 비교 분석 (GraphRAG-Lite)
+            # 3-2. 비교 분석 (GraphRAG-Lite) — 팩트 뉴스만 사용
             # -------------------------------------------------
-            # (1) Graph Extraction & Analysis (All-in-one)
             final_report = await compare_articles_with_graph(articles_data)
+
+            # -------------------------------------------------
+            # 3-2b. 오피니언 분석 (클러스터에 배정된 오피니언이 있으면)
+            # -------------------------------------------------
+            if opinion_articles:
+                opinion_data = [
+                    {
+                        "news_id": a.news_id,
+                        "company_name": a.company_name,
+                        "title": a.title,
+                        "contents": a.contents,
+                        "author": a.author,
+                    }
+                    for a in opinion_articles
+                ]
+                opinion_bullets = await analyze_opinion_articles(opinion_data, issue.title)
+                if opinion_bullets:
+                    final_report["opinion_bullets"] = opinion_bullets
+                    print(f"      📝 오피니언 분석: {len(opinion_bullets)}개 언론사")
 
             issue.analysis_result = final_report
 
@@ -116,7 +143,7 @@ async def process_single_issue(
             # -------------------------------------------------
             from collections import Counter
 
-            category_ids = [art.category_id for art in articles if art.category_id]
+            category_ids = [art.category_id for art in news_articles if art.category_id]
             if category_ids:
                 # 가장 빈도가 높은 카테고리 선택
                 most_common_category = Counter(category_ids).most_common(1)[0][0]

@@ -273,6 +273,9 @@ def run_issue_clustering(db: Session, days=3, ref_date=None):
     # ref_date보다 미래의 기사는 제외 (과거 시점 재현)
     articles = [a for a in articles if a.created_at <= ref_date + timedelta(days=1)]  # 하루 정도 여유
 
+    # 오피니언/사설은 Phase 1에서 제외 (Phase 2에서 별도 배정)
+    articles = [a for a in articles if not a.is_opinion]
+
     articles = [a for a in articles if not a.clusters]
     print(f"🔍 [DEBUG] 조회된 기사 수: {len(articles) if articles else 0}개")
 
@@ -375,4 +378,82 @@ def run_issue_clustering(db: Session, days=3, ref_date=None):
         print(f"✨ [이슈 생성 완료] {final_title} (기사 {len(picked)}건)")
 
     db.commit()
+
+    # Phase 2: 오피니언을 기존 클러스터에 배정
+    assign_opinions_to_clusters(db, since, ref_date)
+
     print("--- [DONE] 모든 작업 완료 ---")
+
+
+# -------------------------------------------------
+# 5. Phase 2: 오피니언 → 기존 클러스터 배정
+# -------------------------------------------------
+def assign_opinions_to_clusters(db: Session, since, ref_date, threshold=0.75):
+    """
+    미배정 오피니언 기사를 임베딩 유사도 기반으로 기존 클러스터에 배정합니다.
+    뉴스 군집화(Phase 1) 후 호출됩니다.
+    """
+    print("\n📝 [Phase 2] 오피니언 클러스터 배정 시작...")
+
+    # 1. 미배정 오피니언 가져오기
+    all_news = crud.get_recent_news(db, since)
+    opinions = [
+        a for a in all_news
+        if a.is_opinion
+        and a.created_at <= ref_date + timedelta(days=1)
+        and not a.clusters
+    ]
+
+    if not opinions:
+        print("  ⚠️ 배정할 오피니언이 없습니다.")
+        return
+
+    print(f"  📰 미배정 오피니언: {len(opinions)}건")
+
+    # 2. 오피니언 임베딩 획득
+    opinion_embeddings = get_embeddings_with_cache(opinions)
+
+    # 3. 최근 클러스터 대표벡터 수집
+    recent_issues = db.query(Report).filter(Report.created_at >= since).all()
+    cluster_vecs = []  # [(issue, vector)]
+
+    for issue in recent_issues:
+        if not issue.cluster or not issue.cluster.news:
+            continue
+        # 클러스터 내 뉴스 기사(오피니언 제외)의 임베딩 평균을 대표벡터로 사용
+        news_in_cluster = [n for n in issue.cluster.news if not n.is_opinion]
+        if not news_in_cluster:
+            continue
+
+        news_ids = [str(n.news_id) for n in news_in_cluster]
+        res = collection.get(ids=news_ids, include=["embeddings"])
+        if len(res["embeddings"]) == 0:
+            continue
+
+        avg_vec = np.mean(res["embeddings"], axis=0).reshape(1, -1)
+        cluster_vecs.append((issue, avg_vec))
+
+    if not cluster_vecs:
+        print("  ⚠️ 배정 대상 클러스터가 없습니다.")
+        return
+
+    # 4. 각 오피니언을 가장 유사한 클러스터에 배정
+    assigned = 0
+    for i, opinion in enumerate(opinions):
+        op_vec = opinion_embeddings[i].reshape(1, -1)
+
+        best_sim = -1
+        best_issue = None
+        for issue, cvec in cluster_vecs:
+            sim = float(cosine_similarity(op_vec, cvec)[0][0])
+            if sim > best_sim:
+                best_sim = sim
+                best_issue = issue
+
+        if best_sim >= threshold and best_issue:
+            crud.add_news_to_cluster(db, cluster_id=best_issue.cluster_id, news_id=opinion.news_id)
+            assigned += 1
+            print(f"  🔗 '{opinion.title[:40]}...' → '{best_issue.title[:30]}...' (유사도: {best_sim:.2f})")
+
+    db.commit()
+    print(f"  ✅ 오피니언 {assigned}/{len(opinions)}건 클러스터 배정 완료")

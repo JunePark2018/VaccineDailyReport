@@ -21,7 +21,7 @@ from schemas import (
 )
 
 # [수정] scraper.py에서 run_article_crawler 임포트
-from scraper import run_article_crawler
+from scraper import run_article_crawler, run_opinion_crawler
 from database.crud import (
     create_news,
     create_user,
@@ -83,6 +83,30 @@ def run_background_worker():
         #                 if news["time"] != "시간 정보 없음"
         #                 else datetime.now()
         #             ),
+        #         )
+        #     db.commit()
+
+        #     # --- [Step 1b] 오피니언/사설/칼럼 수집 ---
+        #     print("📝 오피니언/칼럼 수집 중...")
+        #     opinion_list = run_opinion_crawler(db, target_companies=target_list)
+        #     for opinion in opinion_list:
+        #         company = get_or_create_company_by_raw_name(db, opinion["company_name"])
+        #         create_news(
+        #             db,
+        #             title=opinion["title"],
+        #             contents=opinion["contents"],
+        #             url=opinion["url"],
+        #             company_id=company.company_id,
+        #             is_domestic=True,
+        #             category="오피니언",
+        #             img_urls=opinion.get("img_urls"),
+        #             created_at=(
+        #                 datetime.fromisoformat(opinion["time"])
+        #                 if opinion["time"] != "시간 정보 없음"
+        #                 else datetime.now()
+        #             ),
+        #             is_opinion=True,
+        #             author=opinion.get("author"),
         #         )
         #     db.commit()
 

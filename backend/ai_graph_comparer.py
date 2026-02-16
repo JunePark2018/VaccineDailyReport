@@ -220,3 +220,85 @@ async def generate_graph_report(graph: Dict[str, List[Dict]], companies: List[st
         return json.loads(resp.choices[0].message.content)
     except:
         return {"media_comparison_bullets": ["분석 실패: 데이터를 처리할 수 없습니다."]}
+
+
+# ======================================================================================
+# Opinion Analysis: 오피니언/사설 구조화 분석
+# ======================================================================================
+async def analyze_opinion_articles(opinions: List[Dict[str, Any]], report_title: str) -> List[Dict[str, Any]]:
+    """
+    오피니언/사설 기사들을 AI로 분석하여 구조화된 형태로 반환합니다.
+    반환: [{"company": "...", "hashtags": [...], "summary": "...", "evidence": "..."}]
+    """
+    if not client or not opinions:
+        return []
+
+    # 언론사별로 그룹핑 (1개사당 최대 2개 기사)
+    company_groups = defaultdict(list)
+    for op in opinions:
+        company_groups[op.get("company_name", "Unknown")].append(op)
+
+    opinion_texts = []
+    for comp, arts in company_groups.items():
+        arts_sorted = sorted(arts, key=lambda x: len(x.get("contents", "")), reverse=True)
+        top_arts = arts_sorted[:2]
+        combined = "\n".join(
+            [f"[제목] {a.get('title')}\n[작성자] {a.get('author', '미상')}\n[본문] {a.get('contents', '')[:1500]}"
+             for a in top_arts]
+        )
+        opinion_texts.append(f"## {comp}\n{combined}")
+
+    all_text = "\n\n".join(opinion_texts)
+
+    system_prompt = (
+        "당신은 뉴스 오피니언/사설 분석 전문가입니다. "
+        "주어진 이슈에 대해 각 언론사의 오피니언/사설/칼럼 기사를 분석하고, "
+        "언론사별 논조를 구조화된 형태로 요약합니다. "
+        "출력은 반드시 한국어로, '~ㅂ니다' 어체를 사용합니다. "
+        "영어 사용 금지. 괄호 사용 금지."
+    )
+
+    user_prompt = f"""
+이슈: {report_title}
+
+아래는 이 이슈에 대한 각 언론사의 오피니언/사설/칼럼입니다:
+
+{all_text}
+
+위 오피니언들을 분석하여 아래 JSON 형식으로 출력하세요.
+
+출력 형식:
+{{
+  "opinion_bullets": [
+    {{
+      "company": "언론사명",
+      "hashtags": ["#키워드1", "#키워드2", "#키워드3"],
+      "summary": "해당 언론사의 핵심 논조를 한 문장으로 요약 (15단어 이내, ~ㅂ니다 체)",
+      "evidence": "요약의 근거가 되는 구체적 논점 설명 (2~3문장, ~ㅂ니다 체)"
+    }}
+  ]
+}}
+
+규칙:
+1. 각 언론사별로 하나의 항목을 생성합니다.
+2. hashtags는 해당 언론사의 논조를 대표하는 한국어 키워드 3개입니다.
+3. summary는 팩트가 아닌 '의견/논조'를 요약합니다.
+4. evidence는 기사 본문에서 근거를 인용하여 설명합니다.
+5. 영어 단어 사용 금지. 괄호 사용 금지.
+"""
+
+    try:
+        resp = await client.chat.completions.create(
+            model=MODEL,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.2,
+        )
+        data = json.loads(resp.choices[0].message.content)
+        return data.get("opinion_bullets", [])
+    except Exception as e:
+        print(f"   [Opinion] AI 분석 실패: {e}")
+        return []

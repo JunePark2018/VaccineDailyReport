@@ -19,6 +19,7 @@ import AiNewsRecommendation from '../components/AiNewsRecommendation';
 import { useToast } from '../components/Toast';
 import AgeGenderChart from '../components/AgeGenderChart';
 import MediaFocusChart from '../components/MediaFocusChart'; // Import Chart
+import OpinionSection from '../components/OpinionSection';
 import { HiOutlineSpeakerWave, HiOutlinePrinter, HiOutlineDocumentDuplicate, HiOutlineBookmark, HiMiniBookmark, HiChevronDown, HiChevronUp } from 'react-icons/hi2';
 import SkeletonNews from '../components/SkeletonNews'; // Import Skeleton
 
@@ -606,6 +607,9 @@ function ArticlePage() {
                         </div>
                       )}
                     </div>
+
+                    {/* 관련 오피니언/사설 섹션 */}
+                    <OpinionSection reportId={id} />
                   </div>
 
                   <NewsText

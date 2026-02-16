@@ -84,9 +84,11 @@ def create_news(
     url: str,
     company_id: int,
     is_domestic: bool = True,
-    category: Optional[str] = None,  # 정치, 경제, 사회, 생활/문화, 세계, IT/과학
+    category: Optional[str] = None,  # 정치, 경제, 사회, 생활/문화, 세계, IT/과학, 오피니언
     img_urls: Optional[dict | list] = None,
     created_at: Optional[datetime] = None,
+    is_opinion: bool = False,
+    author: Optional[str] = None,
 ) -> Optional[News]:
     # Check if news with this URL already exists
     existing = get_news_by_url(db, url)
@@ -113,6 +115,8 @@ def create_news(
         category_id=category_id,
         img_urls=img_urls,
         created_at=created_at or datetime.utcnow(),
+        is_opinion=is_opinion,
+        author=author,
     )
     db.add(obj)
     db.flush()
@@ -1119,4 +1123,44 @@ def get_report_demographics(db: Session, report_id: int) -> Dict[str, List[Dict[
         "age_distribution": age_distribution,
         "gender_distribution": gender_distribution
     }
+
+
+TARGET_COMPANIES = ["조선", "KBS", "MBC", "SBS", "연합", "한겨레", "중앙", "경향", "한국", "JTBC"]
+
+
+def get_opinions_for_report(db: Session, report_id: int, limit: int = 10) -> List[dict]:
+    """
+    Report의 클러스터에 배정된 오피니언/사설/칼럼 기사를 반환합니다.
+    임베딩 유사도 기반으로 클러스터에 배정된 오피니언만 조회합니다.
+    10개 주요 언론사로 제한합니다.
+    """
+    report = db.get(Report, report_id)
+    if not report or not report.cluster:
+        return []
+
+    # 클러스터에 연결된 오피니언 기사만 필터
+    opinions = [n for n in report.cluster.news if n.is_opinion]
+
+    # 10개 주요 언론사 필터
+    opinions = [
+        o for o in opinions
+        if o.company_name and any(c in o.company_name for c in TARGET_COMPANIES)
+    ]
+
+    # 최신순 정렬 후 limit 적용
+    opinions.sort(key=lambda o: o.created_at or datetime.min, reverse=True)
+    opinions = opinions[:limit]
+
+    return [
+        {
+            "news_id": o.news_id,
+            "title": o.title,
+            "url": o.url,
+            "contents": o.contents or "",
+            "company_name": o.company_name,
+            "author": o.author,
+            "created_at": o.created_at.isoformat() if o.created_at else None,
+        }
+        for o in opinions
+    ]
 
