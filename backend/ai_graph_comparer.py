@@ -25,7 +25,7 @@ async def compare_articles_with_graph(articles: List[Dict[str, Any]]) -> Dict[st
     3. Normalize: Merge synonyms (e.g., 'Samsung' == 'Samsung Elec').
     4. Analyze: Compare stances on the same entities.
     """
-    print("   🕸️ [GraphRAG] Starting Comparative Analysis...")
+    print("   [GraphRAG] Starting Comparative Analysis...")
 
     # 1. Group & Filter (Top 2 per company to save tokens)
     company_groups = defaultdict(list)
@@ -112,7 +112,7 @@ async def extract_triples(company: str, text: str) -> Dict[str, Any]:
         data = json.loads(resp.choices[0].message.content)
         return {"company": company, "triples": data.get("triples", [])}
     except Exception as e:
-        print(f"   ⚠️ [Graph] Extraction failed for {company}: {e}")
+        print(f"   [Graph] Extraction failed for {company}: {e}")
         return {"company": company, "triples": []}
 
 
@@ -178,9 +178,10 @@ async def generate_graph_report(graph: Dict[str, List[Dict]], companies: List[st
 
     system_prompt = (
         "You are a News Analyst. Compare the viewpoints of different media outlets based on the provided Knowledge Graph data. "
-        "Generate 3-5 sharp, insightful bullet points highlighting the differences in tone, focus, or interpretation."
-        "The output MUST be in Korean."
-        'Output JSON: { "media_comparison_bullets": [ "Bullet 1", "Bullet 2" ... ] }'
+        "The output MUST be in Korean. "
+        "STRICTLY NO English words or parentheses in the output. "
+        "Generate a structured JSON output with hashtags, a one-liner summary, and detailed evidence."
+        'Output JSON: { "media_comparison_bullets": [ { "company": "MediaName", "hashtags": ["#Keyword1", "#Keyword2", "#Keyword3"], "summary": "One sentence summary.", "evidence": "Detailed explanation supporting the summary." }, ... ] }'
     )
 
     user_prompt = f"""
@@ -192,14 +193,18 @@ async def generate_graph_report(graph: Dict[str, List[Dict]], companies: List[st
     Task: Write a comparative analysis in Korean.
 
     Formatting Rules:
-    1. **Language**: Strictly KOREAN.
-    2. **Tone**: Formal polite style (End sentences with '입니다', '합니다', '보입니다').
-    3. **Variety**: Avoid repetitive use of conjunctions like 'on the other hand'. Use diverse logical connectors (e.g., 'Meanwhile', 'In contrast', 'Unlike') or direct contrasts.
+    1. **Structure**: Return a list of objects. Each object must have:
+       - "company": The specific media outlet name.
+       - "hashtags": A list of exactly 3 identifying keywords (Korean), starting with '#'.
+       - "summary": A SINGLE, punchy sentence summarizing their stance (max 15 words). MUST end with '~ㅂ니다' style.
+       - "evidence": A detailed explanation (2-3 sentences) supporting the summary. MUST end with '~ㅂ니다' style.
+    2. **Tone**: Polite and formal ('~ㅂ니다' style).
 
-    Content Rules:
-    1. Identify contradictions, different framings, or causal links (e.g., Press A links X to Y, while Press B links X to Z).
-    2. Focus on *why* they differ (e.g., political stance, target audience, emphasis on economy vs security).
-    3. Be specific about the entities and predicates used.
+    Constraint Rules (CRITICAL):
+    1. **NO English**: Do NOT use any English words in 'summary' or 'evidence'. Translate all terms to Korean (e.g., 'acknowledged' -> '인정했습니다').
+    2. **NO Parentheses**: Do NOT use `( )` or `[ ]` in the text. Explain the context in words instead.
+    3. Hashtags should represent the unique frames used by the media.
+    4. The evidence should cite specific entities or relations from the graph to support the summary.
     """
 
     try:

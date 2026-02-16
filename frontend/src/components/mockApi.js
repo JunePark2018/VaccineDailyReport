@@ -2,7 +2,6 @@
 export const toggleLikeApi = async (contentId, status) => {
     return new Promise((resolve) => {
         setTimeout(() => {
-            console.log(`[API Mock] Content ID: ${contentId}, Liked: ${status}`);
             resolve({ success: true });
         }, 500);
     });

@@ -189,13 +189,18 @@ from fastapi.middleware.cors import CORSMiddleware
 origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://172.30.1.92:3000",
     "http://168.107.51.224:3000",
     "http://43.203.207.47:3000",
 ]
 
+import os
+cors_env = os.getenv("CORS_ORIGINS", "")
+allowed_origins = [o.strip() for o in cors_env.split(",") if o.strip()] if cors_env else origins
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -223,6 +228,12 @@ app.include_router(categories.router)
 app.include_router(search_logs.router)
 app.include_router(reactions.router)
 app.include_router(search.router)
+
+
+@app.get("/health")
+def health_check():
+    """서버 상태 확인용 엔드포인트"""
+    return {"status": "ok"}
 
 
 # DB 세션 의존성 (legacy support)

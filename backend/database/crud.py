@@ -630,10 +630,10 @@ def set_reaction(
     old = r.value
     r.value = value
 
-    if old == 1 and ai.like_count > 0:
-        ai.like_count -= 1
-    if old == -1 and ai.dislike_count > 0:
-        ai.dislike_count -= 1
+    if old == 1 and report.like_count > 0:
+        report.like_count -= 1
+    if old == -1 and report.dislike_count > 0:
+        report.dislike_count -= 1
 
     if value == 1:
         report.like_count += 1

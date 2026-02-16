@@ -13,6 +13,7 @@ import SkeletonNews from '../components/SkeletonNews';
 import './Main.css';
 import MobileBottomNav from '../components/MobileBottomNav';
 import '../components/MobileBottomNav.css';
+import RecommendedNews from '../components/RecommendedNews'; // [New]
 
 import axios from 'axios'; // axios imported
 
@@ -153,6 +154,7 @@ export const Main = () => {
 
   // Slideshow State
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [currentComparisonIndex, setCurrentComparisonIndex] = useState(0); // [New] Rotate comparison
   const [articleDetailsMap, setArticleDetailsMap] = useState({});
   const [touchStart, setTouchStart] = useState(0);
 
@@ -176,12 +178,27 @@ export const Main = () => {
 
   // Auto-rotate slideshow
   // Auto-rotate slideshow (Disabled as per request)
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     setCurrentSlideIndex(prev => (prev + 1) % 3);
-  //   }, 10000); // 10 seconds per slide
-  //   return () => clearInterval(interval);
-  // }, []);
+  // Auto-rotate comparison items every 10s
+  useEffect(() => {
+    // Reset comparison index when slide changes
+    setCurrentComparisonIndex(0);
+  }, [currentSlideIndex]);
+
+  useEffect(() => {
+    const slideArticles = displayArticles.slice(0, 3);
+    const activeArticle = slideArticles[currentSlideIndex];
+    if (!activeArticle) return;
+
+    const interval = setInterval(() => {
+      setCurrentComparisonIndex(prev => {
+        const bullets = activeArticle?.analysis_result?.media_comparison_bullets || [];
+        if (bullets.length <= 1) return 0;
+        return (prev + 1) % bullets.length;
+      });
+    }, 10000); // 10 seconds
+
+    return () => clearInterval(interval);
+  }, [currentSlideIndex, displayArticles]);
 
   // --- Deduplication Logic ---
   // Pre-calculate lists to ensure no duplicates across sections
@@ -296,20 +313,36 @@ export const Main = () => {
               <div key={`hl-${currentSlideIndex}`} className="highlight-list fade-animate">
                 <div className="main-comparison-container">
                   <ul className="main-comparison-list">
-                    {activeBullets.slice(0, 1).map((item, idx) => {
+                    {activeBullets.slice(currentComparisonIndex, currentComparisonIndex + 1).map((item, idx) => {
                       const isString = typeof item === 'string';
-                      const analysisText = isString ? item : item.analysis;
-                      const summaryText = isString ? null : item.summary;
+
+                      let content = "";
+                      let hashtags = [];
+
+                      if (isString) content = item;
+                      else if (item.summary) {
+                        content = item.summary;
+                        hashtags = item.hashtags || [];
+                      }
+                      else if (item.analysis) content = item.analysis;
 
                       return (
-                        <li key={idx} className="main-comparison-item">
-                          {summaryText && (
-                            <div className="main-summary-badge">
-                              {summaryText}
-                            </div>
-                          )}
+                        <li key={`${idx}-${currentComparisonIndex}`} className="main-comparison-item fade-slide-up">
                           <div className="main-analysis-text">
-                            {highlightMediaText(analysisText.replace(/^- /, '').replace(/\[/g, '').replace(/\]/g, ''), activeMediaNames)}
+                            {!isString && item.company && (
+                              <div className="main-company-header" style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '4px' }}>
+                                <span style={{ fontWeight: 'bold', color: '#1a73e8' }}>{item.company}</span>
+                                {hashtags.slice(0, 2).map((tag, tIdx) => (
+                                  <span key={tIdx} style={{ fontSize: '0.75rem', backgroundColor: '#e8f0fe', color: '#1967d2', padding: '2px 6px', borderRadius: '10px' }}>{tag}</span>
+                                ))}
+                              </div>
+                            )}
+                            {highlightMediaText((content || "").replace(/^- /, '').replace(/\[/g, '').replace(/\]/g, ''), activeMediaNames)}
+                            {item.evidence && (
+                              <p className="main-comparison-evidence">
+                                {item.evidence}
+                              </p>
+                            )}
                           </div>
                         </li>
                       );
@@ -342,7 +375,7 @@ export const Main = () => {
                 // const hls = getHighlights(art); // Unused now
                 return (
                   <div key={idx} className="mobile-whole-slide">
-                    {/* Image + Title Part */}
+                    {/* Image + Title + Nav Buttons Part */}
                     <div className="mobile-slide-top" onClick={() => navigate(`/article/${art.report_id}`)}>
                       <img
                         src={imgUrl}
@@ -350,29 +383,52 @@ export const Main = () => {
                         onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }}
                       />
                       <div className="main-image-text"><h3>{art.title}</h3></div>
+                      <button
+                        className="mobile-slide-nav prev"
+                        onClick={(e) => { e.stopPropagation(); setCurrentSlideIndex(prev => (prev - 1 + 3) % 3); }}
+                      >&#x2039;</button>
+                      <button
+                        className="mobile-slide-nav next"
+                        onClick={(e) => { e.stopPropagation(); setCurrentSlideIndex(prev => (prev + 1) % 3); }}
+                      >&#x203A;</button>
                     </div>
                     {/* Highlights Part */}
                     <div className="mobile-slide-bottom">
                       <h3 className="highlights-title">언론사별 비교분석</h3>
                       <div className="main-comparison-container">
                         <ul className="main-comparison-list">
-                          {(art?.analysis_result?.media_comparison_bullets || []).slice(0, 1).map((item, idx) => {
+                          {(art?.analysis_result?.media_comparison_bullets || []).slice(currentComparisonIndex, currentComparisonIndex + 1).map((item, idx) => {
                             const relatedNews = articleDetailsMap[`cluster_${art.cluster_id}`] || [];
                             const articleMediaNames = [...new Set(relatedNews.map(n => n.company_name).filter(Boolean))];
 
                             const isString = typeof item === 'string';
-                            const analysisText = isString ? item : item.analysis;
-                            const summaryText = isString ? null : item.summary;
+                            let content = "";
+                            let hashtags = [];
+
+                            if (isString) content = item;
+                            else if (item.summary) {
+                              content = item.summary;
+                              hashtags = item.hashtags || [];
+                            }
+                            else if (item.analysis) content = item.analysis;
 
                             return (
-                              <li key={idx} className="main-comparison-item">
-                                {summaryText && (
-                                  <div className="main-summary-badge">
-                                    {summaryText}
-                                  </div>
-                                )}
+                              <li key={`${idx}-${currentComparisonIndex}`} className="main-comparison-item fade-slide-up">
                                 <div className="main-analysis-text">
-                                  {highlightMediaText(analysisText.replace(/^- /, '').replace(/\[/g, '').replace(/\]/g, ''), articleMediaNames)}
+                                  {!isString && item.company && (
+                                    <div className="main-company-header" style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '4px' }}>
+                                      <span style={{ fontWeight: 'bold', color: '#1a73e8' }}>{item.company}</span>
+                                      {hashtags.slice(0, 2).map((tag, tIdx) => (
+                                        <span key={tIdx} style={{ fontSize: '0.75rem', backgroundColor: '#e8f0fe', color: '#1967d2', padding: '2px 6px', borderRadius: '10px' }}>{tag}</span>
+                                      ))}
+                                    </div>
+                                  )}
+                                  {highlightMediaText((content || "").replace(/^- /, '').replace(/\[/g, '').replace(/\]/g, ''), articleMediaNames)}
+                                  {item.evidence && (
+                                    <p className="main-comparison-evidence">
+                                      {item.evidence}
+                                    </p>
+                                  )}
                                 </div>
                               </li>
                             );
@@ -541,6 +597,8 @@ export const Main = () => {
       {!loading && displayArticles.length > 0 && (
         <div className="main-carousel-outer">
           {renderMainContent()}
+          {/* [New] Recommended News (YouTube Style) */}
+          <RecommendedNews allArticles={displayArticles} userName={userName} imageMap={imageMap} />
         </div>
       )}
 

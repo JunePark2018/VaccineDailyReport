@@ -51,11 +51,8 @@ const TodayNews = () => {
         if (response.ok) {
           const data = await response.json();
           setNewsList(data);
-          console.log(" 백엔드 데이터 로드 성공");
         } else {
-          // 서버는 응답했으나 404, 500 등 오류가 발생한 경우
           setNewsList(mockData);
-          console.warn(" 서버 응답 오류 - 목데이터 사용");
         }
       } catch (error) {
         /**
@@ -63,7 +60,6 @@ const TodayNews = () => {
          * - 서버가 꺼져있거나(Network Error), CORS 정책 문제가 있을 때 실행됨.
          * - 사용자에게 빈 화면을 보여주는 대신 테스트 데이터를 노출함.
          */
-        console.warn(" 서버 연결 실패 - 목데이터를 표시합니다.");
         setNewsList(mockData);
       } finally {
         setLoading(false); // 성공/실패 여부와 상관없이 로딩 종료

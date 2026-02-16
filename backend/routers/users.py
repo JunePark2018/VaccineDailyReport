@@ -4,6 +4,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
+import bcrypt
 
 from routers import get_db
 from database.crud import (
@@ -15,8 +16,6 @@ from database.crud import (
     list_user_top_keywords,
     clear_user_keyword_stats,
     delete_user_account,
-    get_report,
-    get_category_name,
     get_report,
     get_category_name,
     get_reaction,
@@ -44,11 +43,12 @@ def signup(user: UserCreateRequest, db: Session = Depends(get_db)):
     if existing_user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="이미 존재하는 아이디입니다.")
 
+    hashed_pw = bcrypt.hashpw(user.password_hash.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
     new_user = create_user(
         db,
         login_id=user.login_id,
         username=user.username,
-        password_hash=user.password_hash,
+        password_hash=hashed_pw,
         email=user.email,
         age_range=user.age_range,
         gender=user.gender,
@@ -167,14 +167,14 @@ def update_user(login_id: str, user_update: UserUpdate, db: Session = Depends(ge
     if not user:
         raise HTTPException(status_code=404, detail="해당 아이디의 유저를 찾을 수 없습니다.")
 
-    update_data = user_update.dict(exclude_unset=True)
+    update_data = user_update.model_dump(exclude_unset=True)
     excluded_fields = {"subscribed_categories", "subscribed_keywords"}
 
     for key, value in update_data.items():
         if key in excluded_fields:
             continue
         elif key == "password":
-            user.password_hash = value
+            user.password_hash = bcrypt.hashpw(value.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
         else:
             setattr(user, key, value)
 

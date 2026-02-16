@@ -32,27 +32,31 @@ services:
     networks:
       - finalproject_network
 
-  # 3. Adminer
+  # 3. Adminer (개발 전용 — 프로덕션에서는 profiles로 비활성화)
   adminer:
     image: adminer
     container_name: finalproject_adminer
     restart: always
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     depends_on:
       - postgres
     networks:
       - finalproject_network
+    profiles:
+      - dev
 
-  # 4. Redis
+  # 4. Redis (개발 전용 — 현재 미사용)
   redis:
     image: redis:alpine
     container_name: finalproject_redis
     restart: always
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     networks:
       - finalproject_network
+    profiles:
+      - dev
 
   # 5. Backend (FastAPI)
   backend:
@@ -73,7 +77,6 @@ services:
       - "8081:8000"
     depends_on:
       - postgres
-      - redis
       - chromadb
     networks:
       - finalproject_network

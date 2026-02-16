@@ -5,11 +5,13 @@ import Logo from '../components/Logo';
 import Searchbar from '../components/Searchbar';
 import UserMenu from '../components/UserMenu';
 import { categories as categoryData } from '../components/categoryIcon/categoryData';
+import { useToast } from '../components/Toast';
 import './CreateAccount.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 export default function CreateAccount() {
     const navigate = useNavigate();
+    const showToast = useToast();
 
     // --- State Management ---
     const [formData, setFormData] = useState({
@@ -171,8 +173,6 @@ export default function CreateAccount() {
             };
 
             try {
-                console.log("Sending signup request:", submitData);
-
                 // POST request to backend
                 const response = await fetch(`${API_BASE_URL}/users`, {
                     method: 'POST',
@@ -186,18 +186,17 @@ export default function CreateAccount() {
 
                 if (response.ok) {
                     // Success
-                    console.log("Account created successfully:", data);
-                    alert("회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.");
+                    showToast("회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.", "success");
                     navigate('/login');
                 } else {
                     // Backend returned an error
                     console.error("Signup failed:", data);
-                    alert(`회원가입 실패: ${data.detail || '알 수 없는 오류가 발생했습니다.'}`);
+                    showToast(`회원가입 실패: ${data.detail || '알 수 없는 오류가 발생했습니다.'}`, "error");
                 }
             } catch (error) {
                 // Network or other error
                 console.error("Network error:", error);
-                alert('서버와 연결할 수 없습니다. 나중에 다시 시도해주세요.');
+                showToast('서버와 연결할 수 없습니다. 나중에 다시 시도해주세요.', "error");
             }
         }
     };

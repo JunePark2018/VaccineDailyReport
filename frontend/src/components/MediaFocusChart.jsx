@@ -3,8 +3,6 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 
 const MediaFocusChart = ({ data }) => {
     // data 구조: { media_focus: [...], market_avg_pct: 3.5 }
-    console.log("MediaFocusChart Data:", data); // [DEBUG]
-
     if (!data || !data.media_focus || data.media_focus.length === 0) {
         return (
             <div style={{ padding: '20px', textAlign: 'center', color: '#888', backgroundColor: '#f9f9f9', borderRadius: '12px', border: '1px solid #eee', fontSize: '13px' }}>

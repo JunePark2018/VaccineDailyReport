@@ -1,5 +1,5 @@
-import React, { useMemo, useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import Sources from '../components/Sources';
 import RightSideBar from '../components/RightSideBar';
 import NewsText from '../components/NewsText';
@@ -15,17 +15,18 @@ import { formatDate } from '../utils/dateUtils';
 import WordCloudComponent from '../components/WordCloud';
 import Timeline from '../components/Timeline';
 import LikeButton from '../components/LikeButton';
-import AI_News_Recommendation from '../components/AI_News_Recommendation';
+import AiNewsRecommendation from '../components/AiNewsRecommendation';
+import { useToast } from '../components/Toast';
 import AgeGenderChart from '../components/AgeGenderChart';
 import MediaFocusChart from '../components/MediaFocusChart'; // Import Chart
-import { HiOutlineSpeakerWave, HiOutlinePrinter, HiOutlineDocumentDuplicate, HiOutlineBookmark, HiMiniBookmark } from 'react-icons/hi2';
+import { HiOutlineSpeakerWave, HiOutlinePrinter, HiOutlineDocumentDuplicate, HiOutlineBookmark, HiMiniBookmark, HiChevronDown, HiChevronUp } from 'react-icons/hi2';
 import SkeletonNews from '../components/SkeletonNews'; // Import Skeleton
 
 
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 function ArticlePage() {
-
+  const showToast = useToast();
   const { id } = useParams();
 
   const [loading, setLoading] = useState(true); // Add loading state
@@ -40,6 +41,7 @@ function ArticlePage() {
   // Sidebar & Search State
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [selectedSentence, setSelectedSentence] = useState(null);
+  const [selectedCompany, setSelectedCompany] = useState(null);
 
   // Comparison State
   const [mediaNames, setMediaNames] = useState([]);
@@ -77,22 +79,30 @@ function ArticlePage() {
   useEffect(() => {
     const loadVoices = () => {
       const avail = window.speechSynthesis.getVoices();
-      const koVoices = avail.filter(v => v.lang.includes('ko') || v.lang.includes('KO'));
+      const koVoices = avail.filter(v => {
+        const isKorean = v.lang === 'ko' || v.lang === 'ko-KR' || v.lang === 'ko_KR';
+        if (!isKorean) return false;
+        const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+        if (isMobile) return true;
+        // PC: SunHi(여성) + InJoon(남성)만 허용
+        return v.name.includes('SunHi') || v.name.includes('InJoon');
+      });
       setVoices(koVoices);
       if (koVoices.length > 0) setSelectedVoice(koVoices[0]);
     };
 
     loadVoices();
     window.speechSynthesis.onvoiceschanged = loadVoices;
+
+    return () => {
+      window.speechSynthesis.cancel();
+    };
   }, []);
 
   // Helper: Friendly Voice Name
   const getFriendlyVoiceName = (voice) => {
     const name = voice.name;
-    // Google
-    if (name.includes('Google')) return '여성 음성 (Google)';
-    // Microsoft
-    if (name.includes('Heami')) return '여성 음성 (Microsoft)';
+    if (name.includes('SunHi')) return '여성 음성 (Microsoft)';
     if (name.includes('InJoon')) return '남성 음성 (Microsoft)';
 
     // Clean up
@@ -102,7 +112,7 @@ function ArticlePage() {
       .replace('한국어', '')
       .replace('Korean', '')
       .replace('한국의', '')
-      .replace(/[()\-]/g, '')
+      .replace(/[()-]/g, '')
       .trim();
 
     return cleanName || '기본 음성';
@@ -123,17 +133,17 @@ function ArticlePage() {
     try {
       const currentUrl = window.location.href;
       await navigator.clipboard.writeText(currentUrl);
-      alert("기사 링크가 클립보드에 복사되었습니다.");
+      showToast("기사 링크가 클립보드에 복사되었습니다.", "success");
     } catch (err) {
       console.error('Failed to copy link: ', err);
-      alert("복사에 실패했습니다.");
+      showToast("복사에 실패했습니다.", "error");
     }
   };
 
   const handleScrap = async () => {
     const login_id = localStorage.getItem('login_id');
     if (!login_id) {
-      alert("로그인이 필요한 기능입니다.");
+      showToast("로그인이 필요한 기능입니다.", "warning");
       return;
     }
 
@@ -149,14 +159,14 @@ function ArticlePage() {
       // Backend returns "Scrap added" or "Scrap removed"
       if (response.data.message.includes("added")) {
         setIsScraped(true);
-        alert("스크랩 되었습니다.");
+        showToast("스크랩 되었습니다.", "success");
       } else {
         setIsScraped(false);
-        alert("스크랩이 취소되었습니다.");
+        showToast("스크랩이 취소되었습니다.", "info");
       }
     } catch (err) {
       console.error("Scrap failed:", err);
-      alert("스크랩 처리 중 오류가 발생했습니다.");
+      showToast("스크랩 처리 중 오류가 발생했습니다.", "error");
     }
   };
 
@@ -199,8 +209,9 @@ function ArticlePage() {
 
   // Evidence Fetching Removed
 
-  const handleSentenceClick = (sentence) => {
+  const handleSentenceClick = (sentence, company = null) => {
     setSelectedSentence(sentence);
+    setSelectedCompany(company);
     setSidebarOpen(true);
   };
 
@@ -223,6 +234,32 @@ function ArticlePage() {
     });
   };
 
+  const renderClickableEvidence = (text, company) => {
+    if (!text) return null;
+    return text.split('\n').map((line, lIdx) => (
+      <p key={lIdx} style={{ margin: 0 }}>
+        {line.split('. ').map((stmt, sIdx) => {
+          let s = stmt.trim();
+          if (!s) return null;
+          const endsWithPunct = /[.!?…]$/.test(s);
+          const fullSentence = s + (endsWithPunct ? '' : '.');
+          return (
+            <span
+              key={sIdx}
+              className="clickable-sentence"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSentenceClick(fullSentence, company);
+              }}
+            >
+              {fullSentence}{' '}
+            </span>
+          );
+        })}
+      </p>
+    ));
+  };
+
   useEffect(() => {
     window.scrollTo(0, 0);
 
@@ -233,6 +270,37 @@ function ArticlePage() {
         const article = ai_news_response.data;
         setArticle(article);
         setLikeCount(article.like_count || 0);
+
+        // [Recommendation] Save viewed tags & category to localStorage
+        try {
+          // 1. Tags
+          let tags = [];
+          if (Array.isArray(article.keywords)) {
+            tags = article.keywords;
+          } else if (typeof article.keywords === 'string') {
+            try {
+              tags = JSON.parse(article.keywords);
+            } catch (e) {
+              tags = [];
+            }
+          }
+
+          if (tags.length > 0) {
+            const currentTags = JSON.parse(localStorage.getItem('viewed_tags') || '[]');
+            // Merge & Deduplicate (Keep recent)
+            const newTags = [...new Set([...tags, ...currentTags])].slice(0, 50); // Keep last 50
+            localStorage.setItem('viewed_tags', JSON.stringify(newTags));
+          }
+
+          // 2. Category
+          if (article.category_name) {
+            const currentCats = JSON.parse(localStorage.getItem('viewed_categories') || '[]');
+            const newCats = [...new Set([article.category_name, ...currentCats])].slice(0, 10);
+            localStorage.setItem('viewed_categories', JSON.stringify(newCats));
+          }
+        } catch (err) {
+          console.warn("Failed to save recommendation history", err);
+        }
 
         const login_id = localStorage.getItem('login_id');
         if (login_id) {
@@ -358,7 +426,7 @@ function ArticlePage() {
               <div className="article-content-wrapper">
                 <div className='article-section'>
                   <div className='article-img'>
-                    <img src={imgURL} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
+                    <img src={imgURL} alt={article?.title || ''} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
                   </div>
 
                   <div style={{ padding: '0 20px' }}>
@@ -470,43 +538,70 @@ function ArticlePage() {
                     <hr className="article-head-divider" /> {/* Keeping HR invisble via CSS or actually keep it? CSS hides it. */}
 
                     <div className="article-comparer" style={{ marginTop: '10px', marginBottom: '40px', borderTop: 'none' }}>
-                      <h3 className="section-title" style={{ textAlign: 'left' }}>비교분석</h3>
+                      <h3 className="section-title" style={{ textAlign: 'left' }}>언론사별 보도 특징</h3>
                       <div className={`comparison-container ${isExpanded ? 'expanded' : 'collapsed'}`}>
                         <ul className="comparison-list">
                           {article?.analysis_result?.media_comparison_bullets?.map((item, idx) => {
                             // Backward compatibility: Handle string items
                             const isString = typeof item === 'string';
-                            const analysisText = isString ? item : item.analysis;
-                            const summaryText = isString ? null : item.summary;
 
+                            if (isString) {
+                              return (
+                                <li key={idx} className="comparison-item">
+                                  <span className="analysis-text">
+                                    {highlightMediaText(item)}
+                                  </span>
+                                </li>
+                              );
+                            }
+
+                            // Old Object Format fallback
+                            if (!item.hashtags && item.analysis) {
+                              return (
+                                <li key={idx} className="comparison-item">
+                                  <span className="comparison-company-badge text-badge">{item.company}</span>
+                                  <span className="analysis-text">{item.analysis}</span>
+                                </li>
+                              );
+                            }
+
+                            // New Format: Hashtags + One-liner + Evidence (Global Expand)
                             return (
-                              <li key={idx} className="comparison-item">
-                                {summaryText && (
-                                  <div className="summary-badge" style={{
-                                    display: 'inline-block',
-                                    backgroundColor: '#e3f2fd',
-                                    color: '#0d47a1',
-                                    padding: '4px 8px',
-                                    borderRadius: '4px',
-                                    fontSize: '0.9em',
-                                    marginBottom: '6px',
-                                    fontWeight: '600'
-                                  }}>
-                                    {summaryText}
+                              <li key={idx} className="comparison-item new-format">
+                                <div className="company-header">
+                                  <div className="badge-row">
+                                    <span className="comparison-company-badge">
+                                      {item.company}
+                                    </span>
+                                  </div>
+                                  <div className="hashtags">
+                                    {item.hashtags && item.hashtags.map((tag, tIdx) => (
+                                      <span key={tIdx} className="hashtag-badge">{tag}</span>
+                                    ))}
+                                  </div>
+                                </div>
+                                <p className="summary-text">
+                                  {item.summary}
+                                </p>
+                                {isExpanded && item.evidence && (
+                                  <div className="evidence-text fade-in" style={{ marginTop: '4px', fontSize: '0.9rem', color: '#5f6368', lineHeight: '1.5', textAlign: 'left' }}>
+                                    {renderClickableEvidence(item.evidence, item.company)}
                                   </div>
                                 )}
-                                <div className="analysis-text">
-                                  {highlightMediaText(analysisText.replace(/^- /, '').replace(/\[/g, '').replace(/\]/g, ''))}
-                                </div>
                               </li>
-                            )
+                            );
                           })}
+
                         </ul>
                       </div>
                       {article?.analysis_result?.media_comparison_bullets?.length > 0 && (
                         <div className="show-more-button-wrapper">
                           <button className="show-more-button link-style" onClick={() => setIsExpanded(!isExpanded)}>
-                            {isExpanded ? '접기' : '펼쳐보기'}
+                            {isExpanded ? (
+                              <>접기 <HiChevronUp /></>
+                            ) : (
+                              <>더보기 <HiChevronDown /></>
+                            )}
                           </button>
                         </div>
                       )}
@@ -580,15 +675,17 @@ function ArticlePage() {
                 </div>
               </div>
 
-              <AI_News_Recommendation articleId={id} number_of_article={3} />
+              <AiNewsRecommendation articleId={id} number_of_article={3} />
             </>
-          )}
-        </main>
+          )
+          }
+        </main >
 
         <RightSideBar
           isOpen={isSidebarOpen}
           onClose={closeSidebar}
           searchKeyword={selectedSentence}
+          searchCompany={selectedCompany}
           clusterId={article.cluster_id}
         />
       </div >

@@ -700,7 +700,7 @@ def check_claim_evidence(req: ClaimEvidenceRequest, db: Session = Depends(get_db
             }
         )
 
-    return {" match_found": len(results) > 0, "evidence": results}
+    return {"match_found": len(results) > 0, "evidence": results}
 
 
 @router.get("/{report_id}/media-focus")

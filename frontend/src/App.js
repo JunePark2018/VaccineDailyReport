@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import './App.css';
-import axios from 'axios';
 import { Main } from './pages/Main';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ArticlePage from './pages/ArticlePage.jsx';
@@ -16,6 +15,8 @@ import SocietyPage from './pages/SocietyPage.jsx';
 import SciencePage from './pages/SciencePage.jsx';
 import WorldPage from './pages/WorldPage.jsx';
 import ScrollToTop from './components/ScrollToTop.jsx';
+import ErrorBoundary from './components/ErrorBoundary.jsx';
+import { ToastProvider } from './components/Toast.jsx';
 
 function App() {
   return (
@@ -24,23 +25,27 @@ function App() {
       v7_relativeSplatPath: true,
     }}>
       <ScrollToTop />
-      <div className="App">
-        <Routes>
-          <Route path="/" element={<Main />} />
-          <Route path="/article/:id" element={<ArticlePage />} />
-          <Route path="/politics" element={<PoliticsPage />} />
-          <Route path="/economy" element={<EconomicsPage />} />
-          <Route path="/society" element={<SocietyPage />} />
-          <Route path="/science" element={<SciencePage />} />
-          <Route path="/world" element={<WorldPage />} />
+      <ErrorBoundary>
+        <ToastProvider>
+          <div className="App">
+            <Routes>
+              <Route path="/" element={<Main />} />
+              <Route path="/article/:id" element={<ArticlePage />} />
+              <Route path="/politics" element={<PoliticsPage />} />
+              <Route path="/economy" element={<EconomicsPage />} />
+              <Route path="/society" element={<SocietyPage />} />
+              <Route path="/science" element={<SciencePage />} />
+              <Route path="/world" element={<WorldPage />} />
 
-          <Route path='/login' element={<Login />} />
-          <Route path='/CreateAccount' element={<CreateAccount />} />
-          <Route path='/mypage/:login_id' element={<MyPage />} />
-          <Route path='/search' element={<SearchResult />} />
-          <Route path='/find-id' element={<FindId />} />
-        </Routes>
-      </div>
+              <Route path='/login' element={<Login />} />
+              <Route path='/CreateAccount' element={<CreateAccount />} />
+              <Route path='/mypage/:login_id' element={<MyPage />} />
+              <Route path='/search' element={<SearchResult />} />
+              <Route path='/find-id' element={<FindId />} />
+            </Routes>
+          </div>
+        </ToastProvider>
+      </ErrorBoundary>
     </BrowserRouter>
   );
 }

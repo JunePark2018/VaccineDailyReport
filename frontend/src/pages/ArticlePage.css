@@ -77,25 +77,17 @@
     object-fit: cover;
 }
 
-/* 비교분석 섹션 스타일 */
+/* 비교분석 섹션 스타일 (Updated) */
 .ArticlePage .main-content .article-comparer {
     text-align: left;
     margin-top: 40px;
-    padding-top: 20px;
-    border-top: 1px solid #eee;
+    padding: 24px;
+    background-color: #f8f9fa;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
 }
 
 .ArticlePage .main-content .article-comparer .section-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    margin-bottom: 20px;
-    color: #111;
-    border-left: none;
-    padding-left: 0;
-}
-
-/* Generic Section Title (Matches previous inline styles) */
-.ArticlePage .section-title {
     font-size: 1.25rem;
     font-weight: 700;
     margin-bottom: 20px;
@@ -114,30 +106,118 @@
 }
 
 .ArticlePage .main-content .article-comparer .comparison-item {
-    background-color: #fcfcfc;
+    background-color: #ffffff;
     border: 1px solid #e0e0e0;
     border-radius: 8px;
-    padding: 20px 24px;
-    font-size: 1.1rem;
+    padding: 16px 20px;
+    font-size: 1.05rem;
     line-height: 1.65;
     color: #333;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    position: relative;
+    display: block;
+    /* Ensure block layout */
 }
 
 .ArticlePage .main-content .article-comparer .comparison-item:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-    border-color: #bbb;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
 }
 
-/* Add a visual indicator/icon before the text */
-.ArticlePage .main-content .article-comparer .comparison-item::before {
-    content: "💡";
-    margin-right: 12px;
-    font-size: 1.2rem;
-    vertical-align: middle;
+/* Badge for Company Name */
+.comparison-company-badge {
+    display: inline-block;
+    font-weight: 700;
+    color: #1a73e8;
+    margin-right: 6px;
+}
+
+.analysis-text {
+    color: #495057;
+}
+
+/* New Format: Hashtags + One-liner */
+.comparison-item.new-format {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background-color: #fff;
+    border-left: 4px solid #1a73e8;
+    /* Accent color default */
+}
+
+.company-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+}
+
+.badge-row {
+    display: flex;
+    align-items: center;
+}
+
+.hashtags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.hashtag-badge {
+    background-color: #e8f0fe;
+    color: #1967d2;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.summary-text {
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: #202124;
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Company specific accent colors (Optional dynamic styling logic can be added later) */
+
+.expand-icon {
+    transition: transform 0.2s ease;
+}
+
+.evidence-text {
+    line-height: 1.6;
+}
+
+.evidence-text .clickable-sentence {
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border-radius: 4px;
+    padding: 2px 0;
+}
+
+.evidence-text .clickable-sentence:hover {
+    background-color: #e3f2fd;
+    color: #1a73e8;
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 
@@ -903,9 +983,10 @@
     border-radius: 50%;
 }
 
-/* Font Size Popup Overrides (Unified Style - Left Aligned) */
+/* Font Size Popup Overrides (Unified Style) */
 .ArticlePage .font-size-popup-unified {
     left: 0;
+    right: auto;
     transform: none;
     width: 220px;
 
@@ -1052,9 +1133,8 @@
     top: 100%;
     bottom: auto;
     margin-top: 8px;
-    left: auto;
-    right: 0;
-    /* Align to right since buttons are on right */
+    left: 0;
+    right: auto;
     transform: none;
 }
 

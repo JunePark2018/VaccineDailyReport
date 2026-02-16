@@ -13,6 +13,7 @@ import CategoryRadarChart from '../components/CategoryRadarChart';
 import KeywordBarChart from '../components/KeywordBarChart';
 import SubscribedKeywords from '../components/SubscribedKeywords';
 import EditAccountForm from '../components/EditAccountForm';
+import { useToast } from '../components/Toast';
 import MobileBottomNav from '../components/MobileBottomNav';
 import './MyPage.css';
 
@@ -59,6 +60,7 @@ const ArticleCard = ({ article, type, onRemove }) => {
 const MyPage = () => {
   const { login_id } = useParams();
   const navigate = useNavigate();
+  const showToast = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'insights'; // 'insights' | 'edit' | 'liked' | 'scraps'
 
@@ -138,11 +140,11 @@ const MyPage = () => {
   // 서버 업데이트 로직 (Keyword)
   const updateKeywordsOnServer = async (newList) => {
     try {
-      await axios.put(`http://localhost:8000/users/${login_id}`, { subscribed_keywords: newList });
+      await axios.put(`${API_BASE_URL}/users/${login_id}`, { subscribed_keywords: newList });
     } catch (error) {
       console.error("서버 업데이트 실패:", error);
       const errorMessage = error.response?.data?.detail || "서버 업데이트에 실패했습니다.";
-      alert(errorMessage);
+      showToast(errorMessage, "error");
       try {
         const response = await axios.get(`${API_BASE_URL}/users/${login_id}/dashboard`);
         setUserData(response.data);
@@ -176,9 +178,9 @@ const MyPage = () => {
       const apiUrl = `${API_BASE_URL}/users/${encodedLoginId}/keywords/stats`;
       await axios.delete(apiUrl);
       setUserData({ ...userData, read_keywords: {} });
-      alert('관심 키워드가 초기화되었습니다.');
+      showToast('관심 키워드가 초기화되었습니다.', "success");
     } catch (error) {
-      alert(`초기화에 실패했습니다. 다시 시도해주세요.\n${error.response?.data?.detail || error.message}`);
+      showToast(`초기화에 실패했습니다. ${error.response?.data?.detail || error.message}`, "error");
     }
   };
 
@@ -208,7 +210,7 @@ const MyPage = () => {
       setLikedArticles(prev => prev.filter(a => a.report_id !== newsId));
     } catch (err) {
       console.error("좋아요 취소 실패:", err);
-      alert("처리 중 오류가 발생했습니다.");
+      showToast("처리 중 오류가 발생했습니다.", "error");
     }
   };
 
@@ -219,7 +221,7 @@ const MyPage = () => {
       setScrappedArticles(prev => prev.filter(a => a.report_id !== newsId));
     } catch (err) {
       console.error("스크랩 취소 실패:", err);
-      alert("처리 중 오류가 발생했습니다.");
+      showToast("처리 중 오류가 발생했습니다.", "error");
     }
   };
 
