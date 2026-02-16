@@ -10,7 +10,7 @@ from sqlalchemy import or_, and_, desc
 from routers import get_db
 from database.models import Report, Cluster
 from database import crud
-from ai_graph_comparer import analyze_opinion_articles
+from ai_graph_comparer import compare_articles_with_graph
 
 # schemas import 제거 - dict 반환으로 충분
 from pydantic import BaseModel
@@ -454,13 +454,13 @@ async def get_report_opinions(report_id: int, limit: int = 10, db: Session = Dep
         if cached:
             return cached
 
-    # 2. 캐시가 없으면 클러스터에서 오피니언 조회 후 실시간 분석
+    # 2. 캐시가 없으면 클러스터에서 오피니언 조회 후 GraphRAG 실시간 분석
     opinions = crud.get_opinions_for_report(db, report_id, limit=limit)
     if not opinions:
         return []
 
-    result = await analyze_opinion_articles(opinions, report.title or "")
-    return result
+    opinion_report = await compare_articles_with_graph(opinions, mode="opinion")
+    return opinion_report.get("opinion_bullets", [])
 
 
 @router.get("/{report_id}/timeline")

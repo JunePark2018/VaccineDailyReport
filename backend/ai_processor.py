@@ -34,7 +34,7 @@ from ai_agentic_generator import generate_agentic_article as generate_balanced_a
 #     process_all_companies_async,
 #     generate_final_comparison_report,
 # )
-from ai_graph_comparer import compare_articles_with_graph, analyze_opinion_articles
+from ai_graph_comparer import compare_articles_with_graph
 
 
 from keyword_extractor import KeywordExtractor
@@ -104,7 +104,7 @@ async def process_single_issue(
             final_report = await compare_articles_with_graph(articles_data)
 
             # -------------------------------------------------
-            # 3-2b. 오피니언 분석 (클러스터에 배정된 오피니언이 있으면)
+            # 3-2b. 오피니언 분석 (GraphRAG로 동일 파이프라인, mode="opinion")
             # -------------------------------------------------
             if opinion_articles:
                 opinion_data = [
@@ -113,14 +113,14 @@ async def process_single_issue(
                         "company_name": a.company_name,
                         "title": a.title,
                         "contents": a.contents,
-                        "author": a.author,
                     }
                     for a in opinion_articles
                 ]
-                opinion_bullets = await analyze_opinion_articles(opinion_data, issue.title)
+                opinion_report = await compare_articles_with_graph(opinion_data, mode="opinion")
+                opinion_bullets = opinion_report.get("opinion_bullets", [])
                 if opinion_bullets:
                     final_report["opinion_bullets"] = opinion_bullets
-                    print(f"      📝 오피니언 분석: {len(opinion_bullets)}개 언론사")
+                    print(f"      📝 오피니언 GraphRAG 분석: {len(opinion_bullets)}개 언론사")
 
             issue.analysis_result = final_report
 
