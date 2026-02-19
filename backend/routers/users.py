@@ -17,7 +17,6 @@ from database.crud import (
     clear_user_keyword_stats,
     delete_user_account,
     get_report,
-    get_category_name,
     get_reaction,
     get_representative_image,
     get_user_by_name_and_email,
@@ -234,38 +233,24 @@ def get_user_dashboard(login_id: str, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # 1. Top Interest Keywords (상위 10개)
-    # crud.list_user_top_keywords returns [(keyword, count), ...]
-    top_kws_list = list_user_top_keywords(db, user_id=user.user_id, limit=1000)
-    # 딕셔너리로 변환
+    # 1. Top Interest Keywords (상위 50개 - 개인화 점수 산정에 충분)
+    top_kws_list = list_user_top_keywords(db, user_id=user.user_id, limit=50)
     read_keywords_map = {kw: count for kw, count in top_kws_list}
 
-    # 2. Category Read Counts
-    # user.views (NewsView)를 통해 집계
-    # NewsView에는 category_id가 저장되어 있지 않을 수도 있음(초기 설계 상).
-    # 하지만 Report join해서 카운트 가능
-    # 여기서는 간단히 user.views -> news -> category로 접근하거나
-    # NewsView에 category_id가 있다면 그것을 씀 (models.py에 category_id 있음)
+    # 2. Category Read Counts (JOIN으로 한 번에 조회 - N+1 제거)
     from sqlalchemy import func
-    from database.models import NewsView
+    from database.models import NewsView, Category
 
-    # 카테고리별 읽은 횟수 집계
     cat_counts = (
-        db.query(NewsView.category_id, func.count(NewsView.news_view_id))
+        db.query(Category.name, func.count(NewsView.news_view_id))
+        .join(Category, NewsView.category_id == Category.category_id)
         .filter(NewsView.user_id == user.user_id)
-        .group_by(NewsView.category_id)
+        .filter(NewsView.category_id.isnot(None))
+        .group_by(Category.name)
         .all()
     )
 
-    read_categories_map = {}
-    for cat_id, count in cat_counts:
-        if cat_id:
-            c_name = get_category_name(db, cat_id)
-            if c_name:
-                read_categories_map[c_name] = count
-        else:
-            # 카테고리가 없는 경우 (미분류 등)
-            pass
+    read_categories_map = {name: count for name, count in cat_counts}
 
     # 3. Subscribed Keywords
     sub_kws = [k.keyword for k in user.keyword_subscriptions]

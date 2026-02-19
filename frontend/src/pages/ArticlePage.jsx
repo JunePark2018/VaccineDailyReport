@@ -426,9 +426,11 @@ function ArticlePage() {
             <>
               <div className="article-content-wrapper">
                 <div className='article-section'>
-                  <div className='article-img'>
-                    <img src={imgURL} alt={article?.title || ''} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
-                  </div>
+                  {imgURL && (
+                    <div className='article-img'>
+                      <img src={imgURL} alt={article?.title || ''} onLoad={(e) => { e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; e.target.parentElement.style.display = 'none'; }} />
+                    </div>
+                  )}
 
                   <div style={{ padding: '0 20px' }}>
                     <h1 className="article-head-title">{article.title}</h1>
@@ -662,11 +664,9 @@ function ArticlePage() {
                       </div>
 
                       {/* 언론사 집중도 분석 차트 */}
-                      {focusData && (
-                        <div style={{ flex: '1', minWidth: '300px' }}>
-                          <MediaFocusChart data={focusData} />
-                        </div>
-                      )}
+                      <div style={{ flex: '1', minWidth: '300px' }}>
+                        <MediaFocusChart data={focusData} />
+                      </div>
                     </div>
                   </div>
 

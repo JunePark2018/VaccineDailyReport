@@ -216,22 +216,25 @@ def remove_news_from_cluster(db: Session, *, cluster_id: int, news_id: int) -> i
     return res.rowcount or 0
 
 
-def get_original_news_details_by_cluster(db: Session, cluster_id: int) -> List[dict]:
+def get_original_news_details_by_cluster(db: Session, cluster_id: int, include_contents: bool = True) -> List[dict]:
     """
     cluster_id를 받아서 연결된 원본 기사들의 [제목, URL, 언론사명]을 반환합니다.
-    (Sources 컴포넌트용 데이터)
+    include_contents=False: contents 제외 (메인 페이지용 경량 응답)
     """
     # 1. News, Company, cluster_news_link 3개를 조인(Join)합니다.
+    columns = [
+        News.news_id,
+        News.title,
+        News.url,
+        Company.name.label("company_name"),
+        News.img_urls,
+        News.created_at,
+    ]
+    if include_contents:
+        columns.append(News.contents)
+
     results = (
-        db.query(
-            News.news_id,
-            News.title,
-            News.url,
-            Company.name.label("company_name"),
-            News.img_urls,
-            News.contents,
-            News.created_at,
-        )
+        db.query(*columns)
         .join(cluster_news_link, News.news_id == cluster_news_link.c.news_id)
         .join(Company, News.company_id == Company.company_id)
         .filter(cluster_news_link.c.cluster_id == cluster_id)
@@ -239,18 +242,20 @@ def get_original_news_details_by_cluster(db: Session, cluster_id: int) -> List[d
     )
 
     # 2. 프론트엔드가 쓰기 편한 리스트 형태로 변환
-    return [
-        {
+    response = []
+    for row in results:
+        item = {
             "news_id": row.news_id,
             "title": row.title,
             "company_name": row.company_name,
             "url": row.url,
             "img_urls": row.img_urls,
-            "contents": row.contents,
             "created_at": row.created_at,
         }
-        for row in results
-    ]
+        if include_contents:
+            item["contents"] = row.contents
+        response.append(item)
+    return response
 
 
 # -------------------------

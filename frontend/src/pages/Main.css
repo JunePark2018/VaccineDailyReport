@@ -2332,6 +2332,13 @@
   /* To flow with badge if needed, or block */
 }
 
+/* 로고 폴백 이미지: 영역 안에 여백 두고 표시 */
+.main-page img.logo-fallback {
+  object-fit: contain !important;
+  padding: 20% !important;
+  background-color: #f5f5f5;
+}
+
 /* Fade Slide Up Animation */
 @keyframes fadeSlideUp {
   from {

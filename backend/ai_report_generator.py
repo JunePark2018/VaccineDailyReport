@@ -58,7 +58,7 @@ Source Articles:
 
 Response must be in JSON format only:
 {{
-    "title": "Headline in Korean",
+    "title": "Headline in Korean (MUST be 50 characters or fewer)",
     "contents": "Article Body in Korean"
 }}
 """
@@ -124,7 +124,7 @@ Especially, remove all multimedia reference phrases like "as seen in the video",
 
 [Output Format - JSON]
 {{
-    "title": "Final Revised Headline (Korean)",
+    "title": "Final Revised Headline (Korean, MUST be 50 characters or fewer)",
     "contents": "Final Revised Body (Korean)",
     "search_keyword": "English Search Keyword (e.g., Samsung earnings shock)"
 }}

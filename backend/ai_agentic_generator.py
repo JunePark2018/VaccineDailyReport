@@ -64,7 +64,7 @@ Mandatory Requirements:
 
 Output JSON Format:
 {{
-    "title": "Korean Headline",
+    "title": "Korean Headline (MUST be 50 characters or fewer)",
     "contents": "Full article body written in Korean",
     "search_keyword": "English Search Keyword (e.g., Samsung chip shortage)"
 }}
@@ -132,7 +132,7 @@ Task: Rewrite the article incorporating the critic's feedback.
 
 Output JSON Format:
 {{
-    "title": "Revised Korean Headline",
+    "title": "Revised Korean Headline (MUST be 50 characters or fewer)",
     "contents": "Revised Full Article Body in Korean",
     "search_keyword": "English Search Keyword"
 }}

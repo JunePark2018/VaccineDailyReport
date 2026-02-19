@@ -219,11 +219,18 @@ def get_report_detail(report_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/clusters/{cluster_id}/news")
-def read_cluster_news(cluster_id: int, db: Session = Depends(get_db)):
+def read_cluster_news(
+    cluster_id: int,
+    fields: Optional[str] = Query(None, description="반환할 필드 (예: 'light' = contents 제외)"),
+    db: Session = Depends(get_db),
+):
     """
     클러스터 ID를 받아서 연결된 원본 기사 목록(제목, URL, 언론사명)을 반환합니다.
+    fields=light: contents 제외 (메인 페이지용 경량 응답)
     """
-    original_news_list = crud.get_original_news_details_by_cluster(db, cluster_id)
+    original_news_list = crud.get_original_news_details_by_cluster(
+        db, cluster_id, include_contents=(fields != "light")
+    )
 
     return original_news_list
 
@@ -530,18 +537,16 @@ def get_report_timeline(report_id: int, limit: int = 5, db: Session = Depends(ge
     for item in related_past:
         results.append({
             "id": item.report_id,
-            "date": item.created_at.strftime("%Y-%m-%d"),
+            "date": item.created_at.strftime("%Y.%m.%d"),
+            "time": item.created_at.strftime("%H:%M"),
             "title": item.title,
-            "summary": (item.contents or "")[:60] + "..."
         })
-    
-    # 마지막에 현재 리포트도 포함? (선택사항)
-    # 타임라인의 '현재' 점을 찍어주면 좋음
+
     results.append({
         "id": current_report.report_id,
-        "date": current_report.created_at.strftime("%Y-%m-%d"),
+        "date": current_report.created_at.strftime("%Y.%m.%d"),
+        "time": current_report.created_at.strftime("%H:%M"),
         "title": current_report.title,
-        "summary": "현재 보고 있는 리포트",
         "is_current": True
     })
 

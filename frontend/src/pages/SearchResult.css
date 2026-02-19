@@ -278,6 +278,15 @@
     line-height: 1.6;
 }
 
+.AI_Left_Section {
+    flex: 1;
+    min-width: 0;
+}
+
+.AI_Right_Section {
+    flex: 0 0 420px;
+}
+
 .Hot_Topic_Section {
     width: 100%;
 }
@@ -316,18 +325,17 @@
     bottom: 0px;
     left: 0px;
     width: 100%;
-    padding: 20px 10px 10px 10px;
-    /* Reduced padding for 21:9 ratio */
+    padding: 30px 10px 10px 10px;
     font-size: 14px;
     font-weight: bold;
     color: #fff;
     line-height: 1.4;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.6) 50%, transparent);
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.6) 60%, transparent);
     text-align: left;
     white-space: normal;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);

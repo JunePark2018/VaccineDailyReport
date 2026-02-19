@@ -185,14 +185,12 @@ const MyPage = () => {
   };
 
   const handleLogout = () => {
-    if (window.confirm("로그아웃 하시겠습니까?")) {
-      localStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('user_id');
-      localStorage.removeItem('login_id');
-      localStorage.removeItem('username');
-      navigate('/');
-      window.location.reload();
-    }
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('user_id');
+    localStorage.removeItem('login_id');
+    localStorage.removeItem('username');
+    navigate('/');
+    window.location.reload();
   };
 
   const handleTabChange = (tab) => {
@@ -201,13 +199,10 @@ const MyPage = () => {
 
   // Remove Handlers
   const handleRemoveLike = async (newsId) => {
-    if (!window.confirm("정말 취소하시겠습니까?")) return;
     try {
-      // Toggle request (if value matches, it removes)
-      // Value 1 is like. Sending 1 again removes it.
       await axios.post(`${API_BASE_URL}/news/${newsId}/reaction?value=1&login_id=${login_id}`);
-
       setLikedArticles(prev => prev.filter(a => a.report_id !== newsId));
+      showToast("좋아요가 취소되었습니다.", "success");
     } catch (err) {
       console.error("좋아요 취소 실패:", err);
       showToast("처리 중 오류가 발생했습니다.", "error");
@@ -215,10 +210,10 @@ const MyPage = () => {
   };
 
   const handleRemoveScrap = async (newsId) => {
-    if (!window.confirm("스크랩을 취소하시겠습니까?")) return;
     try {
       await axios.post(`${API_BASE_URL}/users/${login_id}/scraps`, { report_id: newsId });
       setScrappedArticles(prev => prev.filter(a => a.report_id !== newsId));
+      showToast("스크랩이 취소되었습니다.", "success");
     } catch (err) {
       console.error("스크랩 취소 실패:", err);
       showToast("처리 중 오류가 발생했습니다.", "error");

@@ -232,21 +232,28 @@ async def generate_graph_report(graph: Dict[str, List[Dict]], companies: List[st
     Key Entity Analysis (Graph Data):
     {graph_summary}
 
-    Task: Write a comparative analysis in Korean.
+    Task: Write a comparative analysis in Korean. Focus on what makes EACH outlet's coverage UNIQUELY DIFFERENT from the others.
+
+    Core Principle (CRITICAL):
+    - First identify facts/angles that ALL outlets share (common ground).
+    - Then for each outlet, find what ONLY THAT outlet emphasizes, frames differently, or includes exclusively.
+    - NEVER describe a commonly shared fact as if it were a unique characteristic of one outlet.
+    - When a clear unique angle EXISTS: describe it (unique facts, exclusive framing, distinct tone).
+    - When NO clear unique angle exists: instead describe the outlet's NARRATIVE STRUCTURE — what topics it covers in what order, what it leads with, what it closes with, and how it organizes information. Even identical facts can be arranged differently.
 
     Formatting Rules:
-    1. **Structure**: Return a list of objects. Each object must have:
-       - "company": The specific media outlet name.
-       - "hashtags": A list of exactly 3 identifying keywords (Korean), starting with '#'.
-       - "summary": A SINGLE, punchy sentence summarizing their stance (max 15 words). MUST end with '~ㅂ니다' style.
-       - "evidence": A detailed explanation (2-3 sentences) supporting the summary. MUST end with '~ㅂ니다' style.
+    1. **Structure**: Return a list of objects. EXACTLY ONE object per media outlet. Each object must have:
+       - "company": The specific media outlet name (always a single outlet, never grouped).
+       - "hashtags": A list of exactly 3 identifying keywords (Korean), starting with '#'. These should capture the outlet's unique angle or narrative approach.
+       - "summary": A SINGLE, punchy sentence summarizing their unique stance OR narrative approach (max 15 words). MUST end with '~ㅂ니다' style.
+       - "evidence": A detailed explanation (2-3 sentences) supporting the summary. MUST end with '~ㅂ니다' style. When describing narrative structure, mention what the article leads with, how it develops, and what it emphasizes in closing.
     2. **Tone**: Polite and formal ('~ㅂ니다' style).
 
     Constraint Rules (CRITICAL):
-    1. **NO English**: Do NOT use any English words in 'summary' or 'evidence'. Translate all terms to Korean (e.g., 'acknowledged' -> '인정했습니다').
+    1. **NO English**: Do NOT use any English words in 'summary' or 'evidence'. Translate all terms to Korean.
     2. **NO Parentheses**: Do NOT use `( )` or `[ ]` in the text. Explain the context in words instead.
-    3. Hashtags should represent the unique frames used by the media.
-    4. The evidence should cite specific entities or relations from the graph to support the summary.
+    3. Hashtags should represent the unique frames or narrative choices of each media outlet, not shared topics.
+    4. Do NOT fabricate artificial differences. If the content is similar, focus on structural/organizational differences instead.
     """
 
     try:

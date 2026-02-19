@@ -26,8 +26,8 @@
     font-weight: 700;
     margin-bottom: 20px;
     color: #111;
-    border-left: none;
-    padding-left: 0;
+    border-left: 4px solid #333;
+    padding-left: 10px;
     text-align: left;
     font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     letter-spacing: -0.5px;
@@ -79,26 +79,7 @@
 }
 
 .AgeGenderChart .bar-tooltip {
-    position: absolute;
-    top: -32px;
-    background: #222;
-    color: white;
-    padding: 5px 10px;
-    font-size: 11px;
-    font-weight: 600;
-    opacity: 0;
-    transition: opacity 0.2s ease, transform 0.2s ease;
-    pointer-events: none;
-    white-space: nowrap;
-    z-index: 10;
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    transform: translateY(5px);
-}
-
-.AgeGenderChart .bar-item:hover .bar-tooltip {
-    opacity: 1;
-    transform: translateY(0);
+    display: none;
 }
 
 .AgeGenderChart .bar-track {
@@ -110,17 +91,10 @@
     border-radius: 8px;
     border: 1px solid #e0e0e0;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .AgeGenderChart .gender-bar-track {
     height: 200px;
-}
-
-.AgeGenderChart .bar-item:hover .bar-track {
-    transform: translateY(-2px);
-    border-color: #bbb;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 .AgeGenderChart .bar-fill {
@@ -142,10 +116,6 @@
 
 .AgeGenderChart .female-bar-fill {
     background: #ec4899;
-}
-
-.AgeGenderChart .bar-item:hover .bar-fill {
-    opacity: 0.85;
 }
 
 .AgeGenderChart .bar-label {
@@ -188,12 +158,6 @@
     border-radius: 50%;
     position: relative;
     border: 1px solid #e0e0e0;
-    transition: transform 0.2s ease, border-color 0.2s ease;
-}
-
-.AgeGenderChart .pie-chart:hover {
-    transform: translateY(-2px);
-    border-color: #bbb;
 }
 
 .AgeGenderChart .pie-chart-center {

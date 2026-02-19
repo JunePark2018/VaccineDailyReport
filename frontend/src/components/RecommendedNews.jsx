@@ -3,37 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import logoImg from './Logo.png';
 import './RecommendedNews.css';
 
-const RecommendedNews = ({ allArticles, userName, imageMap = {} }) => {
+const RecommendedNews = ({ allArticles, userName, imageMap = {}, subscribedKeywords = [] }) => {
     const navigate = useNavigate();
     const [recommendedArticles, setRecommendedArticles] = useState([]);
-    const [subscribedKeywords, setSubscribedKeywords] = useState([]); // [New]
-    const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000'; // Make sure API_BASE_URL is available
-
-    useEffect(() => {
-        const fetchUserData = async () => {
-            const loginId = localStorage.getItem('login_id');
-            if (loginId) {
-                try {
-                    // Fetch user info to get subscribed keywords
-                    // Assuming axios is available or imported. If not, need to import axios.
-                    // Wait, axios is likely not imported in this component. I should add import axios.
-                    // But I cannot see imports here. I will assume axios needs to be imported or use fetch.
-                    // Let's use fetch for simplicity or assume axios is passed?
-                    // Better to add `import axios` at top, but this tool edit is local.
-                    // I will check imports later. For now, use fetch or assume axios.
-                    // Let's use fetch to be safe if axios isn't imported.
-                    const response = await fetch(`${API_BASE_URL}/users/${loginId}`);
-                    if (response.ok) {
-                        const data = await response.json();
-                        setSubscribedKeywords(data.subscribed_keywords || []);
-                    }
-                } catch (e) {
-                    console.error("Failed to fetch user subscriptions", e);
-                }
-            }
-        };
-        fetchUserData();
-    }, []);
 
     useEffect(() => {
         // 1. Load User History
@@ -63,16 +35,18 @@ const RecommendedNews = ({ allArticles, userName, imageMap = {} }) => {
         // Subscribed Keyword: +5
         // Tag Match: +3 points
         // Category Match: +1 point
+        const getKeywordText = (k) => (typeof k === 'string' ? k : k?.text || '');
+
         const scored = allArticles.map(art => {
             let score = 0;
             const keywords = parseKeywords(art);
 
             // Subscribed Keyword matching (+5)
-            const subMatchCount = keywords.filter(k => subscribedKeywords.includes(k)).length;
+            const subMatchCount = keywords.filter(k => subscribedKeywords.includes(getKeywordText(k))).length;
             score += subMatchCount * 5;
 
             // Tag matching (+3)
-            const matchCount = keywords.filter(k => viewedTags.includes(k)).length;
+            const matchCount = keywords.filter(k => viewedTags.includes(getKeywordText(k))).length;
             score += matchCount * 3;
 
             // Category matching (+1)
@@ -84,17 +58,13 @@ const RecommendedNews = ({ allArticles, userName, imageMap = {} }) => {
         });
 
         // 3. Sort & Slice
-        // Filter out 0 score items (unless we want to show popular as fallback, but user requested hide)
-        // Actually, user said if "first time or not logged in" -> hide.
-        // If user read 1 article, they are not "first time".
-        // So we show items with score > 0.
         const filtered = scored.filter(a => a.score > 0)
             .sort((a, b) => b.score - a.score)
             .slice(0, 10); // Top 10
 
         setRecommendedArticles(filtered);
 
-    }, [allArticles, subscribedKeywords]); // Add subscribedKeywords to dependency
+    }, [allArticles, subscribedKeywords]);
 
     const scrollRef = React.useRef(null);
 
@@ -128,8 +98,8 @@ const RecommendedNews = ({ allArticles, userName, imageMap = {} }) => {
                                 <img
                                     src={imageMap[art.image] || imageMap[`cluster_${art.cluster_id}`] || logoImg}
                                     alt={art.title}
-                                    onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }}
-                                    onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }}
+                                    onLoad={(e) => { if (e.target.src.includes(logoImg)) { e.target.classList.add('logo-fallback'); } else { e.target.style.objectFit = 'cover'; e.target.classList.remove('logo-fallback'); } }}
+                                    onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.classList.add('logo-fallback'); }}
                                 />
                             </div>
                             <div className="recommended-info">
