@@ -1,192 +1,183 @@
+import asyncio
+import concurrent.futures
 import threading
 import time
 from contextlib import asynccontextmanager
-from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
-from fastapi import FastAPI, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import or_
-from scraper_en import GlobalNewsScraper
+from fastapi import FastAPI
 
 from database.engine import engine, SessionLocal
-from database.models import Base, News, Report, Cluster, User
-from schemas import (
-    NewsResponse,
-    ReportResponse,
-    UserCreateRequest,
-    UserLoginRequest,
-    UserResponse,
-    LogViewRequest,
-    UserUpdate,
-)
-
-# [수정] scraper.py에서 run_article_crawler 임포트
-from scraper import run_article_crawler, run_opinion_crawler
+from database.models import Base, News
+from scraper import run_article_crawler, run_opinion_crawler, crawl_news_by_period
 from database.crud import (
     create_news,
-    create_user,
-    get_user,
-    get_user_by_login_id,
     get_or_create_company_by_raw_name,
 )
-from ai_processor import process_news_pipeline
+from ai_processor import process_news_pipeline, process_news_async_internal
 from clustering import run_issue_clustering
-from search_agent import (
-    search_issues_by_keyword,
-    search_hot_topics_by_keyword,
-    search_articles_by_keyword,
-)
+
+TARGET_COMPANIES = [
+    "조선", "KBS", "MBC", "SBS", "연합",
+    "한겨레", "중앙", "경향", "한국", "JTBC",
+]
 
 
-# --- [백그라운드 워커] 주기적으로 뉴스 수집 & AI 분석 ---
+# ---------------------------------------------------------
+# 초기 시드: DB가 비어있을 때 7일치 데이터 수집 + AI 분석
+# ---------------------------------------------------------
+def run_initial_seed():
+    """서버 최초 기동 시 DB가 비어있으면 7일치 뉴스를 수집하고 AI 분석을 실행한다."""
+    print("=" * 60)
+    print("🌱 [Initial Seed] DB가 비어있습니다. 7일치 데이터를 수집합니다.")
+    print("=" * 60)
+
+    today = datetime.now()
+
+    for d in range(7, 0, -1):
+        target = today - timedelta(days=d)
+        target_str = target.strftime("%Y%m%d")
+
+        print(f"\n🚀 [Seed] {target_str} 처리 중... (D-{d})")
+        db = SessionLocal()
+        try:
+            # Step 1: 네이버 뉴스 크롤링 (해당 날짜)
+            print(f"  📰 1. 뉴스 수집")
+            result = crawl_news_by_period(db, target_str, target_str, pages_per_day=5)
+            print(f"     -> {len(result)}건 수집")
+
+            # Step 2: 클러스터링 (해당 날짜 기준 3일 윈도우)
+            print(f"  🧩 2. 이슈 클러스터링")
+            ref_date = target.replace(hour=23, minute=59, second=59)
+            run_issue_clustering(db, days=3, ref_date=ref_date)
+
+            # Step 3: AI 분석 (미분석 리포트 처리)
+            print(f"  🧠 3. AI 분석")
+            asyncio.run(process_news_async_internal())
+
+        except Exception as e:
+            print(f"  ❌ [Seed Error] {target_str}: {e}")
+        finally:
+            db.close()
+
+        print(f"  ✅ {target_str} 완료")
+
+    print("\n🎉 [Initial Seed] 7일치 데이터 시딩 완료!")
+    print("=" * 60)
+
+
+# ---------------------------------------------------------
+# 실시간 사이클: 5분마다 최신 뉴스 수집 + 분석
+# ---------------------------------------------------------
+def run_realtime_cycle():
+    """실시간 크롤링 사이클 1회 실행."""
+    print("\n⏰ [Realtime] 뉴스 수집 및 분석 사이클 시작...")
+
+    # --- Step 1: 기사 + 오피니언 동시 수집 (별도 DB 세션) ---
+    news_list = []
+    opinion_list = []
+
+    def _crawl_articles():
+        db = SessionLocal()
+        try:
+            return run_article_crawler(db, target_companies=TARGET_COMPANIES)
+        finally:
+            db.close()
+
+    def _crawl_opinions():
+        db = SessionLocal()
+        try:
+            return run_opinion_crawler(db, target_companies=TARGET_COMPANIES)
+        finally:
+            db.close()
+
+    print("  🇰🇷📝 기사 + 오피니언 동시 수집 중...")
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+        f_news = executor.submit(_crawl_articles)
+        f_opinion = executor.submit(_crawl_opinions)
+        news_list = f_news.result()
+        opinion_list = f_opinion.result()
+
+    # --- Step 2: 메인 스레드에서 DB 저장 ---
+    db = SessionLocal()
+    try:
+        for news in news_list:
+            company = get_or_create_company_by_raw_name(db, news["company_name"])
+            create_news(
+                db,
+                title=news["title"],
+                contents=news["contents"],
+                url=news["url"],
+                company_id=company.company_id,
+                is_domestic=True,
+                category=news.get("category"),
+                img_urls=news.get("img_urls"),
+                created_at=(
+                    datetime.fromisoformat(news["time"])
+                    if news["time"] != "시간 정보 없음"
+                    else datetime.now()
+                ),
+            )
+        db.commit()
+        print(f"     -> 기사 {len(news_list)}건 저장")
+
+        for opinion in opinion_list:
+            company = get_or_create_company_by_raw_name(db, opinion["company_name"])
+            create_news(
+                db,
+                title=opinion["title"],
+                contents=opinion["contents"],
+                url=opinion["url"],
+                company_id=company.company_id,
+                is_domestic=True,
+                category="오피니언",
+                img_urls=opinion.get("img_urls"),
+                created_at=(
+                    datetime.fromisoformat(opinion["time"])
+                    if opinion["time"] != "시간 정보 없음"
+                    else datetime.now()
+                ),
+                is_opinion=True,
+                author=opinion.get("author"),
+            )
+        db.commit()
+        print(f"     -> 오피니언 {len(opinion_list)}건 저장")
+
+        # --- Step 3: 군집화 및 AI 분석 ---
+        print("  🤖 군집화 및 AI 이슈 분석 중...")
+        run_issue_clustering(db, days=3)
+        process_news_pipeline()
+        db.commit()
+
+        print("  ✅ [Realtime] 사이클 완료")
+
+    except Exception as e:
+        print(f"  ❌ [Realtime Error] {e}")
+        db.rollback()
+    finally:
+        db.close()
+
+
+# ---------------------------------------------------------
+# 백그라운드 워커 메인
+# ---------------------------------------------------------
 def run_background_worker():
     print("🚀 [System] 백그라운드 워커 가동 시작")
 
+    # 1회성: DB가 비어있으면 7일치 시드
+    db = SessionLocal()
+    news_count = db.query(News).count()
+    db.close()
+
+    if news_count == 0:
+        run_initial_seed()
+    else:
+        print(f"📊 [System] DB에 {news_count}건의 뉴스가 존재합니다. 시드를 건너뜁니다.")
+
+    # 실시간 루프
     while True:
-        print("\n⏰ [Auto] 뉴스 수집 및 분석 사이클 시작...")
-        db = SessionLocal()
-
-        # try:
-        #     # --- [Step 1] 국내 뉴스 수집 ---
-        #     print("🇰🇷 국내 뉴스 수집 중...")
-        #     target_list = [
-        #         "조선",
-        #         "KBS",
-        #         "MBC",
-        #         "SBS",
-        #         "연합",
-        #         "한겨레",
-        #         "중앙",
-        #         "경향",
-        #         "한국",
-        #         "JTBC",
-        #     ]
-        #     # target_list = []  # 테스트용 빈 리스트
-
-        #     # [연동] 수정된 scraper.py의 함수 호출 (db 세션 전달)
-        #     news_list = run_article_crawler(db, target_companies=target_list)
-
-        #     for news in news_list:
-        #         company = get_or_create_company_by_raw_name(db, news["company_name"])
-        #         create_news(
-        #             db,
-        #             title=news["title"],
-        #             contents=news["contents"],
-        #             url=news["url"],
-        #             company_id=company.company_id,
-        #             is_domestic=True,
-        #             # [추가] 수집된 카테고리 정보를 DB에 저장 (중요!)
-        #             category=news.get("category"),
-        #             img_urls=news.get("img_urls"),
-        #             created_at=(
-        #                 datetime.fromisoformat(news["time"])
-        #                 if news["time"] != "시간 정보 없음"
-        #                 else datetime.now()
-        #             ),
-        #         )
-        #     db.commit()
-
-        #     # --- [Step 1b] 오피니언/사설/칼럼 수집 ---
-        #     print("📝 오피니언/칼럼 수집 중...")
-        #     opinion_list = run_opinion_crawler(db, target_companies=target_list)
-        #     for opinion in opinion_list:
-        #         company = get_or_create_company_by_raw_name(db, opinion["company_name"])
-        #         create_news(
-        #             db,
-        #             title=opinion["title"],
-        #             contents=opinion["contents"],
-        #             url=opinion["url"],
-        #             company_id=company.company_id,
-        #             is_domestic=True,
-        #             category="오피니언",
-        #             img_urls=opinion.get("img_urls"),
-        #             created_at=(
-        #                 datetime.fromisoformat(opinion["time"])
-        #                 if opinion["time"] != "시간 정보 없음"
-        #                 else datetime.now()
-        #             ),
-        #             is_opinion=True,
-        #             author=opinion.get("author"),
-        #         )
-        #     db.commit()
-
-        #     # --- [Step 2] 군집화 및 AI 분석 (요약 + 영문 키워드 생성) ---
-        #     print("🤖 군집화 및 AI 이슈 분석 중...")
-        #     run_issue_clustering(db, days=3)
-
-        #     # 이 단계에서 AiGeneratedNews 테이블에 search_keyword와 함께 저장되어야 함
-        #     process_news_pipeline()
-        #     db.commit()
-
-        #     # --- [Step 3] 지연된 외신 추적  ---
-        #     # if GlobalNewsScraper:
-        #     #     # 상태가 PENDING이고 생성된 지 24시간 이내인 이슈들만 추적
-        #     #     BATCH_SIZE = 10
-
-        #     #     pending_issues = (
-        #     #         db.query(Report)
-        #     #         .filter(
-        #     #             Report.global_search_status == "PENDING",
-        #     #             Report.created_at >= datetime.now() - timedelta(hours=24),
-        #     #         )
-        #     #         .order_by(Report.search_retry_count.asc())
-        #     #         .limit(BATCH_SIZE)
-        #     #         .all()
-        #     #     )
-
-        #     #     if pending_issues:
-        #     #         print(f"🌍 [Batch] 대기 중인 이슈 {len(pending_issues)}개 외신 추적 시작 (Limit: {BATCH_SIZE})...")
-        #     #         en_scraper = GlobalNewsScraper()
-
-        #     #         for issue in pending_issues:
-        #     #             # 1. 24시간 초과 체크 (DB 쿼리 필터와 별개로 안전장치)
-        #     #             time_diff = datetime.now() - issue.created_at
-        #     #             if time_diff > timedelta(hours=24):
-        #     #                 issue.global_search_status = "FAILED"
-        #     #                 print(f"💀 '{issue.title}' 시간 초과로 추적 종료")
-        #     #                 continue
-
-        #     #             if not issue.search_keyword:
-        #     #                 continue
-
-        #     #             print(f"🔍 [Retry {issue.search_retry_count}] 키워드: '{issue.search_keyword}'")
-
-        #     #             # 스크래핑 수행
-        #     #             en_results = en_scraper.run(issue.search_keyword)
-
-        #     #             if en_results:
-        #     #                 # 성공 로직
-        #     #                 for en_data in en_results:
-        #     #                     company = get_or_create_company_by_raw_name(db, en_data["company_name"])
-        #     #                     create_news(
-        #     #                         db,
-        #     #                         title=en_data["title"],
-        #     #                         contents=en_data["contents"],
-        #     #                         url=en_data["url"],
-        #     #                         company_id=company.company_id,
-        #     #                         is_domestic=False,
-        #     #                         category=en_data.get("category"),  # 카테고리 추가
-        #     #                         img_urls=en_data.get("img_urls"),
-        #     #                         created_at=datetime.now(),
-        #     #                     )
-        #     #                 issue.global_search_status = "SUCCESS"
-        #     #                 print(f"✨ '{issue.title}' 외신 발견 성공!")
-        #     #             else:
-        #     #                 # 실패 시: 카운트만 증가시키고 상태는 PENDING 유지
-        #     #                 issue.search_retry_count += 1
-        #     #                 print(f"💨 '{issue.title}' 외신 없음. (Retry: {issue.search_retry_count})")
-
-        #     #         en_scraper.close()  # 브라우저 종료
-        #     #         db.commit()
-
-        # except Exception as e:
-        #     print(f"❌ [Error] 백그라운드 워커 오류: {e}")
-        #     db.rollback()
-        # finally:
-        #     db.close()
-
-        print("💤 [Sleep] 1분 대기 중...")
-        time.sleep(150)
+        run_realtime_cycle()
+        print("💤 [Sleep] 5분 대기 중...")
+        time.sleep(300)
 
 
 # --- [FastAPI 앱 설정] ---
