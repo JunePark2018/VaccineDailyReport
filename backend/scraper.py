@@ -3,9 +3,33 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import time
+import threading
+import concurrent.futures
 from datetime import datetime, timedelta
 from sqlalchemy import and_
 from database.models import News, Company
+
+
+# ---------------------------------------------------------
+# 0. 네이버 요청 속도 제한 (스레드 안전)
+# ---------------------------------------------------------
+class RateLimiter:
+    """Token-bucket 방식 글로벌 속도 제한기."""
+    def __init__(self, max_per_second=10.0):
+        self._lock = threading.Lock()
+        self._min_interval = 1.0 / max_per_second
+        self._last_time = 0.0
+
+    def acquire(self):
+        with self._lock:
+            now = time.monotonic()
+            wait = self._last_time + self._min_interval - now
+            if wait > 0:
+                time.sleep(wait)
+            self._last_time = time.monotonic()
+
+
+_naver_rate_limiter = RateLimiter(max_per_second=10)
 
 
 # ---------------------------------------------------------
@@ -88,20 +112,20 @@ def get_news_data(url):
 # ---------------------------------------------------------
 def run_article_crawler(db_session, target_companies=None):
     """
-    1. URL 중복 체크
-    2. 메모리 내 제목 중복 체크 (함수 실행 중 중복 방지)
-    3. DB 내 제목+언론사 중복 체크 (카테고리 꼼수 방지)
+    3-Phase 병렬 크롤러:
+      Phase 1: URL 수집 + DB URL 중복 체크 (순차)
+      Phase 2: HTTP fetch 병렬 처리 (ThreadPoolExecutor)
+      Phase 3: 메모리/DB 중복 체크 + 결과 조립 (순차)
     """
     sections = ["100", "101", "102", "103", "104", "105"]
     section_names = {"100": "정치", "101": "경제", "102": "사회", "103": "생활/문화", "104": "세계", "105": "IT/과학"}
-    new_news_list = []
-
-    # 메모리 중복 체크용 변수 초기화
-    collected_titles = set()
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
     }
+
+    # ── Phase 1: URL 수집 + DB 중복 체크 (순차) ──
+    urls_to_fetch = []  # [(url, sid), ...]
 
     for sid in sections:
         print(f"\n--- [{section_names[sid]}] 섹션 스캔 중... ---")
@@ -110,64 +134,74 @@ def run_article_crawler(db_session, target_companies=None):
         try:
             res = requests.get(list_url, headers=headers, timeout=10)
             soup = BeautifulSoup(res.text, "html.parser")
-
             atags = soup.select(".list_body a, .sa_text_title")
-            # URL 리스트 확보
-            urls = list(set([a.get("href") for a in atags if a.get("href") and "article" in a.get("href")]))
+            urls = list(set(a.get("href") for a in atags if a.get("href") and "article" in a.get("href")))
 
             for url in urls:
-                # 1. DB URL 중복 체크 (가장 빠름)
                 if db_session.query(News.news_id).filter(News.url == url).first():
                     continue
-
-                data = get_news_data(url)
-                if not data:
-                    continue
-
-                # 2. 제목 정제 및 키 생성
-                clean_title = data["title"].strip()
-                title_key = (data["company_name"], clean_title)
-
-                # [메모리 체크] 이번 실행 중에 이미 수집했는지 확인
-                if title_key in collected_titles:
-                    print(f"  [SKIP] 메모리 중복: {clean_title[:20]}...")
-                    continue
-
-                # [DB 체크] 기존 DB에 언론사 + 제목이 같은 기사가 있는지 확인
-                exists_content = (
-                    db_session.query(News)
-                    .join(Company)
-                    .filter(News.title == data["title"], Company.name == data["company_name"])
-                    .first()
-                )
-
-                if exists_content:
-                    print(f"  [SKIP] DB 내용 중복: {clean_title[:20]}...")
-                    collected_titles.add(title_key)
-                    continue
-
-                # 3. 언론사 필터링
-                if target_companies:
-                    if not any(tc in data["company_name"] for tc in target_companies):
-                        continue
-
-                # 수집 성공 처리
-                print(f"  ✅ [NEW] {data['company_name']} | {clean_title[:30]}...")
-                collected_titles.add(title_key)
-
-                # 섹션 정보 주입
-                data["category"] = section_names[sid]
-                # [추가] 생활/문화 -> 사회 로 통합 저장
-                if data["category"] == "생활/문화":
-                    data["category"] = "사회"
-
-                new_news_list.append(data)
-
-                time.sleep(0.1)
+                urls_to_fetch.append((url, sid))
 
         except Exception as e:
             print(f"  ❌ [{sid}] 섹션 오류: {e}")
             continue
+
+    print(f"\n--- 총 {len(urls_to_fetch)}개 기사 병렬 수집 시작 ---")
+
+    # ── Phase 2: HTTP fetch 병렬 처리 ──
+    fetched_results = []  # [(data, sid), ...]
+
+    def _fetch_news(url):
+        _naver_rate_limiter.acquire()
+        return get_news_data(url)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_meta = {
+            executor.submit(_fetch_news, url): (url, sid)
+            for url, sid in urls_to_fetch
+        }
+        for future in concurrent.futures.as_completed(future_to_meta):
+            url, sid = future_to_meta[future]
+            try:
+                data = future.result()
+                if data:
+                    fetched_results.append((data, sid))
+                    print(f"  📥 [{section_names[sid]}] {data['company_name']} | {data['title'][:40]}")
+            except Exception as e:
+                print(f"  ❌ fetch 실패: {url}: {e}")
+
+    # ── Phase 3: 중복 체크 + 필터 + 결과 조립 (순차) ──
+    new_news_list = []
+    collected_titles = set()
+
+    for data, sid in fetched_results:
+        clean_title = data["title"].strip()
+        title_key = (data["company_name"], clean_title)
+
+        if title_key in collected_titles:
+            continue
+
+        exists_content = (
+            db_session.query(News)
+            .join(Company)
+            .filter(News.title == data["title"], Company.name == data["company_name"])
+            .first()
+        )
+        if exists_content:
+            collected_titles.add(title_key)
+            continue
+
+        if target_companies:
+            if not any(tc in data["company_name"] for tc in target_companies):
+                continue
+
+        data["category"] = section_names[sid]
+        if data["category"] == "생활/문화":
+            data["category"] = "사회"
+
+        collected_titles.add(title_key)
+        new_news_list.append(data)
+        print(f"  ✅ [NEW] {data['company_name']} | {clean_title[:30]}...")
 
     return new_news_list
 
@@ -298,9 +332,11 @@ def crawl_news_by_period(
     sleep_sec=0.1
 ):
     """
-    특정 기간 (start_date ~ end_date) 동안의 뉴스를 수집합니다.
+    특정 기간 뉴스 수집 (3-Phase 병렬 패턴, 날짜별 처리).
     Format: 'YYYYMMDD'
     """
+    from database.crud import get_or_create_company_by_raw_name, create_news
+
     try:
         start_dt = datetime.strptime(start_date_str, "%Y%m%d")
         end_dt = datetime.strptime(end_date_str, "%Y%m%d")
@@ -312,33 +348,20 @@ def crawl_news_by_period(
         print("❌ 시작일이 종료일보다 늦습니다.")
         return []
 
-    # 날짜 리스트 생성
     date_list = []
     curr = start_dt
     while curr <= end_dt:
         date_list.append(curr)
         curr += timedelta(days=1)
-    
-    # 최신 날짜부터 수집 역순? 혹은 순서대로? -> 보통 과거 데이터 채우기면 최신순이 나을수도 있으나
-    # 여기서는 입력된 순서대로 (과거 -> 미래) 진행하거나 역순으로 진행
-    # run_past_crawler 취지상 상관없음.
-    
+
     total_collected = []
-    
     section_names = {
-        "100": "정치",
-        "101": "경제",
-        "102": "사회",
-        "103": "생활/문화",
-        "104": "세계",
-        "105": "IT/과학",
+        "100": "정치", "101": "경제", "102": "사회",
+        "103": "생활/문화", "104": "세계", "105": "IT/과학",
     }
-    
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
     }
-    
-    # 메모리 중복 방지
     collected_titles = set()
 
     print(f"🚀 기간 수집 시작: {start_date_str} ~ {end_date_str} (총 {len(date_list)}일)")
@@ -347,105 +370,104 @@ def crawl_news_by_period(
         ymd = target_date.strftime("%Y%m%d")
         print(f"\n📅 [Target] {ymd}")
 
-        for sid in sections:
-            # print(f"   └─ [{section_names.get(sid, sid)}] ...")
-            
-            for page in range(1, pages_per_day + 1):
-                list_url = (
-                    "https://news.naver.com/main/list.naver" f"?mode=LSD&mid=sec&sid1={sid}&date={ymd}&page={page}"
-                )
+        # ── Phase 1: 해당 날짜의 모든 URL 수집 (순차) ──
+        urls_to_fetch = []  # [(url, sid), ...]
 
+        for sid in sections:
+            for page in range(1, pages_per_day + 1):
+                list_url = f"https://news.naver.com/main/list.naver?mode=LSD&mid=sec&sid1={sid}&date={ymd}&page={page}"
                 try:
                     resp = requests.get(list_url, headers=headers, timeout=10)
                     resp.raise_for_status()
                     soup = BeautifulSoup(resp.text, "html.parser")
-
                     atags = soup.select(".list_body a, .sa_text_title, a[href*='article']")
-                    urls = [a.get("href") for a in atags if a.get("href") and "article" in a.get("href")]
-                    urls = list(set(urls))
+                    urls = list(set(a.get("href") for a in atags if a.get("href") and "article" in a.get("href")))
 
                     if not urls:
                         break
 
                     for url in urls:
-                        # DB URL 중복 체크
                         if db_session.query(News.news_id).filter(News.url == url).first():
                             continue
-
-                        data = get_news_data(url)
-                        if not data:
-                            continue
-
-                        clean_title = data["title"].strip()
-                        title_key = (data["company_name"], clean_title)
-
-                        if title_key in collected_titles:
-                            continue
-
-                        # DB 제목+언론사 중복 체크
-                        exists = (
-                            db_session.query(News)
-                            .join(Company)
-                            .filter(News.title == data["title"], Company.name == data["company_name"])
-                            .first()
-                        )
-                        if exists:
-                            collected_titles.add(title_key)
-                            continue
-
-                        # 카테고리 매핑
-                        if data.get("category") == "미분류":
-                            data["category"] = section_names.get(sid, "미분류")
-                        if data["category"] == "생활/문화":
-                            data["category"] = "사회"
-
-                        # 저장 (여기서는 리스트에 담아서 리턴하지 않고 바로 DB 저장해도 되지만, 
-                        # 기존 구조를 따라 리스트 반환 후 외부에서 저장하거나, 
-                        # 여기서는 run_past_crawler에서 바로 저장 로직을 수행하도록 
-                        # News 객체를 생성해 DB에 add 하는게 낫다. 
-                        # 하지만 기존 run_article_crawler 패턴을 보면 리스트 반환임.
-                        # -> 메모리 문제 있을 수 있으니 바로바로 저장하자.)
-                        
-                        # 회사 찾기/생성
-                        from database.crud import get_or_create_company_by_raw_name, create_news
-                        
-                        company = get_or_create_company_by_raw_name(db_session, data["company_name"])
-                        
-                        # 날짜 파싱 (data['time']) -> datetime
-                        # data['time'] 예: "2024-01-01 10:00:00" or "시간 정보 없음"
-                        # 네이버 상세 파싱에서 'data-date-time' 속성은 "2024-02-08 22:00:01" 포맷임
-                        created_at = datetime.now()
-                        if data["time"] != "시간 정보 없음":
-                            try:
-                                created_at = datetime.strptime(data["time"], "%Y-%m-%d %H:%M:%S")
-                            except:
-                                pass
-                        
-                        create_news(
-                            db_session,
-                            title=data["title"],
-                            contents=data["contents"],
-                            url=data["url"],
-                            company_id=company.company_id,
-                            is_domestic=True,
-                            category=data["category"],
-                            img_urls=data["img_urls"],
-                            created_at=created_at
-                        )
-                        # 커밋은 페이지 단위 or 하루 단위
-                        
-                        collected_titles.add(title_key)
-                        total_collected.append(data)
-                        print(f"     ✅ [Saved] {data['company_name']} | {clean_title[:15]}...")
-                        
-                        time.sleep(sleep_sec)
-                    
-                    # 페이지 단위 커밋
-                    db_session.commit()
+                        urls_to_fetch.append((url, sid))
 
                 except Exception as e:
                     print(f"     ❌ [Error] {ymd} {sid} p{page}: {e}")
                     continue
+
+        # ── Phase 2: HTTP fetch 병렬 처리 ──
+        fetched_results = []  # [(data, sid), ...]
+
+        def _fetch(url):
+            _naver_rate_limiter.acquire()
+            return get_news_data(url)
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            future_map = {
+                executor.submit(_fetch, url): (url, sid)
+                for url, sid in urls_to_fetch
+            }
+            for future in concurrent.futures.as_completed(future_map):
+                url, sid = future_map[future]
+                try:
+                    data = future.result()
+                    if data:
+                        fetched_results.append((data, sid))
+                        print(f"     📥 {data['company_name']} | {data['title'][:40]}")
+                except Exception:
+                    pass
+
+        # ── Phase 3: 중복 체크 + DB 저장 (순차) ──
+        day_count = 0
+        for data, sid in fetched_results:
+            clean_title = data["title"].strip()
+            title_key = (data["company_name"], clean_title)
+
+            if title_key in collected_titles:
+                continue
+
+            exists = (
+                db_session.query(News)
+                .join(Company)
+                .filter(News.title == data["title"], Company.name == data["company_name"])
+                .first()
+            )
+            if exists:
+                collected_titles.add(title_key)
+                continue
+
+            if data.get("category") == "미분류":
+                data["category"] = section_names.get(sid, "미분류")
+            if data["category"] == "생활/문화":
+                data["category"] = "사회"
+
+            company = get_or_create_company_by_raw_name(db_session, data["company_name"])
+            created_at = datetime.now()
+            if data["time"] != "시간 정보 없음":
+                try:
+                    created_at = datetime.strptime(data["time"], "%Y-%m-%d %H:%M:%S")
+                except Exception:
+                    pass
+
+            create_news(
+                db_session,
+                title=data["title"],
+                contents=data["contents"],
+                url=data["url"],
+                company_id=company.company_id,
+                is_domestic=True,
+                category=data["category"],
+                img_urls=data.get("img_urls"),
+                created_at=created_at
+            )
+
+            collected_titles.add(title_key)
+            total_collected.append(data)
+            day_count += 1
+            print(f"     ✅ [Saved] {data['company_name']} | {clean_title[:15]}...")
+
+        db_session.commit()
+        print(f"  -> {ymd}: {day_count}건 저장")
 
     return total_collected
 
@@ -530,20 +552,20 @@ def get_opinion_data(url):
 
 def run_opinion_crawler(db_session, target_companies=None):
     """
-    네이버 뉴스 오피니언 섹션(사설, 칼럼, 기자의 시각)에서 기사를 수집합니다.
-    run_article_crawler()와 동일한 3중 중복 체크 적용.
+    3-Phase 병렬 오피니언 크롤러.
     """
     opinion_sections = {
         "263": "사설",
         "264": "칼럼",
         "265": "기자의 시각",
     }
-    new_opinions = []
-    collected_titles = set()
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
     }
+
+    # ── Phase 1: URL 수집 + DB 중복 체크 (순차) ──
+    urls_to_fetch = []
 
     for sid2, section_name in opinion_sections.items():
         print(f"\n--- [오피니언 / {section_name}] 섹션 스캔 중... ---")
@@ -552,50 +574,65 @@ def run_opinion_crawler(db_session, target_companies=None):
         try:
             res = requests.get(list_url, headers=headers, timeout=10)
             soup = BeautifulSoup(res.text, "html.parser")
-
             atags = soup.select(".list_body a, .sa_text_title, a[href*='article']")
-            urls = list(set([a.get("href") for a in atags if a.get("href") and "article" in a.get("href")]))
+            urls = list(set(a.get("href") for a in atags if a.get("href") and "article" in a.get("href")))
 
             for url in urls:
-                # 1. DB URL 중복 체크
                 if db_session.query(News.news_id).filter(News.url == url).first():
                     continue
-
-                data = get_opinion_data(url)
-                if not data:
-                    continue
-
-                # 2. 제목+언론사 중복 체크
-                clean_title = data["title"].strip()
-                title_key = (data["company_name"], clean_title)
-
-                if title_key in collected_titles:
-                    continue
-
-                exists_content = (
-                    db_session.query(News)
-                    .join(Company)
-                    .filter(News.title == data["title"], Company.name == data["company_name"])
-                    .first()
-                )
-
-                if exists_content:
-                    collected_titles.add(title_key)
-                    continue
-
-                # 3. 언론사 필터링
-                if target_companies:
-                    if not any(tc in data["company_name"] for tc in target_companies):
-                        continue
-
-                print(f"  ✅ [OPINION] {data['company_name']} | {clean_title[:30]}...")
-                collected_titles.add(title_key)
-                new_opinions.append(data)
-
-                time.sleep(0.1)
+                urls_to_fetch.append(url)
 
         except Exception as e:
             print(f"  ❌ [오피니언/{section_name}] 오류: {e}")
             continue
+
+    print(f"\n--- 총 {len(urls_to_fetch)}개 오피니언 병렬 수집 시작 ---")
+
+    # ── Phase 2: HTTP fetch 병렬 처리 ──
+    fetched_results = []
+
+    def _fetch_opinion(url):
+        _naver_rate_limiter.acquire()
+        return get_opinion_data(url)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_map = {executor.submit(_fetch_opinion, url): url for url in urls_to_fetch}
+        for future in concurrent.futures.as_completed(future_map):
+            try:
+                data = future.result()
+                if data:
+                    fetched_results.append(data)
+                    print(f"  📥 [오피니언] {data['company_name']} | {data['title'][:40]}")
+            except Exception as e:
+                print(f"  ❌ 오피니언 fetch 실패: {e}")
+
+    # ── Phase 3: 중복 체크 + 필터 + 결과 조립 (순차) ──
+    new_opinions = []
+    collected_titles = set()
+
+    for data in fetched_results:
+        clean_title = data["title"].strip()
+        title_key = (data["company_name"], clean_title)
+
+        if title_key in collected_titles:
+            continue
+
+        exists_content = (
+            db_session.query(News)
+            .join(Company)
+            .filter(News.title == data["title"], Company.name == data["company_name"])
+            .first()
+        )
+        if exists_content:
+            collected_titles.add(title_key)
+            continue
+
+        if target_companies:
+            if not any(tc in data["company_name"] for tc in target_companies):
+                continue
+
+        collected_titles.add(title_key)
+        new_opinions.append(data)
+        print(f"  ✅ [OPINION] {data['company_name']} | {clean_title[:30]}...")
 
     return new_opinions

@@ -1,4 +1,5 @@
 import asyncio
+import concurrent.futures
 import threading
 import time
 from contextlib import asynccontextmanager
@@ -70,13 +71,35 @@ def run_initial_seed():
 def run_realtime_cycle():
     """실시간 크롤링 사이클 1회 실행."""
     print("\n⏰ [Realtime] 뉴스 수집 및 분석 사이클 시작...")
+
+    # --- Step 1: 기사 + 오피니언 동시 수집 (별도 DB 세션) ---
+    news_list = []
+    opinion_list = []
+
+    def _crawl_articles():
+        db = SessionLocal()
+        try:
+            return run_article_crawler(db, target_companies=TARGET_COMPANIES)
+        finally:
+            db.close()
+
+    def _crawl_opinions():
+        db = SessionLocal()
+        try:
+            return run_opinion_crawler(db, target_companies=TARGET_COMPANIES)
+        finally:
+            db.close()
+
+    print("  🇰🇷📝 기사 + 오피니언 동시 수집 중...")
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+        f_news = executor.submit(_crawl_articles)
+        f_opinion = executor.submit(_crawl_opinions)
+        news_list = f_news.result()
+        opinion_list = f_opinion.result()
+
+    # --- Step 2: 메인 스레드에서 DB 저장 ---
     db = SessionLocal()
-
     try:
-        # --- Step 1: 국내 뉴스 수집 ---
-        print("  🇰🇷 국내 뉴스 수집 중...")
-        news_list = run_article_crawler(db, target_companies=TARGET_COMPANIES)
-
         for news in news_list:
             company = get_or_create_company_by_raw_name(db, news["company_name"])
             create_news(
@@ -95,11 +118,8 @@ def run_realtime_cycle():
                 ),
             )
         db.commit()
-        print(f"     -> {len(news_list)}건 수집")
+        print(f"     -> 기사 {len(news_list)}건 저장")
 
-        # --- Step 1b: 오피니언/사설/칼럼 수집 ---
-        print("  📝 오피니언/칼럼 수집 중...")
-        opinion_list = run_opinion_crawler(db, target_companies=TARGET_COMPANIES)
         for opinion in opinion_list:
             company = get_or_create_company_by_raw_name(db, opinion["company_name"])
             create_news(
@@ -120,9 +140,9 @@ def run_realtime_cycle():
                 author=opinion.get("author"),
             )
         db.commit()
-        print(f"     -> {len(opinion_list)}건 수집")
+        print(f"     -> 오피니언 {len(opinion_list)}건 저장")
 
-        # --- Step 2: 군집화 및 AI 분석 ---
+        # --- Step 3: 군집화 및 AI 분석 ---
         print("  🤖 군집화 및 AI 이슈 분석 중...")
         run_issue_clustering(db, days=3)
         process_news_pipeline()
