@@ -50,11 +50,13 @@ const Timeline = ({ currentArticleId }) => {
                             }
                         }}
                     >
+                        <div className="timeline-date-col">
+                            <span className="timeline-date">{item.date}</span>
+                            <span className="timeline-time">{item.time}</span>
+                        </div>
                         <div className="timeline-dot"></div>
                         <div className="timeline-content">
-                            <div className="timeline-date">{item.date}</div>
                             <div className="timeline-content-title">{item.title}</div>
-                            <div className="timeline-summary">{item.summary}</div>
                         </div>
                     </li>
                 ))}

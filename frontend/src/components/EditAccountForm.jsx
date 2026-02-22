@@ -7,12 +7,14 @@ import axios from 'axios';
 // Reuse styles from EditAccount.css, but we might want to scoped or rename later.
 // For now, assuming MyPage will load EditAccount.css or we import it here.
 // Since EditAccount.css selectors are scoped to .edit-account-container, we should keep that wrapper or update CSS.
+import { useToast } from './Toast';
 import './EditAccountForm.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 export default function EditAccountForm({ loginId, onUpdateSuccess }) {
     const navigate = useNavigate();
+    const showToast = useToast();
 
     // --- State Management ---
     const [formData, setFormData] = useState({
@@ -52,7 +54,7 @@ export default function EditAccountForm({ loginId, onUpdateSuccess }) {
                 setSelectedCategories(data.subscribed_categories || []);
             } catch (error) {
                 console.error("사용자 정보 로딩 실패:", error);
-                alert("사용자 정보를 불러오는 데 실패했습니다.");
+                showToast("사용자 정보를 불러오는 데 실패했습니다.", "error");
             } finally {
                 setLoading(false);
             }
@@ -182,12 +184,12 @@ export default function EditAccountForm({ loginId, onUpdateSuccess }) {
             localStorage.removeItem('login_id');
             localStorage.removeItem('username');
 
-            alert('회원탈퇴가 완료되었습니다.');
+            showToast('회원탈퇴가 완료되었습니다.', "success");
             navigate('/');
             window.location.reload();
         } catch (error) {
             console.error("회원탈퇴 실패:", error);
-            alert(`회원탈퇴에 실패했습니다.\n${error.response?.data?.detail || error.message}`);
+            showToast(`회원탈퇴에 실패했습니다. ${error.response?.data?.detail || error.message}`, "error");
         }
     };
 
@@ -209,11 +211,11 @@ export default function EditAccountForm({ loginId, onUpdateSuccess }) {
 
             try {
                 await axios.put(`${API_BASE_URL}/users/${formData.loginId}`, submitData);
-                alert("회원 정보가 수정되었습니다.");
+                showToast("회원 정보가 수정되었습니다.", "success");
                 if (onUpdateSuccess) onUpdateSuccess();
             } catch (error) {
                 console.error("업데이트 실패:", error);
-                alert("회원 정보 수정 중 오류가 발생했습니다.");
+                showToast("회원 정보 수정 중 오류가 발생했습니다.", "error");
             }
         }
     };

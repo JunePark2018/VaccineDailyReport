@@ -17,38 +17,43 @@ MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 # ======================================================================================
 
 
-async def compare_articles_with_graph(articles: List[Dict[str, Any]]) -> Dict[str, Any]:
+async def compare_articles_with_graph(articles: List[Dict[str, Any]], mode: str = "news") -> Dict[str, Any]:
     """
     Main entry point for GraphRAG comparison.
-    1. Filter: Pick Top 2 articles per company.
-    2. Extract: Extract (Entity -> Stance -> Target) triples per company.
-    3. Normalize: Merge synonyms (e.g., 'Samsung' == 'Samsung Elec').
-    4. Analyze: Compare stances on the same entities.
-    """
-    print("   🕸️ [GraphRAG] Starting Comparative Analysis...")
+    mode="news":    팩트 기사 비교분석 → media_comparison_bullets
+    mode="opinion": 오피니언/사설 비교분석 → opinion_bullets
 
-    # 1. Group & Filter (Top 2 per company to save tokens)
+    1. Group: Group articles by company.
+    2. Extract: Extract triples from EVERY article individually (parallel).
+    3. Normalize: Merge synonyms across all triples (dedup).
+    4. Analyze: Compare stances on the same entities from the full graph.
+    """
+    label = "Opinion" if mode == "opinion" else "News"
+    print(f"   [GraphRAG-{label}] Starting Comparative Analysis...")
+
+    # 1. Group articles by company
     company_groups = defaultdict(list)
     for art in articles:
         c = art.get("company_name", "Unknown")
         company_groups[c].append(art)
 
-    selected_texts = {}  # { "Chosun": "Title... Content...", ... }
+    # 2. Extract triples from EVERY article individually (parallel)
+    #    → 기사별 추출 후 언론사별로 합산 → 중복은 엔티티 정규화에서 자동 제거
+    tasks = []
+    task_meta = []  # (company, article_index) tracking
     for comp, arts in company_groups.items():
-        # Sort by length and analytical keywords
-        arts.sort(key=lambda x: len(x.get("contents", "")), reverse=True)
-        top_arts = arts[:2]  # Pick Top 2
+        for i, art in enumerate(arts):
+            text = f"[제목] {art.get('title')}\n[본문] {art.get('contents', '')}"
+            tasks.append(extract_triples(comp, text))
+            task_meta.append(comp)
 
-        combined_text = "\n".join([f"[{i + 1}] {a.get('title')}\n{a.get('contents')}" for i, a in enumerate(top_arts)])
-        selected_texts[comp] = combined_text
-
-    # 2. Parallel Extraction
-    # We define a helper to extract triples for one company
-    tasks = [extract_triples(comp, text) for comp, text in selected_texts.items()]
+    print(f"   [GraphRAG-{label}] Extracting triples from {len(tasks)} articles across {len(company_groups)} companies...")
     results = await asyncio.gather(*tasks)
 
-    # results is a list of { "company": "A", "triples": [...] }
-    all_triples_map = {r["company"]: r["triples"] for r in results}
+    # Merge triples by company
+    all_triples_map = defaultdict(list)
+    for comp, result in zip(task_meta, results):
+        all_triples_map[comp].extend(result.get("triples", []))
 
     # 3. Entity Normalization
     # Collect all entities
@@ -77,7 +82,7 @@ async def compare_articles_with_graph(articles: List[Dict[str, Any]]) -> Dict[st
             )
 
     # 4. Generate Final Report
-    report = await generate_graph_report(normalized_graph, selected_texts.keys())
+    report = await generate_graph_report(normalized_graph, company_groups.keys(), mode=mode)
 
     return report
 
@@ -87,16 +92,16 @@ async def compare_articles_with_graph(articles: List[Dict[str, Any]]) -> Dict[st
 # ======================================================================================
 async def extract_triples(company: str, text: str) -> Dict[str, Any]:
     system_prompt = (
-        "You are a Knowledge Graph Extractor. Extract key 'Entity-Relation-Entity' triples from the news text. "
+        "You are a Knowledge Graph Extractor. Extract key 'Entity-Relation-Entity' triples from the news article. "
         "Focus on the main political/economic actors and their specific actions or stances. "
         'Output JSON: { "triples": [ {"subject": "...", "predicate": "...", "object": "...", "sentiment": "positive/negative/neutral"} ] }'
     )
     user_prompt = f"""
     Press: {company}
-    Text:
-    {text[:3000]} (truncated)
-    
-    Extract 5-10 key semantic triples representing the press's coverage.
+    Article:
+    {text[:4000]}
+
+    Extract 3-7 key semantic triples from this single article.
     """
 
     try:
@@ -112,7 +117,7 @@ async def extract_triples(company: str, text: str) -> Dict[str, Any]:
         data = json.loads(resp.choices[0].message.content)
         return {"company": company, "triples": data.get("triples", [])}
     except Exception as e:
-        print(f"   ⚠️ [Graph] Extraction failed for {company}: {e}")
+        print(f"   [Graph] Extraction failed for {company}: {e}")
         return {"company": company, "triples": []}
 
 
@@ -159,8 +164,8 @@ async def normalize_entities(entities: List[str]) -> Dict[str, str]:
 # ======================================================================================
 # Step 4: Reporting
 # ======================================================================================
-async def generate_graph_report(graph: Dict[str, List[Dict]], companies: List[str]) -> Dict[str, Any]:
-    # Select Top 3 most discussed entities (keys with most list items)
+async def generate_graph_report(graph: Dict[str, List[Dict]], companies: List[str], mode: str = "news") -> Dict[str, Any]:
+    # Select Top 5 most discussed entities (keys with most list items)
     top_entities = sorted(graph.keys(), key=lambda k: len(graph[k]), reverse=True)[:5]
 
     # Serialize relevant subgraph
@@ -176,30 +181,79 @@ async def generate_graph_report(graph: Dict[str, List[Dict]], companies: List[st
             graph_summary += f"  - {press}: {'; '.join(views)}\n"
         graph_summary += "\n"
 
-    system_prompt = (
-        "You are a News Analyst. Compare the viewpoints of different media outlets based on the provided Knowledge Graph data. "
-        "Generate 3-5 sharp, insightful bullet points highlighting the differences in tone, focus, or interpretation."
-        "The output MUST be in Korean."
-        'Output JSON: { "media_comparison_bullets": [ "Bullet 1", "Bullet 2" ... ] }'
-    )
+    # mode에 따라 프롬프트 분기
+    if mode == "opinion":
+        output_key = "opinion_bullets"
+        system_prompt = (
+            "You are an Opinion/Editorial Analyst. Compare the editorial stances of different media outlets "
+            "based on the provided Knowledge Graph data extracted from their opinion columns and editorials. "
+            "Focus on the SUBJECTIVE positions, arguments, and editorial framing rather than factual reporting. "
+            "The output MUST be in Korean. "
+            "STRICTLY NO English words or parentheses in the output. "
+            "Generate a structured JSON output with hashtags, a one-liner summary, and detailed evidence."
+            f'Output JSON: {{ "{output_key}": [ {{ "company": "MediaName", "hashtags": ["#Keyword1", "#Keyword2", "#Keyword3"], "summary": "One sentence summary.", "evidence": "Detailed explanation supporting the summary." }}, ... ] }}'
+        )
 
-    user_prompt = f"""
+        user_prompt = f"""
+    Media Outlets Involved: {", ".join(companies)}
+
+    Key Entity Analysis (Graph Data from Opinion/Editorial Articles):
+    {graph_summary}
+
+    Task: Write a comparative analysis of editorial stances in Korean.
+
+    Formatting Rules:
+    1. **Structure**: Return a list of objects. Each object must have:
+       - "company": The specific media outlet name.
+       - "hashtags": A list of exactly 3 identifying keywords (Korean), starting with '#'. These should represent the editorial's unique ARGUMENTATIVE frame.
+       - "summary": A SINGLE sentence summarizing their editorial stance/argument (max 15 words). MUST end with '~ㅂ니다' style. Focus on OPINION, not facts.
+       - "evidence": A detailed explanation (2-3 sentences) supporting the summary with specific arguments from the editorials. MUST end with '~ㅂ니다' style.
+    2. **Tone**: Polite and formal ('~ㅂ니다' style).
+
+    Constraint Rules (CRITICAL):
+    1. **NO English**: Do NOT use any English words in 'summary' or 'evidence'. Translate all terms to Korean.
+    2. **NO Parentheses**: Do NOT use `( )` or `[ ]` in the text.
+    3. Hashtags should represent the editorial's unique argumentative frames, NOT factual topics.
+    4. The evidence should highlight the OPINION and ARGUMENT, citing specific stances from the graph.
+    """
+    else:
+        output_key = "media_comparison_bullets"
+        system_prompt = (
+            "You are a News Analyst. Compare the viewpoints of different media outlets based on the provided Knowledge Graph data. "
+            "The output MUST be in Korean. "
+            "STRICTLY NO English words or parentheses in the output. "
+            "Generate a structured JSON output with hashtags, a one-liner summary, and detailed evidence."
+            f'Output JSON: {{ "{output_key}": [ {{ "company": "MediaName", "hashtags": ["#Keyword1", "#Keyword2", "#Keyword3"], "summary": "One sentence summary.", "evidence": "Detailed explanation supporting the summary." }}, ... ] }}'
+        )
+
+        user_prompt = f"""
     Media Outlets Involved: {", ".join(companies)}
 
     Key Entity Analysis (Graph Data):
     {graph_summary}
 
-    Task: Write a comparative analysis in Korean.
+    Task: Write a comparative analysis in Korean. Focus on what makes EACH outlet's coverage UNIQUELY DIFFERENT from the others.
+
+    Core Principle (CRITICAL):
+    - First identify facts/angles that ALL outlets share (common ground).
+    - Then for each outlet, find what ONLY THAT outlet emphasizes, frames differently, or includes exclusively.
+    - NEVER describe a commonly shared fact as if it were a unique characteristic of one outlet.
+    - When a clear unique angle EXISTS: describe it (unique facts, exclusive framing, distinct tone).
+    - When NO clear unique angle exists: instead describe the outlet's NARRATIVE STRUCTURE — what topics it covers in what order, what it leads with, what it closes with, and how it organizes information. Even identical facts can be arranged differently.
 
     Formatting Rules:
-    1. **Language**: Strictly KOREAN.
-    2. **Tone**: Formal polite style (End sentences with '입니다', '합니다', '보입니다').
-    3. **Variety**: Avoid repetitive use of conjunctions like 'on the other hand'. Use diverse logical connectors (e.g., 'Meanwhile', 'In contrast', 'Unlike') or direct contrasts.
+    1. **Structure**: Return a list of objects. EXACTLY ONE object per media outlet. Each object must have:
+       - "company": The specific media outlet name (always a single outlet, never grouped).
+       - "hashtags": A list of exactly 3 identifying keywords (Korean), starting with '#'. These should capture the outlet's unique angle or narrative approach.
+       - "summary": A SINGLE, punchy sentence summarizing their unique stance OR narrative approach (max 15 words). MUST end with '~ㅂ니다' style.
+       - "evidence": A detailed explanation (2-3 sentences) supporting the summary. MUST end with '~ㅂ니다' style. When describing narrative structure, mention what the article leads with, how it develops, and what it emphasizes in closing.
+    2. **Tone**: Polite and formal ('~ㅂ니다' style).
 
-    Content Rules:
-    1. Identify contradictions, different framings, or causal links (e.g., Press A links X to Y, while Press B links X to Z).
-    2. Focus on *why* they differ (e.g., political stance, target audience, emphasis on economy vs security).
-    3. Be specific about the entities and predicates used.
+    Constraint Rules (CRITICAL):
+    1. **NO English**: Do NOT use any English words in 'summary' or 'evidence'. Translate all terms to Korean.
+    2. **NO Parentheses**: Do NOT use `( )` or `[ ]` in the text. Explain the context in words instead.
+    3. Hashtags should represent the unique frames or narrative choices of each media outlet, not shared topics.
+    4. Do NOT fabricate artificial differences. If the content is similar, focus on structural/organizational differences instead.
     """
 
     try:
@@ -214,4 +268,6 @@ async def generate_graph_report(graph: Dict[str, List[Dict]], companies: List[st
         )
         return json.loads(resp.choices[0].message.content)
     except:
-        return {"media_comparison_bullets": ["분석 실패: 데이터를 처리할 수 없습니다."]}
+        return {output_key: ["분석 실패: 데이터를 처리할 수 없습니다."]}
+
+

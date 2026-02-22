@@ -17,8 +17,8 @@ export default function SearchResult() {
     const [isLoading, setIsLoading] = useState(false);
     const [searchData, setSearchData] = useState(null);
     const [visibleNewsCount, setVisibleNewsCount] = useState(3);
+    const [visibleIssueCount, setVisibleIssueCount] = useState(5);
     const [hasDbResult, setHasDbResult] = useState(false);
-    const [expandedIssues, setExpandedIssues] = useState({});
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
     useEffect(() => {
@@ -36,6 +36,7 @@ export default function SearchResult() {
         setSearchData(null);
         setHasDbResult(false);
         setVisibleNewsCount(3);
+        setVisibleIssueCount(5);
 
         try {
             const res = await axios.get(`${API_BASE_URL}/api/comprehensive-search`, {
@@ -53,66 +54,39 @@ export default function SearchResult() {
                     // Hot Topics 데이터 덮어쓰기 (기존 comprehensive-search 결과 대신 사용)
                     // 데이터 구조 매핑: id, title, url, img_urls, report_id
 
-                    // 이미지도 함께 로딩하기 위해 비동기 처리
-                    // 이미지도 함께 로딩하기 위해 처리 (동기적 순차 처리 요청)
-                    const mappedHotTopics = [];
-                    for (const report of filteredReports) {
-                        let imgUrl = [];
-                        try {
-                            if (report.cluster_id) {
-                                // 순차적으로 API 호출 (await)
-                                const imgRes = await axios.get(`${API_BASE_URL}/reports/clusters/${report.cluster_id}/news`);
-                                const newsList = imgRes.data;
-
-                                // console.log(`[HotTopic Debug] Cluster ${report.cluster_id} News List:`, newsList);
-
-                                if (newsList && newsList.length > 0) {
-                                    // 뉴스 리스트를 순회하며 유효한 이미지가 있는지 확인
-                                    for (const newsItem of newsList) {
-                                        if (newsItem.img_urls) {
-                                            let parsedUrls = newsItem.img_urls;
-
-                                            // JSON 문자열인 경우 파싱
-                                            if (typeof parsedUrls === 'string') {
-                                                try {
-                                                    parsedUrls = JSON.parse(parsedUrls);
-                                                } catch (e) {
-                                                    // 파싱 실패 시 원본 문자열을 배열로 감싸서 시도 (단일 URL일 수도 있음)
-                                                    // 하지만 보통 JSON 배열 문자열임. 실패하면 빈 배열 처리.
-                                                    // console.warn("Image URL parse failed:", e);
-                                                    parsedUrls = [];
+                    // 이미지를 병렬로 로딩 (Promise.all)
+                    const mappedHotTopics = await Promise.all(
+                        filteredReports.map(async (report) => {
+                            let imgUrl = [];
+                            try {
+                                if (report.cluster_id) {
+                                    const imgRes = await axios.get(`${API_BASE_URL}/reports/clusters/${report.cluster_id}/news`);
+                                    const newsList = imgRes.data;
+                                    if (newsList && newsList.length > 0) {
+                                        for (const newsItem of newsList) {
+                                            if (newsItem.img_urls) {
+                                                let parsedUrls = newsItem.img_urls;
+                                                if (typeof parsedUrls === 'string') {
+                                                    try { parsedUrls = JSON.parse(parsedUrls); } catch (e) { parsedUrls = []; }
                                                 }
-                                            }
-
-                                            // 배열이고 이미지가 존재하면 사용
-                                            if (Array.isArray(parsedUrls) && parsedUrls.length > 0) {
-                                                // 첫 번째 이미지 사용 (요청대로 1번째가 없으면 다음 루프에서 다른 뉴스 기사의 이미지를 찾거나,
-                                                // 여기서는 한 기사 내의 이미지 목록 중 첫번째를 씀.
-                                                // 만약 1번째가 깨진 이미지라면? 프론트에서 onError 처리 필요. 
-                                                // 여기서는 유효한 URL 문자열이 있는지만 확인.
-                                                const validUrl = parsedUrls.find(url => url && imgUrl.length === 0);
-                                                if (validUrl) {
-                                                    imgUrl = [validUrl];
-                                                    // console.log(`[HotTopic Debug] Found Image: ${validUrl}`);
-                                                    break; // 이미지를 찾았으면 루프 종료
+                                                if (Array.isArray(parsedUrls) && parsedUrls.length > 0) {
+                                                    const validUrl = parsedUrls.find(url => url);
+                                                    if (validUrl) { imgUrl = [validUrl]; break; }
                                                 }
                                             }
                                         }
                                     }
                                 }
-                            }
-                        } catch (err) {
-                            // console.error("이미지 로딩 실패:", err);
-                        }
-
-                        mappedHotTopics.push({
-                            id: report.report_id,
-                            report_id: report.report_id,
-                            title: report.title,
-                            url: report.url || `/article/${report.report_id}`,
-                            img_urls: imgUrl
-                        });
-                    }
+                            } catch (err) { /* ignore */ }
+                            return {
+                                id: report.report_id,
+                                report_id: report.report_id,
+                                title: report.title,
+                                url: report.url || `/article/${report.report_id}`,
+                                img_urls: imgUrl
+                            };
+                        })
+                    );
 
                     res.data.hot_topics = mappedHotTopics;
                 }
@@ -204,112 +178,64 @@ export default function SearchResult() {
                                     {/* --- [왼쪽 섹션] AI요약 + 관련기사 --- */}
                                     <div className="AI_Left_Section fade-in">
 
-                                        {/* 1. AI 요약 (Analysis_Text_Section) - Issue가 있을 때만 표시 */}
+                                        {/* 1. 종합 리포트 리스트 */}
                                         {searchData.ai_summaries && searchData.ai_summaries.issues && searchData.ai_summaries.issues.length > 0 && (
-                                            <div className="Analysis_Text_Section" style={{ paddingBottom: '30px' }}>
+                                            <div className="Analysis_Text_Section" style={{ paddingBottom: '10px' }}>
                                                 <h2 className="Section_Title_Main" style={{
                                                     fontSize: '26px',
                                                     fontWeight: '800',
                                                     marginBottom: '25px',
                                                     lineHeight: '1',
                                                     color: '#000'
-                                                }}>AI 요약 리포트</h2>
+                                                }}>종합 리포트</h2>
 
-                                                <div className="Analysis_Contents">
-                                                    {/* LLM 분석 텍스트 표시 (에러 메시지가 아닐 경우에만 표시) */}
-                                                    {searchData.ai_summaries.analysis &&
-                                                        !searchData.ai_summaries.analysis.includes("시스템 오류로 인해 AI 요약을 생성할 수 없습니다.") && (
-                                                            <div className="LLM_Analysis_Text" style={{
-                                                                marginBottom: '25px',
-                                                                whiteSpace: 'pre-wrap',
-                                                                lineHeight: '1.6',
-                                                                fontSize: '16px',
-                                                                color: '#333',
-                                                                background: '#f9f9f9',
-                                                                padding: '20px',
-                                                                borderRadius: '5px'
-                                                            }}>
-                                                                {searchData.ai_summaries.analysis}
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+                                                    {searchData.ai_summaries.issues.slice(0, visibleIssueCount).map(issue => (
+                                                        <div
+                                                            key={issue.report_id}
+                                                            onClick={() => { window.location.href = `/article/${issue.report_id}`; }}
+                                                            style={{
+                                                                padding: '16px 0',
+                                                                borderBottom: '1px solid #eee',
+                                                                cursor: 'pointer',
+                                                                transition: 'background 0.15s',
+                                                            }}
+                                                            onMouseEnter={(e) => { e.currentTarget.style.background = '#f8f8f8'; }}
+                                                            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                                                        >
+                                                            <div style={{ fontSize: '17px', fontWeight: '700', color: '#111', marginBottom: '6px', lineHeight: '1.4' }}>
+                                                                {issue.title}
                                                             </div>
-                                                        )}
-
-                                                    {/* 이슈 리스트 표시 */}
-                                                    <div className="Summary_List_Wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                                                        {searchData.ai_summaries.issues.slice(0, 1).map(issue => {
-                                                            const isTextLong = issue.contents && issue.contents.length > 300;
-                                                            const isExpanded = expandedIssues[issue.id];
-
-                                                            return (
-                                                                <div key={issue.id} className="Summary_Item_Modern" style={{ paddingBottom: '15px' }}>
-                                                                    <strong style={{ fontSize: '20px', display: 'block', marginBottom: '10px' }}>• {issue.title}</strong>
-                                                                    <div className={`Issue_Content_Container ${isExpanded ? 'expanded' : 'collapsed'}`} style={{
-                                                                        position: 'relative',
-                                                                        maxHeight: isExpanded ? 'none' : '200px',
-                                                                        overflow: isExpanded ? 'visible' : 'hidden',
-                                                                        transition: 'max-height 0.3s ease-out'
-                                                                    }}>
-                                                                        <p style={{ fontSize: '16px', color: '#333', margin: 0, whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
-                                                                            {issue.contents}
-                                                                        </p>
-                                                                        {isTextLong && !isExpanded && (
-                                                                            <div className="Fade_Overlay" style={{
-                                                                                position: 'absolute',
-                                                                                bottom: 0,
-                                                                                left: 0,
-                                                                                width: '100%',
-                                                                                height: '60px',
-                                                                                background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1))',
-                                                                                pointerEvents: 'none'
-                                                                            }}></div>
-                                                                        )}
-                                                                    </div>
-                                                                    {isTextLong && (
-                                                                        <div style={{
-                                                                            textAlign: 'center',
-                                                                            marginTop: isExpanded ? '0' : '-10px',
-                                                                            position: isExpanded ? 'sticky' : 'relative',
-                                                                            bottom: isExpanded ? (isMobile ? '80px' : '30px') : 'auto',
-                                                                            zIndex: 100,
-                                                                            width: '100%',
-                                                                            pointerEvents: 'none',
-                                                                            display: 'flex',
-                                                                            justifyContent: 'center'
-                                                                        }}>
-                                                                            <div style={{
-                                                                                display: 'inline-block',
-                                                                                pointerEvents: 'auto',
-                                                                                background: 'rgba(255, 255, 255, 0.95)',
-                                                                                padding: '10px 20px',
-                                                                                borderRadius: '30px',
-                                                                                boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
-                                                                                border: '1px solid #eee'
-                                                                            }}>
-                                                                                <button
-                                                                                    onClick={() => setExpandedIssues(prev => ({ ...prev, [issue.id]: !isExpanded }))}
-                                                                                    className="show-more-button link-style"
-                                                                                    style={{
-                                                                                        background: 'none',
-                                                                                        border: 'none',
-                                                                                        color: '#5f6368',
-                                                                                        cursor: 'pointer',
-                                                                                        fontSize: '14px',
-                                                                                        fontWeight: '600',
-                                                                                        padding: 0,
-                                                                                        display: 'flex',
-                                                                                        alignItems: 'center',
-                                                                                        gap: '5px'
-                                                                                    }}
-                                                                                >
-                                                                                    {isExpanded ? "접기 ▲" : "펼쳐보기 ▼"}
-                                                                                </button>
-                                                                            </div>
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
+                                                            <div style={{ fontSize: '14px', color: '#666', lineHeight: '1.5', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                                                                {issue.contents}
+                                                            </div>
+                                                        </div>
+                                                    ))}
                                                 </div>
+
+                                                {visibleIssueCount < searchData.ai_summaries.issues.length && (
+                                                    <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                                                        <div
+                                                            style={{
+                                                                display: 'inline-block',
+                                                                background: '#fff',
+                                                                padding: '10px 25px',
+                                                                borderRadius: '30px',
+                                                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                                                border: '1px solid #eee',
+                                                                cursor: 'pointer',
+                                                                transition: 'all 0.2s'
+                                                            }}
+                                                            onClick={() => setVisibleIssueCount(prev => prev + 5)}
+                                                            onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                                                            onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)'; e.currentTarget.style.transform = 'none'; }}
+                                                        >
+                                                            <span style={{ fontSize: '14px', fontWeight: '600', color: '#5f6368' }}>
+                                                                더보기 ({Math.min(searchData.ai_summaries.issues.length - visibleIssueCount, 5)}건)
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
 

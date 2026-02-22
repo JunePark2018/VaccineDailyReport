@@ -66,7 +66,7 @@ def search_issues_by_keyword(db: Session, keyword: str) -> Dict[str, Any]:
             )
         )
         .order_by(Report.created_at.desc())
-        .limit(5)
+        .limit(30)
         .all()
     )
 
@@ -80,40 +80,7 @@ def search_issues_by_keyword(db: Session, keyword: str) -> Dict[str, Any]:
         for issue in results
     ]
 
-    # 이슈가 없으면 빈 결과 반환
-    if not issues_list:
-        return {"analysis": None, "issues": []}
-
-    # LLM 분석을 위한 컨텍스트 구성
-    prompt = f"User searched for keyword: '{keyword}'. Here are recent AI news summaries (Issues):\n\n"
-
-    for idx, item in enumerate(issues_list, 1):
-        prompt += f"{idx}. Title: {item['title']}\nContent: {item['contents'][:200]}...\n\n"
-
-    prompt += (
-        "Based on the above Issues, analyze the trends and key points comprehensively in Korean. "
-        "Cite the source (title) for each point. "
-        "Excluding Chinese characters (Hanja)- translate them to Korean if present. "
-        "Remove special characters like *, #, @, $, %, ^, &, _, /, \, |, ;,{, }, `."
-    )
-
-    analysis_result = get_llm_summary(prompt)
-
-    # ---------------------------------------------------------
-    # [추가] 300자 내외로 최종 요양 및 최근 트렌드 강조
-    # ---------------------------------------------------------
-    refined_prompt = (
-        f"Here is the analysis of recent major articles related to '{keyword}':\n\n{analysis_result}\n\n"
-        "Based on this, summarize the core points very concisely within **300 Korean characters**, reflecting recent trends. "
-        "It MUST be written as **one single paragraph**. Do not use line breaks. "
-        "Do not use Chinese characters (Hanja); translate all Hanja to Korean. "
-        "Remove unnecessary modifiers and focus on facts. "
-        "Remove all special characters (*, #, etc.) and write in plain text."
-    )
-
-    analysis_result = get_llm_summary(refined_prompt)
-
-    return {"analysis": analysis_result, "issues": issues_list}
+    return {"analysis": None, "issues": issues_list}
 
 
 def deduplicate_articles(articles: List[News], limit: int) -> List[News]:

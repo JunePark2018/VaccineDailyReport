@@ -13,6 +13,7 @@ import SkeletonNews from '../components/SkeletonNews';
 import './Main.css';
 import MobileBottomNav from '../components/MobileBottomNav';
 import '../components/MobileBottomNav.css';
+import RecommendedNews from '../components/RecommendedNews'; // [New]
 
 import axios from 'axios'; // axios imported
 
@@ -26,6 +27,7 @@ export const Main = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
   const [loading, setLoading] = useState(true); // Loading state
+  const [subscribedKeywords, setSubscribedKeywords] = useState([]);
   const itemsPerPage = 5;
 
   // Check login status
@@ -46,7 +48,7 @@ export const Main = () => {
       setLoading(true);
       try {
         // 1. Fetch AI Generated News (Limit 50 for main page coverage)
-        const response = await axios.get(`${API_BASE_URL}/reports?limit=1000`); // Fetch enough to cover all sections
+        const response = await axios.get(`${API_BASE_URL}/reports?limit=50`); // 메인페이지에 필요한 만큼만
         const realArticles = response.data;
 
         // 2. Map Backend Data to Frontend Structure
@@ -68,81 +70,148 @@ export const Main = () => {
             return a.category === decodedName;
           });
 
-        // [추가] 구독 키워드 우선 정렬 (로그인 시)
+        // [추가] 점수 기반 개인화 정렬 (캐러셀 Top 3 이후 기사에만 적용)
+        // 캐러셀은 항상 최신순 유지
         const loginId = localStorage.getItem('login_id');
-        if (loginId) {
+        if (loginId && filtered.length > 3) {
           try {
             const userRes = await axios.get(`${API_BASE_URL}/users/${loginId}/dashboard`);
             const subKeywords = userRes.data.subscribed_keywords || [];
+            setSubscribedKeywords(subKeywords);
+            const readKeywords = userRes.data.read_keywords || {};   // { "트럼프": 8, "관세": 12, ... }
+            const readCategories = userRes.data.read_categories || {}; // { "정치": 15, "경제": 8, ... }
 
-            if (subKeywords.length > 0) {
-              // 겹치는 키워드가 있는지 확인하는 함수
-              const hasKeyword = (article) => {
-                if (!article.keywords) return false;
-                // article.keywords가 JSON string일 수도 있고 list일 수도 있음 (backend settings)
-                // schema상 List[str]로 올 것으로 예상되나, DB에 문자열로 저장된 경우 파싱 필요할 수 있음
+            const hasData = subKeywords.length > 0 || Object.keys(readKeywords).length > 0 || Object.keys(readCategories).length > 0;
+
+            if (hasData) {
+              // read_keywords 빈도를 0~1로 정규화
+              const maxReadFreq = Math.max(...Object.values(readKeywords), 1);
+              // read_categories 빈도를 0~1로 정규화
+              const maxCatFreq = Math.max(...Object.values(readCategories), 1);
+
+              const getArticleKeywords = (article) => {
+                if (!article.keywords) return [];
                 let kws = article.keywords;
                 if (typeof kws === 'string') {
-                  try { kws = JSON.parse(kws); } catch (e) { kws = []; }
+                  try { kws = JSON.parse(kws); } catch (e) { return []; }
                 }
-                if (!Array.isArray(kws)) return false;
-
-                // 단순 포함 여부 체크 (부분 일치 등 더 복잡하게 할 수도 있음)
-                return subKeywords.some(sk => kws.some(ak => ak.includes(sk) || sk.includes(ak)));
+                if (!Array.isArray(kws)) return [];
+                return kws.map(k => (typeof k === 'string' ? k : k?.text || '')).filter(Boolean);
               };
 
-              // 정렬: 키워드 있는 것이 먼저
-              filtered.sort((a, b) => {
-                const aHas = hasKeyword(a);
-                const bHas = hasKeyword(b);
-                if (aHas && !bHas) return -1;
-                if (!aHas && bHas) return 1;
-                return 0; // 원래 순서 유지 (최신순)
-              });
+              const calcScore = (article) => {
+                const artKeywords = getArticleKeywords(article);
+                let score = 0;
+
+                // (1) 구독 키워드 매칭 (×3)
+                for (const sk of subKeywords) {
+                  if (artKeywords.some(ak => ak.includes(sk) || sk.includes(ak))) {
+                    score += 3;
+                  }
+                }
+
+                // (2) 읽은 키워드 매칭 (빈도 가중치, 최대 1점/키워드)
+                for (const ak of artKeywords) {
+                  for (const [rk, freq] of Object.entries(readKeywords)) {
+                    if (ak.includes(rk) || rk.includes(ak)) {
+                      score += (freq / maxReadFreq);
+                      break; // 같은 기사 키워드에 대해 중복 가산 방지
+                    }
+                  }
+                }
+
+                // (3) 선호 카테고리 가중치 (최대 2점)
+                const cat = article.category_name || article.category;
+                if (cat && readCategories[cat]) {
+                  score += 2 * (readCategories[cat] / maxCatFreq);
+                }
+
+                return score;
+              };
+
+              // 캐러셀 3개는 그대로 두고, 나머지만 점수 기반 정렬
+              const top3 = filtered.slice(0, 3);
+              const rest = filtered.slice(3);
+              rest.sort((a, b) => calcScore(b) - calcScore(a));
+              filtered = [...top3, ...rest];
             }
           } catch (e) {
-            console.warn("구독 키워드 로딩 실패", e);
+            console.warn("사용자 데이터 로딩 실패", e);
           }
         }
 
         setDisplayArticles(filtered);
 
-        // 4. Fetch Images and Detail News for each article
-        const newImageMap = {};
-        const newDetailsMap = {};
+        // 4. 이미지 URL 페치 (cluster_id 중복 제거)
+        const seenClusterIds = new Set();
+        const articlesToFetch = filtered.filter(art => {
+          if (seenClusterIds.has(art.cluster_id)) return false;
+          seenClusterIds.add(art.cluster_id);
+          return true;
+        }).slice(0, 30);
 
-        // Use Promise.allSettled to fetch images/details in parallel
-        await Promise.allSettled(filtered.map(async (art) => {
-          try {
-            const imgRes = await axios.get(`${API_BASE_URL}/reports/clusters/${art.cluster_id}/news`);
-            const newsList = imgRes.data;
+        // 캐러셀 Top 3 이미지를 우선 로드 후 화면 표시
+        const carouselClusterIds = new Set(filtered.slice(0, 3).map(a => a.cluster_id));
+        const carouselBatch = articlesToFetch.filter(a => carouselClusterIds.has(a.cluster_id));
+        const restBatch = articlesToFetch.filter(a => !carouselClusterIds.has(a.cluster_id));
 
-            // Store detailed news list for highlights
-            newDetailsMap[`cluster_${art.cluster_id}`] = newsList;
-
-            // Extract all img_urls and pick one
-            const allImgUrls = newsList
-              .flatMap(news => news.img_urls ?? [])
-              .filter(Boolean);
-
+        // 헬퍼: 클러스터 뉴스 → imageMap/detailsMap 변환
+        const processResults = (results) => {
+          const imgMap = {};
+          const detMap = {};
+          for (const r of results) {
+            if (r.status !== 'fulfilled') continue;
+            const { clusterId, newsList } = r.value;
+            detMap[`cluster_${clusterId}`] = newsList;
+            const allImgUrls = newsList.flatMap(n => n.img_urls ?? []).filter(Boolean);
             if (allImgUrls.length > 0) {
-              const selectedImg = allImgUrls[1] || allImgUrls[0]; // Use 2nd image if available, else 1st
-              newImageMap[`cluster_${art.cluster_id}`] = selectedImg;
+              imgMap[`cluster_${clusterId}`] = allImgUrls[1] || allImgUrls[0];
             }
-          } catch (err) {
-            console.warn(`Failed to fetch image/details for cluster ${art.cluster_id}`, err);
           }
-        }));
+          return { imgMap, detMap };
+        };
 
-        setImageMap(prev => ({ ...prev, ...newImageMap }));
-        setArticleDetailsMap(prev => ({ ...prev, ...newDetailsMap }));
+        // 헬퍼: 이미지 URL을 브라우저에 프리로드
+        const preloadImages = (urls) => Promise.all(
+          urls.map(url => new Promise(resolve => {
+            const img = new Image();
+            img.onload = resolve;
+            img.onerror = resolve; // 실패해도 진행
+            img.src = url;
+          }))
+        );
+
+        // (a) 캐러셀 이미지 URL 페치
+        const carouselResults = await Promise.allSettled(carouselBatch.map(async (art) => {
+          const imgRes = await axios.get(`${API_BASE_URL}/reports/clusters/${art.cluster_id}/news?fields=light`);
+          return { clusterId: art.cluster_id, newsList: imgRes.data };
+        }));
+        const { imgMap: carouselImgMap, detMap: carouselDetMap } = processResults(carouselResults);
+
+        // (b) 캐러셀 이미지 브라우저 프리로드 → 완료 후 로딩 해제
+        await preloadImages(Object.values(carouselImgMap));
+        setImageMap(prev => ({ ...prev, ...carouselImgMap }));
+        setArticleDetailsMap(prev => ({ ...prev, ...carouselDetMap }));
+        setLoading(false); // 캐러셀 이미지 렌더 준비 완료 후 화면 표시
+
+        // (c) 나머지 이미지는 백그라운드에서 배치 로드
+        const BATCH_SIZE = 5;
+        for (let i = 0; i < restBatch.length; i += BATCH_SIZE) {
+          const batch = restBatch.slice(i, i + BATCH_SIZE);
+          const results = await Promise.allSettled(batch.map(async (art) => {
+            const imgRes = await axios.get(`${API_BASE_URL}/reports/clusters/${art.cluster_id}/news?fields=light`);
+            return { clusterId: art.cluster_id, newsList: imgRes.data };
+          }));
+          const { imgMap, detMap } = processResults(results);
+          setImageMap(prev => ({ ...prev, ...imgMap }));
+          setArticleDetailsMap(prev => ({ ...prev, ...detMap }));
+        }
 
       } catch (error) {
         console.error('Failed to load real data:', error);
         setImageMap({});
       } finally {
-        // Delay slightly for smooth transition if data loads too fast, or just set false
-        setLoading(false);
+        setLoading(false); // 에러 시에도 로딩 해제
       }
     };
 
@@ -153,6 +222,7 @@ export const Main = () => {
 
   // Slideshow State
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [currentComparisonIndex, setCurrentComparisonIndex] = useState(0); // [New] Rotate comparison
   const [articleDetailsMap, setArticleDetailsMap] = useState({});
   const [touchStart, setTouchStart] = useState(0);
 
@@ -176,12 +246,27 @@ export const Main = () => {
 
   // Auto-rotate slideshow
   // Auto-rotate slideshow (Disabled as per request)
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     setCurrentSlideIndex(prev => (prev + 1) % 3);
-  //   }, 10000); // 10 seconds per slide
-  //   return () => clearInterval(interval);
-  // }, []);
+  // Auto-rotate comparison items every 10s
+  useEffect(() => {
+    // Reset comparison index when slide changes
+    setCurrentComparisonIndex(0);
+  }, [currentSlideIndex]);
+
+  useEffect(() => {
+    const slideArticles = displayArticles.slice(0, 3);
+    const activeArticle = slideArticles[currentSlideIndex];
+    if (!activeArticle) return;
+
+    const interval = setInterval(() => {
+      setCurrentComparisonIndex(prev => {
+        const bullets = activeArticle?.analysis_result?.media_comparison_bullets || [];
+        if (bullets.length <= 1) return 0;
+        return (prev + 1) % bullets.length;
+      });
+    }, 10000); // 10 seconds
+
+    return () => clearInterval(interval);
+  }, [currentSlideIndex, displayArticles]);
 
   // --- Deduplication Logic ---
   // Pre-calculate lists to ensure no duplicates across sections
@@ -264,8 +349,8 @@ export const Main = () => {
                       <img
                         src={imgUrl}
                         alt={art.title}
-                        onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }}
-                        onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }}
+                        onLoad={(e) => { if (e.target.src.includes(logoImg)) { e.target.classList.add('logo-fallback'); } else { e.target.style.objectFit = 'cover'; e.target.classList.remove('logo-fallback'); } }}
+                        onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.classList.add('logo-fallback'); }}
                       />
                       <div className="main-image-text"><h3>{art.title}</h3></div>
                     </div>
@@ -296,20 +381,36 @@ export const Main = () => {
               <div key={`hl-${currentSlideIndex}`} className="highlight-list fade-animate">
                 <div className="main-comparison-container">
                   <ul className="main-comparison-list">
-                    {activeBullets.slice(0, 1).map((item, idx) => {
+                    {activeBullets.slice(currentComparisonIndex, currentComparisonIndex + 1).map((item, idx) => {
                       const isString = typeof item === 'string';
-                      const analysisText = isString ? item : item.analysis;
-                      const summaryText = isString ? null : item.summary;
+
+                      let content = "";
+                      let hashtags = [];
+
+                      if (isString) content = item;
+                      else if (item.summary) {
+                        content = item.summary;
+                        hashtags = item.hashtags || [];
+                      }
+                      else if (item.analysis) content = item.analysis;
 
                       return (
-                        <li key={idx} className="main-comparison-item">
-                          {summaryText && (
-                            <div className="main-summary-badge">
-                              {summaryText}
-                            </div>
-                          )}
+                        <li key={`${idx}-${currentComparisonIndex}`} className="main-comparison-item fade-slide-up">
                           <div className="main-analysis-text">
-                            {highlightMediaText(analysisText.replace(/^- /, '').replace(/\[/g, '').replace(/\]/g, ''), activeMediaNames)}
+                            {!isString && item.company && (
+                              <div className="main-company-header" style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '4px' }}>
+                                <span style={{ fontWeight: 'bold', color: '#1a73e8' }}>{item.company}</span>
+                                {hashtags.slice(0, 2).map((tag, tIdx) => (
+                                  <span key={tIdx} style={{ fontSize: '0.75rem', backgroundColor: '#e8f0fe', color: '#1967d2', padding: '2px 6px', borderRadius: '10px' }}>{tag}</span>
+                                ))}
+                              </div>
+                            )}
+                            {highlightMediaText((content || "").replace(/^- /, '').replace(/\[/g, '').replace(/\]/g, ''), activeMediaNames)}
+                            {item.evidence && (
+                              <p className="main-comparison-evidence">
+                                {item.evidence}
+                              </p>
+                            )}
                           </div>
                         </li>
                       );
@@ -342,37 +443,60 @@ export const Main = () => {
                 // const hls = getHighlights(art); // Unused now
                 return (
                   <div key={idx} className="mobile-whole-slide">
-                    {/* Image + Title Part */}
+                    {/* Image + Title + Nav Buttons Part */}
                     <div className="mobile-slide-top" onClick={() => navigate(`/article/${art.report_id}`)}>
                       <img
                         src={imgUrl}
                         alt={art.title}
-                        onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }}
+                        onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.classList.add('logo-fallback'); }}
                       />
                       <div className="main-image-text"><h3>{art.title}</h3></div>
+                      <button
+                        className="mobile-slide-nav prev"
+                        onClick={(e) => { e.stopPropagation(); setCurrentSlideIndex(prev => (prev - 1 + 3) % 3); }}
+                      >&#x2039;</button>
+                      <button
+                        className="mobile-slide-nav next"
+                        onClick={(e) => { e.stopPropagation(); setCurrentSlideIndex(prev => (prev + 1) % 3); }}
+                      >&#x203A;</button>
                     </div>
                     {/* Highlights Part */}
                     <div className="mobile-slide-bottom">
                       <h3 className="highlights-title">언론사별 비교분석</h3>
                       <div className="main-comparison-container">
                         <ul className="main-comparison-list">
-                          {(art?.analysis_result?.media_comparison_bullets || []).slice(0, 1).map((item, idx) => {
+                          {(art?.analysis_result?.media_comparison_bullets || []).slice(currentComparisonIndex, currentComparisonIndex + 1).map((item, idx) => {
                             const relatedNews = articleDetailsMap[`cluster_${art.cluster_id}`] || [];
                             const articleMediaNames = [...new Set(relatedNews.map(n => n.company_name).filter(Boolean))];
 
                             const isString = typeof item === 'string';
-                            const analysisText = isString ? item : item.analysis;
-                            const summaryText = isString ? null : item.summary;
+                            let content = "";
+                            let hashtags = [];
+
+                            if (isString) content = item;
+                            else if (item.summary) {
+                              content = item.summary;
+                              hashtags = item.hashtags || [];
+                            }
+                            else if (item.analysis) content = item.analysis;
 
                             return (
-                              <li key={idx} className="main-comparison-item">
-                                {summaryText && (
-                                  <div className="main-summary-badge">
-                                    {summaryText}
-                                  </div>
-                                )}
+                              <li key={`${idx}-${currentComparisonIndex}`} className="main-comparison-item fade-slide-up">
                                 <div className="main-analysis-text">
-                                  {highlightMediaText(analysisText.replace(/^- /, '').replace(/\[/g, '').replace(/\]/g, ''), articleMediaNames)}
+                                  {!isString && item.company && (
+                                    <div className="main-company-header" style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '4px' }}>
+                                      <span style={{ fontWeight: 'bold', color: '#1a73e8' }}>{item.company}</span>
+                                      {hashtags.slice(0, 2).map((tag, tIdx) => (
+                                        <span key={tIdx} style={{ fontSize: '0.75rem', backgroundColor: '#e8f0fe', color: '#1967d2', padding: '2px 6px', borderRadius: '10px' }}>{tag}</span>
+                                      ))}
+                                    </div>
+                                  )}
+                                  {highlightMediaText((content || "").replace(/^- /, '').replace(/\[/g, '').replace(/\]/g, ''), articleMediaNames)}
+                                  {item.evidence && (
+                                    <p className="main-comparison-evidence">
+                                      {item.evidence}
+                                    </p>
+                                  )}
                                 </div>
                               </li>
                             );
@@ -413,8 +537,8 @@ export const Main = () => {
                 <img
                   src={imageMap[art.image] || art.image}
                   alt={art.title}
-                  onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }}
-                  onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }}
+                  onLoad={(e) => { if (e.target.src.includes(logoImg)) { e.target.classList.add('logo-fallback'); } else { e.target.style.objectFit = 'cover'; e.target.classList.remove('logo-fallback'); } }}
+                  onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.classList.add('logo-fallback'); }}
                 />
               </div>
               <div className="politics-info">
@@ -437,8 +561,8 @@ export const Main = () => {
                 <img
                   src={imageMap[art.image] || art.image}
                   alt={art.title}
-                  onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }}
-                  onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }}
+                  onLoad={(e) => { if (e.target.src.includes(logoImg)) { e.target.classList.add('logo-fallback'); } else { e.target.style.objectFit = 'cover'; e.target.classList.remove('logo-fallback'); } }}
+                  onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.classList.add('logo-fallback'); }}
                 />
               </div>
               <h3 className="economy-title">{art.title}</h3>
@@ -459,8 +583,8 @@ export const Main = () => {
               <img
                 src={imageMap[art.image] || art.image}
                 alt={art.title}
-                onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }}
-                onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }}
+                onLoad={(e) => { if (e.target.src.includes(logoImg)) { e.target.classList.add('logo-fallback'); } else { e.target.style.objectFit = 'cover'; e.target.classList.remove('logo-fallback'); } }}
+                onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.classList.add('logo-fallback'); }}
               />
             </div>
             <div className="society-large-info">
@@ -502,7 +626,7 @@ export const Main = () => {
             {science.map((art, i) => (
               <div key={i} className="global-card science-card" onClick={() => navigate(`/article/${art.id}`)}>
                 <div className="global-img">
-                  <img src={imageMap[art.image] || art.image} alt={art.title} onLoad={(e) => { if (!e.target.src.includes(logoImg)) e.target.style.objectFit = 'cover'; }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.style.objectFit = 'contain'; }} />
+                  <img src={imageMap[art.image] || art.image} alt={art.title} onLoad={(e) => { if (e.target.src.includes(logoImg)) { e.target.classList.add('logo-fallback'); } else { e.target.style.objectFit = 'cover'; e.target.classList.remove('logo-fallback'); } }} onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.classList.add('logo-fallback'); }} />
                 </div>
                 <div className="science-info">
                   <h5>{art.title}</h5>
@@ -541,6 +665,8 @@ export const Main = () => {
       {!loading && displayArticles.length > 0 && (
         <div className="main-carousel-outer">
           {renderMainContent()}
+          {/* [New] Recommended News (YouTube Style) */}
+          <RecommendedNews allArticles={displayArticles} userName={userName} imageMap={imageMap} subscribedKeywords={subscribedKeywords} />
         </div>
       )}
 

@@ -52,12 +52,13 @@ Source Articles:
 [Instructions]
 1. Synthesize all articles, avoiding duplication.
 2. Exclude subjective interpretations or emotional expressions from specific media outlets; focus on facts.
-3. Structure: [Headline] -> [Lead] -> [Body] -> [Conclusion]
-4. **Language**: The articles must be written in **Korean**.
+3. Structure: Headline -> Lead -> Body -> Conclusion (Do NOT use labels like '[Lead]', '[Body]')
+4. **Formatting**: Group related sentences into paragraphs (3-5 sentences per paragraph). Do NOT start a new line for every sentence.
+5. **Language**: The articles must be written in **Korean**.
 
 Response must be in JSON format only:
 {{
-    "title": "Headline in Korean",
+    "title": "Headline in Korean (MUST be 50 characters or fewer)",
     "contents": "Article Body in Korean"
 }}
 """
@@ -118,11 +119,12 @@ Content: {draft_contents}
 
 Refine the article by reflecting the above feedback.
 **Language**: The final output must be in **Korean**.
+**Formatting**: Ensure the text is divided into paragraphs of appropriate length (3-5 sentences). Do NOT make every sentence a new paragraph. REMOVE any structural labels.
 Especially, remove all multimedia reference phrases like "as seen in the video", "as shown in the photo".
 
 [Output Format - JSON]
 {{
-    "title": "Final Revised Headline (Korean)",
+    "title": "Final Revised Headline (Korean, MUST be 50 characters or fewer)",
     "contents": "Final Revised Body (Korean)",
     "search_keyword": "English Search Keyword (e.g., Samsung earnings shock)"
 }}
@@ -139,25 +141,29 @@ Especially, remove all multimedia reference phrases like "as seen in the video",
     # ------------------------------------------------------------------
     try:
         # 1. Draft
-        print("🤖 [Writer] 초안 작성 중...")
+        # 1. Draft
+        print("[Writer] 초안 작성 중...")
         draft_resp = generate_draft()
         draft_data = json.loads(draft_resp.choices[0].message.content)
 
         # 2. Critique
-        print("🧐 [Critic] 기사 비평 및 검증 중...")
+        # 2. Critique
+        print("[Critic] 기사 비평 및 검증 중...")
         critic_resp = generate_critique(draft_data.get("title"), draft_data.get("contents"))
         feedback = critic_resp.choices[0].message.content
-        print(f"📝 [Critic Feedback]: {feedback}")
+        feedback = critic_resp.choices[0].message.content
+        print(f"[Critic Feedback]: {feedback}")
 
         # 3. Refine
-        print("✍️ [Refiner] 최종 기사 편집 중...")
+        # 3. Refine
+        print("[Refiner] 최종 기사 편집 중...")
         final_resp = generate_final(draft_data.get("title"), draft_data.get("contents"), feedback)
         final_data = json.loads(final_resp.choices[0].message.content)
 
         return final_data
 
     except Exception as e:
-        print(f"⚠️ 에러 발생: {str(e)}")
+        print(f"Error: {str(e)}")
         import traceback
 
         traceback.print_exc()

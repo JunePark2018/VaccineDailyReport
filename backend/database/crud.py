@@ -84,9 +84,11 @@ def create_news(
     url: str,
     company_id: int,
     is_domestic: bool = True,
-    category: Optional[str] = None,  # 정치, 경제, 사회, 생활/문화, 세계, IT/과학
+    category: Optional[str] = None,  # 정치, 경제, 사회, 생활/문화, 세계, IT/과학, 오피니언
     img_urls: Optional[dict | list] = None,
     created_at: Optional[datetime] = None,
+    is_opinion: bool = False,
+    author: Optional[str] = None,
 ) -> Optional[News]:
     # Check if news with this URL already exists
     existing = get_news_by_url(db, url)
@@ -113,6 +115,8 @@ def create_news(
         category_id=category_id,
         img_urls=img_urls,
         created_at=created_at or datetime.utcnow(),
+        is_opinion=is_opinion,
+        author=author,
     )
     db.add(obj)
     db.flush()
@@ -212,22 +216,25 @@ def remove_news_from_cluster(db: Session, *, cluster_id: int, news_id: int) -> i
     return res.rowcount or 0
 
 
-def get_original_news_details_by_cluster(db: Session, cluster_id: int) -> List[dict]:
+def get_original_news_details_by_cluster(db: Session, cluster_id: int, include_contents: bool = True) -> List[dict]:
     """
     cluster_id를 받아서 연결된 원본 기사들의 [제목, URL, 언론사명]을 반환합니다.
-    (Sources 컴포넌트용 데이터)
+    include_contents=False: contents 제외 (메인 페이지용 경량 응답)
     """
     # 1. News, Company, cluster_news_link 3개를 조인(Join)합니다.
+    columns = [
+        News.news_id,
+        News.title,
+        News.url,
+        Company.name.label("company_name"),
+        News.img_urls,
+        News.created_at,
+    ]
+    if include_contents:
+        columns.append(News.contents)
+
     results = (
-        db.query(
-            News.news_id,
-            News.title,
-            News.url,
-            Company.name.label("company_name"),
-            News.img_urls,
-            News.contents,
-            News.created_at,
-        )
+        db.query(*columns)
         .join(cluster_news_link, News.news_id == cluster_news_link.c.news_id)
         .join(Company, News.company_id == Company.company_id)
         .filter(cluster_news_link.c.cluster_id == cluster_id)
@@ -235,18 +242,20 @@ def get_original_news_details_by_cluster(db: Session, cluster_id: int) -> List[d
     )
 
     # 2. 프론트엔드가 쓰기 편한 리스트 형태로 변환
-    return [
-        {
+    response = []
+    for row in results:
+        item = {
             "news_id": row.news_id,
             "title": row.title,
             "company_name": row.company_name,
             "url": row.url,
             "img_urls": row.img_urls,
-            "contents": row.contents,
             "created_at": row.created_at,
         }
-        for row in results
-    ]
+        if include_contents:
+            item["contents"] = row.contents
+        response.append(item)
+    return response
 
 
 # -------------------------
@@ -630,10 +639,10 @@ def set_reaction(
     old = r.value
     r.value = value
 
-    if old == 1 and ai.like_count > 0:
-        ai.like_count -= 1
-    if old == -1 and ai.dislike_count > 0:
-        ai.dislike_count -= 1
+    if old == 1 and report.like_count > 0:
+        report.like_count -= 1
+    if old == -1 and report.dislike_count > 0:
+        report.dislike_count -= 1
 
     if value == 1:
         report.like_count += 1
@@ -1119,4 +1128,44 @@ def get_report_demographics(db: Session, report_id: int) -> Dict[str, List[Dict[
         "age_distribution": age_distribution,
         "gender_distribution": gender_distribution
     }
+
+
+TARGET_COMPANIES = ["조선", "KBS", "MBC", "SBS", "연합", "한겨레", "중앙", "경향", "한국", "JTBC"]
+
+
+def get_opinions_for_report(db: Session, report_id: int, limit: int = 10) -> List[dict]:
+    """
+    Report의 클러스터에 배정된 오피니언/사설/칼럼 기사를 반환합니다.
+    임베딩 유사도 기반으로 클러스터에 배정된 오피니언만 조회합니다.
+    10개 주요 언론사로 제한합니다.
+    """
+    report = db.get(Report, report_id)
+    if not report or not report.cluster:
+        return []
+
+    # 클러스터에 연결된 오피니언 기사만 필터
+    opinions = [n for n in report.cluster.news if n.is_opinion]
+
+    # 10개 주요 언론사 필터
+    opinions = [
+        o for o in opinions
+        if o.company_name and any(c in o.company_name for c in TARGET_COMPANIES)
+    ]
+
+    # 최신순 정렬 후 limit 적용
+    opinions.sort(key=lambda o: o.created_at or datetime.min, reverse=True)
+    opinions = opinions[:limit]
+
+    return [
+        {
+            "news_id": o.news_id,
+            "title": o.title,
+            "url": o.url,
+            "contents": o.contents or "",
+            "company_name": o.company_name,
+            "author": o.author,
+            "created_at": o.created_at.isoformat() if o.created_at else None,
+        }
+        for o in opinions
+    ]
 

@@ -21,7 +21,7 @@ from schemas import (
 )
 
 # [수정] scraper.py에서 run_article_crawler 임포트
-from scraper import run_article_crawler
+from scraper import run_article_crawler, run_opinion_crawler
 from database.crud import (
     create_news,
     create_user,
@@ -83,6 +83,30 @@ def run_background_worker():
         #                 if news["time"] != "시간 정보 없음"
         #                 else datetime.now()
         #             ),
+        #         )
+        #     db.commit()
+
+        #     # --- [Step 1b] 오피니언/사설/칼럼 수집 ---
+        #     print("📝 오피니언/칼럼 수집 중...")
+        #     opinion_list = run_opinion_crawler(db, target_companies=target_list)
+        #     for opinion in opinion_list:
+        #         company = get_or_create_company_by_raw_name(db, opinion["company_name"])
+        #         create_news(
+        #             db,
+        #             title=opinion["title"],
+        #             contents=opinion["contents"],
+        #             url=opinion["url"],
+        #             company_id=company.company_id,
+        #             is_domestic=True,
+        #             category="오피니언",
+        #             img_urls=opinion.get("img_urls"),
+        #             created_at=(
+        #                 datetime.fromisoformat(opinion["time"])
+        #                 if opinion["time"] != "시간 정보 없음"
+        #                 else datetime.now()
+        #             ),
+        #             is_opinion=True,
+        #             author=opinion.get("author"),
         #         )
         #     db.commit()
 
@@ -189,13 +213,18 @@ from fastapi.middleware.cors import CORSMiddleware
 origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://172.30.1.92:3000",
     "http://168.107.51.224:3000",
     "http://43.203.207.47:3000",
 ]
 
+import os
+cors_env = os.getenv("CORS_ORIGINS", "")
+allowed_origins = [o.strip() for o in cors_env.split(",") if o.strip()] if cors_env else origins
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -223,6 +252,12 @@ app.include_router(categories.router)
 app.include_router(search_logs.router)
 app.include_router(reactions.router)
 app.include_router(search.router)
+
+
+@app.get("/health")
+def health_check():
+    """서버 상태 확인용 엔드포인트"""
+    return {"status": "ok"}
 
 
 # DB 세션 의존성 (legacy support)

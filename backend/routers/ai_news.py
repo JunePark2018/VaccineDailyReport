@@ -7,19 +7,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_, and_, desc
 
-# ... (other imports are fine, but I need to make sure I match the file content structure.
-# The previous `from sqlalchemy import or_` was on line 8.
-# I will edit the import line separately or include it in the replace if I can span that far, but the file is large.
-# Better to do two edits or use multi_replace.
-# I will use multi_replace to handle both the import and the function body safely.
-
-# actually I will just use replace_file_content for the import first, then the function.
-# Wait, I can do it in one multi_replace.
-
-
 from routers import get_db
 from database.models import Report, Cluster
 from database import crud
+from ai_graph_comparer import compare_articles_with_graph
 
 # schemas import 제거 - dict 반환으로 충분
 from pydantic import BaseModel
@@ -228,11 +219,18 @@ def get_report_detail(report_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/clusters/{cluster_id}/news")
-def read_cluster_news(cluster_id: int, db: Session = Depends(get_db)):
+def read_cluster_news(
+    cluster_id: int,
+    fields: Optional[str] = Query(None, description="반환할 필드 (예: 'light' = contents 제외)"),
+    db: Session = Depends(get_db),
+):
     """
     클러스터 ID를 받아서 연결된 원본 기사 목록(제목, URL, 언론사명)을 반환합니다.
+    fields=light: contents 제외 (메인 페이지용 경량 응답)
     """
-    original_news_list = crud.get_original_news_details_by_cluster(db, cluster_id)
+    original_news_list = crud.get_original_news_details_by_cluster(
+        db, cluster_id, include_contents=(fields != "light")
+    )
 
     return original_news_list
 
@@ -446,6 +444,32 @@ def get_related_reports(report_id: int, limit: int = 3, db: Session = Depends(ge
     return response_data
 
 
+@router.get("/{report_id}/opinions")
+async def get_report_opinions(report_id: int, limit: int = 10, db: Session = Depends(get_db)):
+    """
+    특정 리포트와 관련된 오피니언/사설/칼럼을 구조화된 형태로 반환합니다.
+    ai_processor에서 미리 생성한 캐시가 있으면 사용하고, 없으면 실시간 분석합니다.
+    반환: [{"company", "hashtags", "summary", "evidence"}]
+    """
+    report = db.get(Report, report_id)
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+
+    # 1. 캐시된 분석결과 확인 (ai_processor에서 저장한 것)
+    if report.analysis_result and isinstance(report.analysis_result, dict):
+        cached = report.analysis_result.get("opinion_bullets")
+        if cached:
+            return cached
+
+    # 2. 캐시가 없으면 클러스터에서 오피니언 조회 후 GraphRAG 실시간 분석
+    opinions = crud.get_opinions_for_report(db, report_id, limit=limit)
+    if not opinions:
+        return []
+
+    opinion_report = await compare_articles_with_graph(opinions, mode="opinion")
+    return opinion_report.get("opinion_bullets", [])
+
+
 @router.get("/{report_id}/timeline")
 def get_report_timeline(report_id: int, limit: int = 5, db: Session = Depends(get_db)):
     """
@@ -513,18 +537,16 @@ def get_report_timeline(report_id: int, limit: int = 5, db: Session = Depends(ge
     for item in related_past:
         results.append({
             "id": item.report_id,
-            "date": item.created_at.strftime("%Y-%m-%d"),
+            "date": item.created_at.strftime("%Y.%m.%d"),
+            "time": item.created_at.strftime("%H:%M"),
             "title": item.title,
-            "summary": (item.contents or "")[:60] + "..."
         })
-    
-    # 마지막에 현재 리포트도 포함? (선택사항)
-    # 타임라인의 '현재' 점을 찍어주면 좋음
+
     results.append({
         "id": current_report.report_id,
-        "date": current_report.created_at.strftime("%Y-%m-%d"),
+        "date": current_report.created_at.strftime("%Y.%m.%d"),
+        "time": current_report.created_at.strftime("%H:%M"),
         "title": current_report.title,
-        "summary": "현재 보고 있는 리포트",
         "is_current": True
     })
 
@@ -700,7 +722,7 @@ def check_claim_evidence(req: ClaimEvidenceRequest, db: Session = Depends(get_db
             }
         )
 
-    return {" match_found": len(results) > 0, "evidence": results}
+    return {"match_found": len(results) > 0, "evidence": results}
 
 
 @router.get("/{report_id}/media-focus")

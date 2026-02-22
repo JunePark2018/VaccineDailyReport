@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import { useToast } from './Toast';
 import './LikeButton.css';
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 const LikeButton = ({ articleId, initialLiked = false, initialCount = 0, onLikeUpdate }) => {
+    const showToast = useToast();
     const [isLiked, setIsLiked] = useState(initialLiked);
     const [likeCount, setLikeCount] = useState(initialCount);
 
@@ -33,7 +37,7 @@ const LikeButton = ({ articleId, initialLiked = false, initialCount = 0, onLikeU
 
         // 로그인 확인
         if (!login_id) {
-            alert('로그인이 필요합니다.');
+            showToast('로그인이 필요합니다.', 'warning');
             return;
         }
 
@@ -48,7 +52,7 @@ const LikeButton = ({ articleId, initialLiked = false, initialCount = 0, onLikeU
         try {
             // 2. 백엔드 API 호출
             const response = await axios.post(
-                `http://localhost:8000/news/${articleId}/reaction`,
+                `${API_BASE_URL}/news/${articleId}/reaction`,
                 null,
                 {
                     params: {
@@ -74,7 +78,7 @@ const LikeButton = ({ articleId, initialLiked = false, initialCount = 0, onLikeU
             // 실패 시 롤백
             setIsLiked(prevLiked);
             setLikeCount(prevCount);
-            alert('좋아요 처리에 실패했습니다.');
+            showToast('좋아요 처리에 실패했습니다.', 'error');
         }
     };
 

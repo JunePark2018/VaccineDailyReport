@@ -13,6 +13,7 @@ import CategoryRadarChart from '../components/CategoryRadarChart';
 import KeywordBarChart from '../components/KeywordBarChart';
 import SubscribedKeywords from '../components/SubscribedKeywords';
 import EditAccountForm from '../components/EditAccountForm';
+import { useToast } from '../components/Toast';
 import MobileBottomNav from '../components/MobileBottomNav';
 import './MyPage.css';
 
@@ -59,6 +60,7 @@ const ArticleCard = ({ article, type, onRemove }) => {
 const MyPage = () => {
   const { login_id } = useParams();
   const navigate = useNavigate();
+  const showToast = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'insights'; // 'insights' | 'edit' | 'liked' | 'scraps'
 
@@ -138,11 +140,11 @@ const MyPage = () => {
   // 서버 업데이트 로직 (Keyword)
   const updateKeywordsOnServer = async (newList) => {
     try {
-      await axios.put(`http://localhost:8000/users/${login_id}`, { subscribed_keywords: newList });
+      await axios.put(`${API_BASE_URL}/users/${login_id}`, { subscribed_keywords: newList });
     } catch (error) {
       console.error("서버 업데이트 실패:", error);
       const errorMessage = error.response?.data?.detail || "서버 업데이트에 실패했습니다.";
-      alert(errorMessage);
+      showToast(errorMessage, "error");
       try {
         const response = await axios.get(`${API_BASE_URL}/users/${login_id}/dashboard`);
         setUserData(response.data);
@@ -176,21 +178,19 @@ const MyPage = () => {
       const apiUrl = `${API_BASE_URL}/users/${encodedLoginId}/keywords/stats`;
       await axios.delete(apiUrl);
       setUserData({ ...userData, read_keywords: {} });
-      alert('관심 키워드가 초기화되었습니다.');
+      showToast('관심 키워드가 초기화되었습니다.', "success");
     } catch (error) {
-      alert(`초기화에 실패했습니다. 다시 시도해주세요.\n${error.response?.data?.detail || error.message}`);
+      showToast(`초기화에 실패했습니다. ${error.response?.data?.detail || error.message}`, "error");
     }
   };
 
   const handleLogout = () => {
-    if (window.confirm("로그아웃 하시겠습니까?")) {
-      localStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('user_id');
-      localStorage.removeItem('login_id');
-      localStorage.removeItem('username');
-      navigate('/');
-      window.location.reload();
-    }
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('user_id');
+    localStorage.removeItem('login_id');
+    localStorage.removeItem('username');
+    navigate('/');
+    window.location.reload();
   };
 
   const handleTabChange = (tab) => {
@@ -199,27 +199,24 @@ const MyPage = () => {
 
   // Remove Handlers
   const handleRemoveLike = async (newsId) => {
-    if (!window.confirm("정말 취소하시겠습니까?")) return;
     try {
-      // Toggle request (if value matches, it removes)
-      // Value 1 is like. Sending 1 again removes it.
       await axios.post(`${API_BASE_URL}/news/${newsId}/reaction?value=1&login_id=${login_id}`);
-
       setLikedArticles(prev => prev.filter(a => a.report_id !== newsId));
+      showToast("좋아요가 취소되었습니다.", "success");
     } catch (err) {
       console.error("좋아요 취소 실패:", err);
-      alert("처리 중 오류가 발생했습니다.");
+      showToast("처리 중 오류가 발생했습니다.", "error");
     }
   };
 
   const handleRemoveScrap = async (newsId) => {
-    if (!window.confirm("스크랩을 취소하시겠습니까?")) return;
     try {
       await axios.post(`${API_BASE_URL}/users/${login_id}/scraps`, { report_id: newsId });
       setScrappedArticles(prev => prev.filter(a => a.report_id !== newsId));
+      showToast("스크랩이 취소되었습니다.", "success");
     } catch (err) {
       console.error("스크랩 취소 실패:", err);
-      alert("처리 중 오류가 발생했습니다.");
+      showToast("처리 중 오류가 발생했습니다.", "error");
     }
   };
 

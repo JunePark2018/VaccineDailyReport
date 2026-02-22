@@ -4,7 +4,7 @@ import './RightSideBar.css';
 import axios from 'axios'; // axios 임포트 확인
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-export default function RightSideBar({ isOpen, onClose, searchKeyword, clusterId }) {
+export default function RightSideBar({ isOpen, onClose, searchKeyword, searchCompany, clusterId }) {
   const [isLoading, setIsLoading] = useState(false);
   const [sourceList, setSourceList] = useState(null);
 
@@ -18,7 +18,6 @@ export default function RightSideBar({ isOpen, onClose, searchKeyword, clusterId
         try {
           // 1. 문장이 선택된 경우 -> /citation (유사도 정렬)
           if (searchKeyword) {
-            console.log(`[RightSideBar] Fetching related news for sentence: "${searchKeyword}"`);
             const response = await axios.post(`${API_BASE_URL}/reports/citation`, {
               cluster_id: clusterId,
               target_sentence: searchKeyword
@@ -36,14 +35,24 @@ export default function RightSideBar({ isOpen, onClose, searchKeyword, clusterId
                 score: item.score,      // 유사도 점수
                 match_text: item.match_text // 가장 유사한 문장
               }));
-              setSourceList(mappedData);
+              let filteredData = mappedData;
+              if (searchCompany) {
+                // Filter by company if provided (e.g. from Evidence click)
+                filteredData = mappedData.filter(item => item.company === searchCompany);
+
+                // If filtering results in empty list, maybe show all but warn? 
+                // For now, strict filtering as requested.
+                // If 0 results, maybe the company name mismatch? try lax matching?
+                // Let's assume exact match for now as they come from same source.
+              }
+
+              setSourceList(filteredData);
             } else {
               setSourceList([]);
             }
           }
           // 2. 문장이 선택 안 된 경우 -> 기존 로직 (단순 기사 목록)
           else {
-            console.log(`[RightSideBar] Fetching news for cluster: ${clusterId}`);
             const response = await axios.get(`${API_BASE_URL}/reports/clusters/${clusterId}/news`);
 
             const mappedData = response.data.map(item => ({
@@ -66,7 +75,7 @@ export default function RightSideBar({ isOpen, onClose, searchKeyword, clusterId
 
       fetchArticles();
     }
-  }, [isOpen, clusterId, searchKeyword]); // searchKeyword 변경 시에도 재호출
+  }, [isOpen, clusterId, searchKeyword, searchCompany]); // added searchCompany dependency
 
   // [Sticky Logic] 헤더 높이만큼 아래에서 시작했다가, 스크롤 시 위로 붙음
   const HEADER_HEIGHT = 160; // Adjusted to 160px per user request
@@ -153,7 +162,7 @@ export default function RightSideBar({ isOpen, onClose, searchKeyword, clusterId
                     <div className="card-header">
                       <span className="company-badge">{article.company}</span>
                       <span className="article-date">{article.date}</span>
-                      {article.score && (
+                      {article.score && (!sourceList || sourceList.length > 1) && (
                         <span
                           className="similarity-badge"
                           style={{

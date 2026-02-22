@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useToast } from './Toast';
 import Button from '../components/Button';
 
 const SubscribedKeywords = ({ keywords = [], isEditMode, onToggleEdit, onDelete, onAdd }) => {
+  const showToast = useToast();
   const [newKeyword, setNewKeyword] = useState('');
 
   // Helper function to get byte length of a string (UTF-8)
@@ -31,13 +33,13 @@ const SubscribedKeywords = ({ keywords = [], isEditMode, onToggleEdit, onDelete,
 
     // Check if keyword already exists
     if (keywords.includes(trimmedKeyword)) {
-      alert('이미 등록된 키워드입니다.');
+      showToast('이미 등록된 키워드입니다.', 'warning');
       return;
     }
 
     // Check maximum keyword count (20)
     if (keywords.length >= 20) {
-      alert('키워드는 최대 20개까지만 등록할 수 있습니다.');
+      showToast('키워드는 최대 20개까지만 등록할 수 있습니다.', 'warning');
       return;
     }
 

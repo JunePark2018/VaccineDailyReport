@@ -1,12 +1,26 @@
 import React, { useState } from 'react';
 import './AgeGenderChart.css';
 
+const MOCK_AGE_DATA = [
+    { age: '10대', count: 5 },
+    { age: '20대', count: 23 },
+    { age: '30대', count: 31 },
+    { age: '40대', count: 18 },
+    { age: '50대', count: 12 },
+    { age: '60대+', count: 7 },
+];
+
+const MOCK_GENDER_DATA = [
+    { gender: '남성', count: 58 },
+    { gender: '여성', count: 38 },
+];
+
 const AgeGenderChart = ({ ageData: propAgeData, genderData: propGenderData }) => {
     const [isActive, setIsActive] = useState(false);
 
-    // 빈 데이터면 빈 배열 사용 (빈 차트 표시)
-    const ageData = (propAgeData && propAgeData.length > 0) ? propAgeData : [];
-    const genderData = (propGenderData && propGenderData.length > 0) ? propGenderData : [];
+    // 빈 데이터면 mock 데이터 사용
+    const ageData = (propAgeData && propAgeData.length > 0) ? propAgeData : MOCK_AGE_DATA;
+    const genderData = (propGenderData && propGenderData.length > 0) ? propGenderData : MOCK_GENDER_DATA;
 
     const maxAgeCount = ageData.length > 0 ? Math.max(...ageData.map(d => d.count), 1) : 100;
 
@@ -21,39 +35,26 @@ const AgeGenderChart = ({ ageData: propAgeData, genderData: propGenderData }) =>
             <section className="chart-section">
                 <h3 className="chart-title">연령대별 조회수</h3>
                 <div className="chart-wrapper">
-                    {ageData.length > 0 ? (
-                        <div className="bars-container age-bars">
-                            {ageData.map((item, index) => (
-                                <div key={item.age} className="bar-item">
-                                    <div className="bar-tooltip">
-                                        {item.count}명
-                                    </div>
-                                    <div className="bar-track">
-                                        <div
-                                            className="bar-fill age-bar-fill"
-                                            style={{
-                                                height: isActive ? `${(item.count / maxAgeCount) * 100}%` : '0%',
-                                                transitionDelay: `${index * 0.1}s`
-                                            }}
-                                        />
-                                    </div>
-                                    <span className="bar-label">{item.age}</span>
-                                    <span className="bar-count">{item.count}명</span>
+                    <div className="bars-container age-bars">
+                        {ageData.map((item, index) => (
+                            <div key={item.age} className="bar-item">
+                                <div className="bar-tooltip">
+                                    {item.count}명
                                 </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div style={{
-                            height: '260px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#999',
-                            fontSize: '12px'
-                        }}>
-                            데이터 없음
-                        </div>
-                    )}
+                                <div className="bar-track">
+                                    <div
+                                        className="bar-fill age-bar-fill"
+                                        style={{
+                                            height: isActive ? `${(item.count / maxAgeCount) * 100}%` : '0%',
+                                            transitionDelay: `${index * 0.1}s`
+                                        }}
+                                    />
+                                </div>
+                                <span className="bar-label">{item.age}</span>
+                                <span className="bar-count">{item.count}명</span>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </section>
 
@@ -79,26 +80,20 @@ const AgeGenderChart = ({ ageData: propAgeData, genderData: propGenderData }) =>
                             >
                                 <div className="pie-chart-center">
                                     <div className="pie-chart-text">
-                                        {genderData.length > 0 ? (
-                                            genderData.map((item, index) => {
-                                                const total = genderData.reduce((sum, g) => sum + g.count, 0);
-                                                const percentage = total > 0 ? ((item.count / total) * 100).toFixed(1) : 0;
-                                                return (
-                                                    <div key={item.gender} className="pie-text-item">
-                                                        <span className={`pie-text-label ${item.gender === '남성' ? 'male-text' : 'female-text'}`}>
-                                                            {item.gender}
-                                                        </span>
-                                                        <span className="pie-text-value">
-                                                            {item.count}명 ({percentage}%)
-                                                        </span>
-                                                    </div>
-                                                );
-                                            })
-                                        ) : (
-                                            <div style={{ color: '#999', fontSize: '12px' }}>
-                                                데이터 없음
-                                            </div>
-                                        )}
+                                        {genderData.map((item, index) => {
+                                            const total = genderData.reduce((sum, g) => sum + g.count, 0);
+                                            const percentage = total > 0 ? ((item.count / total) * 100).toFixed(1) : 0;
+                                            return (
+                                                <div key={item.gender} className="pie-text-item">
+                                                    <span className={`pie-text-label ${item.gender === '남성' ? 'male-text' : 'female-text'}`}>
+                                                        {item.gender}
+                                                    </span>
+                                                    <span className="pie-text-value">
+                                                        {item.count}명 ({percentage}%)
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             </div>

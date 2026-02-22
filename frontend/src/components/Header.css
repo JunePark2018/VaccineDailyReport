@@ -63,13 +63,11 @@
     max-width: 1320px;
     display: flex;
     justify-content: space-between;
+    align-items: center;
     padding: 0 20px;
 }
 
-.Header-Container .weather {
-    color: #007bff;
-    font-weight: 600;
-}
+/* weather-widget 스타일은 Weather.css에서 관리 */
 
 /* Header 2: Main Section */
 .Header-Container .Header-Main {
@@ -184,7 +182,7 @@
 
     /* Hide Main Sections on Mobile */
     .Header-Container .Header-Top,
-    .Header-Container .weather,
+    .Header-Container .weather-widget,
     .Header-Container .Header-Main,
     .Header-Container .Header-Bottom {
         display: none !important;

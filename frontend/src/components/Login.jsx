@@ -59,7 +59,31 @@ const Login = () => {
                 localStorage.setItem('login_id', data.login_id);
                 localStorage.setItem('username', data.username);
 
-                console.log('Login successful:', data);
+                // Restore recommendation data from backend
+                try {
+                    const dashRes = await fetch(`${API_BASE_URL}/users/${data.login_id}/dashboard`);
+                    if (dashRes.ok) {
+                        const dash = await dashRes.json();
+                        // read_keywords: { "키워드": count } → viewed_tags 복원
+                        if (dash.read_keywords && Object.keys(dash.read_keywords).length > 0) {
+                            const sortedTags = Object.entries(dash.read_keywords)
+                                .sort((a, b) => b[1] - a[1])
+                                .map(([kw]) => kw)
+                                .slice(0, 50);
+                            localStorage.setItem('viewed_tags', JSON.stringify(sortedTags));
+                        }
+                        // read_categories: { "카테고리": count } → viewed_categories 복원
+                        if (dash.read_categories && Object.keys(dash.read_categories).length > 0) {
+                            const sortedCats = Object.entries(dash.read_categories)
+                                .sort((a, b) => b[1] - a[1])
+                                .map(([cat]) => cat)
+                                .slice(0, 10);
+                            localStorage.setItem('viewed_categories', JSON.stringify(sortedCats));
+                        }
+                    }
+                } catch (e) {
+                    console.warn('추천 데이터 복원 실패:', e);
+                }
 
                 // Navigate to home page
                 nav('/');

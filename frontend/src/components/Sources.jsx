@@ -14,11 +14,7 @@ const Sources = ({ clusterId }) => {
 
       setIsLoading(true);
       try {
-        console.log(`[Sources] Cluster ID ${clusterId}로 원본 기사 요청 중...`);
-
         const response = await axios.get(`${API_BASE_URL}/reports/clusters/${clusterId}/news`);
-
-        console.log("[Sources] 원본 기사 로딩 완료:", response.data);
         setArticles(response.data);
       } catch (error) {
         console.error("[Sources] 원본 기사 불러오기 실패:", error);
