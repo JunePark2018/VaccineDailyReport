@@ -315,7 +315,13 @@
         justify-content: flex-start;
     }
 
-    /* 8. Remove Divider Lines on Titles (Mobile) */
+    /* 8. Article text padding: match image width */
+    .ArticlePage .article-section > div[style] {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    /* 9. Remove Divider Lines on Titles (Mobile) */
     .ArticlePage .section-title,
     .ArticlePage .main-content .article-comparer .section-title,
     .ArticlePage .statistics-section .section-title {
