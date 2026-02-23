@@ -22,7 +22,7 @@ def get_chroma_client():
             if not host:
                 raise ValueError("CHROMA_MODE가 remote일 때는 CHROMA_SERVER_HOST가 필수입니다.")
 
-            print(f"--- [DEBUG] Connecting to Remote ChromaDB: {host}:{port} ---")
+            # print(f"--- [DEBUG] Connecting to Remote ChromaDB: {host}:{port} ---")
             _chroma_client = chromadb.HttpClient(host=host, port=int(port))
 
         # --- 2. 로컬 파일 모드 (Docker 또는 Local PC) ---
@@ -42,7 +42,7 @@ def get_chroma_client():
                 CHROMA_PATH = os.path.join(BASE_DIR, "chroma_db")
 
             os.makedirs(CHROMA_PATH, exist_ok=True)
-            print(f"--- [DEBUG] Using Local ChromaDB Path: {CHROMA_PATH} ---")
+            # print(f"--- [DEBUG] Using Local ChromaDB Path: {CHROMA_PATH} ---")
             _chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
 
     return _chroma_client

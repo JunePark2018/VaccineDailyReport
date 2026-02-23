@@ -415,9 +415,9 @@ def get_user(db: Session, user_id: int) -> Optional[User]:
 
 
 def get_user_by_login_id(db: Session, login_id: str) -> Optional[User]:
-    print(f"[DEBUG] get_user_by_login_id called with login_id: '{login_id}'")  # 디버깅용
+    # print(f"[DEBUG] get_user_by_login_id called with login_id: '{login_id}'")  # 디버깅용
     result = db.execute(select(User).where(User.login_id == login_id)).scalar_one_or_none()
-    print(f"[DEBUG] Query result: {result}")  # 디버깅용
+    # print(f"[DEBUG] Query result: {result}")  # 디버깅용
     return result
 
 

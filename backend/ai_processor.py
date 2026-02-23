@@ -41,9 +41,21 @@ from keyword_extractor import KeywordExtractor
 
 
 async def process_single_issue(
-    issue: Report, kw_extractor: KeywordExtractor, db: Session
+    issue: Report, kw_extractor: KeywordExtractor, db: Session, semaphore: asyncio.Semaphore = None
 ):
     """단일 이슈 처리 (비동기)"""
+    # Semaphore를 사용한 동시 실행 제한
+    if semaphore:
+        async with semaphore:
+            return await _process_single_issue_impl(issue, kw_extractor, db)
+    else:
+        return await _process_single_issue_impl(issue, kw_extractor, db)
+
+
+async def _process_single_issue_impl(
+    issue: Report, kw_extractor: KeywordExtractor, db: Session
+):
+    """단일 이슈 처리 구현부"""
     try:
         # 2. 관련 기사 가져오기
         cluster = issue.cluster
@@ -181,9 +193,11 @@ async def process_news_async_internal():
         if not targets:
             return
 
-        # 병렬 처리: asyncio.gather로 모든 이슈 동시 처리
-        print(f"⚡ [AI] {len(targets)}개 이슈 병렬 처리 시작...")
-        tasks = [process_single_issue(issue, kw_extractor, db) for issue in targets]
+        # 병렬 처리: Semaphore로 동시 실행 제한 (최대 5개)
+        MAX_CONCURRENT = 5
+        semaphore = asyncio.Semaphore(MAX_CONCURRENT)
+        print(f"⚡ [AI] {len(targets)}개 이슈 처리 시작 (동시 최대 {MAX_CONCURRENT}개)...")
+        tasks = [process_single_issue(issue, kw_extractor, db, semaphore) for issue in targets]
         await asyncio.gather(*tasks)
 
         print(f"🎉 [AI] 모든 이슈 처리 완료!")

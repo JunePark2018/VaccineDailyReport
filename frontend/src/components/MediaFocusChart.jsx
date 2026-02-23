@@ -1,17 +1,6 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LabelList } from 'recharts';
 
-const MOCK_MEDIA_FOCUS = {
-    media_focus: [
-        { company: '조선일보', focus_pct: 8.2, total_count: 120, issue_count: 10 },
-        { company: '한겨레', focus_pct: 6.5, total_count: 95, issue_count: 6 },
-        { company: '중앙일보', focus_pct: 5.1, total_count: 110, issue_count: 6 },
-        { company: 'KBS', focus_pct: 4.3, total_count: 80, issue_count: 3 },
-        { company: 'SBS', focus_pct: 3.7, total_count: 85, issue_count: 3 },
-    ],
-    market_avg_pct: 4.5,
-};
-
 const CustomBarLabel = (props) => {
     const { x, y, width, height, value, index } = props;
     const item = props.data[index];
@@ -30,8 +19,12 @@ const CustomBarLabel = (props) => {
 };
 
 const MediaFocusChart = ({ data }) => {
-    const effectiveData = (data && data.media_focus && data.media_focus.length > 0) ? data : MOCK_MEDIA_FOCUS;
-    const { media_focus } = effectiveData;
+    // 데이터가 없으면 컴포넌트를 렌더링하지 않음
+    if (!data || !data.media_focus || data.media_focus.length === 0) {
+        return null;
+    }
+
+    const { media_focus } = data;
     const chartData = media_focus.slice(0, 5);
 
     return (

@@ -18,22 +18,39 @@ from sklearn.preprocessing import normalize
 from sklearn.metrics.pairwise import cosine_similarity
 import hdbscan
 
-load_dotenv(override=True)
+load_dotenv(override=False)  # 환경 변수가 이미 설정되어 있으면 덮어쓰지 않음
 kiwi = Kiwi()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
 # -------------------------------------------------
-# 1. 초기화 및 ChromaDB 설정
+# 1. 초기화 및 ChromaDB 설정 (Lazy Loading)
 # -------------------------------------------------
 print("--- [AI] 모델 및 ChromaDB 로딩 중... ---")
 
 # [Refactor] vector_store 모듈 사용
 from database.vector_store import get_collection, get_embed_model
 
-collection = get_collection()
-embed_model = get_embed_model()
+# Lazy loading: 함수 호출 시점에 초기화
+_collection = None
+_embed_model = None
+
+def _get_collection():
+    global _collection
+    if _collection is None:
+        _collection = get_collection()
+    return _collection
+
+def _get_embed_model():
+    global _embed_model
+    if _embed_model is None:
+        _embed_model = get_embed_model()
+    return _embed_model
+
+# 하위 호환성을 위한 별칭
+collection = None  # 실제로는 _get_collection()을 통해 접근
+embed_model = None  # 실제로는 _get_embed_model()을 통해 접근
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
@@ -48,7 +65,7 @@ def get_embeddings_with_cache(articles):
     article_ids = [str(a.news_id) for a in articles]
 
     # 1. ChromaDB 조회
-    existing_data = collection.get(ids=article_ids, include=["embeddings"])
+    existing_data = _get_collection().get(ids=article_ids, include=["embeddings"])
     id_to_embedding = {
         aid: np.array(emb, dtype=np.float32) for aid, emb in zip(existing_data["ids"], existing_data["embeddings"])
     }
@@ -66,11 +83,11 @@ def get_embeddings_with_cache(articles):
             clean_content = (a.contents or "")[:200].replace("\n", " ")
             to_embed_texts.append(f"제목: {clean_title} 내용: {clean_content}")
 
-        new_embs = embed_model.encode(to_embed_texts, normalize_embeddings=True)
+        new_embs = _get_embed_model().encode(to_embed_texts, normalize_embeddings=True)
 
         # ChromaDB 저장
         new_ids = [str(articles[i].news_id) for i in to_embed_indices]
-        collection.add(
+        _get_collection().add(
             ids=new_ids,
             embeddings=new_embs.tolist(),
             metadatas=[{"title": articles[i].title} for i in to_embed_indices],
@@ -185,13 +202,20 @@ def simple_kg_check(articles):
 
     docs_nouns = [extract_nouns(a.title) for a in articles]
 
-    # 첫 번째 기사의 명사들을 기준으로 교집합 수행
-    common = docs_nouns[0]
-    for d in docs_nouns[1:]:
-        common = common.intersection(d)
+    # [수정] 모든 기사의 교집합 대신, 과반수 이상의 기사에 등장하는 명사 확인
+    # 모든 명사를 모아서 빈도 계산
+    from collections import Counter
+    all_nouns = []
+    for nouns in docs_nouns:
+        all_nouns.extend(nouns)
 
-    # 공통 핵심어가 1개 이상이면 통과
-    return len(common) >= 1
+    noun_freq = Counter(all_nouns)
+    threshold = len(articles) * 0.5  # 50% 이상의 기사에 등장
+
+    # 과반수 이상의 기사에 등장하는 명사가 있으면 통과
+    common_nouns = [noun for noun, freq in noun_freq.items() if freq >= threshold]
+
+    return len(common_nouns) >= 1
 
 
 def run_stage2_issue_refine(articles):
@@ -277,7 +301,7 @@ def run_issue_clustering(db: Session, days=3, ref_date=None):
     articles = [a for a in articles if not a.is_opinion]
 
     articles = [a for a in articles if not a.clusters]
-    print(f"🔍 [DEBUG] 조회된 기사 수: {len(articles) if articles else 0}개")
+    # print(f"🔍 [DEBUG] 조회된 기사 수: {len(articles) if articles else 0}개")
 
     if len(articles) < 3:
         print("⚠️ 기사가 부족하여 클러스터링을 종료합니다.")
@@ -292,7 +316,7 @@ def run_issue_clustering(db: Session, days=3, ref_date=None):
 
     # 3. [복구됨] 기존 이슈에 새 기사 병합 (Absorption)
     #    - 기존 이슈와 유사도가 매우 높으면(0.85 이상) 해당 이슈로 편입시킵니다.
-    print("🔄 [DEBUG] 기존 이슈와의 병합 검사 시작...")
+    # print("🔄 [DEBUG] 기존 이슈와의 병합 검사 시작...")
     # [수정] recent_issues도 since 이후에 생성된 것들만 조회
     recent_issues = db.query(Report).filter(Report.created_at >= since).all()
 
@@ -304,7 +328,7 @@ def run_issue_clustering(db: Session, days=3, ref_date=None):
         sample_news = issue.cluster.news[0]
 
         # 대표 기사의 임베딩 가져오기 (ChromaDB 활용)
-        res = collection.get(ids=[str(sample_news.news_id)], include=["embeddings"])
+        res = _get_collection().get(ids=[str(sample_news.news_id)], include=["embeddings"])
         if len(res["embeddings"]) == 0:
             continue
 
@@ -324,7 +348,7 @@ def run_issue_clustering(db: Session, days=3, ref_date=None):
                 print(f"  🔗 [병합] '{a.title}' -> 기존 이슈 '{issue.title}' (유사도: {sim:.2f})")
 
     # 4. 신규 클러스터링 (HDBSCAN)
-    print("🚀 [DEBUG] 신규 클러스터링 시작...")
+    # print("🚀 [DEBUG] 신규 클러스터링 시작...")
 
     # 이슈가 할당되지 않은 기사들만 필터링
     rem = [(i, a) for i, a in enumerate(articles) if getattr(a, "issue_id", None) is None]
@@ -346,6 +370,16 @@ def run_issue_clustering(db: Session, days=3, ref_date=None):
     )
     labels = clusterer.fit_predict(rem_embs)
 
+    # 디버깅: 클러스터 레이블 분포 출력
+    # unique_labels = set(labels)
+    # print(f"   [DEBUG] HDBSCAN 결과: {len(unique_labels)}개 레이블 (노이즈 포함)")
+    # for label in unique_labels:
+    #     count = np.sum(labels == label)
+    #     if label == -1:
+    #         print(f"   [DEBUG]   레이블 {label} (노이즈): {count}개")
+    #     else:
+    #         print(f"   [DEBUG]   레이블 {label}: {count}개")
+
     for cid in set(labels):
         if cid == -1:  # 노이즈
             continue
@@ -355,15 +389,21 @@ def run_issue_clustering(db: Session, days=3, ref_date=None):
         cluster = [rem_articles[i] for i in cluster_indices]
 
         # 1차 검증: KG Check
+        # print(f"   [DEBUG] 클러스터 {cid}: 1차 검증 시작 ({len(cluster)}개 기사)")
         if not simple_kg_check(cluster):
+            # print(f"   [DEBUG] 클러스터 {cid}: 1차 검증 실패 (KG Check)")
             continue
 
         # 2차 검증: LLM Refine
+        # print(f"   [DEBUG] 클러스터 {cid}: 2차 검증 시작 (LLM Refine)")
         res = run_stage2_issue_refine(cluster)
         valid_ids = res.get("valid_ids", [])
 
         if len(valid_ids) < 3:
+            # print(f"   [DEBUG] 클러스터 {cid}: 2차 검증 실패 (valid_ids={len(valid_ids)} < 3)")
             continue
+
+        # print(f"   [DEBUG] 클러스터 {cid}: 검증 통과! (valid_ids={len(valid_ids)}개)")
 
         picked = [cluster[i] for i in valid_ids if i < len(cluster)]
         final_title = res.get("title", picked[0].title)
@@ -426,7 +466,7 @@ def assign_opinions_to_clusters(db: Session, since, ref_date, threshold=0.75):
             continue
 
         news_ids = [str(n.news_id) for n in news_in_cluster]
-        res = collection.get(ids=news_ids, include=["embeddings"])
+        res = _get_collection().get(ids=news_ids, include=["embeddings"])
         if len(res["embeddings"]) == 0:
             continue
 

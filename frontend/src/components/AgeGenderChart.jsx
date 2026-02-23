@@ -1,26 +1,17 @@
 import React, { useState } from 'react';
 import './AgeGenderChart.css';
 
-const MOCK_AGE_DATA = [
-    { age: '10대', count: 5 },
-    { age: '20대', count: 23 },
-    { age: '30대', count: 31 },
-    { age: '40대', count: 18 },
-    { age: '50대', count: 12 },
-    { age: '60대+', count: 7 },
-];
-
-const MOCK_GENDER_DATA = [
-    { gender: '남성', count: 58 },
-    { gender: '여성', count: 38 },
-];
-
 const AgeGenderChart = ({ ageData: propAgeData, genderData: propGenderData }) => {
     const [isActive, setIsActive] = useState(false);
 
-    // 빈 데이터면 mock 데이터 사용
-    const ageData = (propAgeData && propAgeData.length > 0) ? propAgeData : MOCK_AGE_DATA;
-    const genderData = (propGenderData && propGenderData.length > 0) ? propGenderData : MOCK_GENDER_DATA;
+    // 데이터 유효성 검사
+    const ageData = (propAgeData && propAgeData.length > 0) ? propAgeData : [];
+    const genderData = (propGenderData && propGenderData.length > 0) ? propGenderData : [];
+
+    // 데이터가 없으면 컴포넌트를 렌더링하지 않음
+    if (ageData.length === 0 && genderData.length === 0) {
+        return null;
+    }
 
     const maxAgeCount = ageData.length > 0 ? Math.max(...ageData.map(d => d.count), 1) : 100;
 
