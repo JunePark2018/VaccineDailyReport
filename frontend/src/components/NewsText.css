@@ -92,6 +92,12 @@
   color: #007bff;
 }
 
+@media screen and (max-width: 768px) {
+  .NewsText {
+    padding: 20px 0 !important;
+  }
+}
+
 .NewsText .news-inline-like {
   display: inline-flex;
   margin-left: 12px;
