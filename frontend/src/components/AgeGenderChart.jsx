@@ -9,14 +9,17 @@ const AgeGenderChart = ({ ageData: propAgeData, genderData: propGenderData }) =>
         setTimeout(() => setIsActive(true), 100);
     }, []);
 
-    // 데이터 유효성 검사
-    const ageData = (propAgeData && propAgeData.length > 0) ? propAgeData : [];
-    const genderData = (propGenderData && propGenderData.length > 0) ? propGenderData : [];
+    // 데이터가 없으면 0명 기본값 사용
+    const DEFAULT_AGE_DATA = [
+        { age: '10대', count: 0 }, { age: '20대', count: 0 }, { age: '30대', count: 0 },
+        { age: '40대', count: 0 }, { age: '50대', count: 0 }, { age: '60대+', count: 0 },
+    ];
+    const DEFAULT_GENDER_DATA = [
+        { gender: '남성', count: 0 }, { gender: '여성', count: 0 },
+    ];
 
-    // 데이터가 없으면 컴포넌트를 렌더링하지 않음
-    if (ageData.length === 0 && genderData.length === 0) {
-        return null;
-    }
+    const ageData = (propAgeData && propAgeData.length > 0) ? propAgeData : DEFAULT_AGE_DATA;
+    const genderData = (propGenderData && propGenderData.length > 0) ? propGenderData : DEFAULT_GENDER_DATA;
 
     const maxAgeCount = ageData.length > 0 ? Math.max(...ageData.map(d => d.count), 1) : 100;
 
