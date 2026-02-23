@@ -824,8 +824,10 @@
         aspect-ratio: 1.5 / 1 !important;
     }
 
-    /* List Section on Mobile */
+    /* List Section on Mobile (single column) */
     .economics-page .list-section {
+        grid-template-columns: 1fr !important;
+        gap: 0 !important;
         padding: 0 !important;
     }
 
@@ -835,7 +837,12 @@
     }
 
     .economics-page .list-info h3 {
-        font-size: 14px !important;
+        font-size: 16px !important;
+    }
+
+    /* Hide related articles on mobile */
+    .economics-page .related-articles {
+        display: none !important;
     }
 
     /* Handle Dividers for Disabled Section */
