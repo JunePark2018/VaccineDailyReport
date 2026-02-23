@@ -23,17 +23,17 @@ TARGET_COMPANIES = [
 
 
 # ---------------------------------------------------------
-# 초기 시드: DB가 비어있을 때 7일치 데이터 수집 + AI 분석
+# 초기 시드: DB가 비어있을 때 3일치 데이터 수집 + AI 분석
 # ---------------------------------------------------------
 def run_initial_seed():
-    """서버 최초 기동 시 DB가 비어있으면 7일치 뉴스를 수집하고 AI 분석을 실행한다."""
+    """서버 최초 기동 시 DB가 비어있으면 3일치 뉴스를 수집하고 AI 분석을 실행한다."""
     print("=" * 60)
-    print("🌱 [Initial Seed] DB가 비어있습니다. 7일치 데이터를 수집합니다.")
+    print("🌱 [Initial Seed] DB가 비어있습니다. 3일치 데이터를 수집합니다.")
     print("=" * 60)
 
     today = datetime.now()
 
-    for d in range(7, 0, -1):
+    for d in range(3, 0, -1):
         target = today - timedelta(days=d)
         target_str = target.strftime("%Y%m%d")
 
@@ -61,7 +61,7 @@ def run_initial_seed():
 
         print(f"  ✅ {target_str} 완료")
 
-    print("\n🎉 [Initial Seed] 7일치 데이터 시딩 완료!")
+    print("\n🎉 [Initial Seed] 3일치 데이터 시딩 완료!")
     print("=" * 60)
 
 
@@ -163,7 +163,7 @@ def run_realtime_cycle():
 def run_background_worker():
     print("🚀 [System] 백그라운드 워커 가동 시작")
 
-    # 1회성: DB가 비어있으면 7일치 시드
+    # 1회성: DB가 비어있으면 3일치 시드
     db = SessionLocal()
     news_count = db.query(News).count()
     db.close()
