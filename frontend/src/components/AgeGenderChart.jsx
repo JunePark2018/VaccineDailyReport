@@ -4,6 +4,11 @@ import './AgeGenderChart.css';
 const AgeGenderChart = ({ ageData: propAgeData, genderData: propGenderData }) => {
     const [isActive, setIsActive] = useState(false);
 
+    // 컴포넌트 마운트 시 애니메이션 시작 (Hook은 early return 전에 호출)
+    React.useEffect(() => {
+        setTimeout(() => setIsActive(true), 100);
+    }, []);
+
     // 데이터 유효성 검사
     const ageData = (propAgeData && propAgeData.length > 0) ? propAgeData : [];
     const genderData = (propGenderData && propGenderData.length > 0) ? propGenderData : [];
@@ -14,11 +19,6 @@ const AgeGenderChart = ({ ageData: propAgeData, genderData: propGenderData }) =>
     }
 
     const maxAgeCount = ageData.length > 0 ? Math.max(...ageData.map(d => d.count), 1) : 100;
-
-    // 컴포넌트 마운트 시 애니메이션 시작
-    React.useEffect(() => {
-        setTimeout(() => setIsActive(true), 100);
-    }, []);
 
     return (
         <div className="AgeGenderChart">
