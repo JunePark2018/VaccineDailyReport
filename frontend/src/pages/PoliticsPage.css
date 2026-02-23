@@ -269,7 +269,22 @@
     }
 
     .politics-page .bottom-grid-section {
-        display: none !important;
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 15px !important;
+        padding: 0 !important;
+    }
+
+    .politics-page .bottom-grid-section .grid-image {
+        width: 100% !important;
+        aspect-ratio: 1.5 / 1 !important;
+        height: auto !important;
+    }
+
+    .politics-page .bottom-grid-section h3 {
+        font-size: 14px !important;
+        -webkit-line-clamp: 2 !important;
+        line-clamp: 2 !important;
     }
 
     /* 카테고리 제목 */
@@ -634,7 +649,7 @@
     gap: 30px;
     text-align: left;
     margin-top: 30px;
-    padding: 0 120px;
+    padding: 0 40px;
 }
 
 .politics-page .feed-item {
@@ -676,7 +691,7 @@
 }
 
 .politics-page .feed-info h3 {
-    font-size: 20px;
+    font-size: 17px;
     font-weight: bold;
     margin: 0 0 12px 0;
     line-height: 1.3;
@@ -695,7 +710,7 @@
 }
 
 .politics-page .feed-image {
-    width: 312px;
+    width: 200px;
     aspect-ratio: 1.5 / 1;
     flex-shrink: 0;
     overflow: hidden;

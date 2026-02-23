@@ -4,7 +4,33 @@ import './OpinionSection.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
-const OpinionSection = ({ reportId }) => {
+const renderClickableEvidence = (text, company, onSentenceClick) => {
+    if (!text || !onSentenceClick) return text;
+    return text.split('\n').map((line, lIdx) => (
+        <p key={lIdx} style={{ margin: 0 }}>
+            {line.split('. ').map((stmt, sIdx) => {
+                let s = stmt.trim();
+                if (!s) return null;
+                const endsWithPunct = /[.!?…]$/.test(s);
+                const fullSentence = s + (endsWithPunct ? '' : '.');
+                return (
+                    <span
+                        key={sIdx}
+                        className="clickable-sentence"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onSentenceClick(fullSentence, company);
+                        }}
+                    >
+                        {fullSentence}{' '}
+                    </span>
+                );
+            })}
+        </p>
+    ));
+};
+
+const OpinionSection = ({ reportId, onSentenceClick }) => {
     const [opinions, setOpinions] = useState([]);
     const [isExpanded, setIsExpanded] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -60,8 +86,8 @@ const OpinionSection = ({ reportId }) => {
                                         {item.summary}
                                     </p>
                                     {isExpanded && item.evidence && (
-                                        <div className="opinion-evidence-text">
-                                            {item.evidence}
+                                        <div className="opinion-evidence-text" style={{ marginTop: '4px', fontSize: '0.9rem', color: '#5f6368', lineHeight: '1.5', textAlign: 'left' }}>
+                                            {renderClickableEvidence(item.evidence, item.company, onSentenceClick)}
                                         </div>
                                     )}
                                 </li>

@@ -611,7 +611,7 @@ function ArticlePage() {
                     </div>
 
                     {/* 관련 오피니언/사설 섹션 */}
-                    <OpinionSection reportId={id} />
+                    <OpinionSection reportId={id} onSentenceClick={handleSentenceClick} />
                   </div>
 
                   <NewsText
