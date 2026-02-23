@@ -298,6 +298,7 @@ const Weather = () => {
             href={naverWeatherUrl}
             target="_blank"
             rel="noopener noreferrer"
+            title="출처: 기상청 (공공데이터포털)"
         >
             <div className="weather-icon-wrap" style={{ color }}>
                 {icon}
@@ -313,6 +314,8 @@ const Weather = () => {
 
             <DropletIcon />
             <span className="weather-humidity">{weatherData.humidity}%</span>
+
+            <span className="weather-source">기상청</span>
         </a>
     );
 };
