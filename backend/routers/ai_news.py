@@ -60,6 +60,9 @@ def get_reports(
 
     query = db.query(Report).options(joinedload(Report.category))
 
+    # 본문이 없는(생성 중인) 리포트 제외
+    query = query.filter(Report.contents != None, Report.contents != "")
+
     if category_id is not None:
         query = query.filter(Report.category_id == category_id)
 
@@ -115,6 +118,7 @@ def search_reports(
     query = (
         db.query(Report)
         .options(joinedload(Report.category))
+        .filter(Report.contents != None, Report.contents != "")
         .filter(or_(Report.title.ilike(search_pattern), Report.contents.ilike(search_pattern)))
     )
 
