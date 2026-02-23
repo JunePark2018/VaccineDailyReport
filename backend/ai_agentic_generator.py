@@ -58,7 +58,7 @@ Task: Synthesize the above articles into a single complete news report **in Kore
 Mandatory Requirements:
 1. **Fact-based**: Never add information not present in the provided articles.
 2. **Korean Writing**: All content MUST be written in Korean.
-3. **Structure**: Headline -> Lead -> Body (Causes/Progress/Details) -> Conclusion.
+3. **Structure**: Write as natural flowing paragraphs. Do NOT use section headers, labels, or markers like 【헤드라인】, 【리드】, 【본문】, [Headline], [Lead], etc. Start with the most important fact, then provide context and details across multiple paragraphs.
 4. **Neutrality**: Exclude emotional expressions; maintain a dry reporting style.
 5. **Remove Multimedia References**: Remove expressions like "Photo above", "Video", "Table", "As seen in the picture", etc.
 
