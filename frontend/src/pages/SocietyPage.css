@@ -753,10 +753,16 @@
 
     /* Grid Section (2-column on Mobile) */
     .society-page .grid-section {
-        display: grid !important;
+        padding: 0 !important;
+    }
+
+    .society-page .right-grid-container {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 15px !important;
-        padding: 0 !important;
+    }
+
+    .society-page .grid-item-small.mobile-hidden {
+        display: flex !important;
     }
 
     .society-page .grid-section .grid-image {
@@ -766,13 +772,29 @@
     }
 
     .society-page .grid-section h3 {
-        font-size: 14px !important;
+        font-size: 16px !important;
         -webkit-line-clamp: 2 !important;
         line-clamp: 2 !important;
     }
 
+    /* Asymmetric List → Mobile: Stack vertically */
     .society-page .asymmetric-list-section {
-        display: none !important;
+        flex-direction: column !important;
+        gap: 20px !important;
+    }
+
+    .society-page .list-left-big {
+        flex: none !important;
+        width: 100% !important;
+    }
+
+    .society-page .list-left-info h3 {
+        font-size: 20px !important;
+    }
+
+    .society-page .list-right-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 15px !important;
     }
 
     /* Handle Dividers for Disabled Sections */
