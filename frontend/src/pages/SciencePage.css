@@ -922,6 +922,11 @@
     }
 
     /* List Section on Mobile */
+    .science-page .list-section {
+        grid-template-columns: 1fr !important;
+        gap: 0 !important;
+    }
+
     .science-page.category-page .list-section {
         padding: 0 !important;
     }
