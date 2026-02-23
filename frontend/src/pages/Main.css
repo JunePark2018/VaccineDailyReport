@@ -1536,7 +1536,8 @@
   .main-page .economy-title,
   .main-page .cat-box-title,
   .main-page .grid-info h3,
-  .main-page .society-large-title {
+  .main-page .society-large-title,
+  .main-page .world-large-title {
     font-size: 20px !important;
     line-height: 1.3 !important;
     font-weight: 700 !important;
@@ -1743,7 +1744,8 @@
     gap: 30px;
   }
 
-  .main-page .society-large-card {
+  .main-page .society-large-card,
+  .main-page .world-large-card {
     flex-direction: column;
     gap: 15px;
   }
@@ -1764,7 +1766,8 @@
 
   .main-page .politics-section,
   .main-page .society-large-section,
-  .main-page .science-section {
+  .main-page .science-section,
+  .main-page .world-large-section {
     padding-left: 20px !important;
     /* 모바일 전용: 가독성 여백 */
     padding-right: 20px !important;
@@ -1843,6 +1846,61 @@
   /* 상단 여백 추가 */
   padding-bottom: 30px;
   /* 하단 여백 추가 */
+}
+
+/* World Large Block */
+.main-page .world-large-section {
+  padding: 30px;
+}
+
+.main-page .world-large-card {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+  padding-top: 10px;
+  cursor: pointer;
+}
+
+.main-page .world-large-img {
+  flex: 1;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+
+.main-page .world-large-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.main-page .world-large-info {
+  flex: 1.5;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.main-page .world-large-title {
+  font-size: 34px;
+  font-weight: 800;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.main-page .world-large-desc {
+  font-size: 15px;
+  color: #555;
+  margin: 0;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.main-page .world-large-card:hover .world-large-title {
+  text-decoration: underline;
 }
 
 /* Hover: Underline ONLY the title of the hovered block */

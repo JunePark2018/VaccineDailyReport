@@ -292,6 +292,7 @@ export const Main = () => {
   const economyArticles = getUniqueArticles('경제', 3);
   const societyArticles = getUniqueArticles('사회', 1);
   const scienceArticles = getUniqueArticles('IT/과학', 1);
+  const worldArticles = getUniqueArticles('세계', 1);
 
   // Function to render the main content block (Slideshow)
   const renderMainContent = () => {
@@ -596,6 +597,30 @@ export const Main = () => {
       );
     };
 
+    const renderWorldSection = () => {
+      const art = worldArticles[0];
+      if (!art) return null;
+      return (
+        <div className="world-large-section">
+          <h2 className="cat-box-header" onClick={() => navigate('/world')}>세계</h2>
+          <div className="world-large-card" onClick={() => navigate(`/article/${art.id}`)}>
+            <div className="world-large-img">
+              <img
+                src={imageMap[art.image] || art.image}
+                alt={art.title}
+                onLoad={(e) => { if (e.target.src.includes(logoImg)) { e.target.classList.add('logo-fallback'); } else { e.target.style.objectFit = 'cover'; e.target.classList.remove('logo-fallback'); } }}
+                onError={(e) => { e.target.onerror = null; e.target.src = logoImg; e.target.classList.add('logo-fallback'); }}
+              />
+            </div>
+            <div className="world-large-info">
+              <h3 className="world-large-title">{art.title}</h3>
+              <p className="world-large-desc">{art.short_text}</p>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
     return (
       <section className="complex-grid-section">
         <div className="complex-left-col">
@@ -604,6 +629,8 @@ export const Main = () => {
           {renderSocietyLargeSection()}
           <div className="complex-inner-divider"></div>
           {renderScienceSection()}
+          <div className="complex-inner-divider"></div>
+          {renderWorldSection()}
         </div>
         <div className="complex-right-col">
           {renderEconomySection()}
