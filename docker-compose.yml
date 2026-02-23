@@ -87,6 +87,7 @@ services:
       context: ./frontend
       args:
         REACT_APP_API_URL: http://${SERVER_IP}:8081
+        REACT_APP_WEATHER_API_KEY: ${REACT_APP_WEATHER_API_KEY}
     container_name: finalproject_frontend
     restart: always
     ports:
