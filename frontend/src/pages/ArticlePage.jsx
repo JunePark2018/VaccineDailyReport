@@ -62,6 +62,9 @@ function ArticlePage() {
   // Media Focus State
   const [focusData, setFocusData] = useState(null);
 
+  // Opinion State (pre-fetched)
+  const [opinionsData, setOpinionsData] = useState(null);
+
   // Action Button States (Unified Popup State)
   // 'tts', 'font', or null (Share removed)
   const [activePopup, setActivePopup] = useState(null);
@@ -368,23 +371,31 @@ function ArticlePage() {
           }
         }
 
-        // Fetch demographics data (after logging view)
-        try {
-          const demographics_response = await axios.get(`${API_BASE_URL}/reports/${id}/demographics`);
-          setDemographics(demographics_response.data);
-        } catch (error) {
-          console.error('Demographics Fetch Error:', error);
-          setDemographics({ age_distribution: [], gender_distribution: [] });
-        }
+        // Fetch demographics, media focus, and opinions in parallel
+        const [demoResult, focusResult, opinionResult] = await Promise.allSettled([
+          axios.get(`${API_BASE_URL}/reports/${id}/demographics`),
+          axios.get(`${API_BASE_URL}/reports/${id}/media-focus`),
+          // 캐시 없을 때만 API 호출 (캐시 있으면 이미 article.analysis_result에 포함)
+          article.analysis_result?.opinion_bullets
+            ? Promise.resolve({ data: article.analysis_result.opinion_bullets })
+            : axios.get(`${API_BASE_URL}/reports/${id}/opinions`),
+        ]);
 
-        // Fetch Media Focus Data
-        try {
-          const focus_response = await axios.get(`${API_BASE_URL}/reports/${id}/media-focus`);
-          setFocusData(focus_response.data || {});
-        } catch (error) {
-          console.error('Media Focus Fetch Error:', error);
-          setFocusData({});
-        }
+        setDemographics(
+          demoResult.status === 'fulfilled'
+            ? demoResult.value.data
+            : { age_distribution: [], gender_distribution: [] }
+        );
+        setFocusData(
+          focusResult.status === 'fulfilled'
+            ? (focusResult.value.data || {})
+            : {}
+        );
+        setOpinionsData(
+          opinionResult.status === 'fulfilled'
+            ? opinionResult.value.data
+            : []
+        );
 
       } catch (error) {
         console.error('Data Fetch Error:', error);
@@ -613,7 +624,7 @@ function ArticlePage() {
                     {/* 관련 오피니언/사설 섹션 */}
                     <OpinionSection
                       reportId={id}
-                      cachedOpinions={article?.analysis_result?.opinion_bullets}
+                      cachedOpinions={opinionsData}
                       onSentenceClick={handleSentenceClick}
                     />
                   </div>

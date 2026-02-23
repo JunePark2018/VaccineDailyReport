@@ -38,8 +38,8 @@ const OpinionSection = ({ reportId, cachedOpinions, onSentenceClick }) => {
     useEffect(() => {
         if (!reportId) return;
 
-        // 캐시된 데이터가 있으면 바로 사용
-        if (Array.isArray(cachedOpinions) && cachedOpinions.length > 0) {
+        // 부모에서 이미 데이터를 가져왔으면 바로 사용 (빈 배열도 "없음" 의미)
+        if (Array.isArray(cachedOpinions)) {
             setOpinions(cachedOpinions);
             return;
         }
