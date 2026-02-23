@@ -30,13 +30,19 @@ const renderClickableEvidence = (text, company, onSentenceClick) => {
     ));
 };
 
-const OpinionSection = ({ reportId, onSentenceClick }) => {
+const OpinionSection = ({ reportId, cachedOpinions, onSentenceClick }) => {
     const [opinions, setOpinions] = useState([]);
     const [isExpanded, setIsExpanded] = useState(false);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         if (!reportId) return;
+
+        // 캐시된 데이터가 있으면 바로 사용
+        if (Array.isArray(cachedOpinions) && cachedOpinions.length > 0) {
+            setOpinions(cachedOpinions);
+            return;
+        }
 
         const fetchOpinions = async () => {
             setLoading(true);
@@ -52,7 +58,7 @@ const OpinionSection = ({ reportId, onSentenceClick }) => {
             }
         };
         fetchOpinions();
-    }, [reportId]);
+    }, [reportId, cachedOpinions]);
 
     if (!loading && opinions.length === 0) return null;
 

@@ -611,7 +611,11 @@ function ArticlePage() {
                     </div>
 
                     {/* 관련 오피니언/사설 섹션 */}
-                    <OpinionSection reportId={id} onSentenceClick={handleSentenceClick} />
+                    <OpinionSection
+                      reportId={id}
+                      cachedOpinions={article?.analysis_result?.opinion_bullets}
+                      onSentenceClick={handleSentenceClick}
+                    />
                   </div>
 
                   <NewsText
