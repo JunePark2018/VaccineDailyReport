@@ -159,8 +159,6 @@ const Weather = () => {
     const [loading, setLoading] = useState(true);
     const [locationName, setLocationName] = useState("서울");
 
-    if (!SERVICE_KEY) return null;
-
     const getWeather = async (lat, lon, name) => {
         setLoading(true);
         try {
@@ -268,6 +266,8 @@ const Weather = () => {
             { timeout: 5000 }
         );
     }, []);
+
+    if (!SERVICE_KEY) return null;
 
     if (loading) {
         return (
