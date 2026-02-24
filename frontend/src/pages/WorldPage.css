@@ -770,6 +770,8 @@
 
     /* List Section on Mobile */
     .world-page .list-section {
+        grid-template-columns: 1fr !important;
+        gap: 0 !important;
         padding: 0 !important;
     }
 
