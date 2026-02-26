@@ -2,7 +2,7 @@
 
 > AI가 10개 언론사의 뉴스를 실시간으로 크롤링하고, 클러스터링 및 분석하여 리포트를 자동 생성하는 뉴스 인텔리전스 플랫폼
 
-PPT 링크: https://docs.google.com/presentation/d/1cZrwqr7LI0HTNF-EIFIWXmSD7udI9yefFjGJ_Iid4Rc/edit?usp=sharing
+PPT 링크: https://docs.google.com/presentation/d/1n3qlZx-QcmbCtOfVL4Ss_9rwqnxXG-3z/edit?usp=sharing&ouid=101202909226412214966&rtpof=true&sd=true
 
 ## 핵심 기능
 
