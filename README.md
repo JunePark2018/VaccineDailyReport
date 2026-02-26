@@ -1,118 +1,146 @@
-# 💉 VaccineDailyReport
-### 하이미디어 1조 AI 웹앱 프로젝트
+# 백신일보
 
-> 📝 **프로젝트 설명**
->
-> 원래 여기에 프로젝트 설명이 들어갑니다.<br>
-> 마크다운 문법으로 수정 가능합니다. 문법은 구글링하거나 AI에게 물어보시면 쉽게 알 수 있습니당
+> AI가 10개 언론사의 뉴스를 실시간으로 크롤링하고, 클러스터링 및 분석하여 리포트를 자동 생성하는 뉴스 인텔리전스 플랫폼
 
-## 🚀 시작하기
+## 핵심 기능
 
-### 1. 리포지토리 복제
+### 자동화된 뉴스 파이프라인
+- 조선, KBS, MBC, SBS, 연합, 한겨레, 중앙, 경향, 한국, JTBC 등 **10개 언론사**를 5분 주기로 크롤링
+- **HDBSCAN + Korean SentenceTransformer**(ko-sroberta)로 관련 기사를 자동 클러스터링
+- 형태소 분석(Kiwi) + LLM(GPT-4o-mini) **2단계 검증**으로 동일 이슈 판별
+
+### AI 리포트 생성 (Agentic Workflow)
+- **Writer → Critic → Editor** 3단계 에이전트 파이프라인
+- Critic 에이전트가 환각(Hallucination) 탐지 후 PASS/FAIL 판정
+- 비동기 병렬 처리 (최대 5건 동시 생성)
+
+### 언론사별 비교 분석 (GraphRAG)
+- 기사별 Entity-Relation-Entity 트리플 추출 → 지식 그래프 구축
+- 동일 사건에 대한 **언론사별 논조 차이**를 자동 분석 및 시각화
+
+### 개인화 추천
+- 구독 키워드, 열람 이력, 카테고리 선호도 기반 **다기준 스코어링**
+- TextRank + KR-WordRank 앙상블 키워드 추출, D3 워드클라우드 시각화
+
+### 기타
+- 인용 검증: 문장 임베딩 코사인 유사도로 원문 출처 자동 매칭
+- 독자 인구통계 및 언론사 보도량 분석 대시보드 (Recharts)
+- Web Speech API 기반 TTS (음성 선택, 속도 조절)
+- 반응형 디자인 (데스크탑 / 모바일)
+
+## 기술 스택
+
+| 영역 | 기술 |
+|------|------|
+| Frontend | React 18, React Router 6, Recharts, D3 Cloud |
+| Backend | FastAPI, SQLAlchemy, AsyncIO |
+| Database | PostgreSQL 15, ChromaDB (벡터 DB) |
+| AI / NLP | OpenAI GPT-4o-mini, SentenceTransformers (ko-sroberta), HDBSCAN, Kiwi, KR-WordRank |
+| Infra | Docker Compose, Nginx, Certbot (HTTPS), AWS EC2 |
+
+## 아키텍처
+
+```
+크롤러 (5분 주기)
+  │
+  ▼
+[10개 언론사] ──▶ PostgreSQL (기사 저장)
+                       │
+                       ▼
+              HDBSCAN 클러스터링 ◄──── ChromaDB (임베딩 캐시)
+                       │
+                       ▼
+              2단계 검증 (형태소 + LLM)
+                       │
+                       ▼
+              AI 리포트 생성 (Writer → Critic → Editor)
+                       │
+                       ▼
+              GraphRAG 비교 분석
+                       │
+                       ▼
+              FastAPI ──────────▶ React (사용자 화면)
+```
+
+## 시작하기
+
+### 사전 요구사항
+
+- Docker & Docker Compose
+- OpenAI API Key
+
+### 1. 클론 및 환경변수 설정
 
 ```bash
-# 터미널에서 아래 명령어로 프로젝트를 다운로드하세요
 git clone https://github.com/JunePark2018/VaccineDailyReport.git
+cd VaccineDailyReport
 
+cp .env.example .env
+# .env 파일을 열어 아래 값들을 수정
+#   POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_DB
+#   OPENAI_API_KEY
+#   SERVER_IP (배포 서버 IP)
 ```
 
-### 2. 데이터베이스 설정
-이 프로젝트는 **SQLite**를 베이스로 하되, 원하시면 **PostgreSQL**과 **Redis**를 Docker 컨테이너로 실행할 수 있습니다.
+### 2. Docker Compose로 실행
 
-아무것도 하지 않으면 SQLite를 사용합니다. PostgreSQL과 Redis를 사용하시려면, 아래 단계들을 따라해 주세요.
-
-
-1.  **Docker Desktop 설치**: Docker가 설치되어 있고 실행 중이어야 합니다.
-    *   https://hub.docker.com/ 에 접속하여 로그인하신 후, 프로그램을 다운받아 주세요.
-2.  **.env 파일 수정**: 아래 코드를 .env에 붙여넣으세요.
-    ```bash
-    DATABASE_URL=postgresql://myuser:mypassword@localhost:5432/finalproject
-    REDIS_URL=redis://localhost:6379/0
-    ```
-3.  **서비스 실행**: 프로젝트 루트 폴더에서 아래 명령어를 실행하세요.
-    ```bash
-    docker-compose up -d
-    ```
-    *   **Postgres**: 5432 포트
-    *   **Redis**: 6379 포트
-    *   **Adminer** (DB 관리 도구): http://localhost:8080
-4.  **DB 열람**: 도커 내 Adminer를 활용하시면 됩니다.
-    🌐 Adminer 접속 방법
-    1. 웹 브라우저를 켭니다.
-    2. 주소창에 http://localhost:8080 을 입력합니다.
-    3. 로그인 화면에서 아래 정보를 입력하세요:
-       * System: PostgreSQL (셀렉트 박스에서 선택)
-       * Server: postgres
-       * Username: myuser
-       * Password: mypassword
-       * Database: finalproject
-    로그인하시면 테이블 목록과 저장된 데이터를 엑셀처럼 보거나 SQL 쿼리를 직접 날리실 수 있습니다.
-5.  **데이터 보존**: DB 데이터는 프로젝트 폴더 내 `./postgres_data` 에 저장되므로, 컨테이너를 꺼도 데이터가 유지됩니다.
-
-#### ⚠️ DB 초기화 (데이터 삭제)
-DB를 완전히 삭제하고 처음부터 다시 시작하려면 다음 과정을 따르세요.
-1.  컨테이너 종료: `docker-compose down`
-2.  폴더 삭제: `./postgres_data` 폴더를 삭제
-3.  서비스 재실행: `docker-compose up -d`
-
-### 3. 백엔드 설정
-1.  **가상환경 및 의존성 설치**:
-    ```bash
-    # 가상환경 생성 (선택 사항)
-    python -m venv venv
-    
-    # 의존성 설치
-    pip install -r backend/requirements.txt
-    ```
-2.  **환경 변수 설정**: `.env` 파일이 있는지 확인하세요. (없다면 팀원에게 요청)
-3.  **서버 실행**:
-    ```bash
-    cd backend
-    uvicorn main:app --reload
-    ```
-
-### 4. 프론트엔드 설정
-1.  **의존성 설치**:
-    ```bash
-    # 프론트엔드 폴더 이동
-    cd frontend
-
-    # 의존성 설치
-    npm i
-    ```
-2.  **서버 실행**
-    ```bash
-    npm start
-    ```
-
-
-## 🤝 쓰실 때
-* 로컬에서 `git add`, `git commit`을 활용해 자유롭게 개발하시면 됩니다.
-* **⚠️ `git push`를 하기 전, 반드시 본인의 브랜치(Branch)인지 확인해 주세요!** `main` 브랜치에 직접 푸시하지 않도록 주의 바랍니다.
-* 나중에 `Pull Requests` 탭에서 함께 push된 코드를 확인하며 병합을 진행하고자 합니다.
-
-## 기타
-* 기존 로컬 프로젝트에서 github에 있는 최신 프로젝트로 업데이트할 때, `git pull`을 쓰면 최신 파일을 가져오기는 하지만 로컬 파일의 변경사항도 그대로 유지됩니다. 만약 **로컬을 날리고 최신 프로젝트로 완전히 초기화**하고 싶으시다면 아래 명령어를 쓰면 됩니다.
-```diff
-- 주의: 이 명령어를 실행하면 로컬의 모든 데이터가 삭제됩니다.
-```
 ```bash
-# 1. 먼저 메인 브랜치로 이동합니다. (가장 중요!)
-git checkout main
+# 전체 서비스 빌드 및 실행
+docker compose up -d --build
 
-# 2. 원격 저장소의 최신 정보를 가져옵니다.
-git fetch --all
-
-# 3. 로컬의 상태를 원격 main과 100% 동일하게 강제 초기화합니다.
-git reset --hard origin/main
-
-# 4. 추적되지 않는 찌꺼기 파일(새로 생긴 파일 등)을 삭제합니다.
-git clean -fd
-
-# 5. main을 제외한 모든 브랜치 삭제
-git branch | grep -v "main" | xargs git branch -D
-
-# 6. 위 명령어가 오류가 날 경우를 대비한 명령어
-git branch --format "%(refname:short)" | ? { $_ -ne "main" } | % { git branch -D $_ }
+# 로그 확인
+docker compose logs -f backend
 ```
 
+서비스가 시작되면:
+- **프론트엔드**: http://localhost (80)
+- **백엔드 API**: http://localhost:8081
+- **API 문서**: http://localhost:8081/docs
+
+### 3. 로컬 개발 (Docker 없이)
+
+```bash
+# 백엔드
+cd backend
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn main:app --reload
+
+# 프론트엔드
+cd frontend
+npm install
+npm start
+```
+
+## 프로젝트 구조
+
+```
+VaccineDailyReport/
+├── backend/
+│   ├── main.py                  # FastAPI 앱 & 백그라운드 워커
+│   ├── scraper.py               # 뉴스 크롤러 (10개 언론사)
+│   ├── clustering.py            # HDBSCAN 클러스터링 엔진
+│   ├── ai_processor.py          # AI 리포트 생성 파이프라인
+│   ├── ai_agentic_generator.py  # Writer-Critic-Editor 에이전트
+│   ├── ai_graph_comparer.py     # GraphRAG 비교 분석
+│   ├── keyword_extractor.py     # TextRank + KR-WordRank 키워드 추출
+│   ├── routers/                 # API 엔드포인트
+│   │   ├── ai_news.py           #   리포트 CRUD, 인용 검증, 타임라인
+│   │   ├── users.py             #   회원, 구독, 스크랩
+│   │   ├── search.py            #   검색
+│   │   └── statistics.py        #   독자 통계, 언론사 분석
+│   └── database/
+│       ├── models.py            # SQLAlchemy 모델
+│       ├── crud.py              # DB 조작
+│       └── engine.py            # DB 연결 설정
+├── frontend/
+│   ├── src/
+│   │   ├── pages/               # 페이지 컴포넌트 (Main, Article, 카테고리별)
+│   │   ├── components/          # 공통 컴포넌트 (Header, SearchBar 등)
+│   │   ├── utils/               # 유틸리티 (날짜 포맷 등)
+│   │   └── App.js               # 라우팅
+│   └── public/
+├── docker-compose.yml
+└── .env.example
+```
