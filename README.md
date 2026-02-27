@@ -4,6 +4,9 @@
 
 PPT 링크: https://docs.google.com/presentation/d/1n3qlZx-QcmbCtOfVL4Ss_9rwqnxXG-3z/edit?usp=sharing&ouid=101202909226412214966&rtpof=true&sd=true
 
+## 시연 영상
+[![백신일보 시연영](https://img.youtube.com/vi/MtE-sdo6wY0/maxresdefault.jpg)](https://youtu.be/MtE-sdo6wY0)
+
 ## 핵심 기능
 
 ### 자동화된 뉴스 파이프라인
