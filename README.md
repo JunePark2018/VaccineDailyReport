@@ -4,7 +4,7 @@
 
 PPT 링크: https://docs.google.com/presentation/d/1n3qlZx-QcmbCtOfVL4Ss_9rwqnxXG-3z/edit?usp=sharing&ouid=101202909226412214966&rtpof=true&sd=true
 
-## 시연 영상
+## 시연 영상 (아래 이미지를 클릭하여 재생하세요)
 [![백신일보 시연영](https://img.youtube.com/vi/MtE-sdo6wY0/maxresdefault.jpg)](https://youtu.be/MtE-sdo6wY0)
 
 ## 핵심 기능
