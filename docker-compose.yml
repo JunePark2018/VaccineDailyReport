@@ -17,7 +17,7 @@ services:
     networks:
       - finalproject_network
 
-  # 2. ChromaDB (이게 있어야 외부에서 접속 가능합니다!)
+  # 2. ChromaDB
   chromadb:
     image: chromadb/chroma:latest
     container_name: finalproject_chroma
@@ -25,40 +25,36 @@ services:
     volumes:
       - ./backend/chroma_db:/chroma/chroma
     ports:
-      - "9000:8000"
+      - "9001:8000"
     environment:
       - IS_PERSISTENT=TRUE
       - ANONYMIZED_TELEMETRY=FALSE
     networks:
       - finalproject_network
 
-  # 3. Adminer (개발 전용 — 프로덕션에서는 profiles로 비활성화)
+  # 3. Adminer (주의: 127.0.0.1 바인딩 시 외부 접속 불가, 필요시 수정)
   adminer:
     image: adminer
     container_name: finalproject_adminer
     restart: always
     ports:
-      - "127.0.0.1:8080:8080"
+      - "8080:8080" # 외부 접속을 위해 127.0.0.1 제거
     depends_on:
       - postgres
     networks:
       - finalproject_network
-    profiles:
-      - dev
 
-  # 4. Redis (개발 전용 — 현재 미사용)
+  # 4. Redis
   redis:
     image: redis:alpine
     container_name: finalproject_redis
     restart: always
     ports:
-      - "127.0.0.1:6379:6379"
+      - "6379:6379"
     networks:
       - finalproject_network
-    profiles:
-      - dev
 
-  # 5. Backend (FastAPI)
+# 5. Backend (FastAPI) - 빌드 환경 변수나 포트는 그대로 유지해도 무방합니다.
   backend:
     build: ./backend
     container_name: finalproject_backend
@@ -68,10 +64,10 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      # 내부에서 크로마 서비스로 연결
       CHROMA_MODE: remote
       CHROMA_SERVER_HOST: chromadb
       CHROMA_SERVER_PORT: 8000
+      ENABLE_BACKGROUND_WORKER: "false"
     working_dir: /app
     ports:
       - "8081:8000"
@@ -81,33 +77,23 @@ services:
     networks:
       - finalproject_network
 
-  # 6. Frontend
+  # 6. Frontend (SSL 인증서 볼륨 및 443 포트 추가)
   frontend:
     build:
       context: ./frontend
       args:
-        REACT_APP_API_URL: http://${SERVER_IP}:8081
-        REACT_APP_WEATHER_API_KEY: ${REACT_APP_WEATHER_API_KEY}
+        # 도메인을 연결했으므로 IP 대신 도메인 주소를 사용하면 더 깔끔합니다.
+        - REACT_APP_API_URL=https://42222.cloud/api
     container_name: finalproject_frontend
     restart: always
     ports:
-      - "80:80"
-      - "443:443"
+      - "80:80"   # HTTP 접속용
+      - "443:443" # HTTPS 접속용 (추가됨)
     volumes:
-      - ./certbot/www:/var/www/certbot
-      - ./certbot/conf:/etc/letsencrypt
+      # 호스트 서버의 인증서 경로를 컨테이너의 nginx가 읽을 수 있도록 연결
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - backend
-    networks:
-      - finalproject_network
-
-  # 7. Certbot (SSL 인증서 발급용)
-  certbot:
-    image: certbot/certbot
-    container_name: finalproject_certbot
-    volumes:
-      - ./certbot/www:/var/www/certbot
-      - ./certbot/conf:/etc/letsencrypt
     networks:
       - finalproject_network
 

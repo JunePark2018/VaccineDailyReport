@@ -1,5 +1,6 @@
 import asyncio
 import concurrent.futures
+import os
 import threading
 import time
 from contextlib import asynccontextmanager
@@ -20,6 +21,13 @@ TARGET_COMPANIES = [
     "조선", "KBS", "MBC", "SBS", "연합",
     "한겨레", "중앙", "경향", "한국", "JTBC",
 ]
+
+
+def env_flag(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
 # ---------------------------------------------------------
@@ -186,9 +194,13 @@ async def lifespan(app: FastAPI):
     # 앱 시작 시 DB 테이블 생성
     Base.metadata.create_all(bind=engine)
 
-    # 백그라운드 스레드 시작
-    worker_thread = threading.Thread(target=run_background_worker, daemon=True)
-    worker_thread.start()
+    if env_flag("ENABLE_BACKGROUND_WORKER", default=False):
+        # 백그라운드 스레드 시작
+        worker_thread = threading.Thread(target=run_background_worker, daemon=True)
+        worker_thread.start()
+        print("🚀 [System] 백그라운드 뉴스 수집 워커 활성화")
+    else:
+        print("⏸️ [System] 백그라운드 뉴스 수집 워커 비활성화")
 
     yield
     print("👋 서버 종료")
@@ -209,7 +221,6 @@ origins = [
     "http://43.203.207.47:3000",
 ]
 
-import os
 cors_env = os.getenv("CORS_ORIGINS", "")
 allowed_origins = [o.strip() for o in cors_env.split(",") if o.strip()] if cors_env else origins
 
